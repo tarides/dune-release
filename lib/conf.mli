@@ -93,6 +93,7 @@ module OCaml : sig
   val native_dynlink : t -> bool
   val word_size : t -> int
   val dump : Format.formatter -> t -> unit
+  val parse_version: string -> (int * int * int * string option) option
 end
 
 (*---------------------------------------------------------------------------
