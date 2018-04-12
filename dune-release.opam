@@ -21,6 +21,7 @@ depends: [
   "opam-format"
   "rresult"
   "logs"
+  "odoc"
 ]
 
 available: [
