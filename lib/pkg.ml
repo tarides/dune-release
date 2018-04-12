@@ -226,12 +226,51 @@ let publish_artefacts p = match p.publish_artefacts with
 | Some arts -> Ok arts
 | None -> Ok [`Doc; `Distrib]
 
+let infer_name () =
+  let opam_files =
+    Sys.readdir "."
+    |> Array.to_list
+    |> List.filter (String.is_suffix ~affix:".opam")
+  in
+  if opam_files = [] then begin
+    Logs.err (fun m -> m "no <package>.opam files found.");
+    exit 1
+  end;
+  let package_names =
+    let suffix_len = String.length ".opam" in
+    List.map (fun s ->
+        String.with_range s ~len:(String.length s - suffix_len)
+      ) opam_files
+  in
+  let name =
+    let shortest =
+      match package_names with
+      | [] -> assert false
+      | first :: rest ->
+        List.fold_left (fun acc s ->
+            if String.length s < String.length acc
+            then s
+            else acc
+          ) first rest
+    in
+    if List.for_all (String.is_prefix ~affix:shortest) package_names
+    then shortest
+    else begin
+      Logs.err (fun m ->
+          m "cannot determine name automatically.\n\
+             You must pass a [name] argument to \
+             [Topkg_jbuilder.describe] in pkg/pkg.ml");
+      exit 1
+    end
+  in
+  name
+
 let v
-    ?version ?delegate ?build_dir ?opam:opam_file ?opam_descr
+    ?name ?version ?delegate ?build_dir ?opam:opam_file ?opam_descr
     ?readme ?change_log ?license ?distrib_uri ?distrib_file ?publish_msg
-    ?publish_artefacts ?(distrib=Distrib.v ()) ?(lint_files = Some [])
-    name
+    ?publish_artefacts ?(distrib=Distrib.v ()) ?(lint_files = Some []) ()
   =
+  let name = match name with None -> infer_name () | Some v -> v in
   let readmes = match readme with Some r -> Some [r] | None -> None in
   let change_logs = match change_log with Some c -> Some [c] | None -> None in
   let licenses = match license with Some l -> Some [l] | None -> None in
@@ -403,48 +442,6 @@ let lint ?(ignore_pkg = false) p ~dir todo =
                      (Fmt.styled_unit `Red "failure") () n); 1
   in
   OS.Dir.with_current dir lint p
-
-
-let infer_name () =
-  let opam_files =
-    Sys.readdir "."
-    |> Array.to_list
-    |> List.filter (String.is_suffix ~affix:".opam")
-  in
-  if opam_files = [] then begin
-    Logs.err (fun m -> m "no <package>.opam files found.");
-    exit 1
-  end;
-  let package_names =
-    let suffix_len = String.length ".opam" in
-    List.map (fun s ->
-        String.with_range s ~len:(String.length s - suffix_len)
-      ) opam_files
-  in
-  let name =
-    let shortest =
-      match package_names with
-      | [] -> assert false
-      | first :: rest ->
-        List.fold_left (fun acc s ->
-            if String.length s < String.length acc
-            then s
-            else acc
-          ) first rest
-    in
-    if List.for_all (String.is_prefix ~affix:shortest) package_names
-    then shortest
-    else begin
-      Logs.err (fun m ->
-          m "cannot determine name automatically.\n\
-             You must pass a [name] argument to \
-             [Topkg_jbuilder.describe] in pkg/pkg.ml");
-      exit 1
-    end
-  in
-  name
-
-let default () = v (infer_name ())
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

@@ -15,6 +15,7 @@ open Bos_setup
 type t
 
 val v :
+  ?name:string ->
   ?version:string ->
   ?delegate:Bos_setup.Cmd.t ->
   ?build_dir:Fpath.t ->
@@ -28,7 +29,7 @@ val v :
   ?publish_msg:string ->
   ?publish_artefacts:[ `Alt of string | `Distrib | `Doc ] list ->
   ?distrib:Distrib.t -> ?lint_files:Fpath.t list option ->
-  string -> t
+  unit -> t
 
 val name : t -> (string, R.msg) result
 val version : t -> (string, R.msg) result
@@ -80,11 +81,6 @@ val lint_all : lint list
 val lint :
   ?ignore_pkg:bool -> t -> dir:Fpath.t -> lint list -> (int, R.msg) result
 
-(** {1 topkg-jbuilder} *)
-
-val infer_name: unit -> string
-
-val default: unit -> t
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

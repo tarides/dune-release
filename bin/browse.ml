@@ -82,8 +82,7 @@ let browse () name opam browser prefix background target =
     let uri = match parse_target target with
       | `Ok (`Uri uri) -> Ok uri
       | `Ok (`Opam field) ->
-        let name = match name with None -> Pkg.infer_name () | Some n -> n in
-        let pkg = Pkg.v ?opam name in
+        let pkg = Pkg.v ?opam ?name () in
         Pkg.opam pkg >>= fun opam -> opam_field_uri opam field
       | `Error msg ->
         let uri_prefixes = ["http://"; "https://"; "file://"] in
