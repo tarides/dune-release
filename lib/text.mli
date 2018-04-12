@@ -48,7 +48,7 @@ val change_log_last_entry :
     change log entry of [text] (i.e. the {!head} of [text]) into
     [Some (version, (header, text))], where [(header,text)] is the
     result of {!head} and [version] a version number extracted from
-    [header] (see [topkg-log(2)] for details). *)
+    [header] (see [dune-release-log(2)] for details). *)
 
 val change_log_file_last_entry :
   Fpath.t -> ((string * (string * string)), R.msg) result

@@ -81,7 +81,7 @@ let publish_doc p ~msg:_ ~docdir =
   let remote = strf "git@@github.com:%s/%s.git" owner repo in
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   let create_empty_gh_pages git =
-    let msg = "Initial commit by topkg." in
+    let msg = "Initial commit by dune-release." in
     let create () =
       OS.Cmd.run Cmd.(v "git" % "init")
       >>= fun () -> Vcs.get ()
@@ -132,7 +132,7 @@ let github_auth ~owner =
     |> Logs.on_error_msg ~use:(fun _ -> None)
   with
   | Some auth -> auth
-  | None -> OS.Env.(value "TOPKG_GITHUB_AUTH" string ~absent:owner)
+  | None -> OS.Env.(value "DUNE_RELEASE_GITHUB_AUTH" string ~absent:owner)
 
 let create_release_json version msg =
   let escape_for_json s =

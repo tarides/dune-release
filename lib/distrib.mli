@@ -23,16 +23,13 @@ type watermark = string * [ `String of string | `Version | `Version_num
          leading ['v'] or ['V'] dropped.}
       {- [`Vcs `Commit_id], is the commit identifier (hash) of the
          distribution. May be post-fixed by ["dirty"] in
-         {{!Conf.build_context}dev package ([`Pin]) builds}.}
+         dev package ([`Pin]) builds}.}
       {- [`Opam (file, field, sep)], is the values of the field
          [field] concatenated with separator [sep] of the opam file
          [file], expressed relative to the distribution root directory, if
          [file] is [None] this is the package's default opam file, see
          {!describe}. Not all fields are supported see the value of
-         {!Topkg_care.Opam.File.field_names}.  {b Warning.} In
-         {{!Conf.build_context}dev package ([`Pin]) builds}, [`Opam]
-         watermarks are only substituted if the package [topkg-care] is
-         installed.}}
+         {!Opam.File.field_names}.}}
 
       When a file is watermarked with an identifier ["ID"], any occurence of
       the sequence [%%ID%%] in its content is substituted by its definition. *)
@@ -48,12 +45,12 @@ val v :
   unit -> t
 (** [distrib ~watermarks ~files_to_watermark ~massage
       ~exclude_paths ()] influences the distribution creation
-      process performed by the [topkg] tool.
+      process performed by the [dune-release] tool.
       See the {{!distdetails}full details about distribution creation}.
 
       In the following the {e distribution build directory} is a
       private clone of the package's source repository's [HEAD] when
-      [topkg distrib] is invoked.
+      [dune-release distrib] is invoked.
       {ul
       {- [watermarks] defines the source watermarks for the distribution,
          defaults to {!watermarks}.}

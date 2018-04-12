@@ -9,11 +9,11 @@ open Bos_setup
 let bistro () =
   begin
     let verb = Cmd.(v "--verbosity" % Logs.(level_to_string (level ()))) in
-    let topkg = Cmd.(v "topkg") in
-    OS.Cmd.run Cmd.(topkg % "distrib" %% verb)
-    >>= fun () -> OS.Cmd.run Cmd.(topkg % "publish" %% verb)
-    >>= fun () -> OS.Cmd.run Cmd.(topkg % "opam" %% verb % "pkg")
-    >>= fun () -> OS.Cmd.run Cmd.(topkg % "opam" %% verb % "submit")
+    let dune_release = Cmd.(v "dune-release") in
+    OS.Cmd.run Cmd.(dune_release % "distrib" %% verb)
+    >>= fun () -> OS.Cmd.run Cmd.(dune_release % "publish" %% verb)
+    >>= fun () -> OS.Cmd.run Cmd.(dune_release % "opam" %% verb % "pkg")
+    >>= fun () -> OS.Cmd.run Cmd.(dune_release % "opam" %% verb % "submit")
     >>= fun () -> Ok 0
   end
   |> Cli.handle_error
@@ -30,11 +30,11 @@ let man =
   [ `S Manpage.s_description;
     `P "The $(tname) command (quick in Russian) is equivalent to invoke:";
     `Pre "\
-topkg distrib       # Create the distribution archive
-topkg publish       # Publish it on the WWW with its documentation
-topkg opam pkg      # Create an opam package
-topkg opam submit   # Submit it to OCaml's opam repository";
-    `P "See topkg-release(7) for more information."; ]
+dune-release distrib       # Create the distribution archive
+dune-release publish       # Publish it on the WWW with its documentation
+dune-release opam pkg      # Create an opam package
+dune-release opam submit   # Submit it to OCaml's opam repository";
+    `P "See dune-release(7) for more information."; ]
 
 let cmd =
   Term.(pure bistro $ Cli.setup),

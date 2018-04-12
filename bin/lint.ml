@@ -42,7 +42,7 @@ let man =
         files pass the opam lint test and that the opam dependencies are
         consistent with those of the build system.";
     `P "Linting is automatically performed on distribution generation, see
-        topkg-distrib(1) for more details." ]
+        dune-release-distrib(1) for more details." ]
 
 let cmd =
   Term.(pure lint $ Cli.setup $ Cli.pkg_name $ lints),
