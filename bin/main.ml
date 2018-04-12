@@ -8,9 +8,9 @@ open Cmdliner
 
 let cmds =
   [Browse.cmd; Status.cmd; Log.cmd; Tag.cmd; Distrib.cmd;
-   Publish.cmd; Opam.cmd; ]
+   Publish.cmd; Opam.cmd; Help.cmd; ]
 (*  [ Bistro.cmd; Build.cmd; Clean.cmd; Doc.cmd;
-    Help.cmd; Ipc.cmd; Issue.cmd; Lint.cmd; ;
+    Ipc.cmd; Issue.cmd; Lint.cmd; ;
     Run.cmd; Test.cmd; ]
 *)
 
