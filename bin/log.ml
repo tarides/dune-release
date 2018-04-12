@@ -27,8 +27,8 @@ let commit change_log =
   >>= function
   | true -> Vcs.commit_files repo ~msg:"Update change log." [change_log]
   | false ->
-    Logs.app (fun m -> m "No changes to commit in %a" Fpath.pp change_log);
-    Ok ()
+      Logs.app (fun m -> m "No changes to commit in %a" Fpath.pp change_log);
+      Ok ()
 
 (* Command *)
 

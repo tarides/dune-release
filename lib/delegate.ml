@@ -32,8 +32,8 @@ let publish_distrib p ~msg ~archive =
 
 let publish_doc p ~msg ~docdir =
   let doc_uri p = Pkg.opam_field_hd p "doc" >>= function
-  | None -> Ok ""
-  | Some uri -> Ok uri
+    | None -> Ok ""
+    | Some uri -> Ok uri
   in
   Pkg.name p
   >>= fun name -> Pkg.version p
@@ -68,11 +68,11 @@ let publish_in_git_branch ~remote ~branch ~name ~version ~docdir ~dir =
   in
   let delete dir =
     if not (Fpath.is_current_dir dir) then OS.Dir.delete ~recurse:true dir else
-      let delete acc p = acc >>= fun () -> OS.Path.delete ~recurse:true p in
-      let gitdir = Fpath.v ".git" in
-      let not_git p = not (Fpath.equal p gitdir) in
-      OS.Dir.contents dir
-      >>= fun files -> List.fold_left delete (Ok ()) (List.filter not_git files)
+    let delete acc p = acc >>= fun () -> OS.Path.delete ~recurse:true p in
+    let gitdir = Fpath.v ".git" in
+    let not_git p = not (Fpath.equal p gitdir) in
+    OS.Dir.contents dir
+    >>= fun files -> List.fold_left delete (Ok ()) (List.filter not_git files)
   in
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   let replace_dir_and_push docdir dir =
@@ -86,27 +86,27 @@ let publish_in_git_branch ~remote ~branch ~name ~version ~docdir ~dir =
     >>= function
     | false -> Ok false
     | true ->
-      OS.Cmd.run Cmd.(git % "add" % p dir)
-      >>= fun () -> OS.Cmd.run Cmd.(git % "commit" % "-m" % msg)
-      >>= fun () -> OS.Cmd.run Cmd.(git % "push")
-      >>= fun () -> Ok true
+        OS.Cmd.run Cmd.(git % "add" % p dir)
+        >>= fun () -> OS.Cmd.run Cmd.(git % "commit" % "-m" % msg)
+        >>= fun () -> OS.Cmd.run Cmd.(git % "push")
+        >>= fun () -> Ok true
   in
   if not (Fpath.is_rooted ~root:Fpath.(v ".") dir)
   then
     R.error_msgf "%a directory is not rooted in the repository or not relative"
       Fpath.pp dir
   else
-    let clonedir = Fpath.(parent docdir / strf "%s-%s.pubdoc" name version) in
-    OS.Dir.delete ~recurse:true clonedir
-    >>= fun () -> Vcs.get ()
-    >>= fun repo -> Vcs.clone repo ~dir:clonedir
-    >>= fun () -> OS.Dir.with_current clonedir (replace_dir_and_push docdir) dir
-    >>= fun res -> res
-    >>= function
-    | false (* no changes *) ->
+  let clonedir = Fpath.(parent docdir / strf "%s-%s.pubdoc" name version) in
+  OS.Dir.delete ~recurse:true clonedir
+  >>= fun () -> Vcs.get ()
+  >>= fun repo -> Vcs.clone repo ~dir:clonedir
+  >>= fun () -> OS.Dir.with_current clonedir (replace_dir_and_push docdir) dir
+  >>= fun res -> res
+  >>= function
+  | false (* no changes *) ->
       log_publish_result "No documentation changes for" (name, version) dir;
       Ok ()
-    | true ->
+  | true ->
       let push_spec = strf "%s:%s" branch branch in
       Ok (git_for_repo repo) >>= fun git ->
       OS.Cmd.run Cmd.(git % "push" % remote % push_spec)
@@ -118,8 +118,8 @@ let publish_in_git_branch ~remote ~branch ~name ~version ~docdir ~dir =
 (* Issue requests *)
 
 let issues_uri p = Pkg.opam_field p "dev-repo" >>| function
-| None | Some [] -> ""
-| Some (u :: _) -> u
+  | None | Some [] -> ""
+  | Some (u :: _) -> u
 
 let issue_list p =
   issues_uri p >>= fun issues_uri ->

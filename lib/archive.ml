@@ -139,8 +139,8 @@ let tar_cmd = OS.Env.(value "TOPKG_TAR" cmd ~absent:(Cmd.v "tar"))
 let ensure_tar () = OS.Cmd.must_exist tar_cmd >>| fun _ -> ()
 let untbz ?(clean = false) ar =
   let clean_dir dir = OS.Dir.exists dir >>= function
-  | true when clean -> OS.Dir.delete ~recurse:true dir
-  | _ -> Ok ()
+    | true when clean -> OS.Dir.delete ~recurse:true dir
+    | _ -> Ok ()
   in
   let archive_dir, ar = Fpath.split_base ar in
   let unarchive ar =

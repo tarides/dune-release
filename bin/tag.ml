@@ -17,8 +17,8 @@ let vcs_tag tag ~commit_ish ~force ~sign ~delete ~msg =
   >>= fun repo -> match delete with
   | true -> Vcs.delete_tag repo tag
   | false ->
-    Vcs.tag repo ~force ~sign ~msg ~commit_ish tag >>| fun () ->
-    Logs.app (fun m -> m "Tagged version %a" Text.Pp.version tag)
+      Vcs.tag repo ~force ~sign ~msg ~commit_ish tag >>| fun () ->
+      Logs.app (fun m -> m "Tagged version %a" Text.Pp.version tag)
 
 let tag () name change_log tag commit_ish force sign delete msg =
   begin

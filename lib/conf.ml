@@ -139,8 +139,8 @@ let build_dir =
 let vcs =
   let doc = "Specifies if the package directory is VCS managed." in
   let absent () = Vcs.find ~dir:(Fpath.v ".") () >>= function
-  | None -> Ok false
-  | Some _ -> Ok true
+    | None -> Ok false
+    | Some _ -> Ok true
   in
   discovered_key "vcs" bool ~absent ~doc
 
@@ -342,15 +342,15 @@ let os_suff_env = function
 let ocamlfindable ?conf name os = match name with
 | "ocamlc" | "ocamlcp" | "ocamlmktop" | "ocamlopt" | "ocamldoc" | "ocamldep"
 | "ocamlmklib" | "ocamlbrowser" as tool ->
-  let toolchain =
-    match conf with
-    | None -> Cmd.empty
-    | Some c ->
-      match os, toolchain c with
-      | `Host_os, Some toolchain -> Cmd.(v "-toolchain" % toolchain)
-      | _ -> Cmd.empty
-  in
-  Some Cmd.(v "ocamlfind" %% toolchain % tool)
+    let toolchain =
+      match conf with
+      | None -> Cmd.empty
+      | Some c ->
+          match os, toolchain c with
+          | `Host_os, Some toolchain -> Cmd.(v "-toolchain" % toolchain)
+          | _ -> Cmd.empty
+    in
+    Some Cmd.(v "ocamlfind" %% toolchain % tool)
 | _ -> None
 
 let tool ?conf name os = match OS.Env.var (os_tool_env name os) with
@@ -378,13 +378,13 @@ let get_ncpus () =
                 Logs.on_error_msg ~level:Logs.Debug ~use:on_fail
     | None -> on_fail ()
   else
-    let run_tool name args ~on_fail =
-      Logs.on_error_msg ~level:Logs.Debug ~use:on_fail
-        (OS.Cmd.(run_out Cmd.(tool name `Build_os %% of_list args) |>
-                 out_string |> success >>= decode_int))
-    in
-    run_tool "getconf" ["_NPROCESSORS_ONLN"] ~on_fail:(fun () ->
-        run_tool "sysctl" ["-n"; "hw.ncpu"] ~on_fail)
+  let run_tool name args ~on_fail =
+    Logs.on_error_msg ~level:Logs.Debug ~use:on_fail
+      (OS.Cmd.(run_out Cmd.(tool name `Build_os %% of_list args) |>
+               out_string |> success >>= decode_int))
+  in
+  run_tool "getconf" ["_NPROCESSORS_ONLN"] ~on_fail:(fun () ->
+      run_tool "sysctl" ["-n"; "hw.ncpu"] ~on_fail)
 
 let jobs =
   let doc = "Allow to run $(docv) commands at once when building." in
@@ -466,8 +466,8 @@ module OCaml = struct
         try Some (bool_of_string v) with
         | (* That good old joke... *) Invalid_argument _ ->
             Logs.warn (fun m ->
-              m (conf_key "could not parse boolean,@ trying to discover")
-                (os_to_string c.os) k);
+                m (conf_key "could not parse boolean,@ trying to discover")
+                  (os_to_string c.os) k);
             None
     in
     match maybe_v with
@@ -478,16 +478,16 @@ module OCaml = struct
     let maybe_v = match find k c with
     | None -> None
     | Some v ->
-      try Some (int_of_string v) with
-      | Failure _ ->
-          Logs.warn (fun m ->
-              m (conf_key "could not parse integer,@ trying to discover")
-                (os_to_string c.os) k);
-          None
-   in
-   match maybe_v with
-   | Some v -> v
-   | None -> let v = discover k c in add_discovery k (string_of_int v) c; v
+        try Some (int_of_string v) with
+        | Failure _ ->
+            Logs.warn (fun m ->
+                m (conf_key "could not parse integer,@ trying to discover")
+                  (os_to_string c.os) k);
+            None
+    in
+    match maybe_v with
+    | Some v -> v
+    | None -> let v = discover k c in add_discovery k (string_of_int v) c; v
 
   let find_stdlib c = find "standard_library" c
 
@@ -505,8 +505,8 @@ module OCaml = struct
           | Ok exist -> exist
           | Error (`Msg e) ->
               Logs.warn (fun m ->
-                m (conf_key "undefined,@ discovery error: %s,@ using %B")
-                  (os_to_string c.os) k e on_error);
+                  m (conf_key "undefined,@ discovery error: %s,@ using %B")
+                    (os_to_string c.os) k e on_error);
               on_error
     end
 
@@ -517,21 +517,21 @@ module OCaml = struct
       else v
     in
     try match String.cut ~sep:"." version with
-      | None -> None
-      | Some (maj, rest) ->
+    | None -> None
+    | Some (maj, rest) ->
         let maj = int_of_string maj in
         match String.cut ~sep:"." rest with
         | None ->
-          begin match String.cut ~sep:"+" rest with
+            begin match String.cut ~sep:"+" rest with
             | None -> Some (maj, int_of_string rest, 0, None)
             | Some (min, i) ->  Some (maj, int_of_string min, 0, Some i)
-          end
+            end
         | Some (min, rest) ->
-          let min = int_of_string min in
-          begin match String.cut ~sep:"+" rest with
+            let min = int_of_string min in
+            begin match String.cut ~sep:"+" rest with
             | None -> Some (maj, min, int_of_string rest, None)
             | Some (p, i) -> Some (maj, min, int_of_string p, Some i)
-          end
+            end
     with
     | Failure _ -> None
 
@@ -541,7 +541,7 @@ module OCaml = struct
     match find k c with
     | None ->
         Logs.warn (fun m ->
-          m (conf_key "missing, using 0.0.0") (os_to_string c.os) k);
+            m (conf_key "missing, using 0.0.0") (os_to_string c.os) k);
         dumb_version
     | Some version ->
         match parse_version version with
@@ -574,8 +574,8 @@ module OCaml = struct
       | Some `Other -> ""
       | None ->
           Logs.warn (fun m ->
-            m (conf_key "undefined and@ no C toolchain@ detected,@ using \"\"")
-              (os_to_string c.os) k;);
+              m (conf_key "undefined and@ no C toolchain@ detected,@ using \"\"")
+                (os_to_string c.os) k;);
           ""
     end
 

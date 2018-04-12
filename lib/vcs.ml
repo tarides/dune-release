@@ -52,13 +52,13 @@ let git_work_tree (_, _, dir) =
   Cmd.(v "--work-tree" % p Fpath.(parent dir))
 
 let find_git () = Lazy.force git >>= function
-| (false, _) -> Ok None
-| (true, git) ->
-    let git_dir = Cmd.(git % "rev-parse" % "--git-dir") in
-    OS.Cmd.(run_out ~err:err_null git_dir |> out_string)
-    >>= function
-    | (dir, (_, `Exited 0)) -> Ok (Some (v `Git git ~dir:Fpath.(v dir)))
-    | _ -> Ok None
+  | (false, _) -> Ok None
+  | (true, git) ->
+      let git_dir = Cmd.(git % "rev-parse" % "--git-dir") in
+      OS.Cmd.(run_out ~err:err_null git_dir |> out_string)
+      >>= function
+      | (dir, (_, `Exited 0)) -> Ok (Some (v `Git git ~dir:Fpath.(v dir)))
+      | _ -> Ok None
 
 let err_git_exit cmd c = R.error_msgf "%a exited with code %d" Cmd.dump cmd c
 let err_git_signal cmd c = R.error_msgf "%a exited with signal %d" Cmd.dump cmd c
@@ -84,7 +84,7 @@ let git_is_dirty r =
 let git_file_is_dirty r file =
   let diff =
     Cmd.(cmd r %% git_work_tree r % "diff-index" % "--quiet" % "HEAD" %
-               p file)
+         p file)
   in
   OS.Cmd.(run_status ~err:err_null diff) >>= function
   | `Exited 0 -> Ok false
@@ -105,7 +105,7 @@ let git_head ~dirty r =
 let git_commit_id ~dirty r commit_ish =
   let dirty = dirty && commit_ish = "HEAD" in
   let id = Cmd.(v "rev-parse" % "--verify" %
-                      (commit_ish ^ "^{commit}"))
+                (commit_ish ^ "^{commit}"))
   in
   run_git r id OS.Cmd.out_string >>= fun id -> dirtify_if ~dirty r id
 
@@ -119,7 +119,7 @@ let git_describe ~dirty r commit_ish =
   let dirty = dirty && commit_ish = "HEAD" in
   run_git r
     Cmd.(git_work_tree r % "describe" % "--always" %%
-               on dirty (v "--dirty") %% on (not dirty) (v commit_ish))
+         on dirty (v "--dirty") %% on (not dirty) (v commit_ish))
     OS.Cmd.out_string
 
 let git_tags r =
@@ -151,7 +151,7 @@ let git_checkout r ~branch ~commit_ish =
   | Some branch -> Cmd.(v "-b" % branch)
   in
   run_git r Cmd.(v "checkout" % "--quiet" %% branch % commit_ish)
-  OS.Cmd.out_string
+    OS.Cmd.out_string
   >>= fun _ -> Ok ()
 
 let git_commit_files r ~msg files =
@@ -179,13 +179,13 @@ let git_delete_tag r tag =
 let hg_rev commit_ish = match commit_ish with "HEAD" -> "tip" | c -> c
 
 let find_hg () = Lazy.force hg >>= function
-| (false, _) -> Ok None
-| (true, hg) ->
-    let hg_root = Cmd.(hg % "root") in
-    OS.Cmd.(run_out ~err:err_null hg_root |> out_string)
-    >>= function
-    | (dir, (_, `Exited 0)) -> Ok (Some (v `Hg hg ~dir:Fpath.(v dir)))
-    | _ -> Ok None
+  | (false, _) -> Ok None
+  | (true, hg) ->
+      let hg_root = Cmd.(hg % "root") in
+      OS.Cmd.(run_out ~err:err_null hg_root |> out_string)
+      >>= function
+      | (dir, (_, `Exited 0)) -> Ok (Some (v `Hg hg ~dir:Fpath.(v dir)))
+      | _ -> Ok None
 
 let err_hg_exit cmd c = R.error_msgf "%a exited with code %d" Cmd.dump cmd c
 let err_hg_signal cmd c = R.error_msgf "%a exited with signal %d" Cmd.dump cmd c
@@ -216,7 +216,7 @@ let hg_file_is_dirty r file =
 
 let hg_head ~dirty r =
   hg_id r ~rev:"tip" >>= function (id, is_dirty) ->
-  Ok (if is_dirty && dirty then dirtify id else id)
+    Ok (if is_dirty && dirty then dirtify id else id)
 
 let hg_commit_id ~dirty r ~rev =
   hg_id r ~rev >>= fun (id, is_dirty) ->
@@ -224,7 +224,7 @@ let hg_commit_id ~dirty r ~rev =
 
 let hg_commit_ptime_s r ~rev =
   let time = Cmd.(v "log" % "--template" % "'{date(date, \"%s\")}'" %
-                        "--rev" % rev)
+                  "--rev" % rev)
   in
   run_git r time OS.Cmd.out_string
   >>= fun ptime -> try Ok (int_of_string ptime) with
@@ -304,35 +304,35 @@ let hg_delete_tag r tag =
 (* Generic VCS support *)
 
 let find ?dir () = match dir with
-  | None ->
+| None ->
     begin find_git () >>= function
       | Some _ as v -> Ok v
       | None -> find_hg ()
     end
-  | Some dir ->
+| Some dir ->
     let git_dir = Fpath.(dir / ".git") in
     OS.Dir.exists git_dir >>= function
     | true ->
-      begin Lazy.force git >>= function
-        | (_, cmd) ->  Ok (Some (v `Git cmd ~dir:git_dir))
-      end
+        begin Lazy.force git >>= function
+          | (_, cmd) ->  Ok (Some (v `Git cmd ~dir:git_dir))
+        end
     | false ->
-      let hg_dir = Fpath.(dir / ".hg") in
-      OS.Dir.exists hg_dir >>= function
-      | false -> Ok None
-      | true ->
-        Lazy.force hg >>= function
-          (_, cmd) -> Ok (Some (v `Hg cmd ~dir:hg_dir))
+        let hg_dir = Fpath.(dir / ".hg") in
+        OS.Dir.exists hg_dir >>= function
+        | false -> Ok None
+        | true ->
+            Lazy.force hg >>= function
+              (_, cmd) -> Ok (Some (v `Hg cmd ~dir:hg_dir))
 
 let get ?dir () = find ?dir () >>= function
   | Some r -> Ok r
   | None ->
-    let dir = match dir with
+      let dir = match dir with
       | None -> OS.Dir.current ()
       | Some dir -> Ok dir
-    in
-    dir >>= function dir ->
-      R.error_msgf "%a: No VCS repository found" Fpath.pp dir
+      in
+      dir >>= function dir ->
+        R.error_msgf "%a: No VCS repository found" Fpath.pp dir
 
 let pp ppf r = Format.fprintf ppf "(%a, %a)" pp_kind (kind r) Fpath.pp (dir r)
 
@@ -343,8 +343,8 @@ let is_dirty = function
 | (`Hg, _ , _ as r ) -> hg_is_dirty r
 
 let not_dirty r = is_dirty r >>= function
-| false -> Ok ()
-| true -> R.error_msgf "The VCS repo is dirty, commit or stash your changes."
+  | false -> Ok ()
+  | true -> R.error_msgf "The VCS repo is dirty, commit or stash your changes."
 
 let file_is_dirty r file = match r with
 | (`Git, _, _  as r) -> git_file_is_dirty r file

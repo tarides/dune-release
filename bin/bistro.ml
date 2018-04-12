@@ -29,7 +29,7 @@ let man_xrefs = [ `Main; `Cmd "distrib"; `Cmd "publish"; `Cmd "opam" ]
 let man =
   [ `S Manpage.s_description;
     `P "The $(tname) command (quick in Russian) is equivalent to invoke:";
-  `Pre "\
+    `Pre "\
 topkg distrib       # Create the distribution archive
 topkg publish       # Publish it on the WWW with its documentation
 topkg opam pkg      # Create an opam package

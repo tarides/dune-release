@@ -89,33 +89,33 @@ let write_subst file vars s = (* very ugly mister, too lazy to rewrite *)
       let len = String.length s in
       while (!last < len - 4) do
         if not (s.[!last] = '%' && s.[!last + 1] = '%') then incr last else
-          begin
-            let start_subst = !last in
-            let last_id = ref (!last + 2) in
-            let stop = ref false in
-            while (!last_id < len - 1 && not !stop) do
-              if not (s.[!last_id] = '%' && s.[!last_id + 1] = '%') then begin
-                if s.[!last_id] <> ' ' then (incr last_id) else
-                  (stop := true; last := !last_id)
-              end else begin
-                let id_start = start_subst + 2 in
-                let id =
-                  String.with_range s ~first:(id_start) ~len:(!last_id - id_start)
-                in
-                try
-                  let subst = List.assoc id vars in
-                  output oc (Bytes.unsafe_of_string s)
-                    !start (start_subst - !start);
-                  output_string oc subst;
-                  stop := true;
-                  start := !last_id + 2;
-                  last := !last_id + 2;
-                with Not_found ->
-                  stop := true;
-                  last := !last_id
-              end
-            done
-          end
+        begin
+          let start_subst = !last in
+          let last_id = ref (!last + 2) in
+          let stop = ref false in
+          while (!last_id < len - 1 && not !stop) do
+            if not (s.[!last_id] = '%' && s.[!last_id + 1] = '%') then begin
+              if s.[!last_id] <> ' ' then (incr last_id) else
+              (stop := true; last := !last_id)
+            end else begin
+              let id_start = start_subst + 2 in
+              let id =
+                String.with_range s ~first:(id_start) ~len:(!last_id - id_start)
+              in
+              try
+                let subst = List.assoc id vars in
+                output oc (Bytes.unsafe_of_string s)
+                  !start (start_subst - !start);
+                output_string oc subst;
+                stop := true;
+                start := !last_id + 2;
+                last := !last_id + 2;
+              with Not_found ->
+                stop := true;
+                last := !last_id
+            end
+          done
+        end
       done;
       output oc (Bytes.unsafe_of_string s) !start (len - !start);
       flush oc;

@@ -8,8 +8,8 @@ open Bos_setup
 open Dune_release
 
 let get_pkg_dir p opam_pkg_dir = match opam_pkg_dir with
-  | Some d -> Ok d
-  | None ->
+| Some d -> Ok d
+| None ->
     Pkg.build_dir p
     >>= fun bdir -> Pkg.distrib_filename ~opam:true p
     >>= fun fname -> Ok Fpath.(bdir // fname)
@@ -25,7 +25,7 @@ let pkg pkg dist_pkg opam_pkg_dir =
   in
   let warn_if_vcs_dirty () =
     Cli.warn_if_vcs_dirty "The opam package may be inconsistent with the \
-    distribution."
+                           distribution."
   in
   get_pkg_dir pkg opam_pkg_dir
   >>= fun dir -> Pkg.opam pkg
@@ -51,24 +51,24 @@ let submit pkg opam_pkg_dir =
   >>= fun pkg_dir -> OS.Dir.exists pkg_dir
   >>= function
   | false ->
-    Logs.err (fun m -> m "Package@ %a@ does@ not@ exist. Did@ you@ forget@ \
-                          to@ invoke 'dune-release opam pkg' ?" Fpath.pp pkg_dir);
-    Ok 1
+      Logs.err (fun m -> m "Package@ %a@ does@ not@ exist. Did@ you@ forget@ \
+                            to@ invoke 'dune-release opam pkg' ?" Fpath.pp pkg_dir);
+      Ok 1
   | true ->
-    Logs.app (fun m -> m "Submitting %a" Text.Pp.path pkg_dir);
-    Pkg.publish_msg pkg
-    >>= fun msg -> Opam.submit ~pkg_dir ~msg >>= fun () -> Ok 0
+      Logs.app (fun m -> m "Submitting %a" Text.Pp.path pkg_dir);
+      Pkg.publish_msg pkg
+      >>= fun msg -> Opam.submit ~pkg_dir ~msg >>= fun () -> Ok 0
 
 let field pkg field = match field with
-  | None -> Logs.err (fun m -> m "Missing FIELD positional argument"); Ok 1
-  | Some field ->
+| None -> Logs.err (fun m -> m "Missing FIELD positional argument"); Ok 1
+| Some field ->
     Pkg.opam_field pkg field
     >>= function
     | Some v -> Logs.app (fun m -> m "%s" (String.concat ~sep:" " v)); Ok 0
     | None ->
-      Pkg.opam pkg >>= fun opam ->
-      Logs.err (fun m -> m "%a: field %s is undefined" Fpath.pp opam field);
-      Ok 1
+        Pkg.opam pkg >>= fun opam ->
+        Logs.err (fun m -> m "%a: field %s is undefined" Fpath.pp opam field);
+        Ok 1
 
 (* Command *)
 
@@ -83,8 +83,8 @@ let opam () build_dir
       ?opam_descr:pkg_descr ?readme ?change_log ?publish_msg ()
   in
   begin match action with
-    | `Descr -> descr p
-    | `Pkg ->
+  | `Descr -> descr p
+  | `Pkg ->
       let dist_p =
         Pkg.v
           ?build_dir ?name:dist_name ?version:dist_version ?opam:dist_opam
@@ -92,8 +92,8 @@ let opam () build_dir
           ?publish_msg ()
       in
       pkg p dist_p pkg_opam_dir
-    | `Submit -> submit p pkg_opam_dir
-    | `Field -> field p field_name
+  | `Submit -> submit p pkg_opam_dir
+  | `Field -> field p field_name
   end
   |> Cli.handle_error
 

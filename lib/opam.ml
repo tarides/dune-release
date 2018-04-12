@@ -88,9 +88,9 @@ module File = struct
     Logs.info (fun m -> m "Parsing opam file %a" Fpath.pp file);
     try Ok (parse file) with
     | _ ->
-      (* Apparently in at least opam-lib 1.2.2, the error will be logged
-           on stdout. *)
-      R.error_msgf "%a: could not parse opam file" Fpath.pp file
+        (* Apparently in at least opam-lib 1.2.2, the error will be logged
+             on stdout. *)
+        R.error_msgf "%a: could not parse opam file" Fpath.pp file
 
   let deps ?(opts = true) fields =
     let deps = match String.Map.find "depends" fields with

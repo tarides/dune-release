@@ -17,20 +17,20 @@ let build_distrib pkg ~dir =
   let out = OS.Cmd.out_string in
   Pkg.build pkg ~dir ~args ~out >>= function
   | (_, (_, `Exited 0)) ->
-    Logs.app (fun m -> m "%a package builds" Text.Pp.status `Ok); Ok 0
+      Logs.app (fun m -> m "%a package builds" Text.Pp.status `Ok); Ok 0
   | (stdout, _) ->
-    Logs.app (fun m -> m "%s@\n%a package builds"
-                 stdout Text.Pp.status `Fail); Ok 1
+      Logs.app (fun m -> m "%s@\n%a package builds"
+                   stdout Text.Pp.status `Fail); Ok 1
 
 let test_distrib pkg ~dir =
   Logs.app (fun m -> m "@.Running package tests in %a" Fpath.pp dir);
   let out = OS.Cmd.out_string in
   Pkg.test pkg ~dir ~args:Cmd.empty ~out >>= function
   | (_, (_, `Exited 0)) ->
-    Logs.app (fun m -> m "%a package tests" Text.Pp.status `Ok); Ok 0
+      Logs.app (fun m -> m "%a package tests" Text.Pp.status `Ok); Ok 0
   | (stdout, _) ->
-    Logs.app (fun m -> m "%s@\n%a package tests" stdout Text.Pp.status `Fail);
-    Ok 1
+      Logs.app (fun m -> m "%s@\n%a package tests" stdout Text.Pp.status `Fail);
+      Ok 1
 
 let check_archive pkg ar ~skip_lint ~skip_build ~skip_tests =
   Archive.untbz ~clean:true ar

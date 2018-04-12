@@ -51,12 +51,12 @@ type t =
 let opam_fields p = Lazy.force p.opam_fields
 let opam_field p f = opam_fields p >>| fun fields -> String.Map.find f fields
 let opam_field_hd p f = opam_field p f >>| function
-| None | Some [] -> None
-| Some (v :: _) -> Some v
+  | None | Some [] -> None
+  | Some (v :: _) -> Some v
 
 let opam_homepage_sld p = opam_field_hd p "homepage" >>| function
-| None -> None
-| Some uri -> match uri_sld uri with None -> None | Some sld -> Some (uri, sld)
+  | None -> None
+  | Some uri -> match uri_sld uri with None -> None | Some sld -> Some (uri, sld)
 
 let name p = Ok p.name
 
@@ -72,20 +72,20 @@ let delegate p =
   match p.delegate with
   | Some cmd -> Ok cmd
   | None ->
-    match OS.Env.(value "DUNE_RELEASE_DELEGATE" (some cmd) ~absent:None) with
-    | Some cmd -> Ok cmd
-    | None ->
-      opam_homepage_sld p >>= function
-      | None -> not_found ()
-      | Some (_, sld) ->
-        let exec = strf "%s-dune-release-delegate" sld in
-        let cmd = Cmd.v exec in
-        OS.Cmd.exists cmd >>= function
-        | true -> Ok cmd
-        | false ->
-          if exec <> "github-dune-release-delegate"
-          then not_found ()
-          else Ok (Cmd.v "toy-github-dune-release-delegate")
+      match OS.Env.(value "DUNE_RELEASE_DELEGATE" (some cmd) ~absent:None) with
+      | Some cmd -> Ok cmd
+      | None ->
+          opam_homepage_sld p >>= function
+          | None -> not_found ()
+          | Some (_, sld) ->
+              let exec = strf "%s-dune-release-delegate" sld in
+              let cmd = Cmd.v exec in
+              OS.Cmd.exists cmd >>= function
+              | true -> Ok cmd
+              | false ->
+                  if exec <> "github-dune-release-delegate"
+                  then not_found ()
+                  else Ok (Cmd.v "toy-github-dune-release-delegate")
 
 let build_dir p = match p.build_dir with
 | Some b -> Ok b
@@ -96,8 +96,8 @@ let readmes p = match p.readmes with
 | None  ->  Ok [Fpath.v "README.md"]
 
 let readme p = readmes p >>= function
-| [] -> R.error_msgf "No readme file specified in the package description"
-| r :: _ -> Ok r
+  | [] -> R.error_msgf "No readme file specified in the package description"
+  | r :: _ -> Ok r
 
 let opam p = match p.opam with
 | Some f -> Ok f
@@ -131,8 +131,8 @@ let change_logs p = match p.change_logs with
 | None   -> Ok [Fpath.v "CHANGES.md"]
 
 let change_log p = change_logs p >>= function
-| [] -> R.error_msgf "No change log specified in the package description."
-| l :: _ -> Ok l
+  | [] -> R.error_msgf "No change log specified in the package description."
+  | l :: _ -> Ok l
 
 let licenses p = match p.licenses with
 | Some f -> Ok f
@@ -150,8 +150,8 @@ let distrib_uri ?(raw = false) p =
     >>= fun version -> Ok (drop_initial_v version)
     >>= fun version_num ->
     let defs = String.Map.(empty
-                          |> add "NAME" name |> add "VERSION" version
-                          |> add "VERSION_NUM" version_num)
+                           |> add "NAME" name |> add "VERSION" version
+                           |> add "VERSION_NUM" version_num)
     in
     Pat.of_string uri >>| fun pat -> Pat.format defs pat
   in
@@ -161,17 +161,17 @@ let distrib_uri ?(raw = false) p =
   let uri = match p.distrib_uri with
   | Some u -> Ok u
   | None ->
-    opam_homepage_sld p >>= function
-    | None -> not_found ()
-    | Some (uri, sld) ->
-      if sld <> "github"
-      then (Ok (uri_append uri "releases/$(NAME)-$(VERSION_NUM).tbz"))
-      else
-        opam_field_hd p "dev-repo">>= function
-        | None -> not_found ()
-        | Some dev_repo ->
-          Ok (uri_append (chop_git_prefix (chop_ext dev_repo))
-                "releases/download/$(VERSION)/$(NAME)-$(VERSION_NUM).tbz")
+      opam_homepage_sld p >>= function
+      | None -> not_found ()
+      | Some (uri, sld) ->
+          if sld <> "github"
+          then (Ok (uri_append uri "releases/$(NAME)-$(VERSION_NUM).tbz"))
+          else
+          opam_field_hd p "dev-repo">>= function
+          | None -> not_found ()
+          | Some dev_repo ->
+              Ok (uri_append (chop_git_prefix (chop_ext dev_repo))
+                    "releases/download/$(VERSION)/$(NAME)-$(VERSION_NUM).tbz")
   in
   if raw then uri else subst_uri p uri
 
@@ -227,11 +227,11 @@ let infer_name () =
       match package_names with
       | [] -> assert false
       | first :: rest ->
-        List.fold_left (fun acc s ->
-            if String.length s < String.length acc
-            then s
-            else acc
-          ) first rest
+          List.fold_left (fun acc s ->
+              if String.length s < String.length acc
+              then s
+              else acc
+            ) first rest
     in
     if List.for_all (String.is_prefix ~affix:shortest) package_names
     then shortest
@@ -342,7 +342,7 @@ let lint_std_files p =
     let report exists =
       let status, errs = if exists then `Ok, errs else `Fail, errs + 1 in
       Logs.app (fun m ->
-           m "%a @[File %a@ is@ present.@]" pp_status status pp_path file);
+          m "%a @[File %a@ is@ present.@]" pp_status status pp_path file);
       errs
     in
     (OS.File.exists file >>= fun exists -> Ok (report exists))
@@ -388,9 +388,9 @@ let lint_opams p =
         will still but opam lint's cli is broken. *)
      let cmd = Cmd.(Opam.cmd % "lint") in
      let handle_exit file status out = match status, out with
-       | `Exited 0,
-         ("" | "5" (* dirname version vs opam file version *)) -> `Ok
-       | _ ->
+     | `Exited 0,
+       ("" | "5" (* dirname version vs opam file version *)) -> `Ok
+     | _ ->
          let err = OS.Cmd.err_run_out in
          match OS.Cmd.(run_out ~err Cmd.(cmd % p file) |> out_string) with
          | Ok (out, _) -> `Fail out

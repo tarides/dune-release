@@ -256,7 +256,7 @@ let delegate =
     `S "SAMPLE UNSUPPORTIVE DELEGATE";
     `P "This delegate script can be used as a blueprint. All requests
         are simply unsupported.";
-`Pre "\
+    `Pre "\
 #!/usr/bin/env ocaml
 #use \"topfind\"
 #require \"bos.setup\"
@@ -325,7 +325,7 @@ let troubleshoot =
     `Pre "pkg/pkg.ml build -d -v [OPTION]...";`Noblank;
     `Pre "dune-release build -d -v [OPTION]...      # mostly equivalent";
     `S "DEBUG DEV PACKAGE INSTALLS";
-     `P "If you need more information about what happens when dev packages
+    `P "If you need more information about what happens when dev packages
          are installed (VCS pins or VCS packages) in opam, for example the
          actual watermark values, invoke opam as follows:";
     `P "DUNE_RELEASE_VERBOSITY=debug opam upgrade mypkg -v";
