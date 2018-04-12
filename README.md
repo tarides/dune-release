@@ -62,8 +62,8 @@ tool.
 
 The main differences between `dune-release` are `topkg`:
 
+- Remove `pkg/pkg.ml`;
 - Assume the project is built with [dune](https://github.com/ocaml/dune);
-- Do not rely on a `pkg/pkg.ml` file;
 - Bundle everything as a single binary;
 - Use of `Astring`, `Logs`, `Fpath` and`Bos`;
 - Remove the IPC layer (which is used between `topkg` and `topkg-care`);
