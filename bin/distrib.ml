@@ -13,8 +13,7 @@ let lint_distrib pkg ~dir =
 
 let build_distrib pkg ~dir skip_tests =
   Logs.app (fun m -> m "@.Building package in %a" Fpath.pp dir);
-  let tests = if skip_tests then Cmd.empty else Cmd.(v "--tests" % "true") in
-  let args = Cmd.(v "--dev-pkg" % "false" % "--vcs" % "false" %% tests) in
+  let args = Cmd.empty (* XXX(samoht): Cmd.(v "--dev") *) in
   let out = OS.Cmd.out_string in
   Pkg.build pkg ~dir ~args ~out >>= function
   | (_, (_, `Exited 0)) ->

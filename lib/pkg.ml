@@ -293,12 +293,14 @@ let distrib_prepare p ~dist_build_dir ~name ~version ~opam =
   let d = p.distrib in
   let ws = Distrib.watermarks d in
   let ws_defs = Distrib.define_watermarks ws ~name ~version ~opam in
-  OS.Dir.set_current dist_build_dir
-  >>= fun () -> Distrib.files_to_watermark d ()
-  >>= fun files -> Distrib.watermark_files ws_defs files
-  >>= fun () -> distrib_version_opam_files p ~version
-  >>= fun () -> Distrib.massage d ()
-  >>= fun () -> Distrib.exclude_paths d ()
+  OS.Dir.with_current dist_build_dir (fun () ->
+      Distrib.files_to_watermark d ()
+      >>= fun files -> Distrib.watermark_files ws_defs files
+      >>= fun () -> distrib_version_opam_files p ~version
+      >>= fun () -> Distrib.massage d ()
+      >>= fun () -> Distrib.exclude_paths d ()
+    ) ()
+  |> R.join
 
 let distrib_archive p ~keep_dir =
   Archive.ensure_bzip2 ()
