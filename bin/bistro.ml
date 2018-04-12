@@ -4,43 +4,41 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-open Cmdliner
+open Bos_setup
 
-let cmds =
-  [Browse.cmd; Status.cmd; Log.cmd; Tag.cmd; Distrib.cmd;
-   Publish.cmd; Opam.cmd; Help.cmd;
-   Bistro.cmd; Issue.cmd; Lint.cmd; ]
-
-let main () = `Help (`Pager, None)
+let bistro () =
+  begin
+    let verb = Cmd.(v "--verbosity" % Logs.(level_to_string (level ()))) in
+    let topkg = Cmd.(v "topkg") in
+    OS.Cmd.run Cmd.(topkg % "distrib" %% verb)
+    >>= fun () -> OS.Cmd.run Cmd.(topkg % "publish" %% verb)
+    >>= fun () -> OS.Cmd.run Cmd.(topkg % "opam" %% verb % "pkg")
+    >>= fun () -> OS.Cmd.run Cmd.(topkg % "opam" %% verb % "submit")
+    >>= fun () -> Ok 0
+  end
+  |> Cli.handle_error
 
 (* Command line interface *)
 
-let doc = "Release dune packages to opam"
+open Cmdliner
+
+let doc = "For when you are in a hurry or need to go for a drink"
 let sdocs = Manpage.s_common_options
 let exits = Cli.exits
+let man_xrefs = [ `Main; `Cmd "distrib"; `Cmd "publish"; `Cmd "opam" ]
 let man =
   [ `S Manpage.s_description;
-    `P "$(mname) releases dune packages to opam.";
-    `P "Use '$(mname) help release' for help to release a package.";
-    `Noblank;
-    `P "Use '$(mname) help delegate' for help about the dune-release delegate.";
-    `Noblank;
-    `P "Use '$(mname) help troubleshoot' for a few troubleshooting tips.";
-    `Noblank;
-    `P "Use '$(mname) help $(i,COMMAND)' for help about $(i,COMMAND).";
-    `S Manpage.s_bugs;
-    `P "Report them, see $(i,%%PKG_HOMEPAGE%%) for contact information.";
-    `S Manpage.s_authors;
-    `P "Daniel C. Buenzli, $(i,http://erratique.ch)"; ]
+    `P "The $(tname) command (quick in Russian) is equivalent to invoke:";
+  `Pre "\
+topkg distrib       # Create the distribution archive
+topkg publish       # Publish it on the WWW with its documentation
+topkg opam pkg      # Create an opam package
+topkg opam submit   # Submit it to OCaml's opam repository";
+    `P "See topkg-release(7) for more information."; ]
 
-let main =
-  Term.(ret (const main $ Cli.setup)),
-  Term.info "dune-release" ~version:"%%VERSION%%" ~doc ~sdocs ~exits ~man
-
-let main () =
-  Term.(exit_status @@ eval_choice main cmds)
-
-let () = main ()
+let cmd =
+  Term.(pure bistro $ Cli.setup),
+  Term.info "bistro" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
