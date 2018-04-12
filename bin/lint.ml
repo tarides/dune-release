@@ -20,11 +20,8 @@ let lint () name lints =
 open Cmdliner
 
 let lints =
-  let test = [ "custom", `Custom;
-               "std-files", `Std_files;
-               "meta", `Meta;
-               "opam", `Opam;
-               "deps", `Deps; ]
+  let test = [ "std-files", `Std_files;
+               "opam", `Opam; ]
   in
   let doc = strf "Test to perform. $(docv) must be one of %s. If unspecified
                   all tests are performed." (Arg.doc_alts_enum test)

@@ -431,7 +431,7 @@ let lint_opams p =
      distrib_owner_and_repo p >>| fun _ ->
      d)
 
-type lint = [ `Custom | `Std_files | `Meta | `Opam | `Deps ]
+type lint = [ `Std_files | `Opam ]
 
 let lints =
   [`Std_files, lint_std_files;

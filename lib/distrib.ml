@@ -187,22 +187,19 @@ type t =
   { watermarks : watermark list;
     files_to_watermark : unit -> (Fpath.t list, R.msg) result;
     massage : unit -> (unit, R.msg) result;
-    exclude_paths : unit -> (Fpath.t list, R.msg) result;
-    uri : string option; }
+    exclude_paths : unit -> (Fpath.t list, R.msg) result; }
 
 let v
     ?(watermarks = default_watermarks)
     ?(files_to_watermark = default_files_to_watermark)
     ?(massage = fun () -> Ok ())
-    ?(exclude_paths = default_exclude_paths)
-    ?uri () =
-  { watermarks; files_to_watermark; massage; exclude_paths; uri }
+    ?(exclude_paths = default_exclude_paths) () =
+  { watermarks; files_to_watermark; massage; exclude_paths }
 
 let watermarks d = d.watermarks
 let files_to_watermark d = d.files_to_watermark
 let massage d = d.massage
 let exclude_paths d = d.exclude_paths
-let uri d = d.uri
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

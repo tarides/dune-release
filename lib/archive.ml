@@ -10,9 +10,6 @@ open Bos_setup
 
 module Tar = struct
 
-  type ptime = int
-  type t = string list
-
   let empty = []
 
   (* Header.
