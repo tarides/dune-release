@@ -3,3 +3,4 @@
 *.install
 _build
 _opam
+.#*
