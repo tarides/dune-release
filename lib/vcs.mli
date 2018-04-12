@@ -4,9 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** VCS repositories.
-
-    See {!Topkg.Vcs} for documentation. *)
+(** VCS repositories. *)
 
 (** {1 VCS} *)
 

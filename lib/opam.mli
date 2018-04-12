@@ -4,9 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** opam interaction.
-
-    See {!Topkg_care.Opam}. *)
+(** opam interaction. *)
 
 (** {1 opam} *)
 

@@ -4,9 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** Package descriptions.
-
-    See {!Topkg_care.Pkg} *)
+(** Package descriptions. *)
 
 open Bos_setup
 

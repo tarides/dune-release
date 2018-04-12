@@ -4,9 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** {1 Distribution description}
-
-    See {!section:Topkg.Pkg.distrib}. *)
+(** {1 Distribution description} *)
 
 (** {1 Distribution} *)
 

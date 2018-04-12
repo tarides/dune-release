@@ -4,9 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** Build configuration
-
-    See {!Topkg.Conf}. *)
+(** Build configuration. *)
 
 open Rresult
 

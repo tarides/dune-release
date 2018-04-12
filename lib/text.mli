@@ -4,9 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** Text processing helpers.
-
-    See {!Topkg_care.Text}. *)
+(** Text processing helpers. *)
 
 (** {1 Text} *)
 

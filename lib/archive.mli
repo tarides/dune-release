@@ -4,9 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** Archive creation.
-
-    See {!Topkg_care.Archive}. *)
+(** Archive creation. *)
 
 open Bos_setup
 
