@@ -5,6 +5,7 @@ homepage: "https://github.com/samoht/dune-release"
 license: "ISC"
 dev-repo: "https://github.com/samoht/dune-release.git"
 bug-reports: "https://github.com/samoht/dune-release/issues"
+doc: "https://samoht.github.com/dune-release/"
 
 build: [
   ["jbuilder" "subst"] {pinned}
