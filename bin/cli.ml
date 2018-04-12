@@ -80,7 +80,7 @@ let change_log =
   Arg.(value & opt (some path_arg) None & info ["change-log"] ~doc ~docv)
 
 let delegate =
-  let doc = "The delegate tool $(docv) to use. If absent, see topkg-delegate(7)
+  let doc = "The delegate tool $(docv) to use. If absent, see dune-release-delegate(7)
              for the lookup procedure."
   in
   let docv = "TOOL" in
@@ -97,7 +97,7 @@ let build_dir =
 
 let publish_msg =
   let doc = "The publication message $(docv). Defaults to the change
-             log of the last version (see $(b,topkg log -l))."
+             log of the last version (see $(b,dune-release log -l))."
   in
   let docv = "MSG" in
   Arg.(value & opt (some string) None & info ["m"; "message"] ~doc ~docv)
@@ -108,7 +108,7 @@ let setup style_renderer log_level cwd =
   Fmt_tty.setup_std_outputs ?style_renderer ();
   Logs.set_level log_level;
   Logs.set_reporter (Logs_fmt.reporter ~app:Fmt.stdout ());
-  Logs.info (fun m -> m "topkg %%VERSION%% running");
+  Logs.info (fun m -> m "dune-release %%VERSION%% running");
   match cwd with
   | None -> `Ok ()
   | Some dir ->
@@ -118,11 +118,11 @@ let setup style_renderer log_level cwd =
 
 let setup =
   let style_renderer =
-    let env = Arg.env_var "TOPKG_COLOR" in
+    let env = Arg.env_var "DUNE_RELEASE_COLOR" in
     Fmt_cli.style_renderer ~docs:Manpage.s_common_options ~env ()
   in
   let log_level =
-    let env = Arg.env_var "TOPKG_VERBOSITY" in
+    let env = Arg.env_var "DUNE_RELEASE_VERBOSITY" in
     Logs_cli.level ~docs:Manpage.s_common_options ~env ()
   in
   let cwd =

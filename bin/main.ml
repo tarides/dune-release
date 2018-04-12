@@ -26,7 +26,7 @@ let man =
     `P "$(mname) releases dune packages to opam.";
     `P "Use '$(mname) help release' for help to release a package.";
     `Noblank;
-    `P "Use '$(mname) help delegate' for help about the topkg delegate.";
+    `P "Use '$(mname) help delegate' for help about the dune-release delegate.";
     `Noblank;
     `P "Use '$(mname) help troubleshoot' for a few troubleshooting tips.";
     `Noblank;

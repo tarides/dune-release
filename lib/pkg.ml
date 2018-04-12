@@ -87,25 +87,25 @@ let version p = match p.version with
 let delegate p =
   let not_found () =
     R.error_msg "No package delegate found. \
-                 Try `topkg help delegate` for more information."
+                 Try `dune-release help delegate` for more information."
   in
   match p.delegate with
   | Some cmd -> Ok cmd
   | None ->
-    match OS.Env.(value "TOPKG_DELEGATE" (some cmd) ~absent:None) with
+    match OS.Env.(value "DUNE_RELEASE_DELEGATE" (some cmd) ~absent:None) with
     | Some cmd -> Ok cmd
     | None ->
       opam_homepage_sld p >>= function
       | None -> not_found ()
       | Some (_, sld) ->
-        let exec = strf "%s-topkg-delegate" sld in
+        let exec = strf "%s-dune-release-delegate" sld in
         let cmd = Cmd.v exec in
         OS.Cmd.exists cmd >>= function
         | true -> Ok cmd
         | false ->
-          if exec <> "github-topkg-delegate"
+          if exec <> "github-dune-release-delegate"
           then not_found ()
-          else Ok (Cmd.v "toy-github-topkg-delegate")
+          else Ok (Cmd.v "toy-github-dune-release-delegate")
 
 let build_dir p = match p.build_dir with
 | Some b -> Ok b
@@ -176,7 +176,7 @@ let distrib_uri ?(raw = false) p =
     Pat.of_string uri >>| fun pat -> Pat.format defs pat
   in
   let not_found () =
-    R.error_msg "no distribution URI found, see topkg's API documentation."
+    R.error_msg "no distribution URI found, see dune-release's API documentation."
   in
   let uri = match p.distrib_uri with
   | Some u -> Ok u
@@ -213,7 +213,7 @@ let distrib_file p = match p.distrib_file with
     (distrib_archive_path p
      >>= fun f -> OS.File.must_exist f)
     |> R.reword_error_msg
-      (fun _ -> R.msgf "Did you forget to call 'topkg distrib' ?")
+      (fun _ -> R.msgf "Did you forget to call 'dune-release distrib' ?")
 
 let publish_msg p = match p.publish_msg with
 | Some msg -> Ok msg
@@ -257,9 +257,7 @@ let infer_name () =
     then shortest
     else begin
       Logs.err (fun m ->
-          m "cannot determine name automatically.\n\
-             You must pass a [name] argument to \
-             [Topkg_jbuilder.describe] in pkg/pkg.ml");
+          m "cannot determine name automatically. Use `-p <name>`");
       exit 1
     end
   in
@@ -316,7 +314,7 @@ let distrib_archive p ~keep_dir =
   >>= fun head -> Vcs.commit_ptime_s repo ~commit_ish:head
   >>= fun mtime -> Vcs.clone repo ~dir:dist_build_dir
   >>= fun () -> Vcs.get ~dir:dist_build_dir ()
-  >>= fun clone -> Ok (Fmt.strf "topkg-dist-%s" head)
+  >>= fun clone -> Ok (Fmt.strf "dune-release-dist-%s" head)
   >>= fun branch -> Vcs.checkout clone ~branch ~commit_ish:head
   >>= fun () -> distrib_prepare p ~dist_build_dir ~name ~version ~opam
   >>= fun exclude_paths ->

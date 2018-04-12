@@ -21,8 +21,8 @@ let opam_issues_field =
 let opam_repo_field =
   "repo", `Opam "dev-repo", "dev-repo opam file field"
 
-let topkg_api =
-  "topkg-api", `Uri "%%PKG_DOC%%", "topkg's API docs"
+let dune_release_api =
+  "dune-release-api", `Uri "%%PKG_DOC%%", "dune-release's API docs"
 
 let ocaml_man =
   "ocaml-man", `Uri "http://caml.inria.fr/pub/docs/manual-ocaml/",
@@ -58,7 +58,7 @@ let weekly_news =
 
 let targets =
   [ opam_doc_field; opam_homepage_field; opam_issues_field; opam_repo_field;
-    topkg_api; ocaml_man; ocaml_issues; ocamlbuild_man; opam_man; packages;
+    dune_release_api; ocaml_man; ocaml_issues; ocamlbuild_man; opam_man; packages;
     planet; temptation; caml_list; weekly_news; ]
 
 let parse_target, max_target_len =

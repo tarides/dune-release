@@ -91,7 +91,7 @@ let man =
     `P "To be able to extract the version and changes of the last distribution,
         a well defined change log format is assumed. Not abiding to the
         format is not catastrophic but may hinder or derail some facilities
-        provided by topkg.";
+        provided by dune-release.";
     `P "The format assumes that the change log is written either in Markdown
         (default or .md extension) or Asciidoc (.asciidoc or .adoc extension).
         A change log is a list of marked up sections. A section is
@@ -109,12 +109,12 @@ v1.6.0 1995-09-12
 -----------------
 etc.";
     `P "The first marked up section in the file is taken as being the
-        change log for the last distribution; use $(b,topkg log -l)
-        to check that it is parsed correctly. This is used by topkg-publish(1)
-        and topkg-opam(1) to enrich distribution publication.";
+        change log for the last distribution; use $(b,dune-release log -l)
+        to check that it is parsed correctly. This is used by dune-release-publish(1)
+        and dune-release-opam(1) to enrich distribution publication.";
     `P "The first token of the first section header title is taken as being the
-        version string of the distribution; use $(b,topkg log -t) to check
-        that it is parsed correctly. It is used by topkg-tag(1) to tag the
+        version string of the distribution; use $(b,dune-release log -t) to check
+        that it is parsed correctly. It is used by dune-release-tag(1) to tag the
         source repository.";
     `S "ACTIONS";
     `I ("$(b,show) (default)", "shows the package's change log.");

@@ -11,8 +11,8 @@ let absolute path = OS.Dir.current () >>| fun cwd -> Fpath.(cwd // path)
 
 let gen_doc dir =
   let do_doc () =
-    OS.Cmd.run Cmd.(v "topkg" % "doc")
-    >>| fun () -> Fpath.(dir / "_build" / "doc" / "api.docdir")
+    OS.Cmd.run Cmd.(v "jbuilder" % "build" % "@doc")
+    >>| fun () -> Fpath.(dir / "_build" / "default" / "_doc")
   in
   R.join @@ OS.Dir.with_current dir do_doc ()
 
@@ -94,8 +94,8 @@ let doc = "Publish package distribution archives and derived artefacts"
 let sdocs = Manpage.s_common_options
 let exits = Cli.exits
 let envs =
-  [ Term.env_info "TOPKG_DELEGATE" ~doc:"The package delegate to use, see
-    topkg-delegate(7)."; ]
+  [ Term.env_info "DUNE_RELEASE_DELEGATE" ~doc:"The package delegate to use, see
+    dune-release-delegate(7)."; ]
 
 let man_xrefs = [`Main; `Cmd "distrib" ]
 let man =
@@ -103,10 +103,10 @@ let man =
     `P "$(mname) $(tname) [$(i,OPTION)]... [$(i,ARTEFACT)]...";
     `S Manpage.s_description;
     `P "The $(tname) command publishes package distribution archives
-        and other artefacts via the package delegate. See topkg-delegate(7) for
+        and other artefacts via the package delegate. See dune-release-delegate(7) for
         more details.";
     `P "Artefact publication always relies on a distribution archive having
-        been generated before with topkg-distrib(1).";
+        been generated before with dune-release-distrib(1).";
     `S "ARTEFACTS";
     `I ("$(b,distrib)",
         "Publishes a distribution archive on the WWW.");
@@ -116,7 +116,7 @@ let man =
         "Publishes the alternative artefact of kind $(i,KIND) of
          a distribution archive. The semantics of alternative artefacts
          is left to the delegate, it could be anything, an email,
-         a pointless tweet, a feed entry etc. See topkg-delegate(7) for
+         a pointless tweet, a feed entry etc. See dune-release-delegate(7) for
          more details."); ]
 
 let cmd =

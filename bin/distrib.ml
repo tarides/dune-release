@@ -104,11 +104,11 @@ let doc = "Create a package distribution archive"
 let sdocs = Manpage.s_common_options
 let exits = Cli.exits
 let envs =
-  [ Term.env_info "TOPKG_BZIP2" ~doc:"The $(b,bzip2) tool to use to compress the
+  [ Term.env_info "DUNE_RELEASE_BZIP2" ~doc:"The $(b,bzip2) tool to use to compress the
     archive. Gets the archive on stdin and must output the result on
     standard out.";
-    Term.env_info "TOPKG_TAR" ~doc:"The $(b,tar) tool to use to unarchive a tbz
-    archive (archive creation itself is handled by topkg)."; ]
+    Term.env_info "DUNE_RELEASE_TAR" ~doc:"The $(b,tar) tool to use to unarchive a tbz
+    archive (archive creation itself is handled by dune-release)."; ]
 
 let man_xrefs = [ `Main ]
 let man =
@@ -118,7 +118,7 @@ let man =
         archive should be bit-wise reproducible. There are however a few
         caveats, see the section about this further down.";
     `P "More detailed information about the archive creation process and its
-        customization can be found in topkg's API documentation.";
+        customization can be found in dune-release's API documentation.";
     `P "Once the archive is created it is unpacked in the build directory,
         linted and the package is built using the package description
         contained in the archive. The build will use the default package
@@ -154,9 +154,7 @@ let man =
          dependency on Uunf).");
     `I ("The bzip2 utility", "The archive is compressed using the bzip2 utility.
          Reproducibility relies on bzip2 to be a reproducible function
-         across platforms.");
-    `I ("Topkg changes", "Topkg could change its distribution procedure in
-         the future, for example to correct bugs."); ]
+         across platforms."); ]
 
 let cmd =
   Term.(pure distrib $ Cli.setup $ Cli.dist_opam $

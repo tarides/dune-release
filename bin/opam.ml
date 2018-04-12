@@ -52,7 +52,7 @@ let submit pkg opam_pkg_dir =
   >>= function
   | false ->
     Logs.err (fun m -> m "Package@ %a@ does@ not@ exist. Did@ you@ forget@ \
-                          to@ invoke 'topkg opam pkg' ?" Fpath.pp pkg_dir);
+                          to@ invoke 'dune-release opam pkg' ?" Fpath.pp pkg_dir);
     Ok 1
   | true ->
     Logs.app (fun m -> m "Submitting %a" Text.Pp.path pkg_dir);
@@ -160,7 +160,7 @@ let pkg_descr =
 let doc = "Interaction with opam and the OCaml opam repository"
 let sdocs = Manpage.s_common_options
 let envs =
-  [ Term.env_info "TOPKG_OPAM_PUBLISH" ~doc:"The $(b,opam-publish) tool to use
+  [ Term.env_info "DUNE_RELEASE_OPAM_PUBLISH" ~doc:"The $(b,opam-publish) tool to use
     to submit packages." ]
 
 let man_xrefs = [`Main; `Cmd "distrib" ]
@@ -177,7 +177,7 @@ let man =
     `I ("$(b,pkg)",
         "create an opam package description for a distribution.
          The action needs a distribution archive to operate, see
-         topkg-distrib(1) or the $(b,--dist-file) option.");
+         dune-release-distrib(1) or the $(b,--dist-file) option.");
     `I ("$(b,submit)",
         "submits a package created with the action $(b,pkg) the OCaml
          opam repository. Requires the $(b,opam-publish) tool to be

@@ -13,14 +13,14 @@ let cmd =
 
 let publish =
   let absent = Cmd.(v "opam-publish") in
-  OS.Env.(value "TOPKG_OPAM_PUBLISH" cmd ~absent)
+  OS.Env.(value "DUNE_RELEASE_OPAM_PUBLISH" cmd ~absent)
 
 let ensure_publish () = OS.Cmd.must_exist publish >>| fun _ -> ()
 let submit ?msg ~pkg_dir =
   let msg = match msg with
   | None -> Ok (Cmd.empty)
   | Some msg ->
-      OS.File.tmp "topkg-opam-submit-msg-%s"
+      OS.File.tmp "dune-release-opam-submit-msg-%s"
       >>= fun m -> OS.File.write m msg
       >>= fun () -> Ok Cmd.(v "--msg" % p m)
   in
