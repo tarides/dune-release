@@ -28,11 +28,16 @@ Consult the manual for details.
 
 ### Important Notes
 
-Most of the code in this repository has been written by
-Daniel Bünzli and has already been released part of the
-[topkg](http://erratique.ch/software/topkg) tool.
+Most of the code in this repository has been written and has already
+been released part of the [topkg](http://erratique.ch/software/topkg)
+tool.
 
-`dune-release` removes the IPC layer of `topkg` and bundle everything
-as a single binary. It removes the need to define `pkg/pkg.ml` and
-assumes that the package is built using
-[dune](https://github.com/ocaml/dune).
+The main differences between `topkg` and `dune-release` are:
+
+- Use of `Astring`, `Logs`, `Fpath` and`Bos` instead of custom
+  re-implementations in `Topkg`;
+- The removal the IPC layer which is used between `topkg` and
+  `topkg-care`;
+- Bundle everything as a single binary
+- `dune-release` does not need a `pkg/pkg.ml`but it assumes that
+  the package is built using [dune](https://github.com/ocaml/dune).
