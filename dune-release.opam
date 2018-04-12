@@ -22,7 +22,6 @@ depends: [
   "rresult"
   "logs"
   "odoc"
-  "tls"
   "opam-publish" {build}
 ]
 
