@@ -1,5 +1,5 @@
 all:
-	jbuilder build
+	jbuilder build --dev
 
 clean:
 	jbuilder clean

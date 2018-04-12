@@ -8,31 +8,11 @@ open Bos_setup
 
 (* Misc *)
 
-let path_set_of_strings ps =
-  try
-    let add_excl acc p = match Fpath.of_string p with
-    | Error (`Msg msg) -> failwith msg
-    | Ok p -> Fpath.Set.add p acc
-    in
-    Ok (List.fold_left add_excl Fpath.Set.empty ps)
-  with
-  Failure msg -> R.error_msg msg
-
-let rec path_list_of_strings ps =
-  let rec loop acc = function
-  | [] -> Ok (List.rev acc)
-  | p :: ps ->
-      match Fpath.of_string p with
-      | Error _ as e -> e
-      | Ok p -> loop (p :: acc) ps
-  in
-  loop [] ps
-
 let uri_sld uri = match Text.split_uri uri with
 | None -> None
 | Some (_, host, _) ->
     match List.rev (String.cuts ~sep:"." host) with
-    | fst :: snd :: _ -> Some snd
+    | _ :: snd :: _ -> Some snd
     | _ -> None
 
 let uri_append u s = match String.head ~rev:true u with
@@ -330,7 +310,7 @@ let distrib_archive p ~keep_dir =
 
 (* Test & build *)
 
-let run p ~dir cmd ~args ~out =
+let run _ ~dir cmd ~args ~out =
   let cmd = Cmd.(v "jbuilder" % cmd %% args) in
   let run () = OS.Cmd.run_out cmd |> out in
   R.join @@ OS.Dir.with_current dir run ()
@@ -344,7 +324,6 @@ let clean p ~dir ~args ~out = run p ~dir "clean" ~args ~out
 let pp_path = Text.Pp.path
 let pp_status = Text.Pp.status
 
-let lint_log msg = Logs.info (fun m -> m ~header:"LINT" "%a" Fmt.text msg); 0
 let lint_disabled test =
   Logs.info (fun m -> m ~header:"LINT" "Package@ disabled@ %a." Fmt.text test);
   0
@@ -428,7 +407,7 @@ let lints =
 
 let lint_all = List.map fst lints
 
-let lint ?(ignore_pkg = false) p ~dir todo =
+let lint p ~dir todo =
   let lint pkg =
     let do_lint acc (l, f) = acc + if List.mem l todo then f pkg else 0 in
     match List.fold_left do_lint 0 lints with

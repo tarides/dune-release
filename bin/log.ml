@@ -82,7 +82,6 @@ let envs =
     Term.env_info "PAGER" ~doc:"The pager used to consult the change log.";
     Term.env_info "TERM" ~doc:"See option $(b,--no-pager)." ]
 
-let man_xrefs = [ `Main; `Cmd "publish"; `Cmd "tag"; `Cmd "opam"; ]
 let man =
   [ `S Manpage.s_description;
     `P "The $(tname) command shows, edits and commits

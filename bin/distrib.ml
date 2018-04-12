@@ -11,7 +11,7 @@ let lint_distrib pkg ~dir =
   Logs.app (fun m -> m "@.Linting distrib in %a" Fpath.pp dir);
   Pkg.lint pkg ~dir Pkg.lint_all
 
-let build_distrib pkg ~dir skip_tests =
+let build_distrib pkg ~dir =
   Logs.app (fun m -> m "@.Building package in %a" Fpath.pp dir);
   let args = Cmd.empty (* XXX(samoht): Cmd.(v "--dev") *) in
   let out = OS.Cmd.out_string in
@@ -35,12 +35,12 @@ let test_distrib pkg ~dir =
 let check_archive pkg ar ~skip_lint ~skip_build ~skip_tests =
   Archive.untbz ~clean:true ar
   >>= fun dir -> (if skip_lint then Ok 0 else lint_distrib pkg ~dir)
-  >>= fun c0 -> (if skip_build then Ok 0 else build_distrib pkg ~dir skip_tests)
+  >>= fun c0 -> (if skip_build then Ok 0 else build_distrib pkg ~dir)
   >>= fun c1 -> (if skip_tests || skip_build then Ok 0 else
                  test_distrib pkg ~dir)
   >>= fun c2 -> match c0 + c1 + c2 with
   | 0 -> OS.Dir.delete ~recurse:true dir >>= fun () -> Ok 0
-  | n -> Ok 1
+  | _ -> Ok 1
 
 let warn_if_vcs_dirty ()=
   Cli.warn_if_vcs_dirty "The distribution archive may be inconsistent."

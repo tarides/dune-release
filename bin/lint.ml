@@ -7,11 +7,11 @@
 open Bos_setup
 open Dune_release
 
-let lint () name ignore_pkg lints =
+let lint () name lints =
   begin
     let pkg = Pkg.v ?name () in
     OS.Dir.current ()
-    >>= fun dir -> Pkg.lint ~ignore_pkg pkg ~dir lints
+    >>= fun dir -> Pkg.lint pkg ~dir lints
   end
   |> Cli.handle_error
 
@@ -33,10 +33,6 @@ let lints =
   let docv = "TEST" in
   Arg.(value & pos_all test Pkg.lint_all & info [] ~doc ~docv)
 
-let ignore_pkg =
-  let doc = "Ignore package description file." in
-  Arg.(value & flag & info ["i"; "ignore-pkg"] ~doc)
-
 let doc = "Check package distribution consistency and conventions"
 let sdocs = Manpage.s_common_options
 let exits = Term.exit_info 1 ~doc:"on lint failure" :: Cli.exits
@@ -52,7 +48,7 @@ let man =
         topkg-distrib(1) for more details." ]
 
 let cmd =
-  Term.(pure lint $ Cli.setup $ Cli.pkg_name $ ignore_pkg $ lints),
+  Term.(pure lint $ Cli.setup $ Cli.pkg_name $ lints),
   Term.info "lint" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 

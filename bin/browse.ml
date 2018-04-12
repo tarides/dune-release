@@ -86,7 +86,7 @@ let browse () name opam browser prefix background target =
         Pkg.opam pkg >>= fun opam -> opam_field_uri opam field
       | `Error msg ->
         let uri_prefixes = ["http://"; "https://"; "file://"] in
-        if List.exists (fun p -> String.is_prefix p target) uri_prefixes
+        if List.exists (fun p -> String.is_prefix ~affix:p target) uri_prefixes
         then Ok target
         else Error (`Msg msg)
     in

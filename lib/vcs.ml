@@ -57,7 +57,7 @@ let find_git () = Lazy.force git >>= function
     let git_dir = Cmd.(git % "rev-parse" % "--git-dir") in
     OS.Cmd.(run_out ~err:err_null git_dir |> out_string)
     >>= function
-    | (dir, (_, `Exited 0)) -> Ok (Some (v `Git git Fpath.(v dir)))
+    | (dir, (_, `Exited 0)) -> Ok (Some (v `Git git ~dir:Fpath.(v dir)))
     | _ -> Ok None
 
 let err_git_exit cmd c = R.error_msgf "%a exited with code %d" Cmd.dump cmd c
@@ -184,7 +184,7 @@ let find_hg () = Lazy.force hg >>= function
     let hg_root = Cmd.(hg % "root") in
     OS.Cmd.(run_out ~err:err_null hg_root |> out_string)
     >>= function
-    | (dir, (_, `Exited 0)) -> Ok (Some (v `Hg hg Fpath.(v dir)))
+    | (dir, (_, `Exited 0)) -> Ok (Some (v `Hg hg ~dir:Fpath.(v dir)))
     | _ -> Ok None
 
 let err_hg_exit cmd c = R.error_msgf "%a exited with code %d" Cmd.dump cmd c
@@ -207,7 +207,7 @@ let hg_id r ~rev =
   Ok (id, is_dirty)
 
 let hg_is_dirty r =
-  hg_id r ~rev:"tip" >>= function (id, is_dirty) -> Ok is_dirty
+  hg_id r ~rev:"tip" >>= function (_, is_dirty) -> Ok is_dirty
 
 let hg_file_is_dirty r file =
   run_hg r Cmd.(v "status" % p file) OS.Cmd.out_string >>= function
@@ -232,7 +232,7 @@ let hg_commit_ptime_s r ~rev =
 
 let hg_describe ~dirty r ~rev =
   let get_distance s = try Ok (int_of_string s) with
-    | Failure _ ->
+  | Failure _ ->
       R.error_msgf "%a: Could not parse hg tag distance." Fpath.pp (dir r)
   in
   let parent t =
@@ -242,7 +242,7 @@ let hg_describe ~dirty r ~rev =
   parent "{latesttagdistance}" >>= get_distance
   >>= begin function
   | 1 -> parent "{latesttag}"
-  | n -> parent "{latesttag}-{latesttagdistance}-{node|short}"
+  | _ -> parent "{latesttag}-{latesttagdistance}-{node|short}"
   end
   >>= fun descr -> match dirty with
   | false -> Ok descr
@@ -263,7 +263,7 @@ let hg_changes r ~after ~until =
   >>= fun commits -> parse_changes commits
   >>= function
   | [] -> Ok []
-  | after :: rest -> Ok (List.rev rest) (* hg order is reverse from git *)
+  | _ :: rest -> Ok (List.rev rest) (* hg order is reverse from git *)
 
 let hg_tracked_files r ~rev =
   run_hg r Cmd.(v "manifest" % "--rev" % rev) OS.Cmd.out_lines
@@ -304,35 +304,35 @@ let hg_delete_tag r tag =
 (* Generic VCS support *)
 
 let find ?dir () = match dir with
-| None ->
+  | None ->
     begin find_git () >>= function
-    | Some _ as v -> Ok v
-    | None -> find_hg ()
+      | Some _ as v -> Ok v
+      | None -> find_hg ()
     end
-| Some dir ->
+  | Some dir ->
     let git_dir = Fpath.(dir / ".git") in
     OS.Dir.exists git_dir >>= function
     | true ->
-        begin Lazy.force git >>= function
-        | (_, cmd) ->  Ok (Some (v `Git cmd git_dir))
-        end
+      begin Lazy.force git >>= function
+        | (_, cmd) ->  Ok (Some (v `Git cmd ~dir:git_dir))
+      end
     | false ->
-        let hg_dir = Fpath.(dir / ".hg") in
-        OS.Dir.exists hg_dir >>= function
-        | false -> Ok None
-        | true ->
-            Lazy.force hg >>= function
-            (_, cmd) -> Ok (Some (v `Hg cmd hg_dir))
+      let hg_dir = Fpath.(dir / ".hg") in
+      OS.Dir.exists hg_dir >>= function
+      | false -> Ok None
+      | true ->
+        Lazy.force hg >>= function
+          (_, cmd) -> Ok (Some (v `Hg cmd ~dir:hg_dir))
 
 let get ?dir () = find ?dir () >>= function
-| Some r -> Ok r
-| None ->
+  | Some r -> Ok r
+  | None ->
     let dir = match dir with
-    | None -> OS.Dir.current ()
-    | Some dir -> Ok dir
+      | None -> OS.Dir.current ()
+      | Some dir -> Ok dir
     in
     dir >>= function dir ->
-    R.error_msgf "%a: No VCS repository found" Fpath.pp dir
+      R.error_msgf "%a: No VCS repository found" Fpath.pp dir
 
 let pp ppf r = Format.fprintf ppf "(%a, %a)" pp_kind (kind r) Fpath.pp (dir r)
 

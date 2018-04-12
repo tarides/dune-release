@@ -78,8 +78,7 @@ val distrib_archive : t -> keep_dir:bool -> (Fpath.t, R.msg) result
 
 type lint = [ `Custom | `Std_files | `Meta | `Opam | `Deps ]
 val lint_all : lint list
-val lint :
-  ?ignore_pkg:bool -> t -> dir:Fpath.t -> lint list -> (int, R.msg) result
+val lint : t -> dir:Fpath.t -> lint list -> (int, R.msg) result
 
 
 (*---------------------------------------------------------------------------

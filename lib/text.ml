@@ -14,7 +14,7 @@ let flavour_of_fpath f = match String.Ascii.lowercase (Fpath.get_ext f) with
 | _ -> None
 
 let rec drop_blanks = function "" :: ls -> drop_blanks ls | ls -> ls
-let last_line = function [] -> None | l :: rev_ls -> Some l
+let last_line = function [] -> None | l :: _ -> Some l
 
 (* Detecting headers *)
 

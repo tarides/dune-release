@@ -127,7 +127,7 @@ let issue_list p =
 
 let issue_show p ~id =
   issues_uri p >>= fun issues_uri ->
-  run_delegate p Cmd.(v "issue" % "show" % issues_uri % "id")
+  run_delegate p Cmd.(v "issue" % "show" % issues_uri % id)
 
 let issue_open p ~title ~body =
   issues_uri p >>= fun issues_uri ->

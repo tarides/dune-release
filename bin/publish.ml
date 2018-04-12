@@ -50,7 +50,7 @@ let publish ()
         ?publish_artefacts ()
     in
     let publish_artefact acc artefact =
-      acc >>= fun acc -> match artefact with
+      acc >>= fun () -> match artefact with
       | `Doc -> publish_doc pkg
       | `Distrib -> publish_distrib pkg
       | `Alt kind -> publish_alt pkg kind
@@ -70,7 +70,7 @@ let artefacts =
   let parser = function
   | "do" | "doc" -> `Ok `Doc
   | "di" | "dis" | "dist" | "distr" | "distri" | "distrib" -> `Ok `Distrib
-  | s when String.is_prefix alt_prefix s ->
+  | s when String.is_prefix ~affix:alt_prefix s ->
       begin match String.(with_range ~first:(length alt_prefix) s) with
       | "" -> `Error ("`alt-' alternative artefact kind is missing")
       | kind -> `Ok (`Alt kind)

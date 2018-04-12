@@ -28,7 +28,7 @@ module Tar = struct
     let s = to_unix_path_string f in
     match String.length s with
     | n when n <= 100 -> Bytes.blit_string s 0 h 0 (String.length s)
-    | n ->
+    | _ ->
         try match String.cut ~rev:true ~sep:"/" s with
         | None -> raise Exit
         | Some (p, n) ->
@@ -146,7 +146,7 @@ let untbz ?(clean = false) ar =
   let unarchive ar =
     let dir = Fpath.rem_ext ar in
     OS.Cmd.must_exist tar_cmd
-    >>= fun cmd -> clean_dir dir
+    >>= fun _  -> clean_dir dir
     >>= fun () -> OS.Cmd.run Cmd.(tar_cmd % "-xjf" % p ar)
     >>= fun () -> Ok Fpath.(archive_dir // dir)
   in

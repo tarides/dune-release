@@ -366,7 +366,6 @@ let topic =
   Arg.(value & pos 0 (some string) None & info [] ~docv:"TOPIC" ~doc)
 
 let doc = "Show help about dune-release"
-let sdocs = Manpage.s_common_options
 let exits = Cli.exits
 let man_xrefs = [`Main]
 let man =

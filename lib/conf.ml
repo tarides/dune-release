@@ -88,7 +88,7 @@ let _key ?docv ?(doc = "Undocumented") ?env name conv absent =
   let to_univ, of_univ = univ () in
   let conv = match docv with
   | None -> conv
-  | Some docv -> conv_with_docv conv docv
+  | Some docv -> conv_with_docv conv ~docv
   in
   let key = { id; name; conv; absent; env; to_univ; of_univ; doc } in
   key_index := Kset.add (Key.V key) !key_index;
@@ -238,10 +238,8 @@ let pp_keys_cli_opts ppf () =
 type t = univ Kmap.t
 
 let empty = Kmap.empty
-let is_empty = Kmap.is_empty
 let mem k c = Kmap.mem (Key.V k) c
 let add k v c = Kmap.add (Key.V k) (k.to_univ v) c
-let rem k c = Kmap.remove (Key.V k) c
 let find k c = try k.of_univ (Kmap.find (Key.V k) c) with Not_found -> None
 let value c k = match find k c with
 | Some v -> v
@@ -514,7 +512,9 @@ module OCaml = struct
 
   let parse_version v =
     let version =
-      if String.is_prefix "v" v then String.with_index_range ~first:1 v else v
+      if String.is_prefix ~affix:"v" v
+      then String.with_index_range ~first:1 v
+      else v
     in
     try match String.cut ~sep:"." version with
       | None -> None
@@ -596,7 +596,7 @@ module OCaml = struct
       | [] -> R.error_msgf "could not find SIZEOF_PTR in %a" Fpath.pp file
       | l :: ls ->
           let l = String.trim l in
-          let is_size_of_ptr = String.is_prefix "#define SIZEOF_PTR" l in
+          let is_size_of_ptr = String.is_prefix ~affix:"#define SIZEOF_PTR" l in
           if not is_size_of_ptr then parse ls else
           match String.cut ~rev:true ~sep:" " l with
           | None -> err l
@@ -625,8 +625,8 @@ module OCaml = struct
           | Ok v -> v
           | Error (`Msg e) ->
               Logs.warn (fun m ->
-                m (conf_key "undefined,@ discovery error: %s,@ using %d")
-                  (os_to_string c.os) k e on_error);
+                  m (conf_key "undefined,@ discovery error: %s,@ using %d")
+                    (os_to_string c.os) k e on_error);
               on_error
     end
 

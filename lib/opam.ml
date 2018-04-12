@@ -71,7 +71,7 @@ module File = struct
   ]
 
   let field_names =
-    let add acc (name, field) = String.Set.add name acc in
+    let add acc (name, _) = String.Set.add name acc in
     List.fold_left add String.Set.empty fields
 
   let fields file =
@@ -87,10 +87,10 @@ module File = struct
     in
     Logs.info (fun m -> m "Parsing opam file %a" Fpath.pp file);
     try Ok (parse file) with
-    | exn ->
-        (* Apparently in at least opam-lib 1.2.2, the error will be logged
-             on stdout. *)
-        R.error_msgf "%a: could not parse opam file" Fpath.pp file
+    | _ ->
+      (* Apparently in at least opam-lib 1.2.2, the error will be logged
+           on stdout. *)
+      R.error_msgf "%a: could not parse opam file" Fpath.pp file
 
   let deps ?(opts = true) fields =
     let deps = match String.Map.find "depends" fields with
@@ -107,7 +107,7 @@ end
 module Descr = struct
   type t = string * string
 
-  let of_string s = match String.cuts "\n" s with
+  let of_string s = match String.cuts ~sep:"\n" s with
   | [] ->  R.error_msgf "Cannot extract opam descr."
   | synopsis :: descr -> Ok (synopsis, String.concat ~sep:"\n" descr)
 
@@ -126,17 +126,17 @@ module Descr = struct
       match String.Sub.head start with
       | None -> error l
       | Some c when Char.Ascii.is_letter c -> ok start
-      | Some c -> (* Try to skip a separator. *)
+      | Some _ -> (* Try to skip a separator. *)
           let start = start |> skip_non_white |> skip_white in
           match String.Sub.head start with
           | None -> error l
           | Some _ -> ok start
     in
     let drop_line l =
-      String.is_prefix "Home page:" l ||
-      String.is_prefix "Homepage:" l ||
-      String.is_prefix "Contact:" l ||
-      String.is_prefix "%%VERSION" l
+      String.is_prefix ~affix:"Home page:" l ||
+      String.is_prefix ~affix:"Homepage:" l ||
+      String.is_prefix ~affix:"Contact:" l ||
+      String.is_prefix ~affix:"%%VERSION" l
     in
     let keep_line l = not (drop_line l) in
     match Text.head ?flavour r with
