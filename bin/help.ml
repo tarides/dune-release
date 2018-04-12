@@ -40,10 +40,6 @@ dune-release opam submit   # Submit it to OCaml's opam repository";
     `P "First have a look at the outstanding issues the package may have
         by checking the issue tracker.";
     `Pre "dune-release browse issues";
-    `P "If the package's delegate supports issue tracker interaction
-        (see dune-release-delegate(7)), you can consult them directly in the
-        terminal with:";
-    `Pre "dune-release issue list";
     `P "Basic checks are performed on the distribution archive when it is
         created, but save time by catching errors early. Hence test that
         your source repository lints and that it builds in the current build
@@ -161,7 +157,6 @@ let delegate =
         dune-release itself, namely:";
     `I ("$(b,dune-release publish)",
         "Publish distribution archives and derived artefacts.");
-    `I ("$(b,dune-release issue)", "Interact with the package's issue tracker.");
     `P "A sample delegate is provided at the end of this man page.";
     `S "DELEGATE LOOKUP PROCEDURE";
     `P "The delegate used by a package is defined by the first match in the
@@ -235,24 +230,6 @@ let delegate =
         "Alternative publication artefact named $(i,KIND). The semantics
          of the action is left to the delegate. The request arguments
          are the same as those of the distrib action.");
-    `S "ISSUE DELEGATION";
-    `P "Issue delegation requests have the form:";
-    `P "issue $(i,ACTION) $(i,ISSUES_URI) $(i,ARG) ...";
-    `P "with $(i,ISSUES_URI) the value of the bug-reports field of the
-        package's opam file or \"\" if there is no such field.";
-    `P "The following actions are currently defined.";
-    `I ("issue list $(i,ISSUES_URI)",
-        "List open issues on standard output. Each issue should be on its
-         own line with the format '$(i,ID) $(i,TITLE)'.");
-    `I ("issue show $(i,ISSUES_URI) $(i,ID)",
-        "Show details about issue $(i,ID) on standard output.");
-    `I ("issue open $(i,ISSUES_URI) $(i,TITLE) $(i,MSG)",
-        "Create an issue with title $(i,TITLE) and description $(i,MSG)
-         (may be an empty string). If the request is successful the
-         delegate should communicate the resulting issue identifier in some
-         way on standard output.");
-    `I ("issue close $(i,ID) $(i,MSG)",
-        "Close issue $(i,ID) with closing message $(i,MSG).");
     `S "SAMPLE UNSUPPORTIVE DELEGATE";
     `P "This delegate script can be used as a blueprint. All requests
         are simply unsupported.";
@@ -274,16 +251,8 @@ let publish = function
 | args ->
     unsupported
 
-let issue = function
-| \"list\" :: uri :: _ -> unsupported
-| \"show\" :: uri :: id :: _ -> unsupported
-| \"open\" :: uri :: title :: descr :: _ -> unsupported
-| \"close\" :: uri :: id :: msg :: _ -> unsupported
-| args -> unsupported
-
 let request = function
 | \"publish\" :: args -> publish args
-| \"issue\" :: args -> issue args
 | args -> unsupported
 
 let main () =
@@ -301,7 +270,7 @@ let main () =
 
 let () = exit (main ())
 ";
-    `Blocks (see_also ~cmds:["dune-release-issue"; "dune-release-publish"]); ]
+    `Blocks (see_also ~cmds:["dune-release-publish"]); ]
 
 let troubleshoot =
   ("DUNE-RELEASE-TROUBLESHOOT", 7, "", version, dune_release_manual),
