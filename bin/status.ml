@@ -24,9 +24,34 @@ let pp_status ppf (dirty, version, changes) = match changes with
     Fmt.pf ppf "@[<v>Changes%a:@,%a%a@]"
       pp_since version pp_dirty dirty (Fmt.list pp_commit) changes
 
+let parse_version v =
+  let version =
+    if String.is_prefix ~affix:"v" v
+    then String.with_index_range ~first:1 v
+    else v
+  in
+  try match String.cut ~sep:"." version with
+  | None -> None
+  | Some (maj, rest) ->
+      let maj = int_of_string maj in
+      match String.cut ~sep:"." rest with
+      | None ->
+          begin match String.cut ~sep:"+" rest with
+          | None -> Some (maj, int_of_string rest, 0, None)
+          | Some (min, i) ->  Some (maj, int_of_string min, 0, Some i)
+          end
+      | Some (min, rest) ->
+          let min = int_of_string min in
+          begin match String.cut ~sep:"+" rest with
+          | None -> Some (maj, min, int_of_string rest, None)
+          | Some (p, i) -> Some (maj, min, int_of_string p, Some i)
+          end
+  with
+  | Failure _ -> None
+
 let find_latest_version_tag repo =
   let rev_compare v v' = -1 * compare v v' in
-  let parse_tag acc t = match Conf.OCaml.parse_version t with
+  let parse_tag acc t = match parse_version t with
   | None -> acc
   | Some v -> (v, t) :: acc
   in

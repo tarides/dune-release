@@ -6,93 +6,10 @@
 
 (** Build configuration. *)
 
-open Rresult
-
-(** {1 Configuration key value converters} *)
-
-type 'a conv
-
-val conv :
-  ?docv:string -> (string -> ('a, R.msg) result) -> (Format.formatter -> 'a -> unit) ->
-  'a conv
-
-val conv_with_docv : 'a conv -> docv:string -> 'a conv
-val conv_parser : 'a conv -> (string -> ('a, R.msg) result)
-val conv_printer : 'a conv -> (Format.formatter -> 'a -> unit)
-val conv_docv : 'a conv -> string
-
-val bool : bool conv
-val int : int conv
-val string : string conv
-val fpath : Fpath.t conv
-val some : ?none:string -> 'a conv -> 'a option conv
-
-(** {1 Configuration keys} *)
-
-type 'a key
-
-val key :
-  ?docv:string -> ?doc:string -> ?env:string -> string -> 'a conv ->
-  absent:'a -> 'a key
-
-val discovered_key :
-  ?docv:string -> ?doc:string -> ?env:string -> string -> 'a conv ->
-  absent:(unit -> ('a, R.msg) result) -> 'a key
-
-val with_pkg : ?default:bool -> string -> bool key
-
-val pp_keys_cli_opts : Format.formatter -> unit -> unit
-
-(** {1 Build configuration} *)
-
-type t
-val empty : t
-val value : t -> 'a key -> 'a
-val pp_value : t -> Format.formatter -> 'a key -> unit
-val dump : Format.formatter -> t -> unit
-val of_cli_args :
-  pkg_name:string -> build_dir:Fpath.t -> string list -> (t, R.msg) result
-
-val pkg_name : t -> string
-val build_dir : t -> Fpath.t
-val vcs : t -> bool
-val pinned : t -> bool
-val dev_pkg : t -> bool
-val jobs : t -> int
-
-type build_context = [`Dev | `Distrib | `Pin ]
-val build_context : t -> [`Dev | `Distrib | `Pin ]
-val build_tests : t -> bool
-
-val debug : t -> bool
-val debugger_support : t -> bool
-val profile : t -> bool
-val toolchain : t -> string option
-
 (** {1 Tool lookup} *)
 
 type os = [ `Build_os | `Host_os ]
-val tool : ?conf:t -> string -> os -> Bos.Cmd.t
-
-(** {1 OCaml configuration} *)
-
-module OCaml : sig
-  type conf = t
-  type t
-  val v : conf -> os -> t
-  val find : string -> t -> string option
-  val version : t -> int * int * int * string option
-  val ext_obj : t -> string
-  val ext_asm : t -> string
-  val ext_lib : t -> string
-  val ext_dll : t -> string
-  val ext_exe : t -> string
-  val native : t -> bool
-  val native_dynlink : t -> bool
-  val word_size : t -> int
-  val dump : Format.formatter -> t -> unit
-  val parse_version: string -> (int * int * int * string option) option
-end
+val tool : string -> os -> Bos.Cmd.t
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
