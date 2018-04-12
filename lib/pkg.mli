@@ -46,6 +46,9 @@ val distrib_file : t -> (Fpath.t, R.msg) result
 val publish_msg : t -> (string, R.msg) result
 val publish_artefacts : t -> ([`Distrib | `Doc] list, R.msg) result
 
+val doc_owner_repo_and_path : t -> (string * string * Fpath.t, R.msg) result
+val distrib_owner_and_repo : t -> (string * string, R.msg) result
+
 (** {1 Test} *)
 
 val test :

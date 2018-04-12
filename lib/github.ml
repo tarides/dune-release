@@ -8,28 +8,6 @@ open Bos_setup
 
 (* Publish documentation *)
 
-let repo_docdir_owner_repo_and_path_from_doc_uri uri =
-  (* Parses the $PATH of $SCHEME://$HOST/$REPO/$PATH *)
-  let uri_error uri =
-    R.msgf "Could not derive publication directory $PATH from opam doc \
-            field value %a; expected the pattern \
-            $SCHEME://$OWNER.github.io/$REPO/$PATH" String.dump uri
-  in
-  match Text.split_uri ~rel:true uri with
-  | None -> Error (uri_error uri)
-  | Some (_, host, path) ->
-      if path = "" then Error (uri_error uri) else
-      (match String.cut ~sep:"." host with
-      | Some (owner, g) when String.equal g "github.io" -> Ok owner
-      | _ -> Error (uri_error uri))
-      >>= fun owner ->
-      match String.cut ~sep:"/" path with
-      | None -> Error (uri_error uri)
-      | Some (repo, "") -> Ok (owner, repo, Fpath.v ".")
-      | Some (repo, path) ->
-          (Fpath.of_string path >>| fun p -> owner, repo, Fpath.rem_empty_seg p)
-          |> R.reword_error_msg (fun _ -> uri_error uri)
-
 let publish_in_git_branch ~remote ~branch ~name ~version ~docdir ~dir =
   let pp_distrib ppf (name, version) =
     Fmt.pf ppf "%a %a" Text.Pp.name name Text.Pp.version version
@@ -95,16 +73,11 @@ let publish_in_git_branch ~remote ~branch ~name ~version ~docdir ~dir =
       log_publish_result "Published documentation for" (name, version) dir;
       Ok ()
 
-let uri p = Pkg.opam_field_hd p "doc" >>| function
-  | None     -> ""
-  | Some uri -> uri
-
 let publish_doc p ~msg:_ ~docdir =
-  uri p
-  >>= fun uri -> Pkg.name p
+  Pkg.doc_owner_repo_and_path p
+  >>= fun (owner, repo, dir) -> Pkg.name p
   >>= fun name -> Pkg.version p
-  >>= fun version -> repo_docdir_owner_repo_and_path_from_doc_uri uri
-  >>= fun (owner, repo, dir) ->
+  >>= fun version ->
   let remote = strf "git@@github.com:%s/%s.git" owner repo in
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   let create_empty_gh_pages git =
@@ -137,29 +110,6 @@ let publish_doc p ~msg:_ ~docdir =
   publish_in_git_branch ~remote ~branch:"gh-pages" ~name ~version ~docdir ~dir
 
 (* Publish releases *)
-
-let repo_and_owner_of_uri uri =
-  let uri_error uri =
-    R.msgf "Could not derive owner and repo from opam dev-repo \
-            field value %a; expected the pattern \
-            $SCHEME://$HOST/$OWNER/$REPO[.$EXT][/$DIR]" String.dump uri
-  in
-  match Text.split_uri ~rel:true uri with
-  | None -> Error (uri_error uri)
-  | Some (_, _, path) ->
-      if path = "" then Error (uri_error uri) else
-      match String.cut ~sep:"/" path with
-      | None -> Error (uri_error uri)
-      | Some (owner, path) ->
-          let repo = match String.cut ~sep:"/" path with
-          | None -> path
-          | Some (repo, _) -> repo
-          in
-          begin
-            Fpath.of_string repo
-            >>= fun repo -> Ok (owner, Fpath.(to_string @@ rem_ext repo))
-          end
-          |> R.reword_error_msg (fun _ -> uri_error uri)
 
 let steal_opam_publish_github_auth () =
   let opam = Cmd.(v "opam") in
@@ -256,14 +206,13 @@ let curl_upload_archive curl archive owner repo release_id =
 
 let publish_distrib p ~msg ~archive =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
-  uri p
-  >>= fun uri -> Pkg.version p
+  Pkg.distrib_owner_and_repo p
+  >>= fun (owner, repo) -> Pkg.version p
   >>= fun version -> OS.Cmd.must_exist Cmd.(v "curl" % "-s" % "-S" % "-K" % "-")
   >>= fun curl -> Vcs.get ()
-  >>= fun repo -> Ok (git_for_repo repo)
+  >>= fun vcs -> Ok (git_for_repo vcs)
   >>= fun git -> OS.Cmd.run Cmd.(git % "push" % "--force" % "--tags")
-  >>= fun () -> repo_and_owner_of_uri uri
-  >>= fun (owner, repo) -> curl_create_release curl version msg owner repo
+  >>= fun () -> curl_create_release curl version msg owner repo
   >>= fun id -> curl_upload_archive curl archive owner repo id
 
 
