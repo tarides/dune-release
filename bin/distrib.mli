@@ -4,44 +4,9 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-open Cmdliner
+(** The [distrib] command. *)
 
-let cmds = [Browse.cmd; Status.cmd; Log.cmd; Tag.cmd; Distrib.cmd; ]
-(*  [ Bistro.cmd; Build.cmd; Clean.cmd; Doc.cmd;
-    Help.cmd; Ipc.cmd; Issue.cmd; Lint.cmd; Opam.cmd;
-    Publish.cmd; Run.cmd; Test.cmd; ]
-*)
-
-let main () = `Help (`Pager, None)
-
-(* Command line interface *)
-
-let doc = "Release dune packages to opam"
-let sdocs = Manpage.s_common_options
-let exits = Cli.exits
-let man =
-  [ `S Manpage.s_description;
-    `P "$(mname) releases dune packages to opam.";
-    `P "Use '$(mname) help release' for help to release a package.";
-    `Noblank;
-    `P "Use '$(mname) help delegate' for help about the topkg delegate.";
-    `Noblank;
-    `P "Use '$(mname) help troubleshoot' for a few troubleshooting tips.";
-    `Noblank;
-    `P "Use '$(mname) help $(i,COMMAND)' for help about $(i,COMMAND).";
-    `S Manpage.s_bugs;
-    `P "Report them, see $(i,%%PKG_HOMEPAGE%%) for contact information.";
-    `S Manpage.s_authors;
-    `P "Daniel C. Buenzli, $(i,http://erratique.ch)"; ]
-
-let main =
-  Term.(ret (const main $ Cli.setup)),
-  Term.info "dune-release" ~version:"%%VERSION%%" ~doc ~sdocs ~exits ~man
-
-let main () =
-  Term.(exit_status @@ eval_choice main cmds)
-
-let () = main ()
+val cmd : int Cmdliner.Term.t * Cmdliner.Term.info
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
