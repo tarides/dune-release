@@ -79,15 +79,6 @@ let change_log =
   let docv = "FILE" in
   Arg.(value & opt (some path_arg) None & info ["change-log"] ~doc ~docv)
 
-let delegate =
-  let doc = "The delegate tool $(docv) to use. If absent, see dune-release-delegate(7)
-             for the lookup procedure."
-  in
-  let docv = "TOOL" in
-  let to_cmd = function None -> None | Some s -> Some (Cmd.v s) in
-  Term.(const to_cmd $
-        Arg.(value & opt (some string) None & info ["delegate"] ~doc ~docv))
-
 let build_dir =
   let doc = "Specifies the build directory $(docv). If absent, provided by the
              package description."

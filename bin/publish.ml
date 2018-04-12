@@ -22,22 +22,16 @@ let publish_doc pkg =
   >>= fun msg -> Archive.untbz ~clean:true distrib_file
   >>= fun dir -> gen_doc dir
   >>= fun docdir -> absolute docdir
-  >>= fun docdir -> Delegate.publish_doc pkg ~msg ~docdir
+  >>= fun docdir -> Github.publish_doc pkg ~msg ~docdir
 
 let publish_distrib pkg =
   Pkg.distrib_file pkg
   >>= fun distrib_file -> Pkg.publish_msg pkg
   >>= fun msg -> absolute distrib_file
-  >>= fun archive -> Delegate.publish_distrib pkg ~msg ~archive
-
-let publish_alt pkg kind =
-  Pkg.distrib_file pkg
-  >>= fun distrib_file -> Pkg.publish_msg pkg
-  >>= fun msg -> absolute distrib_file
-  >>= fun archive -> Delegate.publish_alt pkg ~kind ~msg ~archive
+  >>= fun archive -> Github.publish_distrib pkg ~msg ~archive
 
 let publish ()
-    build_dir name version opam delegate change_log distrib_uri
+    build_dir name version opam change_log distrib_uri
     distrib_file publish_msg publish_artefacts
   =
   begin
@@ -45,7 +39,7 @@ let publish ()
     | [] -> None
     | v -> Some v
     in
-    let pkg = Pkg.v ?name ?version ?build_dir ?opam ?delegate
+    let pkg = Pkg.v ?name ?version ?build_dir ?opam
         ?change_log ?distrib_uri ?distrib_file ?publish_msg
         ?publish_artefacts ()
     in
@@ -53,7 +47,6 @@ let publish ()
       acc >>= fun () -> match artefact with
       | `Doc -> publish_doc pkg
       | `Distrib -> publish_distrib pkg
-      | `Alt kind -> publish_alt pkg kind
     in
     Pkg.publish_artefacts pkg
     >>= fun todo -> List.fold_left publish_artefact (Ok ()) todo
@@ -66,25 +59,18 @@ let publish ()
 open Cmdliner
 
 let artefacts =
-  let alt_prefix = "alt-" in
   let parser = function
   | "do" | "doc" -> `Ok `Doc
   | "di" | "dis" | "dist" | "distr" | "distri" | "distrib" -> `Ok `Distrib
-  | s when String.is_prefix ~affix:alt_prefix s ->
-      begin match String.(with_range ~first:(length alt_prefix) s) with
-      | "" -> `Error ("`alt-' alternative artefact kind is missing")
-      | kind -> `Ok (`Alt kind)
-      end
   | s -> `Error (strf "`%s' unknown publication artefact" s)
   in
   let printer ppf = function
   | `Doc -> Fmt.string ppf "doc"
   | `Distrib -> Fmt.string ppf "distrib"
-  | `Alt a -> Fmt.pf ppf "alt-%s" a
   in
   let artefact = parser, printer in
-  let doc = strf "The artefact to publish. $(docv) must be one of `doc`,
-                  `distrib` or `alt-$(i,KIND)`. If absent, the set of
+  let doc = strf "The artefact to publish. $(docv) must be either `doc` or
+                  `distrib`. If absent, the set of
                   default publication artefacts is determined by the
                   package description."
   in
@@ -93,9 +79,6 @@ let artefacts =
 let doc = "Publish package distribution archives and derived artefacts"
 let sdocs = Manpage.s_common_options
 let exits = Cli.exits
-let envs =
-  [ Term.env_info "DUNE_RELEASE_DELEGATE" ~doc:"The package delegate to use, see
-    dune-release-delegate(7)."; ]
 
 let man_xrefs = [`Main; `Cmd "distrib" ]
 let man =
@@ -103,28 +86,21 @@ let man =
     `P "$(mname) $(tname) [$(i,OPTION)]... [$(i,ARTEFACT)]...";
     `S Manpage.s_description;
     `P "The $(tname) command publishes package distribution archives
-        and other artefacts via the package delegate. See dune-release-delegate(7) for
-        more details.";
+        and other artefacts.";
     `P "Artefact publication always relies on a distribution archive having
         been generated before with dune-release-distrib(1).";
     `S "ARTEFACTS";
     `I ("$(b,distrib)",
         "Publishes a distribution archive on the WWW.");
     `I ("$(b,doc)",
-        "Publishes the documentation of a distribution archive on the WWW.");
-    `I ("$(b,alt)-$(i,KIND)",
-        "Publishes the alternative artefact of kind $(i,KIND) of
-         a distribution archive. The semantics of alternative artefacts
-         is left to the delegate, it could be anything, an email,
-         a pointless tweet, a feed entry etc. See dune-release-delegate(7) for
-         more details."); ]
+        "Publishes the documentation of a distribution archive on the WWW."); ]
 
 let cmd =
   Term.(pure publish $ Cli.setup $ Cli.build_dir $
         Cli.dist_name $ Cli.dist_version $ Cli.dist_opam $
-        Cli.delegate $ Cli.change_log $ Cli.dist_uri $ Cli.dist_file $
+        Cli.change_log $ Cli.dist_uri $ Cli.dist_file $
         Cli.publish_msg $ artefacts),
-  Term.info "publish" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
+  Term.info "publish" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

@@ -41,9 +41,6 @@ val change_log : Fpath.t option Term.t
 val opam : Fpath.t option Term.t
 (** An [--opam] option to define an opam file. *)
 
-val delegate : Bos.Cmd.t option Term.t
-(** A [--delegate] option to define the delegate. *)
-
 val build_dir : Fpath.t option Term.t
 (** A [--build-dir] option to define the build directory. *)
 

@@ -4,7 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** Package delegate. *)
+(** Interface with Github. *)
 
 open Bos_setup
 
@@ -18,25 +18,10 @@ val publish_doc :
   Pkg.t -> msg:string -> docdir:Fpath.t ->
   (unit, R.msg) Result.result
 
-val publish_alt :
-  Pkg.t -> kind:string -> msg:string -> archive:Fpath.t ->
-  (unit, R.msg) Result.result
-
 val publish_in_git_branch :
   remote:string -> branch:string ->
   name:string -> version:string -> docdir:Fpath.t ->
   dir:Fpath.t -> (unit, R.msg) result
-
-(** {1 Delegate} *)
-
-val issue_list : Pkg.t -> (unit, R.msg) result
-val issue_show : Pkg.t -> id:string -> (unit, R.msg) result
-
-val issue_open :
-  Pkg.t -> title:string -> body:string -> (unit, R.msg) result
-
-val issue_close :
-  Pkg.t -> id:string -> msg:string -> (unit, R.msg) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

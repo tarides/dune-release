@@ -15,7 +15,6 @@ type t
 val v :
   ?name:string ->
   ?version:string ->
-  ?delegate:Bos_setup.Cmd.t ->
   ?build_dir:Fpath.t ->
   ?opam:Fpath.t ->
   ?opam_descr:Fpath.t ->
@@ -25,13 +24,12 @@ val v :
   ?distrib_uri:string ->
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
-  ?publish_artefacts:[ `Alt of string | `Distrib | `Doc ] list ->
+  ?publish_artefacts:[`Distrib | `Doc] list ->
   ?distrib:Distrib.t -> ?lint_files:Fpath.t list option ->
   unit -> t
 
 val name : t -> (string, R.msg) result
 val version : t -> (string, R.msg) result
-val delegate : t -> (Cmd.t, R.msg) result
 val build_dir : t -> (Fpath.t, R.msg) result
 val opam : t -> (Fpath.t, R.msg) result
 val opam_field : t -> string -> (string list option, R.msg) result
@@ -46,8 +44,7 @@ val licenses : t -> (Fpath.t list, R.msg) result
 val distrib_uri : ?raw:bool -> t -> (string, R.msg) result
 val distrib_file : t -> (Fpath.t, R.msg) result
 val publish_msg : t -> (string, R.msg) result
-val publish_artefacts : t ->
-  ([ `Distrib | `Doc | `Alt of string] list, R.msg) result
+val publish_artefacts : t -> ([`Distrib | `Doc] list, R.msg) result
 
 (** {1 Test} *)
 
