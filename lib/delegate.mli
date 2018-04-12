@@ -4,46 +4,41 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-open Cmdliner
+(** Package delegate.
 
-let cmds =
-  [Browse.cmd; Status.cmd; Log.cmd; Tag.cmd; Distrib.cmd;
-   Publish.cmd; ]
-(*  [ Bistro.cmd; Build.cmd; Clean.cmd; Doc.cmd;
-    Help.cmd; Ipc.cmd; Issue.cmd; Lint.cmd; Opam.cmd;
-    Run.cmd; Test.cmd; ]
-*)
+    See {!Topkg_care.Delegate} for documentation. *)
 
-let main () = `Help (`Pager, None)
+open Bos_setup
 
-(* Command line interface *)
+(** {1 Publish} *)
 
-let doc = "Release dune packages to opam"
-let sdocs = Manpage.s_common_options
-let exits = Cli.exits
-let man =
-  [ `S Manpage.s_description;
-    `P "$(mname) releases dune packages to opam.";
-    `P "Use '$(mname) help release' for help to release a package.";
-    `Noblank;
-    `P "Use '$(mname) help delegate' for help about the topkg delegate.";
-    `Noblank;
-    `P "Use '$(mname) help troubleshoot' for a few troubleshooting tips.";
-    `Noblank;
-    `P "Use '$(mname) help $(i,COMMAND)' for help about $(i,COMMAND).";
-    `S Manpage.s_bugs;
-    `P "Report them, see $(i,%%PKG_HOMEPAGE%%) for contact information.";
-    `S Manpage.s_authors;
-    `P "Daniel C. Buenzli, $(i,http://erratique.ch)"; ]
+val publish_distrib :
+  Pkg.t -> msg:string -> archive:Fpath.t ->
+  (unit, R.msg) Result.result
 
-let main =
-  Term.(ret (const main $ Cli.setup)),
-  Term.info "dune-release" ~version:"%%VERSION%%" ~doc ~sdocs ~exits ~man
+val publish_doc :
+  Pkg.t -> msg:string -> docdir:Fpath.t ->
+  (unit, R.msg) Result.result
 
-let main () =
-  Term.(exit_status @@ eval_choice main cmds)
+val publish_alt :
+  Pkg.t -> kind:string -> msg:string -> archive:Fpath.t ->
+  (unit, R.msg) Result.result
 
-let () = main ()
+val publish_in_git_branch :
+  remote:string -> branch:string ->
+  name:string -> version:string -> docdir:Fpath.t ->
+  dir:Fpath.t -> (unit, R.msg) result
+
+(** {1 Delegate} *)
+
+val issue_list : Pkg.t -> (unit, R.msg) result
+val issue_show : Pkg.t -> id:string -> (unit, R.msg) result
+
+val issue_open :
+  Pkg.t -> title:string -> body:string -> (unit, R.msg) result
+
+val issue_close :
+  Pkg.t -> id:string -> msg:string -> (unit, R.msg) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
