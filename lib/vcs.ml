@@ -30,11 +30,11 @@ let dirtify id = id ^ "-dirty"
 type t = kind * Cmd.t * Fpath.t
 
 let git =
-  let git = Cmd.v (OS.Env.opt_var "TOPKG_GIT" ~absent:"git") in
+  let git = Cmd.v (OS.Env.opt_var "DUNE_RELEASE_GIT" ~absent:"git") in
   lazy (OS.Cmd.exists git >>= fun exists -> Ok (exists, git))
 
 let hg =
-  let hg = Cmd.v (OS.Env.opt_var "TOPKG_HG" ~absent:"hg") in
+  let hg = Cmd.v (OS.Env.opt_var "DUNE_RELEASE_HG" ~absent:"hg") in
   lazy (OS.Cmd.exists hg >>= fun exists -> Ok (exists, hg))
 
 let vcs_cmd kind cmd dir = match kind with

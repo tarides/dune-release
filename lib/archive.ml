@@ -128,11 +128,11 @@ let tar dir ~exclude_paths ~root ~mtime =
 
 (* Bzip2 compression and unarchiving *)
 
-let bzip2_cmd = OS.Env.(value "TOPKG_BZIP2" cmd ~absent:(Cmd.v "bzip2"))
+let bzip2_cmd = OS.Env.(value "DUNE_RELEASE_BZIP2" cmd ~absent:(Cmd.v "bzip2"))
 let ensure_bzip2 () = OS.Cmd.must_exist bzip2_cmd >>| fun _ -> ()
 let bzip2 s ~dst = OS.Cmd.(in_string s |> run_io bzip2_cmd |> to_file dst)
 
-let tar_cmd = OS.Env.(value "TOPKG_TAR" cmd ~absent:(Cmd.v "tar"))
+let tar_cmd = OS.Env.(value "DUNE_RELEASE_TAR" cmd ~absent:(Cmd.v "tar"))
 let ensure_tar () = OS.Cmd.must_exist tar_cmd >>| fun _ -> ()
 let untbz ?(clean = false) ar =
   let clean_dir dir = OS.Dir.exists dir >>= function
