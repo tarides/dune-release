@@ -413,7 +413,7 @@ let lint_opams p =
     (* remove opam.1.2-related warnings *)
     opam_field p "opam-version" >>= fun opam_version ->
     let args = match opam_version with
-    | Some ["1.2"] -> Cmd.v "--warn=-21-32"
+    | Some ["1.2"] -> Cmd.v "--warn=-21-32-48"
     | _ -> Cmd.empty
     in
     opam p >>= fun opam ->
