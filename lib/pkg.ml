@@ -409,27 +409,33 @@ let doc_owner_repo_and_path p =
 
 
 let lint_opams p =
-  Logs.on_error_msg ~use:(fun () -> 1)
-    (opam p >>= fun opam ->
-     (* We first run opam lint with -s and if there's something beyond 5
-        we rerun it without it for the error messages. It's ugly since 5
-        will still but opam lint's cli is broken. *)
-     let cmd = Cmd.(Opam.cmd % "lint") in
-     let handle_exit file status out = match status, out with
-     | `Exited 0,
-       ("" | "5" (* dirname version vs opam file version *)) -> `Ok
-     | _ ->
-         let err = OS.Cmd.err_run_out in
-         match OS.Cmd.(run_out ~err Cmd.(cmd % p file) |> out_string) with
-         | Ok (out, _) -> `Fail out
-         | Error (`Msg out) -> `Fail out
-     in
-     let cmd = Cmd.(cmd % "-s") in
-     let d = lint_file_with_cmd "opam file" ~cmd opam 0 (handle_exit opam) in
-     (* lint fields *)
-     doc_owner_repo_and_path p >>= fun _ ->
-     distrib_owner_and_repo p >>| fun _ ->
-     d)
+  Logs.on_error_msg ~use:(fun () -> 1) (
+    (* remove opam.1.2-related warnings *)
+    opam_field p "opam-version" >>= fun opam_version ->
+    let args = match opam_version with
+    | Some ["1.2"] -> Cmd.v "--warn=-21-32"
+    | _ -> Cmd.empty
+    in
+    opam p >>= fun opam ->
+    (* We first run opam lint with -s and if there's something beyond 5
+       we rerun it without it for the error messages. It's ugly since 5
+       will still but opam lint's cli is broken. *)
+    let cmd = Cmd.(Opam.cmd % "lint" %% args) in
+    let handle_exit file status out = match status, out with
+    | `Exited 0,
+      ("" | "5" (* dirname version vs opam file version *)) -> `Ok
+    | _ ->
+        let err = OS.Cmd.err_run_out in
+        match OS.Cmd.(run_out ~err Cmd.(cmd % p file) |> out_string) with
+        | Ok (out, _) -> `Fail out
+        | Error (`Msg out) -> `Fail out
+    in
+    let cmd = Cmd.(cmd % "-s") in
+    let d = lint_file_with_cmd "opam file" ~cmd opam 0 (handle_exit opam) in
+    (* lint fields *)
+    doc_owner_repo_and_path p >>= fun _ ->
+    distrib_owner_and_repo p >>| fun _ ->
+    d)
 
 type lint = [ `Std_files | `Opam ]
 
