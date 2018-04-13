@@ -171,6 +171,58 @@ let distrib_file p = match p.distrib_file with
     |> R.reword_error_msg
       (fun _ -> R.msgf "Did you forget to call 'dune-release distrib' ?")
 
+
+let distrib_owner_and_repo p =
+  distrib_uri p >>= fun uri ->
+  let uri_error uri =
+    R.msgf "Could not derive owner and repo from opam dev-repo \
+            field value %a; expected the pattern \
+            $SCHEME://$HOST/$OWNER/$REPO[.$EXT][/$DIR]" String.dump uri
+  in
+  match Text.split_uri ~rel:true uri with
+  | None -> Error (uri_error uri)
+  | Some (_, _, path) ->
+      if path = "" then Error (uri_error uri) else
+      match String.cut ~sep:"/" path with
+      | None -> Error (uri_error uri)
+      | Some (owner, path) ->
+          let repo = match String.cut ~sep:"/" path with
+          | None -> path
+          | Some (repo, _) -> repo
+          in
+          begin
+            Fpath.of_string repo
+            >>= fun repo -> Ok (owner, Fpath.(to_string @@ rem_ext repo))
+          end
+          |> R.reword_error_msg (fun _ -> uri_error uri)
+
+let doc_uri p = opam_field_hd p "doc" >>| function
+  | None     -> ""
+  | Some uri -> uri
+
+let doc_owner_repo_and_path p =
+  doc_uri p >>= fun uri ->
+  (* Parses the $PATH of $SCHEME://$HOST/$REPO/$PATH *)
+  let uri_error uri =
+    R.msgf "Could not derive publication directory $PATH from opam doc \
+            field value %a; expected the pattern \
+            $SCHEME://$OWNER.github.io/$REPO/$PATH" String.dump uri
+  in
+  match Text.split_uri ~rel:true uri with
+  | None -> Error (uri_error uri)
+  | Some (_, host, path) ->
+      if path = "" then Error (uri_error uri) else
+      (match String.cut ~sep:"." host with
+      | Some (owner, g) when String.equal g "github.io" -> Ok owner
+      | _ -> Error (uri_error uri))
+      >>= fun owner ->
+      match String.cut ~sep:"/" path with
+      | None -> Error (uri_error uri)
+      | Some (repo, "") -> Ok (owner, repo, Fpath.v ".")
+      | Some (repo, path) ->
+          (Fpath.of_string path >>| fun p -> owner, repo, Fpath.rem_empty_seg p)
+          |> R.reword_error_msg (fun _ -> uri_error uri)
+
 let publish_msg p = match p.publish_msg with
 | Some msg -> Ok msg
 | None ->
@@ -356,80 +408,34 @@ let lint_file_with_cmd file_kind ~cmd file errs handle_exit =
   end
   |> Logs.on_error_msg ~use:(fun () -> errs + 1)
 
-let distrib_owner_and_repo p =
-  distrib_uri p >>= fun uri ->
-  let uri_error uri =
-    R.msgf "Could not derive owner and repo from opam dev-repo \
-            field value %a; expected the pattern \
-            $SCHEME://$HOST/$OWNER/$REPO[.$EXT][/$DIR]" String.dump uri
-  in
-  match Text.split_uri ~rel:true uri with
-  | None -> Error (uri_error uri)
-  | Some (_, _, path) ->
-      if path = "" then Error (uri_error uri) else
-      match String.cut ~sep:"/" path with
-      | None -> Error (uri_error uri)
-      | Some (owner, path) ->
-          let repo = match String.cut ~sep:"/" path with
-          | None -> path
-          | Some (repo, _) -> repo
-          in
-          begin
-            Fpath.of_string repo
-            >>= fun repo -> Ok (owner, Fpath.(to_string @@ rem_ext repo))
-          end
-          |> R.reword_error_msg (fun _ -> uri_error uri)
-
-let doc_uri p = opam_field_hd p "doc" >>| function
-  | None     -> ""
-  | Some uri -> uri
-
-let doc_owner_repo_and_path p =
-  doc_uri p >>= fun uri ->
-  (* Parses the $PATH of $SCHEME://$HOST/$REPO/$PATH *)
-  let uri_error uri =
-    R.msgf "Could not derive publication directory $PATH from opam doc \
-            field value %a; expected the pattern \
-            $SCHEME://$OWNER.github.io/$REPO/$PATH" String.dump uri
-  in
-  match Text.split_uri ~rel:true uri with
-  | None -> Error (uri_error uri)
-  | Some (_, host, path) ->
-      if path = "" then Error (uri_error uri) else
-      (match String.cut ~sep:"." host with
-      | Some (owner, g) when String.equal g "github.io" -> Ok owner
-      | _ -> Error (uri_error uri))
-      >>= fun owner ->
-      match String.cut ~sep:"/" path with
-      | None -> Error (uri_error uri)
-      | Some (repo, "") -> Ok (owner, repo, Fpath.v ".")
-      | Some (repo, path) ->
-          (Fpath.of_string path >>| fun p -> owner, repo, Fpath.rem_empty_seg p)
-          |> R.reword_error_msg (fun _ -> uri_error uri)
-
-
 let lint_opams p =
-  Logs.on_error_msg ~use:(fun () -> 1)
-    (opam p >>= fun opam ->
-     (* We first run opam lint with -s and if there's something beyond 5
-        we rerun it without it for the error messages. It's ugly since 5
-        will still but opam lint's cli is broken. *)
-     let cmd = Cmd.(Opam.cmd % "lint") in
-     let handle_exit file status out = match status, out with
-     | `Exited 0,
-       ("" | "5" (* dirname version vs opam file version *)) -> `Ok
-     | _ ->
-         let err = OS.Cmd.err_run_out in
-         match OS.Cmd.(run_out ~err Cmd.(cmd % p file) |> out_string) with
-         | Ok (out, _) -> `Fail out
-         | Error (`Msg out) -> `Fail out
-     in
-     let cmd = Cmd.(cmd % "-s") in
-     let d = lint_file_with_cmd "opam file" ~cmd opam 0 (handle_exit opam) in
-     (* lint fields *)
-     doc_owner_repo_and_path p >>= fun _ ->
-     distrib_owner_and_repo p >>| fun _ ->
-     d)
+  Logs.on_error_msg ~use:(fun () -> 1) (
+    (* remove opam.1.2-related warnings *)
+    opam_field p "opam-version" >>= fun opam_version ->
+    let args = match opam_version with
+    | Some ["1.2"] -> Cmd.v "--warn=-21-32"
+    | _ -> Cmd.empty
+    in
+    opam p >>= fun opam ->
+    (* We first run opam lint with -s and if there's something beyond 5
+       we rerun it without it for the error messages. It's ugly since 5
+       will still but opam lint's cli is broken. *)
+    let cmd = Cmd.(Opam.cmd % "lint" %% args) in
+    let handle_exit file status out = match status, out with
+    | `Exited 0,
+      ("" | "5" (* dirname version vs opam file version *)) -> `Ok
+    | _ ->
+        let err = OS.Cmd.err_run_out in
+        match OS.Cmd.(run_out ~err Cmd.(cmd % p file) |> out_string) with
+        | Ok (out, _) -> `Fail out
+        | Error (`Msg out) -> `Fail out
+    in
+    let cmd = Cmd.(cmd % "-s") in
+    let d = lint_file_with_cmd "opam file" ~cmd opam 0 (handle_exit opam) in
+    (* lint fields *)
+    doc_owner_repo_and_path p >>= fun _ ->
+    distrib_owner_and_repo p >>| fun _ ->
+    d)
 
 type lint = [ `Std_files | `Opam ]
 
