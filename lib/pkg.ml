@@ -34,6 +34,7 @@ type t =
   { name : string;
     version : string option;
     build_dir : Fpath.t option;
+    drop_v: bool;
     opam : Fpath.t option;
     opam_descr : Fpath.t option;
     opam_fields : (string list String.map, R.msg) result Lazy.t;
@@ -123,10 +124,10 @@ let distrib_uri ?(raw = false) p =
     uri
     >>= fun uri -> name p
     >>= fun name -> version p
-    >>= fun version -> Ok (drop_initial_v version)
+    >>= fun vers -> (if p.drop_v then Ok (drop_initial_v vers) else Ok vers)
     >>= fun version_num ->
     let defs = String.Map.(empty
-                           |> add "NAME" name |> add "VERSION" version
+                           |> add "NAME" name |> add "VERSION" vers
                            |> add "VERSION_NUM" version_num)
     in
     Pat.of_string uri >>| fun pat -> Pat.format defs pat
@@ -155,7 +156,7 @@ let distrib_filename ?(opam = false) p =
   let sep = if opam then '.' else '-' in
   name p
   >>= fun name -> version p
-  >>= fun version -> Ok (drop_initial_v version)
+  >>= fun vers -> (if p.drop_v then Ok (drop_initial_v vers) else Ok vers)
   >>= fun version_num -> Fpath.of_string (strf "%s%c%s" name sep version_num)
 
 let distrib_archive_path p =
@@ -272,7 +273,7 @@ let infer_name () =
   name
 
 let v
-    ?name ?version ?build_dir ?opam:opam_file ?opam_descr
+    ?name ?version ?(drop_v=true) ?build_dir ?opam:opam_file ?opam_descr
     ?readme ?change_log ?license ?distrib_uri ?distrib_file ?publish_msg
     ?publish_artefacts ?(distrib=Distrib.v ()) ?(lint_files = Some []) ()
   =
@@ -282,7 +283,7 @@ let v
   let licenses = match license with Some l -> Some [l] | None -> None in
   let rec opam_fields = lazy (opam p >>= fun o -> Opam.File.fields o)
   and p =
-    { name; version; build_dir; opam = opam_file; opam_descr;
+    { name; version; drop_v; build_dir; opam = opam_file; opam_descr;
       opam_fields; readmes; change_logs; licenses; distrib_uri; distrib_file;
       publish_msg; publish_artefacts; distrib; lint_files }
   in
@@ -291,7 +292,7 @@ let v
 (* Distrib *)
 
 let distrib_version_opam_files p ~version =
-  let version = drop_initial_v version in
+  let version = if p.drop_v then drop_initial_v version else version in
   opam p
   >>= fun file -> OS.File.read file
   >>= fun o -> Ok (Fmt.strf "version: \"%s\"\n%s" version o)

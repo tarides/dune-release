@@ -23,6 +23,10 @@ val dist_name : string option Term.t
 val dist_version : string option Term.t
 (** A [--dist-version] option to define the package version. *)
 
+val keep_v: bool Term.t
+(** A [--keep-v] option to not drop the 'v' at the beginning of
+   version strings. *)
+
 val dist_file : Fpath.t option Term.t
 (** A [--dist-file] option to define the distribution archive file. *)
 

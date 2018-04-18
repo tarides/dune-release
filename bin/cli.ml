@@ -41,6 +41,10 @@ let dist_version =
   let docv = "VERSION" in
   Arg.(value & opt (some string) None & info ["dist-version"] ~doc ~docv)
 
+let keep_v =
+  let doc = "Do not drop the initial 'v' in the version string." in
+  Arg.(value & flag & info ["keep-v"] ~doc)
+
 let dist_file =
   let doc = "The package distribution archive. If absent the file
              $(i,BUILD_DIR)/$(i,NAME)-$(i,VERSION).tbz (see options

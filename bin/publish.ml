@@ -31,7 +31,7 @@ let publish_distrib pkg =
   >>= fun archive -> Github.publish_distrib pkg ~msg ~archive
 
 let publish ()
-    build_dir name version opam change_log distrib_uri
+    build_dir keep_v name version opam change_log distrib_uri
     distrib_file publish_msg publish_artefacts
   =
   begin
@@ -39,7 +39,7 @@ let publish ()
     | [] -> None
     | v -> Some v
     in
-    let pkg = Pkg.v ?name ?version ?build_dir ?opam
+    let pkg = Pkg.v ?name ?version ?build_dir ?opam ~drop_v:(not keep_v)
         ?change_log ?distrib_uri ?distrib_file ?publish_msg
         ?publish_artefacts ()
     in
@@ -96,7 +96,7 @@ let man =
         "Publishes the documentation of a distribution archive on the WWW."); ]
 
 let cmd =
-  Term.(pure publish $ Cli.setup $ Cli.build_dir $
+  Term.(pure publish $ Cli.setup $ Cli.build_dir $ Cli.keep_v $
         Cli.dist_name $ Cli.dist_version $ Cli.dist_opam $
         Cli.change_log $ Cli.dist_uri $ Cli.dist_file $
         Cli.publish_msg $ artefacts),

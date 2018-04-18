@@ -16,6 +16,7 @@ type t
 val v :
   ?name:string ->
   ?version:string ->
+  ?drop_v:bool ->
   ?build_dir:Fpath.t ->
   ?opam:Fpath.t ->
   ?opam_descr:Fpath.t ->
