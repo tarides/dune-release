@@ -9,9 +9,9 @@ open Dune_release
 
 let absolute path = OS.Dir.current () >>| fun cwd -> Fpath.(cwd // path)
 
-let gen_doc dir =
+let gen_doc dir pkg_name =
   let do_doc () =
-    OS.Cmd.run Cmd.(v "jbuilder" % "build" % "@doc")
+    OS.Cmd.run Cmd.(v "jbuilder" % "build" % "-p" % pkg_name % "@doc")
     >>| fun () -> Fpath.(dir / "_build" / "default" / "_doc")
   in
   R.join @@ OS.Dir.with_current dir do_doc ()
@@ -20,7 +20,8 @@ let publish_doc pkg =
   Pkg.distrib_file pkg
   >>= fun distrib_file -> Pkg.publish_msg pkg
   >>= fun msg -> Archive.untbz ~clean:true distrib_file
-  >>= fun dir -> gen_doc dir
+  >>= fun dir -> Pkg.name pkg
+  >>= fun name -> gen_doc dir name
   >>= fun docdir -> absolute docdir
   >>= fun docdir -> Github.publish_doc pkg ~msg ~docdir
 
