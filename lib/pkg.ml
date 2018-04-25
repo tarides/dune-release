@@ -338,8 +338,9 @@ let distrib_archive p ~keep_dir =
 
 (* Test & build *)
 
-let run _ ~dir cmd ~args ~out =
-  let cmd = Cmd.(v "jbuilder" % cmd %% args) in
+let run p ~dir cmd ~args ~out =
+  let name = p.name in
+  let cmd = Cmd.(v "jbuilder" % cmd % "-p" % name %% args) in
   let run () = OS.Cmd.run_out cmd |> out in
   R.join @@ OS.Dir.with_current dir run ()
 
