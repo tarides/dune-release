@@ -114,7 +114,9 @@ let write_subst file vars s = (* very ugly mister, too lazy to rewrite *)
                 stop := true;
                 last := !last_id
             end
-          done
+          done;
+          (* we exited the loop because we reached eof *)
+          if not !stop then last := !last_id
         end
       done;
       output oc (Bytes.unsafe_of_string s) !start (len - !start);
