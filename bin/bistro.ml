@@ -6,14 +6,15 @@
 
 open Bos_setup
 
-let bistro () =
+let bistro () keep_v =
   begin
     let verb = Cmd.(v "--verbosity" % Logs.(level_to_string (level ()))) in
+    let args = if keep_v then Cmd.(verb % "--keep-v") else verb in
     let dune_release = Cmd.(v "dune-release") in
-    OS.Cmd.run Cmd.(dune_release % "distrib" %% verb)
-    >>= fun () -> OS.Cmd.run Cmd.(dune_release % "publish" %% verb)
-    >>= fun () -> OS.Cmd.run Cmd.(dune_release % "opam" %% verb % "pkg")
-    >>= fun () -> OS.Cmd.run Cmd.(dune_release % "opam" %% verb % "submit")
+    OS.Cmd.run Cmd.(dune_release % "distrib" %% args)
+    >>= fun () -> OS.Cmd.run Cmd.(dune_release % "publish" %% args)
+    >>= fun () -> OS.Cmd.run Cmd.(dune_release % "opam" %% args % "pkg")
+    >>= fun () -> OS.Cmd.run Cmd.(dune_release % "opam" %% args % "submit")
     >>= fun () -> Ok 0
   end
   |> Cli.handle_error
@@ -37,7 +38,7 @@ dune-release opam submit   # Submit it to OCaml's opam repository";
     `P "See dune-release(7) for more information."; ]
 
 let cmd =
-  Term.(pure bistro $ Cli.setup),
+  Term.(pure bistro $ Cli.setup $ Cli.keep_v),
   Term.info "bistro" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 (*---------------------------------------------------------------------------

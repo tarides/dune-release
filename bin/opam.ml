@@ -72,13 +72,13 @@ let field pkg field = match field with
 
 (* Command *)
 
-let opam () build_dir
+let opam () build_dir keep_v
     dist_name dist_version dist_opam dist_uri dist_file
     pkg_opam_dir pkg_name pkg_version pkg_opam pkg_descr
     readme change_log publish_msg action field_name
   =
   let p =
-    Pkg.v
+    Pkg.v ~drop_v:(not keep_v)
       ?build_dir ?name:pkg_name ?version:pkg_version ?opam:pkg_opam
       ?opam_descr:pkg_descr ?readme ?change_log ?publish_msg ()
   in
@@ -86,7 +86,7 @@ let opam () build_dir
   | `Descr -> descr p
   | `Pkg ->
       let dist_p =
-        Pkg.v
+        Pkg.v ~drop_v:(not keep_v)
           ?build_dir ?name:dist_name ?version:dist_version ?opam:dist_opam
           ?distrib_uri:dist_uri ?distrib_file:dist_file ?readme ?change_log
           ?publish_msg ()
@@ -187,7 +187,7 @@ let man =
 
 let cmd =
   let info = Term.info "opam" ~doc ~sdocs ~envs ~man ~man_xrefs in
-  let t = Term.(pure opam $ Cli.setup $ Cli.build_dir $
+  let t = Term.(pure opam $ Cli.setup $ Cli.build_dir $ Cli.keep_v $
                 Cli.dist_name $ Cli.dist_version $ Cli.dist_opam $
                 Cli.dist_uri $ Cli.dist_file $
                 pkg_opam_dir $ Cli.pkg_name $ pkg_version $ pkg_opam $

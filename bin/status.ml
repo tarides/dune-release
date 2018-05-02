@@ -25,10 +25,10 @@ let pp_status ppf (dirty, version, changes) = match changes with
       pp_since version pp_dirty dirty (Fmt.list pp_commit) changes
 
 let parse_version v =
-  let version =
+  let prefix, version =
     if String.is_prefix ~affix:"v" v
-    then String.with_index_range ~first:1 v
-    else v
+    then Some "v", String.with_index_range ~first:1 v
+    else None, v
   in
   try match String.cut ~sep:"." version with
   | None -> None
@@ -37,14 +37,14 @@ let parse_version v =
       match String.cut ~sep:"." rest with
       | None ->
           begin match String.cut ~sep:"+" rest with
-          | None -> Some (maj, int_of_string rest, 0, None)
-          | Some (min, i) ->  Some (maj, int_of_string min, 0, Some i)
+          | None -> Some (prefix, maj, int_of_string rest, 0, None)
+          | Some (min, i) ->  Some (prefix, maj, int_of_string min, 0, Some i)
           end
       | Some (min, rest) ->
           let min = int_of_string min in
           begin match String.cut ~sep:"+" rest with
-          | None -> Some (maj, min, int_of_string rest, None)
-          | Some (p, i) -> Some (maj, min, int_of_string p, Some i)
+          | None -> Some (prefix, maj, min, int_of_string rest, None)
+          | Some (p, i) -> Some (prefix, maj, min, int_of_string p, Some i)
           end
   with
   | Failure _ -> None

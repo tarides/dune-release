@@ -62,11 +62,11 @@ let log_wrote_archive ar =
   Logs.app (fun m -> m "Wrote archive %a" Text.Pp.path ar); Ok ()
 
 let distrib
-    () opam build_dir name version keep_dir skip_lint skip_build
+    () opam keep_v build_dir name version keep_dir skip_lint skip_build
     skip_tests
   =
   begin
-    let pkg = Pkg.v ?name ?version ?build_dir ?opam () in
+    let pkg = Pkg.v ?name ~drop_v:(not keep_v) ?version ?build_dir ?opam () in
     Pkg.distrib_archive pkg ~keep_dir
     >>= fun ar -> log_wrote_archive ar
     >>= fun () -> check_archive pkg ar ~skip_lint ~skip_build ~skip_tests
@@ -156,7 +156,7 @@ let man =
          across platforms."); ]
 
 let cmd =
-  Term.(pure distrib $ Cli.setup $ Cli.dist_opam $
+  Term.(pure distrib $ Cli.setup $ Cli.dist_opam $ Cli.keep_v $
         Cli.build_dir $ Cli.dist_name $ Cli.dist_version $ keep_build_dir $
         skip_lint $ skip_build $ skip_tests),
   Term.info "distrib" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
