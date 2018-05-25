@@ -60,7 +60,7 @@ Most of the code in this repository has been written and has already
 been released part of the [topkg](http://erratique.ch/software/topkg)
 tool.
 
-The main differences between `dune-release` are `topkg`:
+The main differences between `dune-release` and `topkg` are:
 
 - Remove `pkg/pkg.ml`;
 - Assume the project is built with [dune](https://github.com/ocaml/dune);
