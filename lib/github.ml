@@ -54,8 +54,8 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
     R.error_msgf "%a directory is not rooted in the repository or not relative"
       Fpath.pp dir
   else
-  let clonedir = Fpath.(parent docdir / strf "%s-%s.pubdoc" name version) in
-  Sos.delete_dir ~dry_run clonedir
+  let clonedir = Fpath.(parent (parent (parent docdir)) / "gh-pages") in
+  OS.Dir.delete ~recurse:true clonedir
   >>= fun () -> Vcs.get ()
   >>= fun repo -> Vcs.clone ~dry_run:false ~dir:clonedir repo
   >>= fun () -> Sos.with_dir ~dry_run clonedir (replace_dir_and_push docdir) dir

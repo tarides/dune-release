@@ -7,8 +7,6 @@
 open Bos_setup
 open Dune_release
 
-let absolute path = OS.Dir.current () >>| fun cwd -> Fpath.(cwd // path)
-
 let gen_doc ~dry_run dir pkg_name =
   let do_doc () =
     Sos.run ~dry_run Cmd.(v "jbuilder" % "build" % "-p" % pkg_name % "@doc")
@@ -18,18 +16,16 @@ let gen_doc ~dry_run dir pkg_name =
 
 let publish_doc ~dry_run pkg =
   Pkg.distrib_file ~dry_run pkg
-  >>= fun distrib_file -> Pkg.publish_msg pkg
-  >>= fun msg -> Archive.untbz ~dry_run ~clean:true distrib_file
+  >>= fun archive -> Pkg.publish_msg pkg
+  >>= fun msg -> Archive.untbz ~dry_run ~clean:true archive
   >>= fun dir -> Pkg.name pkg
   >>= fun name -> gen_doc ~dry_run dir name
-  >>= fun docdir -> absolute docdir
   >>= fun docdir -> Github.publish_doc ~dry_run pkg ~msg ~docdir
 
 let publish_distrib ~dry_run pkg =
   Pkg.distrib_file ~dry_run pkg
-  >>= fun distrib_file -> Pkg.publish_msg pkg
-  >>= fun msg -> absolute distrib_file
-  >>= fun archive -> Github.publish_distrib ~dry_run pkg ~msg ~archive
+  >>= fun archive -> Pkg.publish_msg pkg
+  >>= fun msg     -> Github.publish_distrib ~dry_run pkg ~msg ~archive
 
 let publish ()
     build_dir keep_v name version opam change_log distrib_uri

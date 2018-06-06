@@ -33,13 +33,19 @@ let current_dir () =
           assert (List.hd (Fpath.segs d) = "_build");
           Some d
 
+let last_dir = ref root
+
 let show ?(color=`Yellow) fmt =
   Fmt.kstrf (fun s ->
       let pp_cwd ppf () = match current_dir () with
       | None   -> ()
-      | Some d -> Fmt.pf ppf "[%a] " Fmt.(styled `Underline Fpath.pp) d
+      | Some d ->
+          if not (Fpath.equal d !last_dir) then (
+            last_dir := d;
+            Fmt.pf ppf "   [in %a]\n" Fmt.(styled `Underline Fpath.pp) d
+          )
       in
-      Logs.app (fun m ->m "%a %a%s" Fmt.(styled color string) "=>" pp_cwd () s);
+      Logs.app (fun m ->m "%a%a %s" pp_cwd () Fmt.(styled color string) "=>" s);
       Ok ()
     ) fmt
 
@@ -64,10 +70,10 @@ let delete_dir ~dry_run dir =
   else (
     let dir' = match current_dir () with
     | None   -> dir
-    | Some d -> Fpath.(d // dir)
+    | Some d -> Fpath.(normalize @@ d // dir)
     in
     let _ = show ~color:`Green "rmdir %a" Fpath.pp dir' in
-    OS.Dir.delete ~recurse:true dir
+    Ok ()
   )
 
 let delete_path ~dry_run p =
@@ -75,10 +81,10 @@ let delete_path ~dry_run p =
   else (
     let p' = match current_dir () with
     | None   -> p
-    | Some d -> Fpath.(d // p)
+    | Some d -> Fpath.(normalize @@ d // p)
     in
     let _ = show ~color:`Green "rm %a" Fpath.pp p' in
-    OS.Path.delete ~recurse:true p
+    Ok ()
   )
 
 let write_file ~dry_run p v =
