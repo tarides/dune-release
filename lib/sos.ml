@@ -16,7 +16,7 @@
 
 open Bos_setup
 
-type error = Rresult.R.msg
+type error = R.msg
 
 let root = match OS.Dir.current () with
 | Error (`Msg e) -> Fmt.failwith "invalid root: %s" e
@@ -61,14 +61,14 @@ let run ~dry_run ?(force=false) v =
     OS.Cmd.run v
   )
 
-let run_out ~dry_run ?(force=false) ?err v =
-  if not dry_run then OS.Cmd.run_out v
+let run_out ~dry_run ?(force=false) ?err ~default v f =
+  if not dry_run then OS.Cmd.run_out ?err v |> f
   else if not force then
     let _ = show "exec:@[@ %a@]" Cmd.pp v in
-    OS.Cmd.run_out ?err Cmd.(v "echo" % "<dry-run>")
+    Ok default
   else (
     let _ = show ~action:`Done "exec:@[@ %a@]" Cmd.pp v in
-    OS.Cmd.run_out v
+    OS.Cmd.run_out ?err v |> f
   )
 
 let run_io ~dry_run ~default v i f =
@@ -77,15 +77,18 @@ let run_io ~dry_run ~default v i f =
   let _ = show "exec:@[@ %a@]" Cmd.pp v in
   Ok default
 
-let delete_dir ~dry_run dir =
+let delete_dir ~dry_run ?(force=false) dir =
   if not dry_run then OS.Dir.delete ~recurse:true dir
   else (
     let dir' = match current_dir () with
     | None   -> dir
     | Some d -> Fpath.(normalize @@ d // dir)
     in
-    let _ = show ~action:`Done "rmdir %a" Fpath.pp dir' in
-    Ok ()
+    if not force then show "rmdir %a" Fpath.pp dir'
+    else (
+      let _ = show ~action:`Done "rmdir %a" Fpath.pp dir' in
+      OS.Dir.delete ~recurse:true dir
+    )
   )
 
 let delete_path ~dry_run p =
@@ -130,3 +133,8 @@ let file_must_exist ~dry_run f =
   else
   let _ = show "must exists %a" Fpath.pp f in
   Ok f
+
+let out y =
+  match OS.Cmd.run_out Cmd.(v "true") |> OS.Cmd.out_string with
+  | Ok (_, x) -> y, x
+  | Error _   -> assert false

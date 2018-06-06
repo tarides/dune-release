@@ -98,7 +98,7 @@ val tracked_files : ?tree_ish:string -> t -> (Fpath.t list, R.msg) result
 
 (** {1:ops Repository operations} *)
 
-val clone : dry_run:bool -> ?force:bool -> dir:Fpath.t ->
+val clone : dry_run:bool -> ?force:bool -> ?branch:string -> dir:Fpath.t ->
   t -> (unit, R.msg) result
 (** [clone ~dir r] clones [r] in directory [dir]. *)
 

@@ -106,7 +106,7 @@ module File = struct
     let add acc (name, _) = String.Set.add name acc in
     List.fold_left add String.Set.empty fields
 
-  let fields file =
+  let fields ~dry_run file =
     let parse file  =
       let file = OpamFilename.of_string (Fpath.to_string file) in
       let opam = OpamFile.OPAM.read (OpamFile.make file) in
@@ -118,7 +118,8 @@ module File = struct
       known_fields
     in
     Logs.info (fun m -> m "Parsing opam file %a" Fpath.pp file);
-    try Ok (parse file) with
+    if dry_run then Ok String.Map.empty
+    else try Ok (parse file) with
     | _ ->
         (* Apparently in at least opam-lib 1.2.2, the error will be logged
              on stdout. *)

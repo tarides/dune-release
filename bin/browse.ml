@@ -68,8 +68,8 @@ let parse_target, max_target_len =
 
 (* opam field uris *)
 
-let opam_field_uri opam field =
-  Opam.File.fields opam
+let opam_field_uri ~dry_run opam field =
+  Opam.File.fields ~dry_run opam
   >>= fun fields -> match String.Map.find field fields with
   | Some (uri :: _) -> Ok uri
   | Some [] -> R.error_msgf "%a: field %s is empty" Fpath.pp opam field
@@ -77,13 +77,13 @@ let opam_field_uri opam field =
 
 (* Browse command *)
 
-let browse () name opam browser prefix background target =
+let browse () dry_run name opam browser prefix background target =
   begin
     let uri = match parse_target target with
     | `Ok (`Uri uri) -> Ok uri
     | `Ok (`Opam field) ->
-        let pkg = Pkg.v ?opam ?name () in
-        Pkg.opam pkg >>= fun opam -> opam_field_uri opam field
+        let pkg = Pkg.v ~dry_run ?opam ?name () in
+        Pkg.opam pkg >>= fun opam -> opam_field_uri ~dry_run opam field
     | `Error msg ->
         let uri_prefixes = ["http://"; "https://"; "file://"] in
         if List.exists (fun p -> String.is_prefix ~affix:p target) uri_prefixes
@@ -122,7 +122,7 @@ let man =
     `Blocks (List.(tl @@ rev @@ fold_left target [] targets)); ]
 
 let cmd =
-  Term.(pure browse $ Cli.setup $ Cli.pkg_name $ Cli.opam $
+  Term.(pure browse $ Cli.setup $ Cli.dry_run $ Cli.pkg_name $ Cli.opam $
         Webbrowser_cli.browser $ Webbrowser_cli.prefix $
         Webbrowser_cli.background $ target),
   Term.info "browse" ~doc ~sdocs ~exits ~man ~man_xrefs

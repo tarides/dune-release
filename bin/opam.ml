@@ -78,7 +78,7 @@ let opam () dry_run build_dir keep_v
     readme change_log publish_msg action field_name
   =
   let p =
-    Pkg.v ~drop_v:(not keep_v)
+    Pkg.v ~dry_run ~drop_v:(not keep_v)
       ?build_dir ?name:pkg_name ?version:pkg_version ?opam:pkg_opam
       ?opam_descr:pkg_descr ?readme ?change_log ?publish_msg ()
   in
@@ -86,7 +86,7 @@ let opam () dry_run build_dir keep_v
   | `Descr -> descr p
   | `Pkg ->
       let dist_p =
-        Pkg.v ~drop_v:(not keep_v)
+        Pkg.v ~dry_run ~drop_v:(not keep_v)
           ?build_dir ?name:dist_name ?version:dist_version ?opam:dist_opam
           ?distrib_uri:dist_uri ?distrib_file:dist_file ?readme ?change_log
           ?publish_msg ()

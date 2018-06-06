@@ -43,7 +43,7 @@ module File : sig
       {!fields}, excluding extension fields (not yet supported by
       [opam-lib] 1.2.2). *)
 
-  val fields : Fpath.t -> ((string list) String.map , R.msg) result
+  val fields : dry_run:bool -> Fpath.t -> ((string list) String.map , R.msg) result
   (** [fields f] returns a simplified model of the fields of the opam
       file [f]. The domain of the result is included in
       {!field_names}. Note that the [depends:] and [depopts:] fields

@@ -110,7 +110,7 @@ val massage : t -> (unit -> (unit, R.msg) result)
 val exclude_paths : t -> (unit -> (Fpath.t list, R.msg) result)
 
 val define_watermarks :
-  name:string -> version:string -> opam:Fpath.t ->
+  dry_run:bool -> name:string -> version:string -> opam:Fpath.t ->
   watermark list -> (string * string) list
 
 val watermark_files :

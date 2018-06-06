@@ -37,7 +37,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
     let msg = strf "Update %s doc to %s." name version in
     Vcs.get ()
     >>= fun repo -> Ok (git_for_repo repo)
-    >>= fun git -> Sos.run ~dry_run Cmd.(git % "checkout" % branch)
+    >>= fun git -> Sos.run ~dry_run ~force:true Cmd.(git % "checkout" % branch)
     >>= fun () -> delete dir
     >>= fun () -> cp docdir dir
     >>= fun () -> (if dry_run then Ok true else Vcs.is_dirty repo)
@@ -55,7 +55,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
       Fpath.pp dir
   else
   let clonedir = Fpath.(parent (parent (parent docdir)) / "gh-pages") in
-  OS.Dir.delete ~recurse:true clonedir
+  Sos.delete_dir ~dry_run ~force:true clonedir
   >>= fun () -> Vcs.get ()
   >>= fun repo -> Vcs.clone ~dry_run ~force:true ~dir:clonedir repo
   >>= fun () -> Sos.with_dir ~dry_run clonedir (replace_dir_and_push docdir) dir
@@ -105,8 +105,9 @@ let publish_doc ~dry_run ~msg:_ ~docdir p =
   | Ok () -> Ok ()
   | Error _ -> create_empty_gh_pages git)
   >>= fun () ->
-  (Sos.run_out ~dry_run ~force:true Cmd.(git % "rev-parse" % "FETCH_HEAD")
-   |> OS.Cmd.to_string)
+  Sos.run_out ~dry_run ~force:true Cmd.(git % "rev-parse" % "FETCH_HEAD")
+    ~default:""
+    OS.Cmd.to_string
   >>= fun id ->
   Sos.run ~dry_run ~force:true Cmd.(git % "branch" % "-f" % "gh-pages" % id)
   >>= fun () ->

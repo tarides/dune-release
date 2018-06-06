@@ -272,7 +272,7 @@ let infer_name () =
   in
   name
 
-let v
+let v ~dry_run
     ?name ?version ?(drop_v=true) ?build_dir ?opam:opam_file ?opam_descr
     ?readme ?change_log ?license ?distrib_uri ?distrib_file ?publish_msg
     ?publish_artefacts ?(distrib=Distrib.v ()) ?(lint_files = Some []) ()
@@ -281,7 +281,7 @@ let v
   let readmes = match readme with Some r -> Some [r] | None -> None in
   let change_logs = match change_log with Some c -> Some [c] | None -> None in
   let licenses = match license with Some l -> Some [l] | None -> None in
-  let rec opam_fields = lazy (opam p >>= fun o -> Opam.File.fields o)
+  let rec opam_fields = lazy (opam p >>= fun o -> Opam.File.fields ~dry_run o)
   and p =
     { name; version; drop_v; build_dir; opam = opam_file; opam_descr;
       opam_fields; readmes; change_logs; licenses; distrib_uri; distrib_file;
@@ -301,7 +301,7 @@ let distrib_version_opam_files ~dry_run p ~version =
 let distrib_prepare ~dry_run p ~dist_build_dir ~name ~version ~opam =
   let d = p.distrib in
   let ws = Distrib.watermarks d in
-  let ws_defs = Distrib.define_watermarks ws ~name ~version ~opam in
+  let ws_defs = Distrib.define_watermarks ws ~dry_run ~name ~version ~opam in
   Sos.with_dir ~dry_run dist_build_dir (fun () ->
       Distrib.files_to_watermark d ()
       >>= fun files -> Distrib.watermark_files ws_defs files
@@ -319,7 +319,7 @@ let distrib_archive ~dry_run p ~keep_dir =
   >>= fun version -> opam p
   >>= fun opam -> distrib_filename p
   >>= fun root -> Ok Fpath.(build_dir // root + ".build")
-  >>= fun dist_build_dir -> Sos.delete_dir ~dry_run dist_build_dir
+  >>= fun dist_build_dir -> Sos.delete_dir ~dry_run ~force:true dist_build_dir
   >>= fun () -> Vcs.get ()
   >>= fun repo -> Vcs.commit_id repo ~dirty:false
   >>= fun head -> Vcs.commit_ptime_s repo ~commit_ish:head
@@ -339,15 +339,27 @@ let distrib_archive ~dry_run p ~keep_dir =
 
 (* Test & build *)
 
-let run ~dry_run p ~dir cmd ~args ~out =
+type f =
+  dry_run:bool ->
+  dir:Fpath.t ->
+  args:Cmd.t ->
+  out:(OS.Cmd.run_out -> (string * OS.Cmd.run_status, Sos.error) result) ->
+  t -> (string * OS.Cmd.run_status, Sos.error) result
+
+let run ~dry_run ~dir ~args ~out ~default p cmd =
   let name = p.name in
   let cmd = Cmd.(v "jbuilder" % cmd % "-p" % name %% args) in
-  let run () = Sos.run_out ~dry_run cmd |> out in
+  let run () = Sos.run_out ~dry_run cmd ~default out in
   R.join @@ Sos.with_dir ~dry_run dir run ()
 
-let test ~dry_run ~dir ~args ~out p = run ~dry_run p ~dir "runtest" ~args ~out
-let build ~dry_run ~dir ~args ~out p = run ~dry_run p ~dir "build" ~args ~out
-let clean ~dry_run ~dir ~args ~out p= run ~dry_run p ~dir "clean" ~args ~out
+let test ~dry_run ~dir ~args ~out p =
+  run ~dry_run ~dir ~args ~out ~default:(Sos.out "") p "runtest"
+
+let build ~dry_run ~dir ~args ~out p =
+  run ~dry_run ~dir ~args ~out ~default:(Sos.out "") p "build"
+
+let clean ~dry_run ~dir ~args ~out p =
+  run ~dry_run ~dir ~args ~out ~default:(Sos.out "") p "clean"
 
 (* Lint *)
 
@@ -389,9 +401,11 @@ let lint_std_files ~dry_run p =
 
 let lint_file_with_cmd ~dry_run file_kind ~cmd file errs handle_exit =
   let run_linter cmd file ~exists =
-    if not exists then Ok (`Fail (strf "%a: No such file" Fpath.pp file)) else
+    if not (exists || dry_run) then
+      Ok (`Fail (strf "%a: No such file" Fpath.pp file))
+    else
     Sos.run_out ~dry_run ~err:OS.Cmd.err_run_out Cmd.(cmd % p file)
-    |> OS.Cmd.out_string
+      ~default:(Sos.out "") OS.Cmd.out_string
     >>| fun (out, status) -> handle_exit (snd status) out
   in
   begin
@@ -430,7 +444,7 @@ let lint_opams ~dry_run p =
     | _ ->
         let err = OS.Cmd.err_run_out in
         match
-          Sos.run_out ~dry_run ~err Cmd.(cmd % p file) |> OS.Cmd.out_string
+          Sos.run_out ~dry_run ~err Cmd.(cmd % p file) ~default:(Sos.out "") OS.Cmd.out_string
         with
         | Ok (out, _) -> `Fail out
         | Error (`Msg out) -> `Fail out
@@ -440,6 +454,8 @@ let lint_opams ~dry_run p =
       lint_file_with_cmd ~dry_run "opam file" ~cmd opam 0 (handle_exit opam)
     in
     (* lint fields *)
+    if dry_run then Ok 0
+    else
     doc_owner_repo_and_path p >>= fun _ ->
     distrib_owner_and_repo p >>| fun _ ->
     d)

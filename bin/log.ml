@@ -34,7 +34,7 @@ let commit ~dry_run change_log =
 
 let log () dry_run name change_log action last last_version no_pager =
   begin
-    let pkg = Pkg.v ?change_log ?name () in
+    let pkg = Pkg.v ~dry_run ?change_log ?name () in
     Pkg.change_log pkg
     >>= fun change_log -> match action with
     | `Show -> show change_log last last_version no_pager >>= fun () -> Ok 0

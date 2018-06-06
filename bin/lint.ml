@@ -9,7 +9,7 @@ open Dune_release
 
 let lint () dry_run name lints =
   begin
-    let pkg = Pkg.v ?name () in
+    let pkg = Pkg.v ~dry_run ?name () in
     OS.Dir.current ()
     >>= fun dir -> Pkg.lint ~dry_run ~dir pkg lints
   end

@@ -14,6 +14,7 @@ type t
 (** The type for package descriptions. *)
 
 val v :
+  dry_run:bool ->
   ?name:string ->
   ?version:string ->
   ?drop_v:bool ->
@@ -99,26 +100,24 @@ val doc_owner_repo_and_path : t -> (string * string * Fpath.t, R.msg) result
 
 val distrib_owner_and_repo : t -> (string * string, R.msg) result
 
+type f =
+  dry_run:bool ->
+  dir:Fpath.t ->
+  args:Cmd.t ->
+  out:(OS.Cmd.run_out -> (string * OS.Cmd.run_status, Sos.error) result) ->
+  t -> (string * OS.Cmd.run_status, Sos.error) result
+
 (** {1 Test} *)
 
-val test :
-  dry_run:bool -> dir:Fpath.t -> args:Cmd.t ->
-  out:(OS.Cmd.run_out -> ('a, R.msg) result) ->
-  t -> ('a, R.msg) result
+val test : f
 
 (** {1 Build} *)
 
-val build :
-  dry_run:bool -> dir:Fpath.t -> args:Cmd.t ->
-  out:(OS.Cmd.run_out -> ('a, R.msg) result) ->
-  t -> ('a, R.msg) result
+val build : f
 
 (** {1 Clean} *)
 
-val clean :
-  dry_run:bool -> dir:Fpath.t -> args:Cmd.t ->
-  out:(OS.Cmd.run_out -> ('a, R.msg) result) ->
-  t -> ('a, R.msg) result
+val clean : f
 
 (** {1 Lint} *)
 

@@ -66,12 +66,14 @@ let distrib
     skip_tests
   =
   begin
-    let pkg = Pkg.v ?name ~drop_v:(not keep_v) ?version ?build_dir ?opam () in
+    let pkg =
+      Pkg.v ~dry_run ?name ~drop_v:(not keep_v) ?version ?build_dir ?opam ()
+    in
     Pkg.distrib_archive ~dry_run pkg ~keep_dir
     >>= fun ar -> log_wrote_archive ar
     >>= fun () -> check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests pkg ar
     >>= fun errs -> log_footprint pkg ar
-    >>= fun () -> warn_if_vcs_dirty ()
+    >>= fun () -> (if dry_run then Ok () else warn_if_vcs_dirty ())
     >>= fun () -> Ok errs
   end
   |> Cli.handle_error

@@ -18,24 +18,25 @@ type watermark =
   | `Vcs of [ `Commit_id ]
   | `Opam of Fpath.t option * string * string ]
 
-let opam_fields file =
-  (Opam.File.fields file)
+let opam_fields ~dry_run file =
+  (Opam.File.fields ~dry_run file)
   |> R.reword_error_msg ~replace:true (fun msg -> R.msgf "Watermarks: %s" msg)
   |> Logs.on_error_msg ~level:Logs.Warning ~use:(fun () -> String.Map.empty)
 
 let opam_field =
   let opam_memo = ref Fpath.Map.empty in (* memoizes the opam files *)
-  let rec opam_field file field = match Fpath.Map.find file !opam_memo with
+  let rec opam_field ~dry_run file field = match Fpath.Map.find file !opam_memo with
   | None ->
-      opam_memo := Fpath.Map.add file (opam_fields file) !opam_memo;
-      opam_field file field
+      opam_memo := Fpath.Map.add file (opam_fields ~dry_run file) !opam_memo;
+      opam_field ~dry_run file field
   | Some fields ->
       match String.Map.find field fields with
       | Some vs -> vs
       | None ->
-          Logs.warn
-            (fun m -> m "file %a: opam field %S undefined or unsupported"
-                Fpath.pp file field);
+          if not dry_run then
+            Logs.warn
+              (fun m -> m "file %a: opam field %S undefined or unsupported"
+                  Fpath.pp file field);
           ["UNDEFINED"]
   in
   opam_field
@@ -50,7 +51,7 @@ let drop_initial_v version = match String.head version with
 | Some ('v' | 'V') -> String.with_index_range ~first:1 version
 | None | Some _ -> version
 
-let define_watermarks ~name ~version ~opam watermarks =
+let define_watermarks ~dry_run ~name ~version ~opam watermarks =
   let define (id, v) =
     let (id, v as def) = match v with
     | `String s -> (id, s)
@@ -60,7 +61,7 @@ let define_watermarks ~name ~version ~opam watermarks =
     | `Vcs `Commit_id -> (id, vcs_commit_id ())
     | `Opam (file, field, sep) ->
         let file = match file with None -> opam | Some file -> file in
-        (id, String.concat ~sep (opam_field file field))
+        (id, String.concat ~sep (opam_field ~dry_run file field))
     in
     Logs.info (fun m -> m "Watermark %s = %S" id v);
     def

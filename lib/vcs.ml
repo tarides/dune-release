@@ -63,9 +63,9 @@ let find_git () = Lazy.force git >>= function
 let err_git_exit cmd c = R.error_msgf "%a exited with code %d" Cmd.dump cmd c
 let err_git_signal cmd c = R.error_msgf "%a exited with signal %d" Cmd.dump cmd c
 
-let run_git ~dry_run ?force r args out =
+let run_git ~dry_run ?force ~default r args out =
   let git = Cmd.(cmd r %% args) in
-  Sos.run_out ~dry_run ?force git |> out >>= function
+  Sos.run_out ~dry_run ?force git ~default out >>= function
   | (v, (_, `Exited 0)) -> Ok v
   | (_, (_, `Exited c)) -> err_git_exit git c
   | (_, (_, `Signaled c)) -> err_git_signal git c
@@ -98,8 +98,15 @@ let dirtify_if ~dirty r id = match dirty with
     git_is_dirty r >>= fun is_dirty ->
     Ok (if is_dirty then dirtify id else id)
 
+module D = struct
+  let string = Sos.out ""
+  let list = Sos.out []
+  let unit = Sos.out ()
+end
+
 let git_head ~dirty r =
-  run_git ~dry_run:false r Cmd.(v "rev-parse" % "HEAD") OS.Cmd.out_string
+  run_git ~dry_run:false r Cmd.(v "rev-parse" % "HEAD")
+    ~default:D.string OS.Cmd.out_string
   >>= fun id -> dirtify_if ~dirty r id
 
 let git_commit_id ~dirty r commit_ish =
@@ -107,44 +114,51 @@ let git_commit_id ~dirty r commit_ish =
   let id = Cmd.(v "rev-parse" % "--verify" %
                 (commit_ish ^ "^{commit}"))
   in
-  run_git ~dry_run:false r id OS.Cmd.out_string >>= fun id ->
+  run_git ~dry_run:false r id ~default:D.string OS.Cmd.out_string >>= fun id ->
   dirtify_if ~dirty r id
 
 let git_commit_ptime_s r commit_ish =
   let time = Cmd.(v "show" % "-s" % "--format=%ct" % commit_ish) in
-  run_git ~dry_run:false r time OS.Cmd.out_string
+  run_git ~dry_run:false r time ~default:D.string OS.Cmd.out_string
   >>= fun ptime -> try Ok (int_of_string ptime) with
   | Failure _ -> R.error_msgf "Could not parse timestamp from %S" ptime
 
 let git_describe ~dirty r commit_ish =
   let dirty = dirty && commit_ish = "HEAD" in
-  run_git ~dry_run:false r
+  let git_describe =
     Cmd.(git_work_tree r % "describe" % "--always" %%
          on dirty (v "--dirty") %% on (not dirty) (v commit_ish))
-    OS.Cmd.out_string
+  in
+  run_git ~dry_run:false r git_describe ~default:D.string OS.Cmd.out_string
 
 let git_tags r =
-  run_git ~dry_run:false r Cmd.(v "tag" % "--list") OS.Cmd.out_lines
+  run_git ~dry_run:false r Cmd.(v "tag" % "--list")
+    ~default:D.list OS.Cmd.out_lines
 
-let git_changes r ~after ~until =
+let git_changes ~after ~until r =
   let range =
     if after = "" then until else
     Fmt.strf "%s..%s" after until
   in
   let changes = Cmd.(v "log" % "--oneline" % "--no-decorate" % range) in
-  run_git ~dry_run:false r changes OS.Cmd.out_lines
+  run_git ~dry_run:false r changes ~default:D.list OS.Cmd.out_lines
   >>= fun commits -> parse_changes commits
 
-let git_tracked_files r ~tree_ish =
+let git_tracked_files ~tree_ish r =
   let tracked =
     Cmd.(git_work_tree r % "ls-tree" % "--name-only" % "-r" % tree_ish)
   in
-  run_git ~dry_run:false r tracked OS.Cmd.out_lines
+  run_git ~dry_run:false r ~default:D.list tracked OS.Cmd.out_lines
   >>| List.map Fpath.v
 
-let git_clone ~dry_run ?force ~dir:d r =
-  let clone = Cmd.(v "clone" % "--local" % p (dir r) % p d) in
-  run_git ~dry_run ?force r clone OS.Cmd.out_stdout >>= fun _ -> Ok ()
+let git_clone ~dry_run ?force ?branch ~dir:d r =
+  let branch = match branch with
+  | None   -> Cmd.empty
+  | Some b -> Cmd.(v "-b" % b)
+  in
+  let clone = Cmd.(v "clone" % "--local" %% branch % p (dir r) % p d) in
+  run_git ~dry_run ?force r clone ~default:D.unit OS.Cmd.out_stdout
+  >>= fun _ -> Ok ()
 
 let git_checkout ~dry_run r ~branch ~commit_ish =
   let branch = match branch with
@@ -152,7 +166,7 @@ let git_checkout ~dry_run r ~branch ~commit_ish =
   | Some branch -> Cmd.(v "-b" % branch)
   in
   run_git ~dry_run r Cmd.(v "checkout" % "--quiet" %% branch % commit_ish)
-    OS.Cmd.out_string
+    ~default:D.string OS.Cmd.out_string
   >>= fun _ -> Ok ()
 
 let git_commit_files ~dry_run r ~msg files =
@@ -161,7 +175,8 @@ let git_commit_files ~dry_run r ~msg files =
   | Some m -> Cmd.(v "-m" % m)
   in
   let files = Cmd.(of_list @@ List.map p files) in
-  run_git ~dry_run r Cmd.(v "commit" %% msg %% files) OS.Cmd.out_stdout
+  run_git ~dry_run r Cmd.(v "commit" %% msg %% files)
+    ~default:D.unit OS.Cmd.out_stdout
 
 let git_tag ~dry_run r ~force ~sign ~msg ~commit_ish tag =
   let msg = match msg with
@@ -170,10 +185,10 @@ let git_tag ~dry_run r ~force ~sign ~msg ~commit_ish tag =
   in
   let flags = Cmd.(on force (v "-f") %% on sign (v "-s")) in
   run_git ~dry_run r Cmd.(v "tag" % "-a" %% flags %% msg % tag % commit_ish)
-    OS.Cmd.out_stdout
+    ~default:D.unit OS.Cmd.out_stdout
 
 let git_delete_tag ~dry_run r tag =
-  run_git ~dry_run r Cmd.(v "tag" % "-d" % tag) OS.Cmd.out_stdout
+  run_git ~dry_run r Cmd.(v "tag" % "-d" % tag) ~default:D.unit OS.Cmd.out_stdout
 
 (* Hg support *)
 
@@ -381,8 +396,8 @@ let tracked_files ?(tree_ish = "HEAD") = function
 
 (* Operations *)
 
-let clone ~dry_run ?force ~dir r = match r with
-| (`Git, _, _ as r) -> git_clone ~dry_run ?force ~dir r
+let clone ~dry_run ?force ?branch ~dir r = match r with
+| (`Git, _, _ as r) -> git_clone ~dry_run ?force ?branch ~dir r
 | (`Hg, _, _ as r) -> hg_clone r ~dir
 
 let checkout ~dry_run ?branch r ~commit_ish = match r with

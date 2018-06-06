@@ -36,7 +36,8 @@ let publish ()
     | [] -> None
     | v -> Some v
     in
-    let pkg = Pkg.v ?name ?version ?build_dir ?opam ~drop_v:(not keep_v)
+    let pkg =
+      Pkg.v ~dry_run ?name ?version ?build_dir ?opam ~drop_v:(not keep_v)
         ?change_log ?distrib_uri ?distrib_file ?publish_msg
         ?publish_artefacts ()
     in
