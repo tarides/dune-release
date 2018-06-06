@@ -98,19 +98,21 @@ val tracked_files : ?tree_ish:string -> t -> (Fpath.t list, R.msg) result
 
 (** {1:ops Repository operations} *)
 
-val clone : t -> dir:Fpath.t -> (unit, R.msg) result
-(** [clone r ~dir] clones [r] in directory [dir]. *)
+val clone : dry_run:bool -> dir:Fpath.t -> t -> (unit, R.msg) result
+(** [clone ~dir r] clones [r] in directory [dir]. *)
 
-val checkout : ?branch:string -> t -> commit_ish:commit_ish -> (unit, R.msg) result
+val checkout : dry_run:bool ->
+  ?branch:string -> t -> commit_ish:commit_ish -> (unit, R.msg) result
 (** [checkout r ~branch commit_ish] checks out [commit_ish]. Checks
     out in a new branch [branch] if provided. *)
 
-val commit_files : ?msg:string -> t -> Fpath.t list -> (unit, R.msg) result
+val commit_files : dry_run:bool ->
+  ?msg:string -> t -> Fpath.t list -> (unit, R.msg) result
 (** [commit_files r ~msg files] commits the file [files] with message
     [msg] (if unspecified the VCS should prompt). *)
 
 val tag :
-  ?force:bool -> ?sign:bool -> ?msg:string -> ?commit_ish:string -> t ->
+  dry_run:bool -> ?force:bool -> ?sign:bool -> ?msg:string -> ?commit_ish:string -> t ->
   string -> (unit, R.msg) result
 (** [tag r ~force ~sign ~msg ~commit_ish t] tags [commit_ish] with [t]
     and message [msg] (if unspecified the VCS should prompt).  if
@@ -118,7 +120,7 @@ val tag :
     only).  If [force] is [true] (default to [false]) doesn't fail if
     the tag already exists. *)
 
-val delete_tag : t -> string -> (unit, R.msg) result
+val delete_tag : dry_run:bool -> t -> string -> (unit, R.msg) result
 (** [delete_tag r t] deletes tag [t] in repo [r]. *)
 
 (*---------------------------------------------------------------------------

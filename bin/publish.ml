@@ -9,31 +9,31 @@ open Dune_release
 
 let absolute path = OS.Dir.current () >>| fun cwd -> Fpath.(cwd // path)
 
-let gen_doc dir pkg_name =
+let gen_doc ~dry_run dir pkg_name =
   let do_doc () =
-    OS.Cmd.run Cmd.(v "jbuilder" % "build" % "-p" % pkg_name % "@doc")
+    Sos.run ~dry_run Cmd.(v "jbuilder" % "build" % "-p" % pkg_name % "@doc")
     >>| fun () -> Fpath.(dir / "_build" / "default" / "_doc")
   in
-  R.join @@ OS.Dir.with_current dir do_doc ()
+  R.join @@ Sos.with_dir ~dry_run dir do_doc ()
 
-let publish_doc pkg =
-  Pkg.distrib_file pkg
+let publish_doc ~dry_run pkg =
+  Pkg.distrib_file ~dry_run pkg
   >>= fun distrib_file -> Pkg.publish_msg pkg
-  >>= fun msg -> Archive.untbz ~clean:true distrib_file
+  >>= fun msg -> Archive.untbz ~dry_run ~clean:true distrib_file
   >>= fun dir -> Pkg.name pkg
-  >>= fun name -> gen_doc dir name
+  >>= fun name -> gen_doc ~dry_run dir name
   >>= fun docdir -> absolute docdir
-  >>= fun docdir -> Github.publish_doc pkg ~msg ~docdir
+  >>= fun docdir -> Github.publish_doc ~dry_run pkg ~msg ~docdir
 
-let publish_distrib pkg =
-  Pkg.distrib_file pkg
+let publish_distrib ~dry_run pkg =
+  Pkg.distrib_file ~dry_run pkg
   >>= fun distrib_file -> Pkg.publish_msg pkg
   >>= fun msg -> absolute distrib_file
-  >>= fun archive -> Github.publish_distrib pkg ~msg ~archive
+  >>= fun archive -> Github.publish_distrib ~dry_run pkg ~msg ~archive
 
 let publish ()
     build_dir keep_v name version opam change_log distrib_uri
-    distrib_file publish_msg publish_artefacts
+    distrib_file publish_msg dry_run publish_artefacts
   =
   begin
     let publish_artefacts = match publish_artefacts with
@@ -46,8 +46,8 @@ let publish ()
     in
     let publish_artefact acc artefact =
       acc >>= fun () -> match artefact with
-      | `Doc -> publish_doc pkg
-      | `Distrib -> publish_distrib pkg
+      | `Doc     -> publish_doc ~dry_run pkg
+      | `Distrib -> publish_distrib ~dry_run pkg
     in
     Pkg.publish_artefacts pkg
     >>= fun todo -> List.fold_left publish_artefact (Ok ()) todo
@@ -100,7 +100,7 @@ let cmd =
   Term.(pure publish $ Cli.setup $ Cli.build_dir $ Cli.keep_v $
         Cli.dist_name $ Cli.dist_version $ Cli.dist_opam $
         Cli.change_log $ Cli.dist_uri $ Cli.dist_file $
-        Cli.publish_msg $ artefacts),
+        Cli.publish_msg $ Cli.dry_run $ artefacts),
   Term.info "publish" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 (*---------------------------------------------------------------------------

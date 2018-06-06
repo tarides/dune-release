@@ -30,13 +30,13 @@ val tar :
 val ensure_bzip2 : unit -> (unit, R.msg) result
 (** [ensure_bzip2 ()] makes sure the [bzip2] utility is available. *)
 
-val bzip2 : string -> dst:Fpath.t -> (unit, R.msg) result
-(** [bzip2 s dst] compresses [s] to [dst] using bzip2. *)
+val bzip2 : dry_run:bool -> dst:Fpath.t -> string -> (unit, R.msg) result
+(** [bzip2 dst s] compresses [s] to [dst] using bzip2. *)
 
 val ensure_tar : unit -> (unit, R.msg) result
 (** [ensure_tar ()] makes sure the [tar] utility is available. *)
 
-val untbz : ?clean:bool -> Fpath.t -> (Fpath.t, R.msg) result
+val untbz : dry_run:bool -> ?clean:bool -> Fpath.t -> (Fpath.t, R.msg) result
 (** [untbz ~clean ar] untars the tar bzip2 archive [ar] in the same
     directory as [ar] and returns a base directory for [ar]. If [clean]
     is [true] (defaults to [false]) first delete the base directory if

@@ -47,15 +47,16 @@ let publish =
   OS.Env.(value "DUNE_RELEASE_OPAM_PUBLISH" cmd ~absent)
 
 let ensure_publish () = OS.Cmd.must_exist publish >>| fun _ -> ()
-let submit ?msg ~pkg_dir =
+
+let submit ~dry_run ?msg ~pkg_dir () =
   let msg = match msg with
   | None -> Ok (Cmd.empty)
   | Some msg ->
       OS.File.tmp "dune-release-opam-submit-msg-%s"
-      >>= fun m -> OS.File.write m msg
+      >>= fun m -> Sos.write_file ~dry_run m msg
       >>= fun () -> Ok Cmd.(v "--msg" % p m)
   in
-  msg >>= fun msg -> OS.Cmd.run Cmd.(publish % "submit" %% msg % p pkg_dir)
+  msg >>= fun msg -> Sos.run ~dry_run Cmd.(publish % "submit" %% msg % p pkg_dir)
 
 (* Packages *)
 
@@ -190,11 +191,14 @@ end
 
 module Url = struct
   let v ~uri ~checksum = strf "archive: \"%s\"\nchecksum: \"%s\"" uri checksum
-  let with_distrib_file ~uri distrib_file =
-    try
-      let checksum = Digest.(to_hex @@ file (Fpath.to_string distrib_file)) in
-      Ok (v ~uri ~checksum)
-    with Failure msg | Sys_error msg -> R.error_msg msg
+  let with_distrib_file ~dry_run ~uri distrib_file =
+    match OS.File.exists distrib_file with
+    | Ok true ->
+        let checksum = Digest.(to_hex @@ file (Fpath.to_string distrib_file)) in
+        Ok (v ~uri ~checksum)
+    | _ ->
+        if dry_run then Ok "<dry-run>"
+        else (OS.File.must_exist distrib_file >>= fun _ -> assert false)
 end
 
 (*---------------------------------------------------------------------------

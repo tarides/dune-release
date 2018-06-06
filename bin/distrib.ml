@@ -11,35 +11,35 @@ let lint_distrib pkg ~dir =
   Logs.app (fun m -> m "@.Linting distrib in %a" Fpath.pp dir);
   Pkg.lint pkg ~dir Pkg.lint_all
 
-let build_distrib pkg ~dir =
+let build_distrib ~dry_run ~dir pkg =
   Logs.app (fun m -> m "@.Building package in %a" Fpath.pp dir);
   let args = Cmd.empty (* XXX(samoht): Cmd.(v "--dev") *) in
   let out = OS.Cmd.out_string in
-  Pkg.build pkg ~dir ~args ~out >>= function
+  Pkg.build ~dry_run pkg ~dir ~args ~out >>= function
   | (_, (_, `Exited 0)) ->
       Logs.app (fun m -> m "%a package builds" Text.Pp.status `Ok); Ok 0
   | (stdout, _) ->
       Logs.app (fun m -> m "%s@\n%a package builds"
                    stdout Text.Pp.status `Fail); Ok 1
 
-let test_distrib pkg ~dir =
+let test_distrib ~dry_run ~dir pkg =
   Logs.app (fun m -> m "@.Running package tests in %a" Fpath.pp dir);
   let out = OS.Cmd.out_string in
-  Pkg.test pkg ~dir ~args:Cmd.empty ~out >>= function
+  Pkg.test ~dry_run ~dir ~args:Cmd.empty ~out pkg >>= function
   | (_, (_, `Exited 0)) ->
       Logs.app (fun m -> m "%a package tests" Text.Pp.status `Ok); Ok 0
   | (stdout, _) ->
       Logs.app (fun m -> m "%s@\n%a package tests" stdout Text.Pp.status `Fail);
       Ok 1
 
-let check_archive pkg ar ~skip_lint ~skip_build ~skip_tests =
-  Archive.untbz ~clean:true ar
-  >>= fun dir -> (if skip_lint then Ok 0 else lint_distrib pkg ~dir)
-  >>= fun c0 -> (if skip_build then Ok 0 else build_distrib pkg ~dir)
+let check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests pkg ar =
+  Archive.untbz ~dry_run ~clean:true ar
+  >>= fun dir -> (if skip_lint then Ok 0 else lint_distrib ~dry_run ~dir pkg)
+  >>= fun c0 -> (if skip_build then Ok 0 else build_distrib ~dry_run ~dir pkg)
   >>= fun c1 -> (if skip_tests || skip_build then Ok 0 else
-                 test_distrib pkg ~dir)
+                 test_distrib ~dry_run ~dir pkg)
   >>= fun c2 -> match c0 + c1 + c2 with
-  | 0 -> OS.Dir.delete ~recurse:true dir >>= fun () -> Ok 0
+  | 0 -> Sos.delete_dir ~dry_run dir >>= fun () -> Ok 0
   | _ -> Ok 1
 
 let warn_if_vcs_dirty ()=
@@ -62,14 +62,14 @@ let log_wrote_archive ar =
   Logs.app (fun m -> m "Wrote archive %a" Text.Pp.path ar); Ok ()
 
 let distrib
-    () opam keep_v build_dir name version keep_dir skip_lint skip_build
+    () dry_run opam keep_v build_dir name version keep_dir skip_lint skip_build
     skip_tests
   =
   begin
     let pkg = Pkg.v ?name ~drop_v:(not keep_v) ?version ?build_dir ?opam () in
-    Pkg.distrib_archive pkg ~keep_dir
+    Pkg.distrib_archive ~dry_run pkg ~keep_dir
     >>= fun ar -> log_wrote_archive ar
-    >>= fun () -> check_archive pkg ar ~skip_lint ~skip_build ~skip_tests
+    >>= fun () -> check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests pkg ar
     >>= fun errs -> log_footprint pkg ar
     >>= fun () -> warn_if_vcs_dirty ()
     >>= fun () -> Ok errs
@@ -156,7 +156,7 @@ let man =
          across platforms."); ]
 
 let cmd =
-  Term.(pure distrib $ Cli.setup $ Cli.dist_opam $ Cli.keep_v $
+  Term.(pure distrib $ Cli.setup $ Cli.dry_run $ Cli.dist_opam $ Cli.keep_v $
         Cli.build_dir $ Cli.dist_name $ Cli.dist_version $ keep_build_dir $
         skip_lint $ skip_build $ skip_tests),
   Term.info "distrib" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs

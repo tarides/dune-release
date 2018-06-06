@@ -97,6 +97,12 @@ let publish_msg =
   let docv = "MSG" in
   Arg.(value & opt (some string) None & info ["m"; "message"] ~doc ~docv)
 
+let dry_run =
+  let doc =
+    "Don't actually perform any action, just show what would be done."
+  in
+  Arg.(value & flag & info ["dry-run"] ~doc)
+
 (* Terms *)
 
 let setup style_renderer log_level cwd =

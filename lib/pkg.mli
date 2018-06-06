@@ -71,7 +71,7 @@ val distrib_uri : ?raw:bool -> t -> (string, R.msg) result
     defaults to [false], [p]'s raw URI distribution pattern is
     returned. *)
 
-val distrib_file : t -> (Fpath.t, R.msg) result
+val distrib_file : dry_run:bool -> t -> (Fpath.t, R.msg) result
 (** [distrib_file p] is [p]'s distribution archive. *)
 
 val publish_msg : t -> (string, R.msg) result
@@ -79,7 +79,7 @@ val publish_msg : t -> (string, R.msg) result
 
 (** {1 Distribution} *)
 
-val distrib_archive : t -> keep_dir:bool -> (Fpath.t, R.msg) result
+val distrib_archive : dry_run:bool -> t -> keep_dir:bool -> (Fpath.t, R.msg) result
 (** [distrib_archive p ~keep_dir] creates a distribution archive for
     [p] and returns its path. If [keep_dir] is [true] the repository
     checkout used to create the distribution archive is kept in the
@@ -102,20 +102,23 @@ val distrib_owner_and_repo : t -> (string * string, R.msg) result
 (** {1 Test} *)
 
 val test :
-  t -> dir:Fpath.t -> args:Cmd.t ->
-  out:(OS.Cmd.run_out -> ('a, R.msg) result) -> ('a, R.msg) result
+  dry_run:bool -> dir:Fpath.t -> args:Cmd.t ->
+  out:(OS.Cmd.run_out -> ('a, R.msg) result) ->
+  t -> ('a, R.msg) result
 
 (** {1 Build} *)
 
 val build :
-  t -> dir:Fpath.t -> args:Cmd.t ->
-  out:(OS.Cmd.run_out -> ('a, R.msg) result) -> ('a, R.msg) result
+  dry_run:bool -> dir:Fpath.t -> args:Cmd.t ->
+  out:(OS.Cmd.run_out -> ('a, R.msg) result) ->
+  t -> ('a, R.msg) result
 
 (** {1 Clean} *)
 
 val clean :
-  t -> dir:Fpath.t -> args:Cmd.t ->
-  out:(OS.Cmd.run_out -> ('a, R.msg) result) -> ('a, R.msg) result
+  dry_run:bool -> dir:Fpath.t -> args:Cmd.t ->
+  out:(OS.Cmd.run_out -> ('a, R.msg) result) ->
+  t -> ('a, R.msg) result
 
 (** {1 Lint} *)
 
@@ -125,7 +128,7 @@ type lint = [ `Std_files |`Opam ]
 val lint_all : lint list
 (** [lint_all] is a list with all lint values. *)
 
-val lint : t -> dir:Fpath.t -> lint list -> (int, R.msg) result
+val lint : dry_run:bool -> dir:Fpath.t -> t -> lint list -> (int, R.msg) result
 (** [distrib ~ignore_pkg p ~dir lints] performs the lints mentioned in
     [lints] in a directory [dir] on the package [p].  If [ignore_pkg]
     is [true] [p]'s definitions are ignored. *)

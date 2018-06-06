@@ -8,7 +8,7 @@ open Bos_setup
 
 (* Publish documentation *)
 
-let publish_in_git_branch ~remote ~branch ~name ~version ~docdir ~dir =
+let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
   let pp_distrib ppf (name, version) =
     Fmt.pf ppf "%a %a" Text.Pp.name name Text.Pp.version version
   in
@@ -22,11 +22,11 @@ let publish_in_git_branch ~remote ~branch ~name ~version ~docdir ~dir =
       if dst_is_root then Fpath.to_dir_path src else Fpath.rem_empty_seg src
     in
     (* FIXME we lost Windows friends here, fix bos #30 *)
-    OS.Cmd.run Cmd.(v "cp" % "-R" % p src % p dst)
+    Sos.run ~dry_run Cmd.(v "cp" % "-R" % p src % p dst)
   in
   let delete dir =
-    if not (Fpath.is_current_dir dir) then OS.Dir.delete ~recurse:true dir else
-    let delete acc p = acc >>= fun () -> OS.Path.delete ~recurse:true p in
+    if not (Fpath.is_current_dir dir) then Sos.delete_dir ~dry_run dir else
+    let delete acc p = acc >>= fun () -> Sos.delete_path ~dry_run p in
     let gitdir = Fpath.v ".git" in
     let not_git p = not (Fpath.equal p gitdir) in
     OS.Dir.contents dir
@@ -37,16 +37,16 @@ let publish_in_git_branch ~remote ~branch ~name ~version ~docdir ~dir =
     let msg = strf "Update %s doc to %s." name version in
     Vcs.get ()
     >>= fun repo -> Ok (git_for_repo repo)
-    >>= fun git -> OS.Cmd.run Cmd.(git % "checkout" % branch)
+    >>= fun git -> Sos.run ~dry_run Cmd.(git % "checkout" % branch)
     >>= fun () -> delete dir
     >>= fun () -> cp docdir dir
     >>= fun () -> Vcs.is_dirty repo
     >>= function
     | false -> Ok false
     | true ->
-        OS.Cmd.run Cmd.(git % "add" % p dir)
-        >>= fun () -> OS.Cmd.run Cmd.(git % "commit" % "-m" % msg)
-        >>= fun () -> OS.Cmd.run Cmd.(git % "push")
+        Sos.run ~dry_run Cmd.(git % "add" % p dir)
+        >>= fun () -> Sos.run ~dry_run Cmd.(git % "commit" % "-m" % msg)
+        >>= fun () -> Sos.run ~dry_run Cmd.(git % "push")
         >>= fun () -> Ok true
   in
   if not (Fpath.is_rooted ~root:Fpath.(v ".") dir)
@@ -55,10 +55,10 @@ let publish_in_git_branch ~remote ~branch ~name ~version ~docdir ~dir =
       Fpath.pp dir
   else
   let clonedir = Fpath.(parent docdir / strf "%s-%s.pubdoc" name version) in
-  OS.Dir.delete ~recurse:true clonedir
+  Sos.delete_dir ~dry_run clonedir
   >>= fun () -> Vcs.get ()
-  >>= fun repo -> Vcs.clone repo ~dir:clonedir
-  >>= fun () -> OS.Dir.with_current clonedir (replace_dir_and_push docdir) dir
+  >>= fun repo -> Vcs.clone ~dry_run:false ~dir:clonedir repo
+  >>= fun () -> Sos.with_dir ~dry_run clonedir (replace_dir_and_push docdir) dir
   >>= fun res -> res
   >>= function
   | false (* no changes *) ->
@@ -67,13 +67,13 @@ let publish_in_git_branch ~remote ~branch ~name ~version ~docdir ~dir =
   | true ->
       let push_spec = strf "%s:%s" branch branch in
       Ok (git_for_repo repo) >>= fun git ->
-      OS.Cmd.run Cmd.(git % "push" % remote % push_spec)
-      >>= fun () -> OS.Dir.delete ~recurse:true clonedir
+      Sos.run ~dry_run Cmd.(git % "push" % remote % push_spec)
+      >>= fun () -> Sos.delete_dir ~dry_run clonedir
       >>= fun () ->
       log_publish_result "Published documentation for" (name, version) dir;
       Ok ()
 
-let publish_doc p ~msg:_ ~docdir =
+let publish_doc ~dry_run ~msg:_ ~docdir p =
   Pkg.doc_owner_repo_and_path p
   >>= fun (owner, repo, dir) -> Pkg.name p
   >>= fun name -> Pkg.version p
@@ -83,35 +83,36 @@ let publish_doc p ~msg:_ ~docdir =
   let create_empty_gh_pages git =
     let msg = "Initial commit by dune-release." in
     let create () =
-      OS.Cmd.run Cmd.(v "git" % "init")
+      Sos.run ~dry_run Cmd.(v "git" % "init")
       >>= fun () -> Vcs.get ()
       >>= fun repo -> Ok (git_for_repo repo)
-      >>= fun git -> OS.Cmd.run Cmd.(git % "checkout" % "--orphan" % "gh-pages")
-      >>= fun () -> OS.File.write (Fpath.v "README") "" (* need some file *)
-      >>= fun () -> OS.Cmd.run Cmd.(git % "add" % "README")
-      >>= fun () -> OS.Cmd.run Cmd.(git % "commit" % "README" % "-m" % msg)
+      >>= fun git -> Sos.run ~dry_run Cmd.(git % "checkout" % "--orphan" % "gh-pages")
+      >>= fun () -> Sos.write_file ~dry_run (Fpath.v "README") "" (* need some file *)
+      >>= fun () -> Sos.run ~dry_run Cmd.(git % "add" % "README")
+      >>= fun () -> Sos.run ~dry_run Cmd.(git % "commit" % "README" % "-m" % msg)
     in
     OS.Dir.with_tmp "gh-pages-%s.tmp" (fun dir () ->
-        OS.Dir.with_current dir create () |> R.join
-        >>= fun () -> OS.Cmd.run Cmd.(git % "fetch" % Fpath.to_string dir
-                                      % "gh-pages")
+        Sos.with_dir ~dry_run dir create () |> R.join
+        >>= fun () -> Sos.run ~dry_run Cmd.(git % "fetch" % Fpath.to_string dir
+                                            % "gh-pages")
       ) () |> R.join
   in
   Vcs.get ()
   >>= fun repo -> Ok (git_for_repo repo)
   >>= fun git ->
-  (match OS.Cmd.run Cmd.(git % "fetch" % remote % "gh-pages") with
+  (match Sos.run ~dry_run Cmd.(git % "fetch" % remote % "gh-pages") with
   | Ok () -> Ok ()
   | Error _ -> create_empty_gh_pages git)
-  >>= fun () -> (OS.Cmd.run_out Cmd.(git % "rev-parse" % "FETCH_HEAD")
+  >>= fun () -> (Sos.run_out ~dry_run Cmd.(git % "rev-parse" % "FETCH_HEAD")
                  |> OS.Cmd.to_string)
-  >>= fun id -> OS.Cmd.run Cmd.(git % "branch" % "-f" % "gh-pages" % id)
+  >>= fun id -> Sos.run ~dry_run Cmd.(git % "branch" % "-f" % "gh-pages" % id)
   >>= fun () ->
-  publish_in_git_branch ~remote ~branch:"gh-pages" ~name ~version ~docdir ~dir
+  publish_in_git_branch
+    ~dry_run ~remote ~branch:"gh-pages" ~name ~version ~docdir ~dir
 
 (* Publish releases *)
 
-let steal_opam_publish_github_auth () =
+let steal_opam_publish_github_auth ~dry_run () =
   let opam = Cmd.(v "opam") in
   let publish = Fpath.v "plugins/opam-publish" in
   OS.Cmd.exists opam >>= function
@@ -123,12 +124,12 @@ let steal_opam_publish_github_auth () =
       >>= function
       | [] -> Ok None
       | (file, defs) :: _ ->
-          OS.File.read file >>= fun token ->
+          Sos.read_file ~dry_run file >>= fun token ->
           Ok (Some (strf "%s:%s" (String.Map.get "user" defs) token))
 
-let github_auth ~owner =
+let github_auth ~dry_run ~owner =
   match
-    steal_opam_publish_github_auth ()
+    steal_opam_publish_github_auth ~dry_run ()
     |> Logs.on_error_msg ~use:(fun _ -> None)
   with
   | Some auth -> auth
@@ -166,11 +167,11 @@ let create_release_json version msg =
   strf "{ \"tag_name\" : \"%s\", \
           \"body\" : \"%s\" }" (escape_for_json version) (escape_for_json msg)
 
-let run_with_auth auth curl =
-    let auth = strf "-u %s" auth in
-    OS.Cmd.(in_string auth |> run_io curl)
+let run_with_auth ~dry_run auth curl k =
+  let auth = strf "-u %s" auth in
+  Sos.run_io ~dry_run curl (OS.Cmd.in_string auth) k
 
-let curl_create_release curl version msg owner repo =
+let curl_create_release ~dry_run curl version msg owner repo =
   let parse_release_id resp = (* FIXME this is retired. *)
     let headers = String.cuts ~sep:"\r\n" resp in
     try
@@ -178,42 +179,44 @@ let curl_create_release curl version msg owner repo =
       let loc = List.find (String.is_prefix ~affix:"Location:") headers in
       let id = String.take ~rev:true ~sat:not_slash loc in
       match String.to_int id with
-      | None -> R.error_msgf "Could not parse id from location header %S" loc
       | Some id -> Ok id
+      | None ->
+          R.error_msgf "Could not parse id from location header %S: %S" loc id
     with Not_found ->
       R.error_msgf "Could not find release id in response:\n%s."
         (String.concat ~sep:"\n" headers)
   in
   let data = create_release_json version msg in
   let uri = strf "https://api.github.com/repos/%s/%s/releases" owner repo in
-  let auth = github_auth ~owner in
+  let auth = github_auth ~dry_run ~owner in
   let cmd = Cmd.(curl % "-D" % "-" % "--data" % data % uri) in
-  run_with_auth auth cmd |> OS.Cmd.to_string ~trim:false
+  run_with_auth ~dry_run ~default:"Location: /0" auth cmd
+    (OS.Cmd.to_string ~trim:false)
   >>= parse_release_id
 
-let curl_upload_archive curl archive owner repo release_id =
+let curl_upload_archive ~dry_run curl archive owner repo release_id =
   let uri =
       (* FIXME upload URI prefix should be taken from release creation
          response *)
       strf "https://uploads.github.com/repos/%s/%s/releases/%d/assets?name=%s"
         owner repo release_id (Fpath.filename archive)
   in
-  let auth = github_auth ~owner in
+  let auth = github_auth ~dry_run ~owner in
   let data = Cmd.(v "--data-binary" % strf "@@%s" (Fpath.to_string archive)) in
   let ctype = Cmd.(v "-H" % "Content-Type:application/x-tar") in
   let cmd = Cmd.(curl %% ctype %% data % uri) in
-  OS.Cmd.(run_with_auth auth cmd |> to_stdout)
+  run_with_auth ~dry_run ~default:() auth cmd OS.Cmd.to_stdout
 
-let publish_distrib p ~msg ~archive =
+let publish_distrib ~dry_run ~msg ~archive p =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   Pkg.distrib_owner_and_repo p
   >>= fun (owner, repo) -> Pkg.version p
   >>= fun version -> OS.Cmd.must_exist Cmd.(v "curl" % "-s" % "-S" % "-K" % "-")
   >>= fun curl -> Vcs.get ()
   >>= fun vcs -> Ok (git_for_repo vcs)
-  >>= fun git -> OS.Cmd.run Cmd.(git % "push" % "--force" % "--tags")
-  >>= fun () -> curl_create_release curl version msg owner repo
-  >>= fun id -> curl_upload_archive curl archive owner repo id
+  >>= fun git -> Sos.run ~dry_run Cmd.(git % "push" % "--force" % "--tags")
+  >>= fun () -> curl_create_release ~dry_run curl version msg owner repo
+  >>= fun id -> curl_upload_archive ~dry_run curl archive owner repo id
 
 
 (*---------------------------------------------------------------------------

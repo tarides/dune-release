@@ -19,7 +19,7 @@ let descr pkg =
   Logs.app (fun m -> m "%s" (Opam.Descr.to_string descr));
   Ok 0
 
-let pkg pkg dist_pkg opam_pkg_dir =
+let pkg ~dry_run pkg dist_pkg opam_pkg_dir =
   let log_pkg dir =
     Logs.app (fun m -> m "Wrote opam package %a" Text.Pp.path dir)
   in
@@ -32,20 +32,20 @@ let pkg pkg dist_pkg opam_pkg_dir =
   >>= fun opam -> OS.File.read opam
   >>= fun opam -> Pkg.opam_descr pkg
   >>= fun descr -> Ok (Opam.Descr.to_string descr)
-  >>= fun descr -> Pkg.distrib_file dist_pkg
+  >>= fun descr -> Pkg.distrib_file ~dry_run dist_pkg
   >>= fun distrib_file -> Pkg.distrib_uri dist_pkg
-  >>= fun uri -> Opam.Url.with_distrib_file ~uri distrib_file
+  >>= fun uri -> Opam.Url.with_distrib_file ~dry_run ~uri distrib_file
   >>= fun url -> OS.Dir.exists dir
-  >>= fun exists -> (if exists then OS.Dir.delete ~recurse:true dir else Ok ())
+  >>= fun exists -> (if exists then Sos.delete_dir ~dry_run dir else Ok ())
   >>= fun () -> OS.Dir.create dir
-  >>= fun _ -> OS.File.write Fpath.(dir / "descr") descr
-  >>= fun () -> OS.File.write Fpath.(dir / "opam") opam
-  >>= fun () -> OS.File.write Fpath.(dir / "url") url
+  >>= fun _ -> Sos.write_file ~dry_run Fpath.(dir / "descr") descr
+  >>= fun () -> Sos.write_file ~dry_run Fpath.(dir / "opam") opam
+  >>= fun () -> Sos.write_file ~dry_run Fpath.(dir / "url") url
   >>= fun () -> log_pkg dir; warn_if_vcs_dirty ()
   >>= fun () ->
   Ok 0
 
-let submit pkg opam_pkg_dir =
+let submit ~dry_run pkg opam_pkg_dir =
   Opam.ensure_publish ()
   >>= fun () -> get_pkg_dir pkg opam_pkg_dir
   >>= fun pkg_dir -> OS.Dir.exists pkg_dir
@@ -57,7 +57,7 @@ let submit pkg opam_pkg_dir =
   | true ->
       Logs.app (fun m -> m "Submitting %a" Text.Pp.path pkg_dir);
       Pkg.publish_msg pkg
-      >>= fun msg -> Opam.submit ~pkg_dir ~msg >>= fun () -> Ok 0
+      >>= fun msg -> Opam.submit ~dry_run ~pkg_dir ~msg () >>= fun () -> Ok 0
 
 let field pkg field = match field with
 | None -> Logs.err (fun m -> m "Missing FIELD positional argument"); Ok 1
@@ -72,7 +72,7 @@ let field pkg field = match field with
 
 (* Command *)
 
-let opam () build_dir keep_v
+let opam () dry_run build_dir keep_v
     dist_name dist_version dist_opam dist_uri dist_file
     pkg_opam_dir pkg_name pkg_version pkg_opam pkg_descr
     readme change_log publish_msg action field_name
@@ -91,8 +91,8 @@ let opam () build_dir keep_v
           ?distrib_uri:dist_uri ?distrib_file:dist_file ?readme ?change_log
           ?publish_msg ()
       in
-      pkg p dist_p pkg_opam_dir
-  | `Submit -> submit p pkg_opam_dir
+      pkg ~dry_run p dist_p pkg_opam_dir
+  | `Submit -> submit ~dry_run p pkg_opam_dir
   | `Field -> field p field_name
   end
   |> Cli.handle_error
@@ -187,7 +187,7 @@ let man =
 
 let cmd =
   let info = Term.info "opam" ~doc ~sdocs ~envs ~man ~man_xrefs in
-  let t = Term.(pure opam $ Cli.setup $ Cli.build_dir $ Cli.keep_v $
+  let t = Term.(pure opam $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.keep_v $
                 Cli.dist_name $ Cli.dist_version $ Cli.dist_opam $
                 Cli.dist_uri $ Cli.dist_file $
                 pkg_opam_dir $ Cli.pkg_name $ pkg_version $ pkg_opam $
