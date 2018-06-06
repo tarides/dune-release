@@ -40,7 +40,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
     >>= fun git -> Sos.run ~dry_run Cmd.(git % "checkout" % branch)
     >>= fun () -> delete dir
     >>= fun () -> cp docdir dir
-    >>= fun () -> Vcs.is_dirty repo
+    >>= fun () -> (if dry_run then Ok true else Vcs.is_dirty repo)
     >>= function
     | false -> Ok false
     | true ->
@@ -57,7 +57,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
   let clonedir = Fpath.(parent (parent (parent docdir)) / "gh-pages") in
   OS.Dir.delete ~recurse:true clonedir
   >>= fun () -> Vcs.get ()
-  >>= fun repo -> Vcs.clone ~dry_run:false ~dir:clonedir repo
+  >>= fun repo -> Vcs.clone ~dry_run ~force:true ~dir:clonedir repo
   >>= fun () -> Sos.with_dir ~dry_run clonedir (replace_dir_and_push docdir) dir
   >>= fun res -> res
   >>= function
@@ -92,20 +92,23 @@ let publish_doc ~dry_run ~msg:_ ~docdir p =
       >>= fun () -> Sos.run ~dry_run Cmd.(git % "commit" % "README" % "-m" % msg)
     in
     OS.Dir.with_tmp "gh-pages-%s.tmp" (fun dir () ->
-        Sos.with_dir ~dry_run dir create () |> R.join
-        >>= fun () -> Sos.run ~dry_run Cmd.(git % "fetch" % Fpath.to_string dir
-                                            % "gh-pages")
+        Sos.with_dir ~dry_run dir create () |> R.join >>= fun () ->
+        let git_fetch = Cmd.(git % "fetch" % Fpath.to_string dir % "gh-pages") in
+        Sos.run ~dry_run ~force:true git_fetch
       ) () |> R.join
   in
   Vcs.get ()
   >>= fun repo -> Ok (git_for_repo repo)
   >>= fun git ->
-  (match Sos.run ~dry_run Cmd.(git % "fetch" % remote % "gh-pages") with
+  let git_fetch = Cmd.(git % "fetch" % remote % "gh-pages") in
+  (match Sos.run ~dry_run ~force:true git_fetch with
   | Ok () -> Ok ()
   | Error _ -> create_empty_gh_pages git)
-  >>= fun () -> (Sos.run_out ~dry_run Cmd.(git % "rev-parse" % "FETCH_HEAD")
-                 |> OS.Cmd.to_string)
-  >>= fun id -> Sos.run ~dry_run Cmd.(git % "branch" % "-f" % "gh-pages" % id)
+  >>= fun () ->
+  (Sos.run_out ~dry_run ~force:true Cmd.(git % "rev-parse" % "FETCH_HEAD")
+   |> OS.Cmd.to_string)
+  >>= fun id ->
+  Sos.run ~dry_run ~force:true Cmd.(git % "branch" % "-f" % "gh-pages" % id)
   >>= fun () ->
   publish_in_git_branch
     ~dry_run ~remote ~branch:"gh-pages" ~name ~version ~docdir ~dir

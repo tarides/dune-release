@@ -63,9 +63,9 @@ let find_git () = Lazy.force git >>= function
 let err_git_exit cmd c = R.error_msgf "%a exited with code %d" Cmd.dump cmd c
 let err_git_signal cmd c = R.error_msgf "%a exited with signal %d" Cmd.dump cmd c
 
-let run_git ~dry_run r args out =
+let run_git ~dry_run ?force r args out =
   let git = Cmd.(cmd r %% args) in
-  Sos.run_out ~dry_run git |> out >>= function
+  Sos.run_out ~dry_run ?force git |> out >>= function
   | (v, (_, `Exited 0)) -> Ok v
   | (_, (_, `Exited c)) -> err_git_exit git c
   | (_, (_, `Signaled c)) -> err_git_signal git c
@@ -142,9 +142,9 @@ let git_tracked_files r ~tree_ish =
   run_git ~dry_run:false r tracked OS.Cmd.out_lines
   >>| List.map Fpath.v
 
-let git_clone ~dry_run ~dir:d r =
+let git_clone ~dry_run ?force ~dir:d r =
   let clone = Cmd.(v "clone" % "--local" % p (dir r) % p d) in
-  run_git ~dry_run r clone OS.Cmd.out_stdout >>= fun _ -> Ok ()
+  run_git ~dry_run ?force r clone OS.Cmd.out_stdout >>= fun _ -> Ok ()
 
 let git_checkout ~dry_run r ~branch ~commit_ish =
   let branch = match branch with
@@ -381,8 +381,8 @@ let tracked_files ?(tree_ish = "HEAD") = function
 
 (* Operations *)
 
-let clone ~dry_run ~dir r = match r with
-| (`Git, _, _ as r) -> git_clone ~dry_run ~dir r
+let clone ~dry_run ?force ~dir r = match r with
+| (`Git, _, _ as r) -> git_clone ~dry_run ?force ~dir r
 | (`Hg, _, _ as r) -> hg_clone r ~dir
 
 let checkout ~dry_run ?branch r ~commit_ish = match r with

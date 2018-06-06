@@ -35,29 +35,41 @@ let current_dir () =
 
 let last_dir = ref root
 
-let show ?(color=`Yellow) fmt =
+let show ?(action=`Skip) fmt =
+  let pp_action ppf = function
+  | `Skip -> Fmt.(styled `Yellow string) ppf "-:"
+  | `Done -> Fmt.(styled `Green string) ppf "=>"
+  in
+  let pp_cwd ppf () = match current_dir () with
+  | None   -> ()
+  | Some d ->
+      if not (Fpath.equal d !last_dir) then (
+        last_dir := d;
+        Fmt.pf ppf "   [in %a]\n" Fmt.(styled `Underline Fpath.pp) d
+      )
+  in
   Fmt.kstrf (fun s ->
-      let pp_cwd ppf () = match current_dir () with
-      | None   -> ()
-      | Some d ->
-          if not (Fpath.equal d !last_dir) then (
-            last_dir := d;
-            Fmt.pf ppf "   [in %a]\n" Fmt.(styled `Underline Fpath.pp) d
-          )
-      in
-      Logs.app (fun m ->m "%a%a %s" pp_cwd () Fmt.(styled color string) "=>" s);
+      Logs.app (fun m ->m "%a%a %s" pp_cwd () pp_action action s);
       Ok ()
     ) fmt
 
-let run ~dry_run v =
+let run ~dry_run ?(force=false) v =
   if not dry_run then OS.Cmd.run v
-  else show "exec:@[@ %a@]" Cmd.pp v
+  else if not force then show "exec:@[@ %a@]" Cmd.pp v
+  else (
+    let _ = show ~action:`Done "exec:@[@ %a@]" Cmd.pp v in
+    OS.Cmd.run v
+  )
 
-let run_out ~dry_run ?err v =
+let run_out ~dry_run ?(force=false) ?err v =
   if not dry_run then OS.Cmd.run_out v
-  else
-  let _ = show "exec:@[@ %a@]" Cmd.pp v in
-  OS.Cmd.run_out ?err Cmd.(v "true")
+  else if not force then
+    let _ = show "exec:@[@ %a@]" Cmd.pp v in
+    OS.Cmd.run_out ?err Cmd.(v "echo" % "<dry-run>")
+  else (
+    let _ = show ~action:`Done "exec:@[@ %a@]" Cmd.pp v in
+    OS.Cmd.run_out v
+  )
 
 let run_io ~dry_run ~default v i f =
   if not dry_run then OS.Cmd.run_io v i |> f
@@ -72,7 +84,7 @@ let delete_dir ~dry_run dir =
     | None   -> dir
     | Some d -> Fpath.(normalize @@ d // dir)
     in
-    let _ = show ~color:`Green "rmdir %a" Fpath.pp dir' in
+    let _ = show ~action:`Done "rmdir %a" Fpath.pp dir' in
     Ok ()
   )
 
@@ -83,7 +95,7 @@ let delete_path ~dry_run p =
     | None   -> p
     | Some d -> Fpath.(normalize @@ d // p)
     in
-    let _ = show ~color:`Green "rm %a" Fpath.pp p' in
+    let _ = show ~action:`Done "rm %a" Fpath.pp p' in
     Ok ()
   )
 
@@ -107,7 +119,7 @@ let with_dir ~dry_run dir f x =
   if not dry_run then OS.Dir.with_current dir f x
   else match OS.Dir.exists dir with
   | Ok true ->
-      let _ = show ~color:`Green "chdir %a" Fpath.pp dir in
+      let _ = show ~action:`Done "chdir %a" Fpath.pp dir in
       OS.Dir.with_current dir f x
   | _ ->
       let _ = show "chdir %a" Fpath.pp dir in

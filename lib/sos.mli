@@ -23,14 +23,15 @@
 
 type error = Rresult.R.msg
 
-val run: dry_run:bool -> Bos.Cmd.t -> (unit, error) result
+val run: dry_run:bool -> ?force:bool -> Bos.Cmd.t -> (unit, error) result
 
 val run_io: dry_run:bool ->
   default:'a -> Bos.Cmd.t -> Bos.OS.Cmd.run_in ->
   (Bos.OS.Cmd.run_out -> ('a, 'b) result) -> ('a, 'b) result
 
 val run_out:
-  dry_run:bool -> ?err:Bos.OS.Cmd.run_err -> Bos.Cmd.t -> Bos.OS.Cmd.run_out
+  dry_run:bool -> ?force:bool -> ?err:Bos.OS.Cmd.run_err ->
+  Bos.Cmd.t -> Bos.OS.Cmd.run_out
 
 val delete_dir: dry_run:bool -> Fpath.t -> (unit, error) result
 val delete_path: dry_run:bool -> Fpath.t -> (unit, error) result
