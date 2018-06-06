@@ -19,8 +19,9 @@ val ensure_publish : unit -> (unit, R.msg) result
 (** [ensure_publish ()] makes sure [opam-publish] is in the executable
     search PATH. *)
 
-val submit : ?msg:string -> pkg_dir:Fpath.t -> (unit, R.msg) result
-(** [submit ~pkg_dir] submits the package [pkg_dir] with [opam-publish]
+val submit : dry_run:bool -> ?msg:string -> pkg_dir:Fpath.t ->
+  unit -> (unit, R.msg) result
+(** [submit ~pkg_dir ()] submits the package [pkg_dir] with [opam-publish]
     and submission message [msg] (if any) to the OCaml opam repository. *)
 
 (** {1:pkgs Packages} *)
@@ -91,7 +92,8 @@ module Url : sig
   (** [v ~uri ~checksum] is an URL file for URI [uri] with
       checksum [checksum]. *)
 
-  val with_distrib_file : uri:string -> Fpath.t -> (string, R.msg) result
+  val with_distrib_file :
+    dry_run:bool -> uri:string -> Fpath.t -> (string, R.msg) result
   (** [with_distrib_file ~uri f] is an URL file for URI [uri] with
       the checksum of file [f]. *)
 end

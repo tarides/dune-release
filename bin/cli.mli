@@ -51,6 +51,9 @@ val build_dir : Fpath.t option Term.t
 val publish_msg : string option Term.t
 (** A [--msg] option to define a publication message. *)
 
+val dry_run: bool Term.t
+(** A [--dry-run] option to do not perform any action. *)
+
 (** {1 Terms} *)
 
 val setup : unit Term.t

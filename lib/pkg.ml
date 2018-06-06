@@ -164,11 +164,11 @@ let distrib_archive_path p =
   >>= fun build_dir -> distrib_filename ~opam:false p
   >>| fun b -> Fpath.(build_dir // b + ".tbz")
 
-let distrib_file p = match p.distrib_file with
+let distrib_file ~dry_run p = match p.distrib_file with
 | Some f -> Ok f
 | None ->
     (distrib_archive_path p
-     >>= fun f -> OS.File.must_exist f)
+     >>= fun f -> Sos.file_must_exist ~dry_run f)
     |> R.reword_error_msg
       (fun _ -> R.msgf "Did you forget to call 'dune-release distrib' ?")
 
@@ -291,27 +291,27 @@ let v
 
 (* Distrib *)
 
-let distrib_version_opam_files p ~version =
+let distrib_version_opam_files ~dry_run p ~version =
   let version = if p.drop_v then drop_initial_v version else version in
   opam p
   >>= fun file -> OS.File.read file
   >>= fun o -> Ok (Fmt.strf "version: \"%s\"\n%s" version o)
-  >>= fun o -> OS.File.write file o
+  >>= fun o -> Sos.write_file ~dry_run file o
 
-let distrib_prepare p ~dist_build_dir ~name ~version ~opam =
+let distrib_prepare ~dry_run p ~dist_build_dir ~name ~version ~opam =
   let d = p.distrib in
   let ws = Distrib.watermarks d in
   let ws_defs = Distrib.define_watermarks ws ~name ~version ~opam in
-  OS.Dir.with_current dist_build_dir (fun () ->
+  Sos.with_dir ~dry_run dist_build_dir (fun () ->
       Distrib.files_to_watermark d ()
       >>= fun files -> Distrib.watermark_files ws_defs files
-      >>= fun () -> distrib_version_opam_files p ~version
+      >>= fun () -> distrib_version_opam_files ~dry_run p ~version
       >>= fun () -> Distrib.massage d ()
       >>= fun () -> Distrib.exclude_paths d ()
     ) ()
   |> R.join
 
-let distrib_archive p ~keep_dir =
+let distrib_archive ~dry_run p ~keep_dir =
   Archive.ensure_bzip2 ()
   >>= fun () -> name p
   >>= fun name -> build_dir p
@@ -319,35 +319,35 @@ let distrib_archive p ~keep_dir =
   >>= fun version -> opam p
   >>= fun opam -> distrib_filename p
   >>= fun root -> Ok Fpath.(build_dir // root + ".build")
-  >>= fun dist_build_dir -> OS.Dir.delete ~recurse:true dist_build_dir
+  >>= fun dist_build_dir -> Sos.delete_dir ~dry_run dist_build_dir
   >>= fun () -> Vcs.get ()
   >>= fun repo -> Vcs.commit_id repo ~dirty:false
   >>= fun head -> Vcs.commit_ptime_s repo ~commit_ish:head
-  >>= fun mtime -> Vcs.clone repo ~dir:dist_build_dir
+  >>= fun mtime -> Vcs.clone ~dry_run:false repo ~dir:dist_build_dir
   >>= fun () -> Vcs.get ~dir:dist_build_dir ()
   >>= fun clone -> Ok (Fmt.strf "dune-release-dist-%s" head)
-  >>= fun branch -> Vcs.checkout clone ~branch ~commit_ish:head
-  >>= fun () -> distrib_prepare p ~dist_build_dir ~name ~version ~opam
+  >>= fun branch -> Vcs.checkout ~dry_run clone ~branch ~commit_ish:head
+  >>= fun () -> distrib_prepare ~dry_run p ~dist_build_dir ~name ~version ~opam
   >>= fun exclude_paths ->
   let exclude_paths = Fpath.Set.of_list exclude_paths in
   Archive.tar dist_build_dir ~exclude_paths ~root ~mtime
   >>= fun tar -> distrib_archive_path p
-  >>= fun archive -> Archive.bzip2 tar ~dst:archive
+  >>= fun archive -> Archive.bzip2 ~dry_run ~dst:archive tar
   >>= fun () ->
-  (if keep_dir then Ok () else OS.Dir.delete ~recurse:true dist_build_dir)
+  (if keep_dir then Ok () else Sos.delete_dir ~dry_run dist_build_dir)
   >>= fun () -> Ok archive
 
 (* Test & build *)
 
-let run p ~dir cmd ~args ~out =
+let run ~dry_run p ~dir cmd ~args ~out =
   let name = p.name in
   let cmd = Cmd.(v "jbuilder" % cmd % "-p" % name %% args) in
-  let run () = OS.Cmd.run_out cmd |> out in
-  R.join @@ OS.Dir.with_current dir run ()
+  let run () = Sos.run_out ~dry_run cmd |> out in
+  R.join @@ Sos.with_dir ~dry_run dir run ()
 
-let test p ~dir ~args ~out = run p ~dir "runtest" ~args ~out
-let build p ~dir ~args ~out = run p ~dir "build" ~args ~out
-let clean p ~dir ~args ~out = run p ~dir "clean" ~args ~out
+let test ~dry_run ~dir ~args ~out p = run ~dry_run p ~dir "runtest" ~args ~out
+let build ~dry_run ~dir ~args ~out p = run ~dry_run p ~dir "build" ~args ~out
+let clean ~dry_run ~dir ~args ~out p= run ~dry_run p ~dir "clean" ~args ~out
 
 (* Lint *)
 
@@ -367,7 +367,7 @@ let lint_files p = match p.lint_files with
 | None (* disabled *) -> None
 | Some fs -> Some (List.rev_append (std_files p) fs)
 
-let lint_std_files p =
+let lint_std_files ~dry_run p =
   let lint_exists file errs =
     let report exists =
       let status, errs = if exists then `Ok, errs else `Fail, errs + 1 in
@@ -375,7 +375,7 @@ let lint_std_files p =
           m "%a @[File %a@ is@ present.@]" pp_status status pp_path file);
       errs
     in
-    (OS.File.exists file >>= fun exists -> Ok (report exists))
+    (Sos.file_exists ~dry_run file >>= fun exists -> Ok (report exists))
     |> Logs.on_error_msg ~use:(fun () -> errs + 1)
   in
   begin
@@ -387,10 +387,11 @@ let lint_std_files p =
   end
   |> Logs.on_error_msg ~use:(fun () -> 1)
 
-let lint_file_with_cmd file_kind ~cmd file errs handle_exit =
+let lint_file_with_cmd ~dry_run file_kind ~cmd file errs handle_exit =
   let run_linter cmd file ~exists =
     if not exists then Ok (`Fail (strf "%a: No such file" Fpath.pp file)) else
-    OS.Cmd.(run_out ~err:err_run_out Cmd.(cmd % p file) |> out_string)
+    Sos.run_out ~dry_run ~err:OS.Cmd.err_run_out Cmd.(cmd % p file)
+    |> OS.Cmd.out_string
     >>| fun (out, status) -> handle_exit (snd status) out
   in
   begin
@@ -410,7 +411,7 @@ let lint_file_with_cmd file_kind ~cmd file errs handle_exit =
   end
   |> Logs.on_error_msg ~use:(fun () -> errs + 1)
 
-let lint_opams p =
+let lint_opams ~dry_run p =
   Logs.on_error_msg ~use:(fun () -> 1) (
     (* remove opam.1.2-related warnings *)
     opam_field p "opam-version" >>= fun opam_version ->
@@ -428,12 +429,16 @@ let lint_opams p =
       ("" | "5" (* dirname version vs opam file version *)) -> `Ok
     | _ ->
         let err = OS.Cmd.err_run_out in
-        match OS.Cmd.(run_out ~err Cmd.(cmd % p file) |> out_string) with
+        match
+          Sos.run_out ~dry_run ~err Cmd.(cmd % p file) |> OS.Cmd.out_string
+        with
         | Ok (out, _) -> `Fail out
         | Error (`Msg out) -> `Fail out
     in
     let cmd = Cmd.(cmd % "-s") in
-    let d = lint_file_with_cmd "opam file" ~cmd opam 0 (handle_exit opam) in
+    let d =
+      lint_file_with_cmd ~dry_run "opam file" ~cmd opam 0 (handle_exit opam)
+    in
     (* lint fields *)
     doc_owner_repo_and_path p >>= fun _ ->
     distrib_owner_and_repo p >>| fun _ ->
@@ -447,9 +452,9 @@ let lints =
 
 let lint_all = List.map fst lints
 
-let lint p ~dir todo =
+let lint ~dry_run ~dir p todo =
   let lint pkg =
-    let do_lint acc (l, f) = acc + if List.mem l todo then f pkg else 0 in
+    let do_lint acc (l, f) = acc + if List.mem l todo then f ~dry_run pkg else 0 in
     match List.fold_left do_lint 0 lints with
     | 0 ->
         Logs.app (fun m -> m "%a lint@ %a %a"
@@ -460,7 +465,7 @@ let lint p ~dir todo =
                      pp_status `Fail pp_path dir
                      (Fmt.styled_unit `Red "failure") () n); 1
   in
-  OS.Dir.with_current dir lint p
+  Sos.with_dir ~dry_run dir lint p
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

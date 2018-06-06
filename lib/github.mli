@@ -11,14 +11,15 @@ open Bos_setup
 (** {1 Publish} *)
 
 val publish_distrib :
-  Pkg.t -> msg:string -> archive:Fpath.t ->
-  (unit, R.msg) Result.result
+  dry_run: bool -> msg:string -> archive:Fpath.t ->
+  Pkg.t -> (unit, R.msg) Result.result
 
 val publish_doc :
-  Pkg.t -> msg:string -> docdir:Fpath.t ->
-  (unit, R.msg) Result.result
+  dry_run: bool -> msg:string -> docdir:Fpath.t ->
+  Pkg.t -> (unit, R.msg) Result.result
 
 val publish_in_git_branch :
+  dry_run: bool ->
   remote:string -> branch:string ->
   name:string -> version:string -> docdir:Fpath.t ->
   dir:Fpath.t -> (unit, R.msg) result

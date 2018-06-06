@@ -21,25 +21,25 @@ let show change_log last last_version no_pager =
   | None -> Logs.app (fun m -> m "%s" text); Ok ()
   | Some pager -> OS.Cmd.(in_string text |> run_in pager)
 
-let commit change_log =
+let commit ~dry_run change_log =
   Vcs.get ()
   >>= fun repo -> Vcs.file_is_dirty repo change_log
   >>= function
-  | true -> Vcs.commit_files repo ~msg:"Update change log." [change_log]
+  | true -> Vcs.commit_files ~dry_run repo ~msg:"Update change log." [change_log]
   | false ->
       Logs.app (fun m -> m "No changes to commit in %a" Fpath.pp change_log);
       Ok ()
 
 (* Command *)
 
-let log () name change_log action last last_version no_pager =
+let log () dry_run name change_log action last last_version no_pager =
   begin
     let pkg = Pkg.v ?change_log ?name () in
     Pkg.change_log pkg
     >>= fun change_log -> match action with
     | `Show -> show change_log last last_version no_pager >>= fun () -> Ok 0
     | `Edit -> Text.edit_file change_log
-    | `Commit -> commit change_log >>= fun () -> Ok 0
+    | `Commit -> commit ~dry_run change_log >>= fun () -> Ok 0
   end
   |> Cli.handle_error
 
@@ -122,7 +122,7 @@ etc.";
                         VCS.") ]
 
 let cmd =
-  Term.(pure log $ Cli.setup $ Cli.pkg_name $ Cli.change_log $ action $
+  Term.(pure log $ Cli.setup $ Cli.dry_run $ Cli.pkg_name $ Cli.change_log $ action $
         last $ last_version $ no_pager),
   Term.info "log" ~doc ~sdocs ~exits ~envs ~man
 

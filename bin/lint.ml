@@ -7,11 +7,11 @@
 open Bos_setup
 open Dune_release
 
-let lint () name lints =
+let lint () dry_run name lints =
   begin
     let pkg = Pkg.v ?name () in
     OS.Dir.current ()
-    >>= fun dir -> Pkg.lint pkg ~dir lints
+    >>= fun dir -> Pkg.lint ~dry_run ~dir pkg lints
   end
   |> Cli.handle_error
 
@@ -45,7 +45,7 @@ let man =
         dune-release-distrib(1) for more details." ]
 
 let cmd =
-  Term.(pure lint $ Cli.setup $ Cli.pkg_name $ lints),
+  Term.(pure lint $ Cli.setup $ Cli.dry_run $ Cli.pkg_name $ lints),
   Term.info "lint" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 

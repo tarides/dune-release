@@ -11,16 +11,16 @@ let extract_version change_log =
   Text.change_log_file_last_entry change_log
   >>= fun (version, _) -> Ok version
 
-let vcs_tag tag ~commit_ish ~force ~sign ~delete ~msg =
+let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg =
   let msg = match msg with None -> strf "Distribution %s" tag | Some m -> m in
   Vcs.get ()
   >>= fun repo -> match delete with
-  | true -> Vcs.delete_tag repo tag
+  | true -> Vcs.delete_tag ~dry_run repo tag
   | false ->
-      Vcs.tag repo ~force ~sign ~msg ~commit_ish tag >>| fun () ->
+      Vcs.tag repo ~dry_run ~force ~sign ~msg ~commit_ish tag >>| fun () ->
       Logs.app (fun m -> m "Tagged version %a" Text.Pp.version tag)
 
-let tag () name change_log tag commit_ish force sign delete msg =
+let tag () name change_log dry_run tag commit_ish force sign delete msg =
   begin
     let pkg = Pkg.v ?change_log ?name () in
     let tag = match tag with
@@ -28,7 +28,7 @@ let tag () name change_log tag commit_ish force sign delete msg =
     | None -> Pkg.change_log pkg >>= fun cl -> extract_version cl
     in
     tag
-    >>= fun tag -> vcs_tag tag ~commit_ish ~force ~sign ~delete ~msg
+    >>= fun tag -> vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg
     >>= fun () -> Ok 0
   end
   |> Cli.handle_error
@@ -77,7 +77,7 @@ let man =
         $(b,dune-release log -t) to check the extracted value." ]
 
 let cmd =
-  Term.(pure tag $ Cli.setup $ Cli.pkg_name $ Cli.change_log $
+  Term.(pure tag $ Cli.setup $ Cli.pkg_name $ Cli.change_log $ Cli.dry_run $
         version $ commit $ force $ sign $ delete $ msg),
   Term.info "tag" ~doc ~sdocs ~exits ~man ~man_xrefs
 
