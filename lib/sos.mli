@@ -16,16 +16,17 @@
 
 (** Safe OS operations.
 
-    All the commands in that module can have side-effects. They also
-    all take a [--dry-run] paramater which cause the side-effect to be
-    discarded and to display a message instead.
-*)
+   All the commands in that module can have side-effects. They also
+   all take a [--dry-run] paramater which cause the side-effect to be
+   discarded and to display a message instead. Some of these commands
+   also have a `[--force]` option: this causes the message to be
+   printed AND the side-effects to be caused.  *)
 
 type error = Bos_setup.R.msg
 
 val run: dry_run:bool -> ?force:bool -> Bos.Cmd.t -> (unit, error) result
 
-val run_io: dry_run:bool ->
+val run_io: dry_run:bool -> ?force:bool ->
   default:'a -> Bos.Cmd.t -> Bos.OS.Cmd.run_in ->
   (Bos.OS.Cmd.run_out -> ('a, 'b) result) -> ('a, 'b) result
 
@@ -37,7 +38,7 @@ val run_out:
 val delete_dir: dry_run:bool -> ?force:bool -> Fpath.t -> (unit, error) result
 val delete_path: dry_run:bool -> Fpath.t -> (unit, error) result
 val read_file: dry_run:bool -> Fpath.t -> (string, error) result
-val write_file: dry_run:bool -> Fpath.t -> string -> (unit, error) result
+val write_file: dry_run:bool -> ?force:bool -> Fpath.t -> string -> (unit, error) result
 val with_dir: dry_run:bool -> Fpath.t -> ('a -> 'b) -> 'a -> ('b,  error) result
 
 val file_exists: dry_run:bool -> Fpath.t -> (bool, error) result

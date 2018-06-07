@@ -96,9 +96,9 @@ val publish_artefacts : t -> ([`Distrib | `Doc] list, R.msg) result
 
 (** {1 Uri} *)
 
-val doc_owner_repo_and_path : t -> (string * string * Fpath.t, R.msg) result
+val doc_user_repo_and_path : t -> (string * string * Fpath.t, R.msg) result
 
-val distrib_owner_and_repo : t -> (string * string, R.msg) result
+val distrib_user_and_repo : t -> (string * string, R.msg) result
 
 type f =
   dry_run:bool ->

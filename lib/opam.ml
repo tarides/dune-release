@@ -52,9 +52,9 @@ let submit ~dry_run ?msg ~pkg_dir () =
   let msg = match msg with
   | None -> Ok (Cmd.empty)
   | Some msg ->
-      OS.File.tmp "dune-release-opam-submit-msg-%s"
-      >>= fun m -> Sos.write_file ~dry_run m msg
-      >>= fun () -> Ok Cmd.(v "--msg" % p m)
+      let file = Fpath.(parent pkg_dir / "submit-msg") in
+      Sos.write_file ~dry_run ~force:true file msg >>| fun () ->
+      Cmd.(v "--msg" % p file)
   in
   msg >>= fun msg -> Sos.run ~dry_run Cmd.(publish % "submit" %% msg % p pkg_dir)
 
@@ -118,11 +118,11 @@ module File = struct
       known_fields
     in
     Logs.info (fun m -> m "Parsing opam file %a" Fpath.pp file);
-    if dry_run then Ok String.Map.empty
-    else try Ok (parse file) with
+    try Ok (parse file) with
     | _ ->
-        (* Apparently in at least opam-lib 1.2.2, the error will be logged
-             on stdout. *)
+        if dry_run then Ok String.Map.empty else
+        (* Apparently in at least opam-lib 1.2.2, the error will be
+           logged on stdout. *)
         R.error_msgf "%a: could not parse opam file" Fpath.pp file
 
   let deps ?(opts = true) fields =

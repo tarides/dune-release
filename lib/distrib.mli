@@ -23,7 +23,7 @@ type watermark = string * [ `String of string | `Version | `Version_num
          leading ['v'] or ['V'] dropped.}
       {- [`Vcs `Commit_id], is the commit identifier (hash) of the
          distribution. May be post-fixed by ["dirty"] in
-         dev package ([`Pin]) builds}.}
+         dev package ([`Pin]) builds.}
       {- [`Opam (file, field, sep)], is the values of the field
          [field] concatenated with separator [sep] of the opam file
          [file], expressed relative to the distribution root directory, if

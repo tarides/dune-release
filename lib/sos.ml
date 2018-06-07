@@ -71,11 +71,15 @@ let run_out ~dry_run ?(force=false) ?err ~default v f =
     OS.Cmd.run_out ?err v |> f
   )
 
-let run_io ~dry_run ~default v i f =
+let run_io ~dry_run ?(force=false) ~default v i f =
   if not dry_run then OS.Cmd.run_io v i |> f
-  else
-  let _ = show "exec:@[@ %a@]" Cmd.pp v in
-  Ok default
+  else if not force then
+    let _ = show "exec:@[@ %a@]" Cmd.pp v in
+    Ok default
+  else (
+    let _ = show ~action:`Done "exec:@[@ %a@]" Cmd.pp v in
+    OS.Cmd.run_io v i |> f
+  )
 
 let delete_dir ~dry_run ?(force=false) dir =
   if not dry_run then OS.Dir.delete ~recurse:true dir
@@ -102,15 +106,23 @@ let delete_path ~dry_run p =
     Ok ()
   )
 
-let write_file ~dry_run p v =
+let write_file ~dry_run ?(force=false) p v =
   if not dry_run then OS.File.write p v
-  else show "write %a" Fpath.pp p
+  else if not force then show "write %a" Fpath.pp p
+  else (
+    let _ = show ~action:`Done "write %a" Fpath.pp p in
+    OS.File.write p v
+  )
 
 let read_file ~dry_run p =
   if not dry_run then OS.File.read p
-  else
-  let _ = show "read %a" Fpath.pp p in
-  Ok ""
+  else match OS.File.exists p with
+  | Ok true ->
+      let _ = show ~action:`Done "read %a" Fpath.pp p in
+      OS.File.read p
+  | _ ->
+      let _ = show "read %a" Fpath.pp p in
+      Ok ""
 
 let file_exists ~dry_run p =
   if not dry_run then OS.File.exists p
@@ -131,7 +143,10 @@ let with_dir ~dry_run dir f x =
 let file_must_exist ~dry_run f =
   if not dry_run then OS.File.must_exist f
   else
-  let _ = show "must exists %a" Fpath.pp f in
+  let _ = match OS.File.exists f with
+  | Ok true -> show ~action:`Done "must exists %a" Fpath.pp f
+  | _       -> show "must exists %a" Fpath.pp f
+  in
   Ok f
 
 let out y =

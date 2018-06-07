@@ -131,14 +131,15 @@ let tar dir ~exclude_paths ~root ~mtime =
 let bzip2_cmd = OS.Env.(value "DUNE_RELEASE_BZIP2" cmd ~absent:(Cmd.v "bzip2"))
 let ensure_bzip2 () = OS.Cmd.must_exist bzip2_cmd >>| fun _ -> ()
 
-let bzip2 ~dry_run ~dst s =
-  Sos.run_io ~dry_run ~default:() bzip2_cmd (OS.Cmd.in_string s) (OS.Cmd.to_file dst)
+let bzip2 ~dry_run ?force ~dst s =
+  Sos.run_io ~dry_run ?force ~default:()
+    bzip2_cmd (OS.Cmd.in_string s) (OS.Cmd.to_file dst)
 
 let tar_cmd = OS.Env.(value "DUNE_RELEASE_TAR" cmd ~absent:(Cmd.v "tar"))
 let ensure_tar () = OS.Cmd.must_exist tar_cmd >>| fun _ -> ()
 let untbz ~dry_run ?(clean = false) ar =
   let clean_dir dir = OS.Dir.exists dir >>= function
-    | true when clean -> Sos.delete_dir ~dry_run dir
+    | true when clean -> Sos.delete_dir ~dry_run ~force:true dir
     | _ -> Ok ()
   in
   let archive_dir, ar = Fpath.split_base ar in
@@ -146,7 +147,8 @@ let untbz ~dry_run ?(clean = false) ar =
     let dir = Fpath.rem_ext ar in
     OS.Cmd.must_exist tar_cmd
     >>= fun _  -> clean_dir dir
-    >>= fun () -> Sos.run ~dry_run Cmd.(tar_cmd % "-xjf" % p ar)
+    >>= fun () -> OS.File.exists ar
+    >>= fun force -> Sos.run ~dry_run ~force Cmd.(tar_cmd % "-xjf" % p ar)
     >>= fun () -> Ok Fpath.(archive_dir // dir)
   in
   R.join @@ Sos.with_dir ~dry_run archive_dir unarchive ar
