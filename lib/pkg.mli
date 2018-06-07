@@ -46,6 +46,9 @@ val opam : t -> (Fpath.t, R.msg) result
 val opam_descr : t -> (Opam.Descr.t, R.msg) result
 (** [opam_descr p] is [p]'s opam description. *)
 
+val opam_homepage: t -> (string option, R.msg) result
+val opam_doc: t -> (string option, R.msg) result
+
 val opam_field : t -> string -> (string list option, R.msg) result
 (** [opam_field p f] looks up field [f] of [p]'s opam file. *)
 

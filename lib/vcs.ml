@@ -65,7 +65,7 @@ let err_git_signal cmd c = R.error_msgf "%a exited with signal %d" Cmd.dump cmd 
 
 let run_git ~dry_run ?force ~default r args out =
   let git = Cmd.(cmd r %% args) in
-  Sos.run_out ~dry_run ?force git ~default out >>= function
+  Sos.run_out ~dry_run ~sandbox:false ?force git ~default out >>= function
   | (v, (_, `Exited 0)) -> Ok v
   | (_, (_, `Exited c)) -> err_git_exit git c
   | (_, (_, `Signaled c)) -> err_git_signal git c
@@ -140,6 +140,12 @@ let git_tag_exists ~dry_run r tag =
     run_git ~dry_run r Cmd.(v "rev-parse" % "--verify" % tag)
       ~default:D.unit OS.Cmd.out_null
   with
+  | Ok () -> true
+  | _     -> false
+
+let git_branch_exists ~dry_run r br =
+  let cmd = Cmd.(v "show-ref" % "--verify" % "--quiet" % ("refs/heads/" ^ br)) in
+  match run_git ~dry_run r cmd ~default:D.unit OS.Cmd.out_null with
   | Ok () -> true
   | _     -> false
 
@@ -396,6 +402,10 @@ let tags = function
 
 let tag_exists ~dry_run r tag = match r with
 | (`Git, _, _ as r) -> git_tag_exists r ~dry_run tag
+| (`Hg, _, _) -> failwith "TODO"
+
+let branch_exists ~dry_run r tag = match r with
+| (`Git, _, _ as r) -> git_branch_exists r ~dry_run tag
 | (`Hg, _, _) -> failwith "TODO"
 
 let changes ?(until = "HEAD") r ~after = match r with

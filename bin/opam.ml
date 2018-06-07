@@ -7,6 +7,8 @@
 open Bos_setup
 open Dune_release
 
+let default_local_repo = "~/git/opam-repository"
+
 let get_pkg_dir p opam_pkg_dir = match opam_pkg_dir with
 | Some d -> Ok d
 | None ->
@@ -51,16 +53,34 @@ let pkg ~dry_run pkg dist_pkg opam_pkg_dir =
   >>= fun () ->
   Ok 0
 
-let github_issue = Re.(compile @@ seq [char '#'; rep1 digit])
+let github_issue = Re.(compile @@ seq [
+    compl [alpha];
+    group (seq [char '#'; rep1 digit])
+  ])
 
 let rewrite_github_refs user repo msg =
   Re.replace github_issue msg
-    ~f:(fun s -> Fmt.strf "%s/%s%s" user repo Re.Group.(get s 0))
+    ~f:(fun s -> Fmt.strf "%s/%s%s" user repo Re.Group.(get s 1))
 
-let submit ~dry_run pkg opam_pkg_dir =
-  Opam.ensure_publish ()
-  >>= fun () -> get_pkg_dir pkg opam_pkg_dir
-  >>= fun pkg_dir -> OS.Dir.exists pkg_dir
+let rec pkgs_name_and_version = function
+| []   -> Ok []
+| h::t ->
+    Pkg.name h >>= fun name ->
+    Pkg.version h >>= fun version ->
+    pkgs_name_and_version t >>= fun t ->
+    Ok ((name, version) :: t)
+
+let pp_pkgs ppf = function
+| []        -> assert false
+| h::_ as l ->
+    let version = snd h in
+    let names = List.map fst l in
+    Fmt.pf ppf "%a (%s)" Fmt.(list ~sep:(unit ", ") string) names version
+
+let submit ~dry_run opam_pkg_dir local_repo opam_repo_user pkgs =
+  let pkg = match pkgs with [] -> assert false | h::_ -> h in
+  get_pkg_dir pkg opam_pkg_dir
+  >>= fun pkg_dir -> Sos.dir_exists ~dry_run pkg_dir
   >>= function
   | false ->
       Logs.err (fun m -> m "Package@ %a@ does@ not@ exist. Did@ you@ forget@ \
@@ -68,11 +88,38 @@ let submit ~dry_run pkg opam_pkg_dir =
       Ok 1
   | true ->
       Logs.app (fun m -> m "Submitting %a" Text.Pp.path pkg_dir);
-      Pkg.publish_msg pkg >>= fun msg ->
+      pkgs_name_and_version pkgs >>= fun pkgs ->
+      let title = strf "[new release] %a" pp_pkgs pkgs in
+      Pkg.publish_msg pkg >>= fun changes ->
       Pkg.distrib_user_and_repo pkg >>= fun (user, repo) ->
-      let msg = rewrite_github_refs user repo (msg ^ "\n\n") in
-      Opam.submit ~dry_run ~pkg_dir ~msg () >>= fun () ->
-      Ok 0
+      let msg = strf "%s\n\n%s\n" title changes in
+      let user = match opam_repo_user with None -> user | Some u -> u in
+      Opam.prepare ~dry_run ~pkg_dir ~msg ~local_repo ~user pkgs >>= fun branch ->
+      (* open a new PR *)
+      Pkg.opam_descr pkg >>= fun (syn, _) ->
+      Pkg.opam_homepage pkg >>= fun homepage ->
+      Pkg.opam_doc pkg >>= fun doc ->
+      let pp_link name ppf = function
+      | None -> () | Some h -> Fmt.pf ppf "- %s: <a href=%S>%s</a>\n\n" name h h
+      in
+      let msg =
+        strf "%s\n%a%a##### %s"
+          syn
+          (pp_link "Project page") homepage
+          (pp_link "Documentation") doc
+          (rewrite_github_refs user repo changes)
+      in
+      Github.open_pr ~dry_run ~title ~user ~branch msg >>= function
+      | `Already_exists -> Logs.app (fun m ->
+          m "\nThe existing pull request for %a has been automatically updated."
+            Fmt.(styled `Bold string) (user ^ ":" ^ branch));
+          Ok 0
+      | `Url url ->
+          let auto_open =
+            if OpamStd.Sys.(os () = Darwin) then "open" else "xdg-open"
+          in
+          Sos.run ~dry_run Cmd.(v auto_open % url) >>= fun () ->
+          Ok 0
 
 let field pkg field = match field with
 | None -> Logs.err (fun m -> m "Missing FIELD positional argument"); Ok 1
@@ -87,7 +134,7 @@ let field pkg field = match field with
 
 (* Command *)
 
-let opam () dry_run build_dir keep_v
+let opam () dry_run build_dir local_repo user keep_v
     dist_name dist_version dist_opam dist_uri dist_file
     pkg_opam_dir pkg_name pkg_version pkg_opam pkg_descr
     readme change_log publish_msg action field_name
@@ -107,7 +154,12 @@ let opam () dry_run build_dir keep_v
           ?publish_msg ()
       in
       pkg ~dry_run p dist_p pkg_opam_dir
-  | `Submit -> submit ~dry_run p pkg_opam_dir
+  | `Submit ->
+      (if local_repo <> default_local_repo then Ok Fpath.(v local_repo)
+       else match OS.Env.var "HOME" with
+       | None   -> R.error_msg "$HOME is undefined"
+       | Some d -> Ok Fpath.(v d / "git" / "opam-repository"))
+      >>= fun local_repo -> submit ~dry_run pkg_opam_dir local_repo user [p]
   | `Field -> field p field_name
   end
   |> Cli.handle_error
@@ -129,6 +181,18 @@ let action =
 let field =
   let doc = "the field to output ($(b,field) action)" in
   Arg.(value & pos 1 (some string) None & info [] ~doc ~docv:"FIELD")
+
+let user =
+  let doc =
+    "the name of the GitHub account where to push new opam-repository branches."
+  in
+  Arg.(value & opt (some string) None & info ["u"; "user"] ~doc ~docv:"USER")
+
+let local_repo =
+  let doc = "Location of the local fork of the opam-repository" in
+  let env = Arg.env_var "DUNE_RELEASE_LOCAL_REPO" in
+  Arg.(required & opt (some string) (Some default_local_repo)
+       & info ~env ["--local-repo"] ~doc ~docv:"PATH")
 
 let pkg_opam_dir =
   let doc = "Directory to use to write the opam package. If absent the
@@ -202,7 +266,8 @@ let man =
 
 let cmd =
   let info = Term.info "opam" ~doc ~sdocs ~envs ~man ~man_xrefs in
-  let t = Term.(pure opam $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.keep_v $
+  let t = Term.(pure opam $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ local_repo $
+                user $ Cli.keep_v $
                 Cli.dist_name $ Cli.dist_version $ Cli.dist_opam $
                 Cli.dist_uri $ Cli.dist_file $
                 pkg_opam_dir $ Cli.pkg_name $ pkg_version $ pkg_opam $

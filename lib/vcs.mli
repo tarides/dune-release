@@ -87,6 +87,7 @@ val tags : t -> (string list, R.msg) result
 (** [tags r] is the list of tags in the repo [r]. *)
 
 val tag_exists: dry_run:bool -> t -> string -> bool
+val branch_exists: dry_run:bool -> t -> string -> bool
 
 val changes :
   ?until:commit_ish -> t -> after:commit_ish -> ((string * string) list, R.msg) result

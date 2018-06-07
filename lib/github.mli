@@ -24,6 +24,10 @@ val publish_in_git_branch :
   name:string -> version:string -> docdir:Fpath.t ->
   dir:Fpath.t -> (unit, R.msg) result
 
+val open_pr:
+  dry_run:bool -> title:string -> user:string -> branch:string ->
+  string -> ([`Url of string | `Already_exists], [> Rresult.R.msg ]) result
+
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
 

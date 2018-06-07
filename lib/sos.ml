@@ -22,7 +22,7 @@ let root = match OS.Dir.current () with
 | Error (`Msg e) -> Fmt.failwith "invalid root: %s" e
 | Ok d -> d
 
-let current_dir () =
+let current_dir ?(sandbox=true) () =
   match OS.Dir.current () with
   | Error (`Msg e) -> Fmt.failwith "invalid current directory: %s" e
   | Ok dir         ->
@@ -30,17 +30,25 @@ let current_dir () =
       match Fpath.relativize ~root dir with
       | None   -> assert false
       | Some d ->
-          assert (List.hd (Fpath.segs d) = "_build");
+          if sandbox then assert (List.hd (Fpath.segs d) = "_build");
           Some d
 
 let last_dir = ref root
 
-let show ?(action=`Skip) fmt =
+let pp_cmd ppf cmd =
+  let x = Fmt.to_to_string Cmd.pp cmd in
+  let x = String.mapi (fun _ -> function
+    | '\n' -> ' '
+    | c    -> c
+    ) x in
+  Fmt.string ppf x
+
+let show ?sandbox ?(action=`Skip) fmt =
   let pp_action ppf = function
   | `Skip -> Fmt.(styled `Yellow string) ppf "-:"
   | `Done -> Fmt.(styled `Green string) ppf "=>"
   in
-  let pp_cwd ppf () = match current_dir () with
+  let pp_cwd ppf () = match current_dir ?sandbox () with
   | None   -> ()
   | Some d ->
       if not (Fpath.equal d !last_dir) then (
@@ -53,31 +61,31 @@ let show ?(action=`Skip) fmt =
       Ok ()
     ) fmt
 
-let run ~dry_run ?(force=false) v =
+let run ~dry_run ?(force=false) ?sandbox v =
   if not dry_run then OS.Cmd.run v
-  else if not force then show "exec:@[@ %a@]" Cmd.pp v
+  else if not force then show ?sandbox "exec:@[@ %a@]" pp_cmd v
   else (
-    let _ = show ~action:`Done "exec:@[@ %a@]" Cmd.pp v in
+    let _ = show ?sandbox ~action:`Done "exec:@[@ %a@]" pp_cmd v in
     OS.Cmd.run v
   )
 
-let run_out ~dry_run ?(force=false) ?err ~default v f =
+let run_out ~dry_run ?(force=false) ?sandbox ?err ~default v f =
   if not dry_run then OS.Cmd.run_out ?err v |> f
   else if not force then
-    let _ = show "exec:@[@ %a@]" Cmd.pp v in
+    let _ = show ?sandbox "exec:@[@ %a@]" pp_cmd v in
     Ok default
   else (
-    let _ = show ~action:`Done "exec:@[@ %a@]" Cmd.pp v in
+    let _ = show ?sandbox ~action:`Done "exec:@[@ %a@]" pp_cmd v in
     OS.Cmd.run_out ?err v |> f
   )
 
-let run_io ~dry_run ?(force=false) ~default v i f =
+let run_io ~dry_run ?(force=false) ?sandbox ~default v i f =
   if not dry_run then OS.Cmd.run_io v i |> f
   else if not force then
-    let _ = show "exec:@[@ %a@]" Cmd.pp v in
+    let _ = show ?sandbox "exec:@[@ %a@]" pp_cmd v in
     Ok default
   else (
-    let _ = show ~action:`Done "exec:@[@ %a@]" Cmd.pp v in
+    let _ = show ?sandbox ~action:`Done "exec:@[@ %a@]" pp_cmd v in
     OS.Cmd.run_io v i |> f
   )
 
@@ -126,6 +134,12 @@ let read_file ~dry_run p =
 
 let file_exists ~dry_run p =
   if not dry_run then OS.File.exists p
+  else
+  let _ = show "exists %a" Fpath.pp p in
+  Ok true
+
+let dir_exists ~dry_run p =
+  if not dry_run then OS.Dir.exists p
   else
   let _ = show "exists %a" Fpath.pp p in
   Ok true

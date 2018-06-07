@@ -42,21 +42,73 @@ let cmd = Cmd.of_list @@ Cmd.to_list @@ tool "opam" `Host_os
 
 (* Publish *)
 
-let publish =
-  let absent = Cmd.(v "opam-publish") in
-  OS.Env.(value "DUNE_RELEASE_OPAM_PUBLISH" cmd ~absent)
-
-let ensure_publish () = OS.Cmd.must_exist publish >>| fun _ -> ()
-
-let submit ~dry_run ?msg ~pkg_dir () =
+let prepare ~dry_run ?msg ~pkg_dir ~local_repo ~user pkgs =
   let msg = match msg with
   | None -> Ok (Cmd.empty)
   | Some msg ->
-      let file = Fpath.(parent pkg_dir / "submit-msg") in
+      OS.Dir.current () >>= fun cwd ->
+      let file = Fpath.(cwd // parent pkg_dir / "submit-msg") in
       Sos.write_file ~dry_run ~force:true file msg >>| fun () ->
-      Cmd.(v "--msg" % p file)
+      Cmd.(v "--file" % p file)
   in
-  msg >>= fun msg -> Sos.run ~dry_run Cmd.(publish % "submit" %% msg % p pkg_dir)
+  msg >>= fun msg ->
+  Sos.dir_exists ~dry_run Fpath.(local_repo / ".git")
+  >>= fun exists ->
+  (if exists then Ok ()
+   else R.error_msgf "%a is not a valid Git repository." Fpath.pp local_repo)
+  >>= fun () ->
+  let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
+  Vcs.get () >>= fun repo ->
+  let git = git_for_repo repo in
+  let remote_repo = "https://github.com/ocaml/opam-repository.git" in
+  let remote_fork = strf "git@github.com:%s/opam-repository.git" user in
+  let remote_branch = "master" in
+  let pkg = Fpath.to_string Fpath.(base pkg_dir) in
+  let branch = Fmt.strf "release-%s" pkg in
+  let prepare_repo () =
+    (* fetch from upstream *)
+    let git_fetch = Cmd.(git % "fetch" % remote_repo % remote_branch) in
+    Sos.run ~sandbox:false ~dry_run ~force:true git_fetch >>= fun () ->
+    Sos.run_out ~sandbox:false ~dry_run ~force:true
+      Cmd.(git % "rev-parse" % "FETCH_HEAD")
+      ~default:"${fetch_head}"
+      OS.Cmd.to_string
+    >>= fun id ->
+    (* make a branch *)
+    let delete_branch () =
+      if not (Vcs.branch_exists ~dry_run repo branch) then Ok ()
+      else (
+        Sos.run ~dry_run ~sandbox:false Cmd.(git % "checkout" % "master") >>= fun () ->
+        Sos.run ~dry_run ~sandbox:false Cmd.(git % "branch" % "-D" % branch)
+      )
+    in
+    delete_branch () >>= fun () ->
+    Vcs.checkout repo ~dry_run ~branch ~commit_ish:id
+  in
+  OS.Dir.current () >>= fun cwd ->
+  let prepare_package (name, version) =
+    let package_dir = Fpath.(v "packages" / name / (name ^ "." ^ version)) in
+    let cp = Cmd.(v "cp" % "-R" % p Fpath.(cwd // pkg_dir) % p package_dir) in
+    (* copy opam/descr/url (or just opam if opam-version>=2 ?  *)
+    Sos.run ~dry_run ~sandbox:false cp >>= fun () ->
+    (* git add *)
+    Sos.run ~dry_run ~sandbox:false Cmd.(git % "add" % p package_dir)
+  in
+  let rec prepare_packages = function
+  | []   -> Ok ()
+  | h::t -> prepare_package h >>= fun () -> prepare_packages t
+  in
+  let commit_and_push () =
+    Sos.run ~dry_run ~sandbox:false Cmd.(git % "commit" %% msg) >>= fun () ->
+    Sos.run ~dry_run ~sandbox:false
+      Cmd.(git % "push" % "--force" % remote_fork % branch)
+  in
+  Sos.with_dir ~dry_run local_repo (fun () ->
+      prepare_repo () >>= fun () ->
+      prepare_packages pkgs >>= fun () ->
+      commit_and_push () >>= fun () ->
+      Ok branch
+    ) () |> R.join
 
 (* Packages *)
 
