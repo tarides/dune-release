@@ -19,6 +19,10 @@ let descr pkg =
   Logs.app (fun m -> m "%s" (Opam.Descr.to_string descr));
   Ok 0
 
+module D = struct
+  let distrib_uri = "${distrib_uri}"
+end
+
 let pkg ~dry_run pkg dist_pkg opam_pkg_dir =
   let log_pkg dir =
     Logs.app (fun m -> m "Wrote opam package %a" Text.Pp.path dir)
@@ -29,11 +33,13 @@ let pkg ~dry_run pkg dist_pkg opam_pkg_dir =
   in
   get_pkg_dir pkg opam_pkg_dir
   >>= fun dir -> Pkg.opam pkg
-  >>= fun opam -> OS.File.read opam
+  >>= fun opam_f -> OS.File.read opam_f
   >>= fun opam -> Pkg.opam_descr pkg
   >>= fun descr -> Ok (Opam.Descr.to_string descr)
-  >>= fun descr -> Pkg.distrib_file ~dry_run dist_pkg
-  >>= fun distrib_file -> Pkg.distrib_uri dist_pkg
+  >>= fun descr -> OS.Path.exists opam_f
+  >>= fun exists -> Pkg.distrib_file ~dry_run dist_pkg
+  >>= fun distrib_file ->
+  (if dry_run && not exists then Ok D.distrib_uri else Pkg.distrib_uri dist_pkg)
   >>= fun uri -> Opam.Url.with_distrib_file ~dry_run ~uri distrib_file
   >>= fun url -> OS.Dir.exists dir
   >>= fun exists -> (if exists then Sos.delete_dir ~dry_run dir else Ok ())
@@ -41,7 +47,7 @@ let pkg ~dry_run pkg dist_pkg opam_pkg_dir =
   >>= fun _ -> Sos.write_file ~dry_run Fpath.(dir / "descr") descr
   >>= fun () -> Sos.write_file ~dry_run Fpath.(dir / "opam") opam
   >>= fun () -> Sos.write_file ~dry_run Fpath.(dir / "url") url
-  >>= fun () -> log_pkg dir; warn_if_vcs_dirty ()
+  >>= fun () -> log_pkg dir; (if not dry_run then warn_if_vcs_dirty () else Ok ())
   >>= fun () ->
   Ok 0
 
