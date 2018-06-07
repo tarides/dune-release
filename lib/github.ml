@@ -82,7 +82,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
       Ok ()
 
 let publish_doc ~dry_run ~msg:_ ~docdir p =
-  (if dry_run then Ok D.(user, repo, dir) else Pkg.doc_owner_repo_and_path p)
+  (if dry_run then Ok D.(user, repo, dir) else Pkg.doc_user_repo_and_path p)
   >>= fun (user, repo, dir) -> Pkg.name p
   >>= fun name -> Pkg.version p
   >>= fun version ->
@@ -140,13 +140,13 @@ let steal_opam_publish_github_auth ~dry_run () =
           Sos.read_file ~dry_run file >>= fun token ->
           Ok (Some (strf "%s:%s" (String.Map.get "user" defs) token))
 
-let github_auth ~dry_run ~owner =
+let github_auth ~dry_run ~user =
   match
     steal_opam_publish_github_auth ~dry_run ()
     |> Logs.on_error_msg ~use:(fun _ -> None)
   with
   | Some auth -> auth
-  | None -> OS.Env.(value "DUNE_RELEASE_GITHUB_AUTH" string ~absent:owner)
+  | None -> OS.Env.(value "DUNE_RELEASE_GITHUB_AUTH" string ~absent:user)
 
 let create_release_json version msg =
   let escape_for_json s =
@@ -184,7 +184,7 @@ let run_with_auth ~dry_run auth curl k =
   let auth = strf "-u %s" auth in
   Sos.run_io ~dry_run curl (OS.Cmd.in_string auth) k
 
-let curl_create_release ~dry_run curl version msg owner repo =
+let curl_create_release ~dry_run curl version msg user repo =
   let parse_release_id resp = (* FIXME this is retired. *)
     let headers = String.cuts ~sep:"\r\n" resp in
     try
@@ -200,21 +200,21 @@ let curl_create_release ~dry_run curl version msg owner repo =
         (String.concat ~sep:"\n" headers)
   in
   let data = create_release_json version msg in
-  let uri = strf "https://api.github.com/repos/%s/%s/releases" owner repo in
-  let auth = github_auth ~dry_run ~owner in
+  let uri = strf "https://api.github.com/repos/%s/%s/releases" user repo in
+  let auth = github_auth ~dry_run ~user in
   let cmd = Cmd.(curl % "-D" % "-" % "--data" % data % uri) in
   run_with_auth ~dry_run ~default:"Location: /0" auth cmd
     (OS.Cmd.to_string ~trim:false)
   >>= parse_release_id
 
-let curl_upload_archive ~dry_run curl archive owner repo release_id =
+let curl_upload_archive ~dry_run curl archive user repo release_id =
   let uri =
       (* FIXME upload URI prefix should be taken from release creation
          response *)
       strf "https://uploads.github.com/repos/%s/%s/releases/%d/assets?name=%s"
-        owner repo release_id (Fpath.filename archive)
+        user repo release_id (Fpath.filename archive)
   in
-  let auth = github_auth ~dry_run ~owner in
+  let auth = github_auth ~dry_run ~user in
   let data = Cmd.(v "--data-binary" % strf "@@%s" (Fpath.to_string archive)) in
   let ctype = Cmd.(v "-H" % "Content-Type:application/x-tar") in
   let cmd = Cmd.(curl %% ctype %% data % uri) in
@@ -222,7 +222,7 @@ let curl_upload_archive ~dry_run curl archive owner repo release_id =
 
 let publish_distrib ~dry_run ~msg ~archive p =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
-  (if dry_run then Ok (D.user, D.repo) else Pkg.distrib_owner_and_repo p)
+  (if dry_run then Ok (D.user, D.repo) else Pkg.distrib_user_and_repo p)
   >>= fun (user, repo) -> Pkg.version p
   >>= fun version -> OS.Cmd.must_exist Cmd.(v "curl" % "-s" % "-S" % "-K" % "-")
   >>= fun curl -> Vcs.get ()
