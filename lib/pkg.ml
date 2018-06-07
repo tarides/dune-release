@@ -121,8 +121,12 @@ let drop_initial_v version = match String.head version with
 
 let dev_repo p =
   opam_field_hd p "dev-repo" >>= function
-  | Some r -> Ok (Some (chop_git_prefix r))
   | None   -> Ok None
+  | Some r ->
+      let uri = chop_git_prefix r in
+      match String.cut ~sep:"https://github.com/" uri with
+      | Some ("", path) -> Ok (Some ("git@github.com:" ^ path))
+      | _ -> Ok (Some uri)
 
 let distrib_uri ?(raw = false) p =
   let subst_uri p uri =
