@@ -71,11 +71,15 @@ let run_out ~dry_run ?(force=false) ?err ~default v f =
     OS.Cmd.run_out ?err v |> f
   )
 
-let run_io ~dry_run ~default v i f =
+let run_io ~dry_run ?(force=false) ~default v i f =
   if not dry_run then OS.Cmd.run_io v i |> f
-  else
-  let _ = show "exec:@[@ %a@]" Cmd.pp v in
-  Ok default
+  else if not force then
+    let _ = show "exec:@[@ %a@]" Cmd.pp v in
+    Ok default
+  else (
+    let _ = show ~action:`Done "exec:@[@ %a@]" Cmd.pp v in
+    OS.Cmd.run_io v i |> f
+  )
 
 let delete_dir ~dry_run ?(force=false) dir =
   if not dry_run then OS.Dir.delete ~recurse:true dir

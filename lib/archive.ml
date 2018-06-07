@@ -131,8 +131,9 @@ let tar dir ~exclude_paths ~root ~mtime =
 let bzip2_cmd = OS.Env.(value "DUNE_RELEASE_BZIP2" cmd ~absent:(Cmd.v "bzip2"))
 let ensure_bzip2 () = OS.Cmd.must_exist bzip2_cmd >>| fun _ -> ()
 
-let bzip2 ~dry_run ~dst s =
-  Sos.run_io ~dry_run ~default:() bzip2_cmd (OS.Cmd.in_string s) (OS.Cmd.to_file dst)
+let bzip2 ~dry_run ?force ~dst s =
+  Sos.run_io ~dry_run ?force ~default:()
+    bzip2_cmd (OS.Cmd.in_string s) (OS.Cmd.to_file dst)
 
 let tar_cmd = OS.Env.(value "DUNE_RELEASE_TAR" cmd ~absent:(Cmd.v "tar"))
 let ensure_tar () = OS.Cmd.must_exist tar_cmd >>| fun _ -> ()

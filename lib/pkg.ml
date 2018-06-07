@@ -332,7 +332,7 @@ let distrib_archive ~dry_run p ~keep_dir =
   let exclude_paths = Fpath.Set.of_list exclude_paths in
   Archive.tar dist_build_dir ~exclude_paths ~root ~mtime
   >>= fun tar -> distrib_archive_path p
-  >>= fun archive -> Archive.bzip2 ~dry_run ~dst:archive tar
+  >>= fun archive -> Archive.bzip2 ~dry_run ~force:true ~dst:archive tar
   >>= fun () ->
   (if keep_dir then Ok () else Sos.delete_dir ~dry_run dist_build_dir)
   >>= fun () -> Ok archive
