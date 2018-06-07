@@ -17,6 +17,7 @@ depends: [
   "fmt"
   "bos"
   "cmdliner"
+  "re"
   "webbrowser"
   "opam-format"
   "rresult"
