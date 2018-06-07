@@ -51,6 +51,12 @@ let pkg ~dry_run pkg dist_pkg opam_pkg_dir =
   >>= fun () ->
   Ok 0
 
+let github_issue = Re.(compile @@ seq [char '#'; rep1 digit])
+
+let rewrite_github_refs user repo msg =
+  Re.replace github_issue msg
+    ~f:(fun s -> Fmt.strf "%s/%s%s" user repo Re.Group.(get s 0))
+
 let submit ~dry_run pkg opam_pkg_dir =
   Opam.ensure_publish ()
   >>= fun () -> get_pkg_dir pkg opam_pkg_dir
@@ -62,8 +68,11 @@ let submit ~dry_run pkg opam_pkg_dir =
       Ok 1
   | true ->
       Logs.app (fun m -> m "Submitting %a" Text.Pp.path pkg_dir);
-      Pkg.publish_msg pkg
-      >>= fun msg -> Opam.submit ~dry_run ~pkg_dir ~msg () >>= fun () -> Ok 0
+      Pkg.publish_msg pkg >>= fun msg ->
+      Pkg.distrib_user_and_repo pkg >>= fun (user, repo) ->
+      let msg = rewrite_github_refs user repo (msg ^ "\n\n") in
+      Opam.submit ~dry_run ~pkg_dir ~msg () >>= fun () ->
+      Ok 0
 
 let field pkg field = match field with
 | None -> Logs.err (fun m -> m "Missing FIELD positional argument"); Ok 1
