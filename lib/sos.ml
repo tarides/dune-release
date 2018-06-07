@@ -106,9 +106,13 @@ let delete_path ~dry_run p =
     Ok ()
   )
 
-let write_file ~dry_run p v =
+let write_file ~dry_run ?(force=false) p v =
   if not dry_run then OS.File.write p v
-  else show "write %a" Fpath.pp p
+  else if not force then show "write %a" Fpath.pp p
+  else (
+    let _ = show ~action:`Done "write %a" Fpath.pp p in
+    OS.File.write p v
+  )
 
 let read_file ~dry_run p =
   if not dry_run then OS.File.read p

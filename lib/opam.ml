@@ -52,9 +52,9 @@ let submit ~dry_run ?msg ~pkg_dir () =
   let msg = match msg with
   | None -> Ok (Cmd.empty)
   | Some msg ->
-      OS.File.tmp "dune-release-opam-submit-msg-%s"
-      >>= fun m -> Sos.write_file ~dry_run m msg
-      >>= fun () -> Ok Cmd.(v "--msg" % p m)
+      let file = Fpath.(parent pkg_dir / "submit-msg") in
+      Sos.write_file ~dry_run ~force:true file msg >>| fun () ->
+      Cmd.(v "--msg" % p file)
   in
   msg >>= fun msg -> Sos.run ~dry_run Cmd.(publish % "submit" %% msg % p pkg_dir)
 
