@@ -220,6 +220,22 @@ let curl_upload_archive ~dry_run curl archive user repo release_id =
   let cmd = Cmd.(curl %% ctype %% data % uri) in
   run_with_auth ~dry_run ~default:() auth cmd OS.Cmd.to_stdout
 
+let dev_repo p =
+  Pkg.dev_repo p >>= function
+  | Some r -> Ok r
+  | None ->
+      Pkg.opam p >>= fun opam ->
+      R.error_msgf "The field dev-repo is missing in %a." Fpath.pp opam
+
+let check_tag ~dry_run vcs tag =
+  if Vcs.tag_exists ~dry_run vcs tag then Ok ()
+  else
+  R.error_msgf
+    "CHANGES.md lists '%s' as the latest release, but no \
+     corresponding tag has been found in the repository.@.\
+     Did you forget to call 'dune-release tag' ?"
+    tag
+
 let publish_distrib ~dry_run ~msg ~archive p =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   (if dry_run then Ok (D.user, D.repo) else Pkg.distrib_user_and_repo p)
@@ -227,7 +243,10 @@ let publish_distrib ~dry_run ~msg ~archive p =
   >>= fun version -> OS.Cmd.must_exist Cmd.(v "curl" % "-s" % "-S" % "-K" % "-")
   >>= fun curl -> Vcs.get ()
   >>= fun vcs -> Ok (git_for_repo vcs)
-  >>= fun git -> Sos.run ~dry_run Cmd.(git % "push" % "--force" % "--tags")
+  >>= fun git -> Pkg.tag p
+  >>= fun tag -> check_tag ~dry_run vcs tag
+  >>= fun () -> dev_repo p
+  >>= fun upstr -> Sos.run ~dry_run Cmd.(git % "push" % "--force" % upstr % tag)
   >>= fun () -> curl_create_release ~dry_run curl version msg user repo
   >>= fun id -> curl_upload_archive ~dry_run curl archive user repo id
 
