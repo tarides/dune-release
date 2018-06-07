@@ -7,19 +7,19 @@
 open Bos_setup
 open Dune_release
 
-let gen_doc ~dry_run dir pkg_name =
-  let do_doc () =
-    Sos.run ~dry_run Cmd.(v "jbuilder" % "build" % "-p" % pkg_name % "@doc")
-    >>| fun () -> Fpath.(dir / "_build" / "default" / "_doc")
-  in
+let gen_doc ~dry_run ~force dir pkg_name =
+  let build_doc = Cmd.(v "jbuilder" % "build" % "-p" % pkg_name % "@doc") in
+  let build_dir = Fpath.(dir / "_build" / "default" / "_doc") in
+  let do_doc () = Sos.run ~dry_run ~force build_doc >>| fun () -> build_dir in
   R.join @@ Sos.with_dir ~dry_run dir do_doc ()
 
 let publish_doc ~dry_run pkg =
   Pkg.distrib_file ~dry_run pkg
   >>= fun archive -> Pkg.publish_msg pkg
   >>= fun msg -> Archive.untbz ~dry_run ~clean:true archive
-  >>= fun dir -> Pkg.name pkg
-  >>= fun name -> gen_doc ~dry_run dir name
+  >>= fun dir -> OS.Dir.exists dir
+  >>= fun force -> Pkg.name pkg
+  >>= fun name -> gen_doc ~dry_run ~force dir name
   >>= fun docdir -> Github.publish_doc ~dry_run pkg ~msg ~docdir
 
 let publish_distrib ~dry_run pkg =

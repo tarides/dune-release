@@ -455,10 +455,11 @@ let lint_opams ~dry_run p =
     in
     (* lint fields *)
     if dry_run then Ok 0
-    else
-    doc_owner_repo_and_path p >>= fun _ ->
-    distrib_owner_and_repo p >>| fun _ ->
-    d)
+    else (
+      doc_owner_repo_and_path p >>= fun _ ->
+      distrib_owner_and_repo p >>| fun _ ->
+      d
+    ))
 
 type lint = [ `Std_files | `Opam ]
 

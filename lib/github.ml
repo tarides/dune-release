@@ -6,6 +6,13 @@
 
 open Bos_setup
 
+module D = struct
+  let user = "${user}"
+  let repo = "${repo}"
+  let dir = Fpath.v "${dir}"
+  let fetch_head = "${fetch_head}"
+end
+
 (* Publish documentation *)
 
 let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
@@ -37,7 +44,8 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
     let msg = strf "Update %s doc to %s." name version in
     Vcs.get ()
     >>= fun repo -> Ok (git_for_repo repo)
-    >>= fun git -> Sos.run ~dry_run ~force:true Cmd.(git % "checkout" % branch)
+    >>= fun git ->
+    Sos.run ~dry_run ~force:(dir <> D.dir) Cmd.(git % "checkout" % branch)
     >>= fun () -> delete dir
     >>= fun () -> cp docdir dir
     >>= fun () -> (if dry_run then Ok true else Vcs.is_dirty repo)
@@ -74,12 +82,13 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
       Ok ()
 
 let publish_doc ~dry_run ~msg:_ ~docdir p =
-  Pkg.doc_owner_repo_and_path p
-  >>= fun (owner, repo, dir) -> Pkg.name p
+  (if dry_run then Ok D.(user, repo, dir) else Pkg.doc_owner_repo_and_path p)
+  >>= fun (user, repo, dir) -> Pkg.name p
   >>= fun name -> Pkg.version p
   >>= fun version ->
-  let remote = strf "git@@github.com:%s/%s.git" owner repo in
+  let remote = strf "git@@github.com:%s/%s.git" user repo in
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
+  let force = user <> D.user in
   let create_empty_gh_pages git =
     let msg = "Initial commit by dune-release." in
     let create () =
@@ -94,22 +103,22 @@ let publish_doc ~dry_run ~msg:_ ~docdir p =
     OS.Dir.with_tmp "gh-pages-%s.tmp" (fun dir () ->
         Sos.with_dir ~dry_run dir create () |> R.join >>= fun () ->
         let git_fetch = Cmd.(git % "fetch" % Fpath.to_string dir % "gh-pages") in
-        Sos.run ~dry_run ~force:true git_fetch
+        Sos.run ~dry_run ~force git_fetch
       ) () |> R.join
   in
   Vcs.get ()
   >>= fun repo -> Ok (git_for_repo repo)
   >>= fun git ->
   let git_fetch = Cmd.(git % "fetch" % remote % "gh-pages") in
-  (match Sos.run ~dry_run ~force:true git_fetch with
+  (match Sos.run ~dry_run ~force git_fetch with
   | Ok () -> Ok ()
   | Error _ -> create_empty_gh_pages git)
   >>= fun () ->
-  Sos.run_out ~dry_run ~force:true Cmd.(git % "rev-parse" % "FETCH_HEAD")
-    ~default:""
+  Sos.run_out ~dry_run ~force Cmd.(git % "rev-parse" % "FETCH_HEAD")
+    ~default:D.fetch_head
     OS.Cmd.to_string
   >>= fun id ->
-  Sos.run ~dry_run ~force:true Cmd.(git % "branch" % "-f" % "gh-pages" % id)
+  Sos.run ~dry_run ~force Cmd.(git % "branch" % "-f" % "gh-pages" % id)
   >>= fun () ->
   publish_in_git_branch
     ~dry_run ~remote ~branch:"gh-pages" ~name ~version ~docdir ~dir

@@ -135,7 +135,10 @@ let with_dir ~dry_run dir f x =
 let file_must_exist ~dry_run f =
   if not dry_run then OS.File.must_exist f
   else
-  let _ = show "must exists %a" Fpath.pp f in
+  let _ = match OS.File.exists f with
+  | Ok true -> show ~action:`Done "must exists %a" Fpath.pp f
+  | _       -> show "must exists %a" Fpath.pp f
+  in
   Ok f
 
 let out y =
