@@ -86,6 +86,8 @@ val describe : ?dirty:bool -> ?commit_ish:commit_ish -> t -> (string, R.msg) res
 val tags : t -> (string list, R.msg) result
 (** [tags r] is the list of tags in the repo [r]. *)
 
+val tag_exists: dry_run:bool -> t -> string -> bool
+
 val changes :
   ?until:commit_ish -> t -> after:commit_ish -> ((string * string) list, R.msg) result
 (** [changes r ~after ~until] is the list of commits with their

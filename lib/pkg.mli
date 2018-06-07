@@ -132,6 +132,13 @@ val lint : dry_run:bool -> dir:Fpath.t -> t -> lint list -> (int, R.msg) result
     [lints] in a directory [dir] on the package [p].  If [ignore_pkg]
     is [true] [p]'s definitions are ignored. *)
 
+(** {1 Tag} *)
+
+val tag: t -> (string, Sos.error) result
+
+(** {1 Dev repo} *)
+
+val dev_repo: t -> (string option, Sos.error) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

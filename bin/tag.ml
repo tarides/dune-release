@@ -7,10 +7,6 @@
 open Bos_setup
 open Dune_release
 
-let extract_version change_log =
-  Text.change_log_file_last_entry change_log
-  >>= fun (version, _) -> Ok version
-
 let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg =
   let msg = match msg with None -> strf "Distribution %s" tag | Some m -> m in
   Vcs.get ()
@@ -25,7 +21,7 @@ let tag () dry_run name change_log tag commit_ish force sign delete msg =
     let pkg = Pkg.v ~dry_run ?change_log ?name () in
     let tag = match tag with
     | Some t -> Ok t
-    | None -> Pkg.change_log pkg >>= fun cl -> extract_version cl
+    | None   -> Pkg.tag pkg
     in
     tag
     >>= fun tag -> vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg

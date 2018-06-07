@@ -119,6 +119,11 @@ let drop_initial_v version = match String.head version with
 | Some ('v' | 'V') -> String.with_index_range ~first:1 version
 | None | Some _ -> version
 
+let dev_repo p =
+  opam_field_hd p "dev-repo" >>= function
+  | Some r -> Ok (Some (chop_git_prefix r))
+  | None   -> Ok None
+
 let distrib_uri ?(raw = false) p =
   let subst_uri p uri =
     uri
@@ -483,6 +488,14 @@ let lint ~dry_run ~dir p todo =
                      (Fmt.styled_unit `Red "failure") () n); 1
   in
   Sos.with_dir ~dry_run dir lint p
+
+(* tags *)
+
+let extract_version change_log =
+  Text.change_log_file_last_entry change_log
+  >>= fun (version, _) -> Ok version
+
+let tag pkg = change_log pkg >>= fun cl -> extract_version cl
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

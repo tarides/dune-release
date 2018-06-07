@@ -135,6 +135,14 @@ let git_tags r =
   run_git ~dry_run:false r Cmd.(v "tag" % "--list")
     ~default:D.list OS.Cmd.out_lines
 
+let git_tag_exists ~dry_run r tag =
+  match
+    run_git ~dry_run r Cmd.(v "rev-parse" % "--verify" % tag)
+      ~default:D.unit OS.Cmd.out_null
+  with
+  | Ok () -> true
+  | _     -> false
+
 let git_changes ~after ~until r =
   let range =
     if after = "" then until else
@@ -385,6 +393,10 @@ let describe ?(dirty = true) ?(commit_ish = "HEAD") = function
 let tags = function
 | (`Git, _, _ as r) -> git_tags r
 | (`Hg, _, _ as r) -> hg_tags r
+
+let tag_exists ~dry_run r tag = match r with
+| (`Git, _, _ as r) -> git_tag_exists r ~dry_run tag
+| (`Hg, _, _) -> failwith "TODO"
 
 let changes ?(until = "HEAD") r ~after = match r with
 | (`Git, _, _ as r) -> git_changes r ~after ~until
