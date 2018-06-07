@@ -222,14 +222,14 @@ let curl_upload_archive ~dry_run curl archive owner repo release_id =
 
 let publish_distrib ~dry_run ~msg ~archive p =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
-  Pkg.distrib_owner_and_repo p
-  >>= fun (owner, repo) -> Pkg.version p
+  (if dry_run then Ok (D.user, D.repo) else Pkg.distrib_owner_and_repo p)
+  >>= fun (user, repo) -> Pkg.version p
   >>= fun version -> OS.Cmd.must_exist Cmd.(v "curl" % "-s" % "-S" % "-K" % "-")
   >>= fun curl -> Vcs.get ()
   >>= fun vcs -> Ok (git_for_repo vcs)
   >>= fun git -> Sos.run ~dry_run Cmd.(git % "push" % "--force" % "--tags")
-  >>= fun () -> curl_create_release ~dry_run curl version msg owner repo
-  >>= fun id -> curl_upload_archive ~dry_run curl archive owner repo id
+  >>= fun () -> curl_create_release ~dry_run curl version msg user repo
+  >>= fun id -> curl_upload_archive ~dry_run curl archive user repo id
 
 
 (*---------------------------------------------------------------------------

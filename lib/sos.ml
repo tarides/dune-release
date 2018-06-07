@@ -112,9 +112,13 @@ let write_file ~dry_run p v =
 
 let read_file ~dry_run p =
   if not dry_run then OS.File.read p
-  else
-  let _ = show "read %a" Fpath.pp p in
-  Ok ""
+  else match OS.File.exists p with
+  | Ok true ->
+      let _ = show ~action:`Done "read %a" Fpath.pp p in
+      OS.File.read p
+  | _ ->
+      let _ = show "read %a" Fpath.pp p in
+      Ok ""
 
 let file_exists ~dry_run p =
   if not dry_run then OS.File.exists p
