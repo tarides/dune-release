@@ -109,13 +109,17 @@ let submit ~dry_run opam_pkg_dir local_repo opam_repo_user pkgs =
       Pkg.opam_homepage pkg >>= fun homepage ->
       Pkg.opam_doc pkg >>= fun doc ->
       let pp_link name ppf = function
-      | None -> () | Some h -> Fmt.pf ppf "- %s: <a href=%S>%s</a>\n\n" name h h
+      | None -> () | Some h -> Fmt.pf ppf "- %s: <a href=%S>%s</a>\n" name h h
+      in
+      let pp_space ppf () =
+        if homepage <> None || doc <> None then Fmt.string ppf "\n"
       in
       let msg =
-        strf "%s\n%a%a##### %s"
+        strf "%s\n\n%a%a%a##### %s"
           syn
           (pp_link "Project page") homepage
           (pp_link "Documentation") doc
+          pp_space ()
           changes
       in
       Github.open_pr ~dry_run ~title ~user ~branch msg >>= function
