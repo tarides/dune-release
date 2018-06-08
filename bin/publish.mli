@@ -6,7 +6,7 @@
 
 (** The [publish] command. *)
 
-val token: unit -> (Fpath.t, Bos_setup.R.msg) result
+val token: dry_run:bool -> unit -> (Fpath.t, Bos_setup.R.msg) result
 val cmd : int Cmdliner.Term.t * Cmdliner.Term.info
 
 (*---------------------------------------------------------------------------

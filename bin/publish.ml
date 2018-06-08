@@ -27,16 +27,57 @@ let publish_distrib ~token ~dry_run pkg =
   >>= fun archive -> Pkg.publish_msg pkg
   >>= fun msg     -> Github.publish_distrib ~token ~dry_run pkg ~msg ~archive
 
-let token () =
+let reset_terminal : (unit -> unit) option ref = ref None
+let cleanup () = match !reset_terminal with None -> () | Some f -> f ()
+let () = at_exit cleanup
+
+let no_stdin_echo f =
+  let open Unix in
+  let attr = tcgetattr stdin in
+  let reset () = tcsetattr stdin TCSAFLUSH attr in
+  reset_terminal := Some reset;
+  tcsetattr stdin TCSAFLUSH
+    { attr with
+      c_echo = false; c_echoe = false; c_echok = false; c_echonl = true; };
+  let v = f () in
+  reset ();
+  reset_terminal := None;
+  v
+
+let get_token () =
+  let rec aux () =
+    match read_line () with
+    | "" -> aux ()
+    | s  -> s
+    | exception End_of_file ->
+        print_newline ();
+        aux ()
+    | exception (Sys.Break as e) ->
+        print_newline ();
+        raise e
+  in
+  no_stdin_echo aux
+
+let token ~dry_run () =
   match OS.Env.var "HOME" with
   | None   -> R.error_msg "$HOME is undefined"
   | Some d ->
       let file = Fpath.(v d / "dune-release" / "config.yml") in
       OS.File.exists file >>= fun exists ->
       if exists then Ok file
-      else
-      R.error_msgf "%a does not exist! Refer to the documentation to continue."
-        Fpath.pp file
+      else if dry_run then Ok Fpath.(v "${token}")
+      else (
+        Fmt.pr
+          "%a does not exist! To create a new token, visit \
+           https://github.com/settings/tokens and click on \
+           \"Generate New Token\". Pick a useful Token description \
+           (for dune-release) and select only the 'public_repo' scope.\n\
+           \n\
+           token: %!" Fpath.pp file;
+        let token = get_token () in
+        OS.File.write ~mode:0o600 file token >>= fun () ->
+        Ok file
+      )
 
 let publish ()
     build_dir keep_v name version opam change_log distrib_uri
@@ -56,7 +97,7 @@ let publish ()
       acc >>= fun () -> match artefact with
       | `Doc     -> publish_doc ~dry_run pkg
       | `Distrib ->
-          token () >>= fun token ->
+          token ~dry_run () >>= fun token ->
           publish_distrib ~token ~dry_run pkg
     in
     Pkg.publish_artefacts pkg
