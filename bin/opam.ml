@@ -63,13 +63,16 @@ let pkg ~dry_run pkgs dist_pkg opam_pkg_dir =
   loop pkgs
 
 let github_issue = Re.(compile @@ seq [
-    compl [alpha];
-    group (seq [char '#'; rep1 digit])
+    group (compl [alpha]);
+    group (seq [char '#'; rep1 digit]);
   ])
 
 let rewrite_github_refs user repo msg =
   Re.replace github_issue msg
-    ~f:(fun s -> Fmt.strf "%s/%s%s" user repo Re.Group.(get s 1))
+    ~f:(fun s ->
+        let x = Re.Group.get s 1 in
+        let y = Re.Group.get s 2 in
+        Fmt.strf "%s%s/%s%s" x user repo y)
 
 let rec pp_list pp ppf = function
   | []    -> ()
