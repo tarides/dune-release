@@ -15,6 +15,8 @@ end
 
 (* Publish documentation *)
 
+let cwd = OS.Dir.current ()
+
 let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
   let pp_distrib ppf (name, version) =
     Fmt.pf ppf "%a %a" Text.Pp.name name Text.Pp.version version
@@ -23,11 +25,10 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
     Logs.app (fun m -> m "%s %a@ in@ directory@ %a@ of@ gh-pages@ branch"
                  msg pp_distrib distrib Fpath.pp dir)
   in
+  cwd >>= fun cwd ->
   let cp src dst =
-    let dst_is_root = Fpath.is_current_dir dst in
-    let src =
-      if dst_is_root then Fpath.to_dir_path src else Fpath.rem_empty_seg src
-    in
+    let src = Fpath.(cwd // src) in
+    let src = Fpath.to_dir_path src in
     (* FIXME we lost Windows friends here, fix bos #30 *)
     Sos.run ~dry_run Cmd.(v "cp" % "-R" % p src % p dst)
   in
