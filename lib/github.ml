@@ -125,7 +125,9 @@ let publish_doc ~dry_run ~msg:_ ~docdir p =
 
 (* Publish releases *)
 
-let github_auth ~dry_run token = Sos.read_file ~dry_run token
+let github_auth ~dry_run ~user token =
+  Sos.read_file ~dry_run token >>= fun token ->
+  Ok (strf "%s:%s" user token)
 
 let create_release_json version msg =
   let escape_for_json s =
@@ -180,7 +182,7 @@ let curl_create_release ~token ~dry_run curl version msg user repo =
   in
   let data = create_release_json version msg in
   let uri = strf "https://api.github.com/repos/%s/%s/releases" user repo in
-  github_auth ~dry_run token >>= fun auth ->
+  github_auth ~dry_run ~user token >>= fun auth ->
   let cmd = Cmd.(curl % "-D" % "-" % "--data" % data % uri) in
   run_with_auth ~dry_run ~default:"Location: /0" auth cmd
     (OS.Cmd.to_string ~trim:false)
@@ -193,7 +195,7 @@ let curl_upload_archive ~token ~dry_run curl archive user repo release_id =
       strf "https://uploads.github.com/repos/%s/%s/releases/%d/assets?name=%s"
         user repo release_id (Fpath.filename archive)
   in
-  github_auth ~dry_run token >>= fun auth ->
+  github_auth ~dry_run ~user token >>= fun auth ->
   let data = Cmd.(v "--data-binary" % strf "@@%s" (Fpath.to_string archive)) in
   let ctype = Cmd.(v "-H" % "Content-Type:application/x-tar") in
   let cmd = Cmd.(curl %% ctype %% data % uri) in
@@ -223,7 +225,7 @@ let curl_open_pr ~token ~dry_run ~title ~user ~branch ~body curl =
       title body user branch
   in
   let cmd = Cmd.(curl % "-D" % "-" % "--data" % data % uri) in
-  github_auth ~dry_run token >>= fun auth ->
+  github_auth ~dry_run ~user token >>= fun auth ->
   let default = {|  "html_url": "${pr_url}",|} in
   run_with_auth ~dry_run ~default auth cmd (OS.Cmd.to_string ~trim:false)
   >>= parse_url
