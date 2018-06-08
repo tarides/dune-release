@@ -42,12 +42,15 @@ let cmd = Cmd.of_list @@ Cmd.to_list @@ tool "opam" `Host_os
 
 (* Publish *)
 
-let prepare ~dry_run ?msg ~pkg_dir ~local_repo ~user pkgs =
+let shortest x =
+  List.hd (List.sort (fun x y -> compare (String.length x) (String.length y)) x)
+
+let prepare ~dry_run ?msg ~local_repo ~user ~version names =
   let msg = match msg with
   | None -> Ok (Cmd.empty)
   | Some msg ->
       OS.Dir.current () >>= fun cwd ->
-      let file = Fpath.(cwd // parent pkg_dir / "submit-msg") in
+      let file = Fpath.(cwd / "_build" / "submit-msg") in
       Sos.write_file ~dry_run ~force:true file msg >>| fun () ->
       Cmd.(v "--file" % p file)
   in
@@ -63,49 +66,58 @@ let prepare ~dry_run ?msg ~pkg_dir ~local_repo ~user pkgs =
   let remote_repo = "https://github.com/ocaml/opam-repository.git" in
   let remote_fork = strf "git@github.com:%s/opam-repository.git" user in
   let remote_branch = "master" in
-  let pkg = Fpath.to_string Fpath.(base pkg_dir) in
+  let pkg = shortest names in
   let branch = Fmt.strf "release-%s" pkg in
+  let run = Sos.run ~sandbox:false ~dry_run ~force:true in
+  let run_out = Sos.run_out ~sandbox:false ~dry_run ~force:true in
   let prepare_repo () =
     (* fetch from upstream *)
     let git_fetch = Cmd.(git % "fetch" % remote_repo % remote_branch) in
-    Sos.run ~sandbox:false ~dry_run ~force:true git_fetch >>= fun () ->
-    Sos.run_out ~sandbox:false ~dry_run ~force:true
-      Cmd.(git % "rev-parse" % "FETCH_HEAD")
-      ~default:"${fetch_head}"
-      OS.Cmd.to_string
+    run git_fetch >>= fun () ->
+    run_out Cmd.(git % "rev-parse" % "FETCH_HEAD")
+      ~default:"${fetch_head}" OS.Cmd.to_string
     >>= fun id ->
     (* make a branch *)
     let delete_branch () =
-      if not (Vcs.branch_exists ~dry_run repo branch) then Ok ()
+      if not (Vcs.branch_exists ~dry_run:false repo branch) then Ok ()
       else (
-        Sos.run ~dry_run ~sandbox:false Cmd.(git % "checkout" % "master") >>= fun () ->
-        Sos.run ~dry_run ~sandbox:false Cmd.(git % "branch" % "-D" % branch)
+        run Cmd.(git % "checkout" % "master") >>= fun () ->
+        run Cmd.(git % "branch" % "-D" % branch)
       )
     in
     delete_branch () >>= fun () ->
-    Vcs.checkout repo ~dry_run ~branch ~commit_ish:id
+    Vcs.checkout repo ~dry_run:false ~branch ~commit_ish:id
   in
   OS.Dir.current () >>= fun cwd ->
-  let prepare_package (name, version) =
-    let package_dir = Fpath.(v "packages" / name / (name ^ "." ^ version)) in
-    let cp = Cmd.(v "cp" % "-R" % p Fpath.(cwd // pkg_dir) % p package_dir) in
-    (* copy opam/descr/url (or just opam if opam-version>=2 ?  *)
-    Sos.run ~dry_run ~sandbox:false cp >>= fun () ->
+  let prepare_package name =
+    (* copy opam, descr and url files *)
+    let dir = name ^ "." ^ version in
+    let src = Fpath.(cwd / "_build" / dir) in
+    let dst = Fpath.(v "packages" / name / dir) in
+    let cp = Cmd.(v "cp" % "-R" % p src % p dst) in
+    OS.Dir.exists src >>= fun exists ->
+    (if exists then Ok ()
+     else
+     R.error_msgf
+       "%a does not exist, did you run:\n  dune-release opam pkg -n %s\n"
+       Fpath.pp src name
+    ) >>= fun () ->
+    run cp >>= fun () ->
     (* git add *)
-    Sos.run ~dry_run ~sandbox:false Cmd.(git % "add" % p package_dir)
+    run Cmd.(git % "add" % p dst)
   in
   let rec prepare_packages = function
   | []   -> Ok ()
   | h::t -> prepare_package h >>= fun () -> prepare_packages t
   in
   let commit_and_push () =
-    Sos.run ~dry_run ~sandbox:false Cmd.(git % "commit" %% msg) >>= fun () ->
+    run Cmd.(git % "commit" %% msg) >>= fun () ->
     Sos.run ~dry_run ~sandbox:false
       Cmd.(git % "push" % "--force" % remote_fork % branch)
   in
   Sos.with_dir ~dry_run local_repo (fun () ->
       prepare_repo () >>= fun () ->
-      prepare_packages pkgs >>= fun () ->
+      prepare_packages names >>= fun () ->
       commit_and_push () >>= fun () ->
       Ok branch
     ) () |> R.join

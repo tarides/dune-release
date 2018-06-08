@@ -16,10 +16,10 @@ val cmd : Cmd.t
 (** {1:publish Publish} *)
 
 val prepare : dry_run:bool -> ?msg:string ->
-  pkg_dir:Fpath.t -> local_repo:Fpath.t -> user:string ->
-  (string * string) list -> (string, R.msg) result
-(** [prepare ~pkg_dir ~local_repo pkgs] adds the package
-   [name.version] to a new branch in the local opam repository
+  local_repo:Fpath.t -> user:string ->
+  version:string -> string list -> (string, R.msg) result
+(** [prepare ~local_repo ~version pkgs] adds the packages
+   [pkg.version] to a new branch in the local opam repository
    [local_repo], using the commit message [msg] (if any). Return the
    new branch. *)
 

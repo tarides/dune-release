@@ -135,13 +135,15 @@ let read_file ~dry_run p =
 let file_exists ~dry_run p =
   if not dry_run then OS.File.exists p
   else
-  let _ = show "exists %a" Fpath.pp p in
+  let action = match OS.File.exists p with Ok true -> `Done | _ -> `Skip in
+  let _ = show ~action "exists %a" Fpath.pp p in
   Ok true
 
 let dir_exists ~dry_run p =
   if not dry_run then OS.Dir.exists p
   else
-  let _ = show "exists %a" Fpath.pp p in
+  let action = match OS.Dir.exists p with Ok true -> `Done | _ -> `Skip in
+  let _ = show ~action "exists %a" Fpath.pp p in
   Ok true
 
 let with_dir ~dry_run dir f x =
