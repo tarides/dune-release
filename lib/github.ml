@@ -125,28 +125,9 @@ let publish_doc ~dry_run ~msg:_ ~docdir p =
 
 (* Publish releases *)
 
-let steal_opam_publish_github_auth ~dry_run () =
-  let opam = Cmd.(v "opam") in
-  let publish = Fpath.v "plugins/opam-publish" in
-  OS.Cmd.exists opam >>= function
-  | false -> Ok None
-  | true ->
-      OS.Cmd.(run_out Cmd.(opam % "config" % "var" % "root") |> to_string)
-      >>= fun root -> Fpath.of_string root
-      >>= fun root -> OS.Path.query Fpath.(root // publish / "$(user).token")
-      >>= function
-      | [] -> Ok None
-      | (file, defs) :: _ ->
-          Sos.read_file ~dry_run file >>= fun token ->
-          Ok (Some (strf "%s:%s" (String.Map.get "user" defs) token))
-
-let github_auth ~dry_run ~user =
-  match
-    steal_opam_publish_github_auth ~dry_run ()
-    |> Logs.on_error_msg ~use:(fun _ -> None)
-  with
-  | Some auth -> auth
-  | None -> OS.Env.(value "DUNE_RELEASE_GITHUB_AUTH" string ~absent:user)
+let github_auth ~dry_run ~user token =
+  Sos.read_file ~dry_run token >>= fun token ->
+  Ok (strf "%s:%s" user token)
 
 let create_release_json version msg =
   let escape_for_json s =
@@ -184,7 +165,7 @@ let run_with_auth ~dry_run auth curl k =
   let auth = strf "-u %s" auth in
   Sos.run_io ~dry_run curl (OS.Cmd.in_string auth) k
 
-let curl_create_release ~dry_run curl version msg user repo =
+let curl_create_release ~token ~dry_run curl version msg user repo =
   let parse_release_id resp = (* FIXME this is retired. *)
     let headers = String.cuts ~sep:"\r\n" resp in
     try
@@ -201,24 +182,57 @@ let curl_create_release ~dry_run curl version msg user repo =
   in
   let data = create_release_json version msg in
   let uri = strf "https://api.github.com/repos/%s/%s/releases" user repo in
-  let auth = github_auth ~dry_run ~user in
+  github_auth ~dry_run ~user token >>= fun auth ->
   let cmd = Cmd.(curl % "-D" % "-" % "--data" % data % uri) in
   run_with_auth ~dry_run ~default:"Location: /0" auth cmd
     (OS.Cmd.to_string ~trim:false)
   >>= parse_release_id
 
-let curl_upload_archive ~dry_run curl archive user repo release_id =
+let curl_upload_archive ~token ~dry_run curl archive user repo release_id =
   let uri =
       (* FIXME upload URI prefix should be taken from release creation
          response *)
       strf "https://uploads.github.com/repos/%s/%s/releases/%d/assets?name=%s"
         user repo release_id (Fpath.filename archive)
   in
-  let auth = github_auth ~dry_run ~user in
+  github_auth ~dry_run ~user token >>= fun auth ->
   let data = Cmd.(v "--data-binary" % strf "@@%s" (Fpath.to_string archive)) in
   let ctype = Cmd.(v "-H" % "Content-Type:application/x-tar") in
   let cmd = Cmd.(curl %% ctype %% data % uri) in
   run_with_auth ~dry_run ~default:() auth cmd OS.Cmd.to_stdout
+
+let curl_open_pr ~token ~dry_run ~title ~user ~branch ~body curl =
+  let parse_url resp = (* FIXME this is nuts. *)
+    let url = Re.(compile @@ seq [
+        bol;
+        str {|  "html_url":|};
+        rep space;
+        char '"';
+        group (rep (compl [char '"']))
+      ])
+    in
+    let alread_exists = Re.(compile @@ str "A pull request already exists") in
+    try Ok (`Url Re.(Group.get (exec url resp) 1))
+    with Not_found ->
+      if Re.execp alread_exists resp then Ok `Already_exists
+      else R.error_msgf "Could not find html_url id in response:\n%s." resp
+  in
+  let base = "ocaml" in
+  let repo = "opam-repository" in
+  let uri = strf "https://api.github.com/repos/%s/%s/pulls" base repo in
+  let data =
+    strf {|{"title": %S,"base": "master", "body": %S, "head": "%s:%s"}|}
+      title body user branch
+  in
+  let cmd = Cmd.(curl % "-D" % "-" % "--data" % data % uri) in
+  github_auth ~dry_run ~user token >>= fun auth ->
+  let default = {|  "html_url": "${pr_url}",|} in
+  run_with_auth ~dry_run ~default auth cmd (OS.Cmd.to_string ~trim:false)
+  >>= parse_url
+
+let open_pr ~token ~dry_run ~title ~user ~branch body =
+  OS.Cmd.must_exist Cmd.(v "curl" % "-s" % "-S" % "-K" % "-") >>= fun curl ->
+  curl_open_pr ~token ~dry_run ~title ~user ~branch ~body curl
 
 let dev_repo p =
   Pkg.dev_repo p >>= function
@@ -236,7 +250,7 @@ let check_tag ~dry_run vcs tag =
      Did you forget to call 'dune-release tag' ?"
     tag
 
-let publish_distrib ~dry_run ~msg ~archive p =
+let publish_distrib ~token ~dry_run ~msg ~archive p =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   (if dry_run then Ok (D.user, D.repo) else Pkg.distrib_user_and_repo p)
   >>= fun (user, repo) -> Pkg.version p
@@ -247,8 +261,8 @@ let publish_distrib ~dry_run ~msg ~archive p =
   >>= fun tag -> check_tag ~dry_run vcs tag
   >>= fun () -> dev_repo p
   >>= fun upstr -> Sos.run ~dry_run Cmd.(git % "push" % "--force" % upstr % tag)
-  >>= fun () -> curl_create_release ~dry_run curl version msg user repo
-  >>= fun id -> curl_upload_archive ~dry_run curl archive user repo id
+  >>= fun () -> curl_create_release ~token ~dry_run curl version msg user repo
+  >>= fun id -> curl_upload_archive ~token ~dry_run curl archive user repo id
 
 
 (*---------------------------------------------------------------------------

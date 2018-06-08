@@ -15,14 +15,13 @@ val cmd : Cmd.t
 
 (** {1:publish Publish} *)
 
-val ensure_publish : unit -> (unit, R.msg) result
-(** [ensure_publish ()] makes sure [opam-publish] is in the executable
-    search PATH. *)
-
-val submit : dry_run:bool -> ?msg:string -> pkg_dir:Fpath.t ->
-  unit -> (unit, R.msg) result
-(** [submit ~pkg_dir ()] submits the package [pkg_dir] with [opam-publish]
-    and submission message [msg] (if any) to the OCaml opam repository. *)
+val prepare : dry_run:bool -> ?msg:string ->
+  local_repo:Fpath.t -> remote_repo:string ->
+  version:string -> string list -> (string, R.msg) result
+(** [prepare ~local_repo ~version pkgs] adds the packages
+   [pkg.version] to a new branch in the local opam repository
+   [local_repo], using the commit message [msg] (if any). Return the
+   new branch. *)
 
 (** {1:pkgs Packages} *)
 

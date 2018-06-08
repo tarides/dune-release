@@ -54,7 +54,9 @@ let opam_field_hd p f = opam_field p f >>| function
   | None | Some [] -> None
   | Some (v :: _) -> Some v
 
-let opam_homepage_sld p = opam_field_hd p "homepage" >>| function
+let opam_homepage p = opam_field_hd p "homepage"
+let opam_doc p = opam_field_hd p "doc"
+let opam_homepage_sld p = opam_homepage p >>| function
   | None -> None
   | Some uri -> match uri_sld uri with None -> None | Some sld -> Some (uri, sld)
 
@@ -238,7 +240,7 @@ let publish_msg p = match p.publish_msg with
 | None ->
     change_log p
     >>= fun change_log -> Text.change_log_file_last_entry change_log
-    >>= fun (_, (h, txt)) -> Ok (strf "%s\n%s" h txt)
+    >>= fun (_, (_, txt)) -> Ok (strf "CHANGES:\n\n%s\n" (String.trim txt))
 
 let publish_artefacts p = match p.publish_artefacts with
 | Some arts -> Ok arts

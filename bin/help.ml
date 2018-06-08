@@ -175,11 +175,46 @@ let troubleshoot =
     `P "See the TROUBLESHOOTING section of dune-release(7).";
     `Blocks (see_also ~cmds:[]) ]
 
+let files =
+  ("DUNE-RELEASE-FILES", 7, "", version, dune_release_manual),
+  [ `S Manpage.s_name;
+    `P "dune-release-files - Format of the configuration files";
+    `S Manpage.s_description;
+    `S "LOCATION";
+    `P "Configuration files are stored globally under $(i,~/.dune/) directory.";
+    `I ("$(b,release.yml)",
+        "GitHub and Git parameters.");
+    `I ("$(b,github.token)",
+        "the GitHub token used for doing GitHub API calls.");
+    `S "RELEASE.YML";
+    `P "$(i,~/dune/release.yml) might contain the following entries:";
+    `I ("$(b,user)",
+        "GitHub username of the current user.
+         By default it is guessed from the $(i,dev-repo)
+         field of the current opam project. Should be the ID used to
+         generate $(i,github.token).");
+    `I ("$(b,remote)",
+        "Location of a clone of opam repository, where the current user
+         has push access.
+         By default it is https://github.com/$(b,user)/opam-repository.");
+    `I ("$(b,local)",
+        "The local clone of $(b,remote). By default it is $(i,~/git/opam-repository).");
+    `S "GITHUB.TOKEN";
+    `P "$(b,~/dune/github.token) contains a token generated via GitHub web UI, by
+        the user who ID is set in $(i,release.yml).
+        To create a new token, visit https://github.com/settings/tokens and
+        click on $(b,Generate New Token). Pick a useful Token description
+        (for instance \"dune-release\") and select only the $(i,public_repo) scope.
+        $(b,dune-release) will save the token for you and give the saved file the
+        correct permissions.";
+    `Blocks (see_also ~cmds:[]) ]
+
 (* Help command *)
 
 let pages =
   [ "release", release;
-    "troubleshoot", troubleshoot; ]
+    "troubleshoot", troubleshoot;
+    "files", files]
 
 let help man_format topic commands = match topic with
 | None -> `Help (man_format, None)

@@ -24,14 +24,17 @@
 
 type error = Bos_setup.R.msg
 
-val run: dry_run:bool -> ?force:bool -> Bos.Cmd.t -> (unit, error) result
+val run: dry_run:bool -> ?force:bool -> ?sandbox:bool ->
+  Bos.Cmd.t -> (unit, error) result
 
-val run_io: dry_run:bool -> ?force:bool ->
+val run_io:
+  dry_run:bool -> ?force:bool -> ?sandbox:bool ->
   default:'a -> Bos.Cmd.t -> Bos.OS.Cmd.run_in ->
   (Bos.OS.Cmd.run_out -> ('a, 'b) result) -> ('a, 'b) result
 
 val run_out:
-  dry_run:bool -> ?force:bool -> ?err:Bos.OS.Cmd.run_err -> default:'a ->
+  dry_run:bool -> ?force:bool -> ?sandbox:bool ->
+  ?err:Bos.OS.Cmd.run_err -> default:'a ->
   Bos.Cmd.t -> (Bos.OS.Cmd.run_out -> ('a, 'b) result) ->
   ('a, 'b) result
 
@@ -42,6 +45,7 @@ val write_file: dry_run:bool -> ?force:bool -> Fpath.t -> string -> (unit, error
 val with_dir: dry_run:bool -> Fpath.t -> ('a -> 'b) -> 'a -> ('b,  error) result
 
 val file_exists: dry_run:bool -> Fpath.t -> (bool, error) result
+val dir_exists: dry_run:bool -> Fpath.t -> (bool, error) result
 val file_must_exist: dry_run:bool -> Fpath.t -> (Fpath.t, error) result
 
 val out: 'a -> 'a * Bos.OS.Cmd.run_status
