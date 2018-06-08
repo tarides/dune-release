@@ -45,7 +45,7 @@ let cmd = Cmd.of_list @@ Cmd.to_list @@ tool "opam" `Host_os
 let shortest x =
   List.hd (List.sort (fun x y -> compare (String.length x) (String.length y)) x)
 
-let prepare ~dry_run ?msg ~local_repo ~user ~version names =
+let prepare ~dry_run ?msg ~local_repo ~remote_repo ~version names =
   let msg = match msg with
   | None -> Ok (Cmd.empty)
   | Some msg ->
@@ -63,8 +63,7 @@ let prepare ~dry_run ?msg ~local_repo ~user ~version names =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   Vcs.get () >>= fun repo ->
   let git = git_for_repo repo in
-  let remote_repo = "https://github.com/ocaml/opam-repository.git" in
-  let remote_fork = strf "git@github.com:%s/opam-repository.git" user in
+  let upstream = "https://github.com/ocaml/opam-repository.git" in
   let remote_branch = "master" in
   let pkg = shortest names in
   let branch = Fmt.strf "release-%s-%s" pkg version in
@@ -72,7 +71,7 @@ let prepare ~dry_run ?msg ~local_repo ~user ~version names =
   let run_out = Sos.run_out ~sandbox:false ~dry_run ~force:true in
   let prepare_repo () =
     (* fetch from upstream *)
-    let git_fetch = Cmd.(git % "fetch" % remote_repo % remote_branch) in
+    let git_fetch = Cmd.(git % "fetch" % upstream % remote_branch) in
     run git_fetch >>= fun () ->
     run_out Cmd.(git % "rev-parse" % "FETCH_HEAD")
       ~default:"${fetch_head}" OS.Cmd.to_string
@@ -113,7 +112,7 @@ let prepare ~dry_run ?msg ~local_repo ~user ~version names =
   let commit_and_push () =
     run Cmd.(git % "commit" %% msg) >>= fun () ->
     Sos.run ~dry_run ~sandbox:false
-      Cmd.(git % "push" % "--force" % remote_fork % branch)
+      Cmd.(git % "push" % "--force" % remote_repo % branch)
   in
   Sos.with_dir ~dry_run local_repo (fun () ->
       prepare_repo () >>= fun () ->

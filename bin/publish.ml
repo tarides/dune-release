@@ -22,10 +22,21 @@ let publish_doc ~dry_run pkg =
   >>= fun name -> gen_doc ~dry_run ~force dir name
   >>= fun docdir -> Github.publish_doc ~dry_run pkg ~msg ~docdir
 
-let publish_distrib ~dry_run pkg =
+let publish_distrib ~token ~dry_run pkg =
   Pkg.distrib_file ~dry_run pkg
   >>= fun archive -> Pkg.publish_msg pkg
-  >>= fun msg     -> Github.publish_distrib ~dry_run pkg ~msg ~archive
+  >>= fun msg     -> Github.publish_distrib ~token ~dry_run pkg ~msg ~archive
+
+let token () =
+  match OS.Env.var "HOME" with
+  | None   -> R.error_msg "$HOME is undefined"
+  | Some d ->
+      let file = Fpath.(v d / "dune-release" / "config.yml") in
+      OS.File.exists file >>= fun exists ->
+      if exists then Ok file
+      else
+      R.error_msgf "%a does not exist! Refer to the documentation to continue."
+        Fpath.pp file
 
 let publish ()
     build_dir keep_v name version opam change_log distrib_uri
@@ -44,7 +55,9 @@ let publish ()
     let publish_artefact acc artefact =
       acc >>= fun () -> match artefact with
       | `Doc     -> publish_doc ~dry_run pkg
-      | `Distrib -> publish_distrib ~dry_run pkg
+      | `Distrib ->
+          token () >>= fun token ->
+          publish_distrib ~token ~dry_run pkg
     in
     Pkg.publish_artefacts pkg
     >>= fun todo -> List.fold_left publish_artefact (Ok ()) todo

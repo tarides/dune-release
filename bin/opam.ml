@@ -7,7 +7,44 @@
 open Bos_setup
 open Dune_release
 
-let default_local_repo = "~/git/opam-repository"
+type config = {
+  user  : string option;
+  remote: string option;
+  local : string option;
+}
+
+let config_of_yaml_exn str = (* ouch *)
+  let lines = String.cuts ~empty:false ~sep:"\n" str in
+  let dict () =
+    List.map (fun line ->
+        match String.cut ~sep:":" line with
+        | Some (k, v) -> String.trim k, String.trim v
+        | _ -> failwith "invalid format"
+      ) lines
+  in
+  let dict = dict () in
+  let find k = try Some (List.assoc k dict) with Not_found -> None in
+  let valid = ["user"; "remote"; "local"] in
+  List.iter (fun (k, _) ->
+      if not (List.mem k valid) then
+        Fmt.failwith "%S is not a valid configuration key." k
+    ) dict;
+  { user = find "user"; remote = find "remote"; local = find "local" }
+
+let config_of_yaml str =
+  try Ok (config_of_yaml_exn str)
+  with Failure s -> R.error_msg s
+
+let config () =
+  match OS.Env.var "HOME" with
+  | None   -> R.error_msg "$HOME is undefined"
+  | Some d ->
+      let file = Fpath.(v d / "dune-release" / "config.yml") in
+      OS.File.exists file >>= fun exists ->
+      if exists then OS.File.read file >>= config_of_yaml
+      else
+      R.error_msgf "%a does not exist! Refer to the documentation to continue."
+        Fpath.pp file
 
 let get_pkg_dir pkgs opam_pkg_dir = match pkgs, opam_pkg_dir with
 | _   , Some d -> Ok d
@@ -84,7 +121,7 @@ let rec list_map f = function
 | []   -> Ok []
 | h::t -> f h >>= fun h -> list_map f t >>= fun t -> Ok (h :: t)
 
-let submit ~dry_run opam_pkg_dir local_repo opam_repo_user pkgs =
+let submit ~dry_run opam_pkg_dir local_repo remote_repo opam_repo_user pkgs =
   get_pkg_dir pkgs opam_pkg_dir
   >>= fun pkg_dir -> Sos.dir_exists ~dry_run pkg_dir
   >>= function
@@ -105,7 +142,10 @@ let submit ~dry_run opam_pkg_dir local_repo opam_repo_user pkgs =
       let changes = rewrite_github_refs user repo changes in
       let msg = strf "%s\n\n%s\n" title changes in
       let user = match opam_repo_user with None -> user | Some u -> u in
-      Opam.prepare ~dry_run ~msg ~local_repo ~user ~version names
+      let remote_repo = match remote_repo with Some r -> r | None ->
+        strf "git@github.com:%s/opam-repository.git" user
+      in
+      Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~version names
       >>= fun branch ->
       (* open a new PR *)
       Pkg.opam_descr pkg >>= fun (syn, _) ->
@@ -125,7 +165,8 @@ let submit ~dry_run opam_pkg_dir local_repo opam_repo_user pkgs =
           pp_space ()
           changes
       in
-      Github.open_pr ~dry_run ~title ~user ~branch msg >>= function
+      Publish.token () >>= fun token ->
+      Github.open_pr ~token ~dry_run ~title ~user ~branch msg >>= function
       | `Already_exists -> Logs.app (fun m ->
           m "\nThe existing pull request for %a has been automatically updated."
             Fmt.(styled `Bold string) (user ^ ":" ^ branch));
@@ -154,7 +195,7 @@ let field pkgs field = match field with
 
 (* Command *)
 
-let opam () dry_run build_dir local_repo user keep_v
+let opam () dry_run build_dir local_repo remote_repo user keep_v
     dist_name dist_version dist_opam dist_uri dist_file
     pkg_opam_dir pkg_names pkg_version pkg_opam pkg_descr
     readme change_log publish_msg action field_name
@@ -180,12 +221,21 @@ let opam () dry_run build_dir local_repo user keep_v
       in
       pkg ~dry_run pkgs dist_p pkg_opam_dir
   | `Submit ->
-      (if local_repo <> default_local_repo then Ok Fpath.(v local_repo)
-       else match OS.Env.var "HOME" with
-       | None   -> R.error_msg "$HOME is undefined"
-       | Some d -> Ok Fpath.(v d / "git" / "opam-repository"))
+      (match local_repo with
+      | Some r -> Ok Fpath.(v r)
+      | None   ->
+          config () >>= fun config ->
+          match config.local with
+          | Some r -> Ok Fpath.(v r)
+          | None   ->
+              Logs.warn (fun l ->
+                  l "No config file found: using ~/git/opam-repository as the \
+                     local clone of opam-repository.");
+              match OS.Env.var "HOME" with
+              | None   -> R.error_msg "$HOME is undefined"
+              | Some d -> Ok Fpath.(v d / "git" / "opam-repository"))
       >>= fun local_repo ->
-      submit ~dry_run pkg_opam_dir local_repo user pkgs
+      submit ~dry_run pkg_opam_dir local_repo remote_repo user pkgs
   | `Field -> field pkgs field_name
   end
   |> Cli.handle_error
@@ -215,10 +265,16 @@ let user =
   Arg.(value & opt (some string) None & info ["u"; "user"] ~doc ~docv:"USER")
 
 let local_repo =
-  let doc = "Location of the local fork of the opam-repository" in
+  let doc = "Location of the local fork of opam-repository" in
   let env = Arg.env_var "DUNE_RELEASE_LOCAL_REPO" in
-  Arg.(required & opt (some string) (Some default_local_repo)
-       & info ~env ["--local-repo"] ~doc ~docv:"PATH")
+  Arg.(value & opt (some string) None
+       & info ~env ["l"; "--local-repo"] ~doc ~docv:"PATH")
+
+let remote_repo =
+  let doc = "Location of the remote fork of opam-repository" in
+  let env = Arg.env_var "DUNE_RELEASE_REMOTE_REPO" in
+  Arg.(value & opt (some string) None
+       & info ~env ["r"; "--remote-repo"] ~doc ~docv:"URI")
 
 let pkg_opam_dir =
   let doc = "Directory to use to write the opam package. If absent the
@@ -264,9 +320,7 @@ let pkg_descr =
 
 let doc = "Interaction with opam and the OCaml opam repository"
 let sdocs = Manpage.s_common_options
-let envs =
-  [ Term.env_info "DUNE_RELEASE_OPAM_PUBLISH" ~doc:"The $(b,opam-publish) tool to use
-    to submit packages." ]
+let envs = [  ]
 
 let pkg_names =
   let doc = "The names $(docv) of the opam package to release. If absent provided
@@ -292,14 +346,14 @@ let man =
          dune-release-distrib(1) or the $(b,--dist-file) option.");
     `I ("$(b,submit)",
         "submits a package created with the action $(b,pkg) the OCaml
-         opam repository. Requires the $(b,opam-publish) tool to be
-         installed.");
+         opam repository. ");
     `I ("$(b,field) $(i,FIELD)",
         "outputs the field $(i,FIELD) of the package's opam file."); ]
 
 let cmd =
   let info = Term.info "opam" ~doc ~sdocs ~envs ~man ~man_xrefs in
-  let t = Term.(pure opam $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ local_repo $
+  let t = Term.(pure opam $ Cli.setup $ Cli.dry_run $ Cli.build_dir $
+                local_repo $ remote_repo $
                 user $ Cli.keep_v $
                 Cli.dist_name $ Cli.dist_version $ Cli.dist_opam $
                 Cli.dist_uri $ Cli.dist_file $
