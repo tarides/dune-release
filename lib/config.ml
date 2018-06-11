@@ -106,23 +106,17 @@ let create_config ~user ~remote_repo ~local_repo pkgs file =
   OS.File.write file v >>= fun () ->
   Ok { user = Some user; remote = Some remote; local = Some local }
 
-let home = lazy (
-  match OS.Env.var "HOME" with
-  | None   -> R.error_msg "$HOME is undefined"
-  | Some d -> Ok Fpath.(v d)
-)
-
 let config_dir () =
-  Lazy.force home >>= fun home ->
-  let cfg = Fpath.(home / ".config" / "dune") in
+  let cfg = Fpath.(v Xdg.config_dir / "dune") in
   let upgrade () =
     (* Upgrade from 0.2 to 0.3 format *)
-    let old_d = Fpath.(home / ".dune") in
+    let old_d = Fpath.(v Xdg.home / ".dune") in
     OS.Dir.exists old_d >>= function
     | false -> Ok ()
     | true  ->
         Logs.app (fun m ->
-            m "Upgrading configuration files: ~/.dune => ~/.config/dune");
+            m "Upgrading configuration files: %a => %a"
+              Fpath.pp old_d Fpath.pp cfg);
         OS.Cmd.run Cmd.(v "mv" % p old_d % p cfg)
   in
   upgrade () >>= fun () ->
