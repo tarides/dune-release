@@ -192,9 +192,7 @@ let opam () dry_run build_dir local_repo remote_repo user keep_v
               Logs.warn (fun l ->
                   l "No config file found: using ~/git/opam-repository as the \
                      local clone of opam-repository.");
-              match OS.Env.var "HOME" with
-              | None   -> R.error_msg "$HOME is undefined"
-              | Some d -> Ok Fpath.(v d / "git" / "opam-repository"))
+              Ok Fpath.(v Xdg.home / "git" / "opam-repository"))
       >>= fun local_repo ->
       submit ~dry_run pkg_opam_dir local_repo remote_repo user pkgs
   | `Field -> field pkgs field_name
