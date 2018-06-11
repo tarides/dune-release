@@ -106,15 +106,34 @@ let create_config ~user ~remote_repo ~local_repo pkgs file =
   OS.File.write file v >>= fun () ->
   Ok { user = Some user; remote = Some remote; local = Some local }
 
-let v ~user ~remote_repo ~local_repo pkgs =
+let home = lazy (
   match OS.Env.var "HOME" with
   | None   -> R.error_msg "$HOME is undefined"
-  | Some d ->
-      let file = Fpath.(v d / ".dune" / "release.yml") in
-      OS.File.exists file >>= fun exists ->
-      if exists then OS.File.read file >>= of_yaml
-      else create_config ~user ~remote_repo ~local_repo pkgs file
+  | Some d -> Ok Fpath.(v d)
+)
 
+let config_dir () =
+  Lazy.force home >>= fun home ->
+  let cfg = Fpath.(home / ".config" / "dune") in
+  let upgrade () =
+    (* Upgrade from 0.2 to 0.3 format *)
+    let old_d = Fpath.(home / ".dune") in
+    OS.Dir.exists old_d >>= function
+    | false -> Ok ()
+    | true  ->
+        Logs.app (fun m ->
+            m "Upgrading configuration files: ~/.dune => ~/.config/dune");
+        OS.Cmd.run Cmd.(v "mv" % p old_d % p cfg)
+  in
+  upgrade () >>= fun () ->
+  Ok cfg
+
+let v ~user ~remote_repo ~local_repo pkgs =
+  config_dir () >>= fun cfg ->
+  let file = Fpath.(cfg / "release.yml") in
+  OS.File.exists file >>= fun exists ->
+  if exists then OS.File.read file >>= of_yaml
+  else create_config ~user ~remote_repo ~local_repo pkgs file
 
 let reset_terminal : (unit -> unit) option ref = ref None
 let cleanup () = match !reset_terminal with None -> () | Some f -> f ()
@@ -148,28 +167,26 @@ let get_token () =
   no_stdin_echo aux
 
 let token ~dry_run () =
-  match OS.Env.var "HOME" with
-  | None   -> R.error_msg "$HOME is undefined"
-  | Some d ->
-      let file = Fpath.(v d / ".dune" / "github.token") in
-      OS.File.exists file >>= fun exists ->
-      if exists then Ok file
-      else if dry_run then Ok Fpath.(v "${token}")
-      else (
-        Fmt.pr
-          "%a does not exist!\n\
-           \n\
-           To create a new token, please visit:\n\
-           \n\
-          \   https://github.com/settings/tokens/new\n\
-           \n\
-           And create a token with a nice name and and the %a scope only.\n\
-           \n\
-           Copy the token@ here: %!"
-          Fpath.pp file
-          Fmt.(styled `Bold string) "public_repo";
-        let token = get_token () in
-        OS.Dir.create Fpath.(parent file) >>= fun _ ->
-        OS.File.write ~mode:0o600 file token >>= fun () ->
-        Ok file
-      )
+  config_dir () >>= fun cfg ->
+  let file = Fpath.(cfg / "github.token") in
+  OS.File.exists file >>= fun exists ->
+  if exists then Ok file
+  else if dry_run then Ok Fpath.(v "${token}")
+  else (
+    Fmt.pr
+      "%a does not exist!\n\
+       \n\
+       To create a new token, please visit:\n\
+       \n\
+      \   https://github.com/settings/tokens/new\n\
+       \n\
+       And create a token with a nice name and and the %a scope only.\n\
+       \n\
+       Copy the token@ here: %!"
+      Fpath.pp file
+      Fmt.(styled `Bold string) "public_repo";
+    let token = get_token () in
+    OS.Dir.create Fpath.(parent file) >>= fun _ ->
+    OS.File.write ~mode:0o600 file token >>= fun () ->
+    Ok file
+  )
