@@ -87,10 +87,7 @@ let create_config ~user ~remote_repo ~local_repo pkgs file =
   in
   let default_local = match local_repo with
   | Some r -> Ok r
-  | None ->
-      match OS.Env.var "HOME" with
-      | None   -> R.error_msg "$HOME is undefined"
-      | Some d -> Ok (Fpath.(v d / "git" / "opam-repository") |> Fpath.to_string)
+  | None   -> Ok (Fpath.(v Xdg.home / "git" / "opam-repository" |> to_string))
   in
   default_local >>= fun default_local ->
   let remote = read_string default_remote
