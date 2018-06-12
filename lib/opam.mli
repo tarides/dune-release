@@ -97,6 +97,9 @@ module Url : sig
       the checksum of file [f]. *)
 end
 
+val version: [`v1_2_2 | `v2] Lazy.t
+(** [version] is the output of [opam --version]. *)
+
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
 

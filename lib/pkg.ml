@@ -437,11 +437,10 @@ let lint_file_with_cmd ~dry_run file_kind ~cmd file errs handle_exit =
   |> Logs.on_error_msg ~use:(fun () -> errs + 1)
 
 let lint_opams ~dry_run p =
-  Logs.on_error_msg ~use:(fun () -> 1) (
-    (* remove opam.1.2-related warnings *)
-    opam_field p "opam-version" >>= fun opam_version ->
-    let args = match opam_version with
-    | Some ["1.2"] -> Cmd.v "--warn=-21-32-48"
+  let tool_version = Lazy.force Opam.version in
+  let lint opam_version =
+    let args = match opam_version, Lazy.force Opam.version with
+    | Some ["1.2"], `v2 -> Cmd.v "--warn=-21-32-48"
     | _ -> Cmd.empty
     in
     opam p >>= fun opam ->
@@ -454,10 +453,10 @@ let lint_opams ~dry_run p =
       ("" | "5" (* dirname version vs opam file version *)) -> `Ok
     | _ ->
         let err = OS.Cmd.err_run_out in
-        match
-          Sos.run_out ~dry_run ~err Cmd.(cmd % p file) ~default:(Sos.out "") OS.Cmd.out_string
-        with
-        | Ok (out, _) -> `Fail out
+        let cmd = Cmd.(cmd % p file)  in
+        let default = Sos.out "" in
+        match Sos.run_out ~dry_run ~err cmd ~default OS.Cmd.out_string with
+        | Ok (out, _     ) -> `Fail out
         | Error (`Msg out) -> `Fail out
     in
     let cmd = Cmd.(cmd % "-s") in
@@ -470,7 +469,18 @@ let lint_opams ~dry_run p =
       doc_user_repo_and_path p >>= fun _ ->
       distrib_user_and_repo p >>| fun _ ->
       d
-    ))
+    )
+  in
+  Logs.on_error_msg ~use:(fun () -> 1) (
+    (* remove opam.1.2-related warnings *)
+    opam_field p "opam-version" >>= fun opam_version ->
+    match opam_version, tool_version with
+    | Some ["2.0"], `v1_2_2 ->
+        Logs.app (fun m ->
+            m "Skipping opam lint as `opam-version` field is \"2.0\" \
+               while `opam --version` is 1.2.2");
+        Ok 0
+    | _ -> lint opam_version)
 
 type lint = [ `Std_files | `Opam ]
 

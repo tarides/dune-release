@@ -265,6 +265,24 @@ module Url = struct
         else (OS.File.must_exist distrib_file >>= fun _ -> assert false)
 end
 
+let opam_version () =
+  let v =
+    OS.Cmd.run_out Cmd.(cmd % "--version") |> OS.Cmd.out_string ~trim:true
+  in
+  let of_str = function
+  | "1.2.2" -> `v1_2_2
+  | s       ->
+      match String.cut ~sep:"2." s with
+      | Some ("", _) -> `v2
+      | _ -> Fmt.failwith "opam: invalid version %s" s
+  in
+  match v with
+  | Ok (v, (_, `Exited 0)) -> of_str v
+  | Ok (_, (_, s)) -> Fmt.failwith "opam: %a" OS.Cmd.pp_status s
+  | Error (`Msg e) -> Fmt.failwith "opam: %s" e
+
+let version = lazy (opam_version ())
+
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
 
