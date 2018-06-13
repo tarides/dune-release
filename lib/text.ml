@@ -144,11 +144,11 @@ let find_pager ~don't =
       in
       loop cmds
 
-let edit_file f = match OS.Env.(value "EDITOR" (some cmd) ~absent:None) with
-| None -> R.error_msg "EDITOR environment variable undefined."
-| Some editor ->
-    OS.Cmd.exists editor >>= function
-    | false -> R.error_msgf "Editor %a not in search path" Cmd.pp editor
+let edit_file f =
+  let editor = OS.Env.(value "EDITOR" cmd ~absent:(Cmd.v "nano")) in
+  OS.Cmd.exists editor >>= function
+    | false ->
+        R.error_msgf "Editor %a not in search path. Set the EDITOR environment variable." Cmd.pp editor
     | true ->
         OS.Cmd.(run_status Cmd.(editor % p f)) >>= function
         | `Exited n | `Signaled n -> Ok n

@@ -1,3 +1,7 @@
+## dev
+
+- Default to `nano` if the EDITOR environment variable is not set.
+
 ## 0.2.0 (2018-06-08)
 
 - Remove opam lint warnings for 1.2 files (#2, @samoht)
