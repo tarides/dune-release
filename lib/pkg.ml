@@ -277,7 +277,7 @@ let infer_name () =
     then shortest
     else begin
       Logs.err (fun m ->
-          m "cannot determine name automatically. Use `-p <name>`");
+          m "cannot determine name automatically. Use `-n <name>`");
       exit 1
     end
   in
