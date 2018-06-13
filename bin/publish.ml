@@ -9,8 +9,14 @@ open Dune_release
 
 let gen_doc ~dry_run ~force dir pkg_name =
   let build_doc = Cmd.(v "jbuilder" % "build" % "-p" % pkg_name % "@doc") in
-  let build_dir = Fpath.(dir / "_build" / "default" / "_doc") in
-  let do_doc () = Sos.run ~dry_run ~force build_doc >>| fun () -> build_dir in
+  let doc_dir = Fpath.(dir / "_build" / "default" / "_doc") in
+  let html_dir = Fpath.(doc_dir / "_html") in
+  let do_doc () =
+    Sos.run ~dry_run ~force build_doc >>= fun () ->
+    Sos.dir_exists ~dry_run html_dir >>| function
+    | true  -> html_dir
+    | false -> doc_dir
+  in
   R.join @@ Sos.with_dir ~dry_run dir do_doc ()
 
 let publish_doc ~dry_run pkg =
