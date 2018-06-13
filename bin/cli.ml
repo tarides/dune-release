@@ -17,7 +17,7 @@ let pkg_name =
              by the package description."
   in
   let docv = "PKG_NAME" in
-  Arg.(value & opt (some string) None & info ["p"; "pkg-name"] ~doc ~docv)
+  Arg.(value & opt (some string) None & info ["n"; "pkg-name"] ~doc ~docv)
 
 let opam =
   let doc = "The opam file to use. If absent uses the default opam file
