@@ -25,7 +25,6 @@ let release =
     `P "The basic release script is the following. Each step is
         refined and explained with more details below.";
     `Pre "\
-dune-release browse issues # Review remaining outstanding issues
 dune-release status        # Review the changes since last version
 dune-release log edit      # Write the release notes
 dune-release log commit    # Commit the release notes
@@ -37,9 +36,6 @@ dune-release opam submit   # Submit it to OCaml's opam repository";
     `P "The last four steps can be performed via a single invocation
         to dune-release-bistro(1).";
     `S "BASIC CHECKS";
-    `P "First have a look at the outstanding issues the package may have
-        by checking the issue tracker.";
-    `Pre "dune-release browse issues";
     `P "Basic checks are performed on the distribution archive when it is
         created, but save time by catching errors early. Hence test that
         your source repository lints and that it builds in the current build
