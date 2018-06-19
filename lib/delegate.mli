@@ -4,30 +4,24 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** Interface with Github. *)
+(** Package delegate.
+
+    See {!Topkg_care.Delegate} for documentation. *)
 
 open Bos_setup
 
 (** {1 Publish} *)
 
-val publish_distrib :
-  dry_run: bool -> msg:string -> archive:Fpath.t ->
-  Pkg.t -> (unit, R.msg) Result.result
+val publish_distrib:
+  dry_run:bool -> msg:string -> archive:Fpath.t -> Pkg.t -> (unit, R.msg) result
 
-val publish_doc :
-  dry_run: bool -> msg:string -> docdir:Fpath.t ->
-  Pkg.t -> (unit, R.msg) Result.result
+val publish_doc:
+  dry_run:bool -> msg:string -> docdir:Fpath.t -> Pkg.t -> (unit, R.msg) result
 
-val publish_in_git_branch :
-  dry_run: bool ->
-  remote:string -> branch:string ->
-  name:string -> version:string -> docdir:Fpath.t ->
-  dir:Fpath.t -> (unit, R.msg) result
+val publish_alt:
+  dry_run:bool -> kind:string -> msg:string -> archive:Fpath.t ->
+  Pkg.t -> (unit, R.msg) result
 
-val open_pr:
-  token:Fpath.t -> dry_run:bool ->
-  title:string -> user:string -> branch:string ->
-  string -> ([`Url of string | `Already_exists], R.msg) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

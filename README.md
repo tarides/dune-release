@@ -66,4 +66,3 @@ The main differences between `dune-release` and `topkg` are:
 - Bundle everything as a single binary;
 - Use of `Astring`, `Logs`, `Fpath` and`Bos`;
 - Remove the IPC layer (which is used between `topkg` and `topkg-care`);
-- Remove the delegation mechanism: only publishing to GitHub is supported.

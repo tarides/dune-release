@@ -38,6 +38,10 @@ val run_out:
   Bos.Cmd.t -> (Bos.OS.Cmd.run_out -> ('a, 'b) result) ->
   ('a, 'b) result
 
+val run_status:
+  dry_run:bool -> ?force:bool -> ?sandbox:bool ->
+  Bos.Cmd.t -> (Bos.OS.Cmd.status, error) result
+
 val delete_dir: dry_run:bool -> ?force:bool -> Fpath.t -> (unit, error) result
 val delete_path: dry_run:bool -> Fpath.t -> (unit, error) result
 val read_file: dry_run:bool -> Fpath.t -> (string, error) result

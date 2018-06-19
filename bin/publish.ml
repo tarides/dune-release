@@ -26,15 +26,20 @@ let publish_doc ~dry_run pkg =
   >>= fun dir -> OS.Dir.exists dir
   >>= fun force -> Pkg.name pkg
   >>= fun name -> gen_doc ~dry_run ~force dir name
-  >>= fun docdir -> Github.publish_doc ~dry_run pkg ~msg ~docdir
+  >>= fun docdir -> Delegate.publish_doc ~dry_run pkg ~msg ~docdir
 
-let publish_distrib ~token ~dry_run pkg =
+let publish_distrib ~dry_run pkg =
   Pkg.distrib_file ~dry_run pkg
   >>= fun archive -> Pkg.publish_msg pkg
-  >>= fun msg     -> Github.publish_distrib ~token ~dry_run pkg ~msg ~archive
+  >>= fun msg     -> Delegate.publish_distrib ~dry_run pkg ~msg ~archive
+
+let publish_alt ~dry_run pkg kind =
+  Pkg.distrib_file ~dry_run pkg
+  >>= fun archive -> Pkg.publish_msg pkg
+  >>= fun msg     -> Delegate.publish_alt ~dry_run pkg ~kind ~msg ~archive
 
 let publish ()
-    build_dir keep_v name version opam change_log distrib_uri
+    build_dir keep_v name version opam delegate change_log distrib_uri
     distrib_file publish_msg dry_run publish_artefacts
   =
   begin
@@ -45,14 +50,13 @@ let publish ()
     let pkg =
       Pkg.v ~dry_run ?name ?version ?build_dir ?opam ~drop_v:(not keep_v)
         ?change_log ?distrib_uri ?distrib_file ?publish_msg
-        ?publish_artefacts ()
+        ?publish_artefacts ?delegate ()
     in
     let publish_artefact acc artefact =
       acc >>= fun () -> match artefact with
-      | `Doc     -> publish_doc ~dry_run pkg
-      | `Distrib ->
-          Config.token ~dry_run () >>= fun token ->
-          publish_distrib ~token ~dry_run pkg
+      | `Doc      -> publish_doc ~dry_run pkg
+      | `Distrib  -> publish_distrib ~dry_run pkg
+      | `Alt kind -> publish_alt ~dry_run pkg kind
     in
     Pkg.publish_artefacts pkg
     >>= fun todo -> List.fold_left publish_artefact (Ok ()) todo
@@ -64,15 +68,33 @@ let publish ()
 
 open Cmdliner
 
+let delegate =
+  let doc =
+    "The delegate tool $(docv) to use. If absent, see dune-release-delegate(7)
+     for the lookup procedure."
+  in
+  let docv = "TOOL" in
+  let to_cmd = function None -> None | Some s -> Some (Cmd.v s) in
+  Term.(const to_cmd $
+        Arg.(value & opt (some string) None & info ["delegate"] ~doc ~docv))
+
 let artefacts =
+  let alt_prefix = "alt-" in
   let parser = function
   | "do" | "doc" -> `Ok `Doc
   | "di" | "dis" | "dist" | "distr" | "distri" | "distrib" -> `Ok `Distrib
+  | s when String.is_prefix ~affix:alt_prefix s ->
+      begin match String.(with_range ~first:(length alt_prefix) s) with
+      | "" -> `Error ("`alt-' alternative artefact kind is missing")
+      | kind -> `Ok (`Alt kind)
+      end
+
   | s -> `Error (strf "`%s' unknown publication artefact" s)
   in
   let printer ppf = function
-  | `Doc -> Fmt.string ppf "doc"
+  | `Doc     -> Fmt.string ppf "doc"
   | `Distrib -> Fmt.string ppf "distrib"
+  | `Alt a   -> Fmt.pf ppf "alt-%s" a
   in
   let artefact = parser, printer in
   let doc = strf "The artefact to publish. $(docv) must be either `doc` or
@@ -85,6 +107,9 @@ let artefacts =
 let doc = "Publish package distribution archives and derived artefacts"
 let sdocs = Manpage.s_common_options
 let exits = Cli.exits
+let envs =
+  [ Term.env_info "DUNE_RELEASE_DELEGATE" ~doc:"The package delegate to use, see
+    dune-release-delegate(7)."; ]
 
 let man_xrefs = [`Main; `Cmd "distrib" ]
 let man =
@@ -99,14 +124,21 @@ let man =
     `I ("$(b,distrib)",
         "Publishes a distribution archive on the WWW.");
     `I ("$(b,doc)",
-        "Publishes the documentation of a distribution archive on the WWW."); ]
+        "Publishes the documentation of a distribution archive on the WWW.");
+    `I ("$(b,alt)-$(i,KIND)",
+        "Publishes the alternative artefact of kind $(i,KIND) of
+         a distribution archive. The semantics of alternative artefacts
+         is left to the delegate, it could be anything, an email,
+         a pointless tweet, a feed entry etc. See dune-release-delegate(7) for
+         more details.");
+  ]
 
 let cmd =
   Term.(pure publish $ Cli.setup $ Cli.build_dir $ Cli.keep_v $
         Cli.dist_name $ Cli.dist_version $ Cli.dist_opam $
-        Cli.change_log $ Cli.dist_uri $ Cli.dist_file $
+        delegate $ Cli.change_log $ Cli.dist_uri $ Cli.dist_file $
         Cli.publish_msg $ Cli.dry_run $ artefacts),
-  Term.info "publish" ~doc ~sdocs ~exits ~man ~man_xrefs
+  Term.info "publish" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
