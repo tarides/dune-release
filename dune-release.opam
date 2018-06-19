@@ -18,7 +18,6 @@ depends: [
   "bos"
   "cmdliner"
   "re"
-  "webbrowser"
   "opam-format"
   "rresult"
   "logs"

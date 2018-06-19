@@ -40,7 +40,6 @@ DESCRIPTION
        The basic release script is the following. Each step is refined and
        explained with more details below.
 
-       dune-release browse issues # Review remaining outstanding issues
        dune-release status        # Review the changes since last version
        dune-release log edit      # Write the release notes
        dune-release log commit    # Commit the release notes

@@ -1,7 +1,4 @@
-(jbuild_version 1)
-
 (executable
  ((name        main)
   (public_name dune-release)
-  (libraries   (dune-release re logs.fmt fmt.tty logs.cli fmt.cli
-                webbrowser.cli))))
+  (libraries   (dune-release re logs.fmt fmt.tty logs.cli fmt.cli))))
