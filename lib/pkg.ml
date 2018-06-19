@@ -33,6 +33,7 @@ let chop_git_prefix u = match String.cut ~sep:"git+" u with
 type t =
   { name : string;
     version : string option;
+    delegate: Cmd.t option;
     build_dir : Fpath.t option;
     drop_v: bool;
     opam : Fpath.t option;
@@ -46,7 +47,7 @@ type t =
     distrib_file : Fpath.t option;
     lint_files: Fpath.t list option;
     publish_msg : string option;
-    publish_artefacts : [`Distrib | `Doc] list option }
+    publish_artefacts : [`Distrib | `Doc | `Alt of string] list option }
 
 let opam_fields p = Lazy.force p.opam_fields
 let opam_field p f = opam_fields p >>| fun fields -> String.Map.find f fields
@@ -65,6 +66,29 @@ let name p = Ok p.name
 let version p = match p.version with
 | Some v -> Ok v
 | None -> Vcs.get () >>= fun r -> Vcs.describe ~dirty:false r
+
+let delegate p =
+  let not_found () =
+    R.error_msg "No package delegate found. \
+                 Try `dune-release help delegate` for more information."
+  in
+  match p.delegate with
+  | Some cmd -> Ok (Some cmd)
+  | None ->
+      match OS.Env.(value "DUNE_RELEASE_DELEGATE" (some cmd) ~absent:None) with
+      | Some cmd -> Ok (Some cmd)
+      | None ->
+          opam_homepage_sld p >>= function
+          | None -> not_found ()
+          | Some (_, sld) ->
+              let exec = strf "%s-dune-release-delegate" sld in
+              let cmd = Cmd.v exec in
+              OS.Cmd.exists cmd >>= function
+              | true -> Ok (Some cmd)
+              | false ->
+                  if exec <> "github-dune-release-delegate"
+                  then not_found ()
+                  else Ok None
 
 let build_dir p = match p.build_dir with
 | Some b -> Ok b
@@ -284,7 +308,7 @@ let infer_name () =
   name
 
 let v ~dry_run
-    ?name ?version ?(drop_v=true) ?build_dir ?opam:opam_file ?opam_descr
+    ?name ?version ?delegate ?(drop_v=true) ?build_dir ?opam:opam_file ?opam_descr
     ?readme ?change_log ?license ?distrib_uri ?distrib_file ?publish_msg
     ?publish_artefacts ?(distrib=Distrib.v ()) ?(lint_files = Some []) ()
   =
@@ -294,7 +318,7 @@ let v ~dry_run
   let licenses = match license with Some l -> Some [l] | None -> None in
   let rec opam_fields = lazy (opam p >>= fun o -> Opam.File.fields ~dry_run o)
   and p =
-    { name; version; drop_v; build_dir; opam = opam_file; opam_descr;
+    { name; version; delegate; drop_v; build_dir; opam = opam_file; opam_descr;
       opam_fields; readmes; change_logs; licenses; distrib_uri; distrib_file;
       publish_msg; publish_artefacts; distrib; lint_files }
   in

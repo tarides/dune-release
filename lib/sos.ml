@@ -89,6 +89,16 @@ let run_io ~dry_run ?(force=false) ?sandbox ~default v i f =
     OS.Cmd.run_io v i |> f
   )
 
+let run_status ~dry_run ?(force=false) ?sandbox v =
+  if not dry_run then OS.Cmd.run_status v
+  else if not force then
+    let _ = show ?sandbox "exec:@[@ %a@]" pp_cmd v in
+    Ok (`Exited 0)
+  else (
+    let _ = show ?sandbox ~action:`Done "exec:@[@ %a@]" pp_cmd v in
+    OS.Cmd.run_status v
+  )
+
 let delete_dir ~dry_run ?(force=false) dir =
   if not dry_run then OS.Dir.delete ~recurse:true dir
   else (

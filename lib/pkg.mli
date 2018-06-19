@@ -17,6 +17,7 @@ val v :
   dry_run:bool ->
   ?name:string ->
   ?version:string ->
+  ?delegate:Cmd.t ->
   ?drop_v:bool ->
   ?build_dir:Fpath.t ->
   ?opam:Fpath.t ->
@@ -27,7 +28,7 @@ val v :
   ?distrib_uri:string ->
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
-  ?publish_artefacts:[`Distrib | `Doc] list ->
+  ?publish_artefacts:[`Distrib | `Doc | `Alt of string] list ->
   ?distrib:Distrib.t -> ?lint_files:Fpath.t list option ->
   unit -> t
 
@@ -36,6 +37,9 @@ val name : t -> (string, R.msg) result
 
 val version : t -> (string, R.msg) result
 (** [version p] is [p]'s version string.*)
+
+val delegate : t -> (Cmd.t option, R.msg) result
+(** [delegate p] is [p]'s delegate. *)
 
 val build_dir : t -> (Fpath.t, R.msg) result
 (** [build_dir p] is [p]'s build directory. *)
@@ -51,6 +55,8 @@ val opam_doc: t -> (string option, R.msg) result
 
 val opam_field : t -> string -> (string list option, R.msg) result
 (** [opam_field p f] looks up field [f] of [p]'s opam file. *)
+
+val opam_field_hd: t -> string -> (string option, Sos.error) result
 
 val opam_fields : t -> (string list String.map, R.msg) result
 (** [opam_fields p] are [p]'s opam file fields. *)
@@ -94,7 +100,7 @@ val distrib_filename : ?opam:bool -> t -> (Fpath.t, R.msg) result
     [opam] is [true] (defaults to [false]), the name follows opam's
     naming conventions. *)
 
-val publish_artefacts : t -> ([`Distrib | `Doc] list, R.msg) result
+val publish_artefacts : t -> ([`Distrib | `Doc | `Alt of string] list, R.msg) result
 (** [publish_artefacts p] are [p]'s publication artefacts. *)
 
 (** {1 Uri} *)
