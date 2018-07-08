@@ -45,6 +45,10 @@ let cmd = Cmd.of_list @@ Cmd.to_list @@ tool "opam" `Host_os
 let shortest x =
   List.hd (List.sort (fun x y -> compare (String.length x) (String.length y)) x)
 
+let drop_initial_v version = match String.head version with
+| Some ('v' | 'V') -> String.with_index_range ~first:1 version
+| None | Some _ -> version
+
 let prepare ~dry_run ?msg ~local_repo ~remote_repo ~version names =
   let msg = match msg with
   | None -> Ok (Cmd.empty)
@@ -90,7 +94,7 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~version names =
   OS.Dir.current () >>= fun cwd ->
   let prepare_package name =
     (* copy opam, descr and url files *)
-    let dir = name ^ "." ^ version in
+    let dir = name ^ "." ^ drop_initial_v version in
     let src = Fpath.(cwd / "_build" / dir) in
     let dst = Fpath.(v "packages" / name / dir) in
     let cp = Cmd.(v "cp" % "-R" % p src % p dst) in
