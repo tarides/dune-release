@@ -130,19 +130,6 @@ let reset_terminal : (unit -> unit) option ref = ref None
 let cleanup () = match !reset_terminal with None -> () | Some f -> f ()
 let () = at_exit cleanup
 
-let no_stdin_echo f =
-  let open Unix in
-  let attr = tcgetattr stdin in
-  let reset () = tcsetattr stdin TCSAFLUSH attr in
-  reset_terminal := Some reset;
-  tcsetattr stdin TCSAFLUSH
-    { attr with
-      c_echo = false; c_echoe = false; c_echok = false; c_echonl = true; };
-  let v = f () in
-  reset ();
-  reset_terminal := None;
-  v
-
 let get_token () =
   let rec aux () =
     match read_line () with
@@ -155,7 +142,7 @@ let get_token () =
         print_newline ();
         raise e
   in
-  no_stdin_echo aux
+  aux ()
 
 let token ~dry_run () =
   config_dir () >>= fun cfg ->
