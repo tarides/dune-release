@@ -285,7 +285,7 @@ let pkg_names =
              by the package description."
   in
   let docv = "PKG_NAME" in
-  Arg.(value & opt (list string) [] & info ["n"; "pkg-names"] ~doc ~docv)
+  Arg.(value & opt (list string) [] & info ["p"; "pkg-names"] ~doc ~docv)
 
 let man_xrefs = [`Main; `Cmd "distrib" ]
 let man =
