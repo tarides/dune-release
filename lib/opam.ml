@@ -97,7 +97,11 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~version names =
     let dir = name ^ "." ^ drop_initial_v version in
     let src = Fpath.(cwd / "_build" / dir) in
     let dst = Fpath.(v "packages" / name / dir) in
-    let cp = Cmd.(v "cp" % "-R" % p src % p dst) in
+    let cp f =
+      OS.File.exists Fpath.(src / f) >>= function
+      | true -> run Cmd.(v "cp" % p Fpath.(src / f) % p Fpath.(dst / f))
+      | _    -> Ok ()
+    in
     OS.Dir.exists src >>= fun exists ->
     (if exists then Ok ()
      else
@@ -105,7 +109,10 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~version names =
        "%a does not exist, did you run:\n  dune-release opam pkg -n %s\n"
        Fpath.pp src name
     ) >>= fun () ->
-    run cp >>= fun () ->
+    OS.Dir.create ~path:true dst >>= fun _ ->
+    cp "opam"  >>= fun () ->
+    cp "url"   >>= fun () ->
+    cp "descr" >>= fun () ->
     (* git add *)
     run Cmd.(git % "add" % p dst)
   in
