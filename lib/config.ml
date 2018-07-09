@@ -130,19 +130,6 @@ let reset_terminal : (unit -> unit) option ref = ref None
 let cleanup () = match !reset_terminal with None -> () | Some f -> f ()
 let () = at_exit cleanup
 
-let no_stdin_echo f =
-  let open Unix in
-  let attr = tcgetattr stdin in
-  let reset () = tcsetattr stdin TCSAFLUSH attr in
-  reset_terminal := Some reset;
-  tcsetattr stdin TCSAFLUSH
-    { attr with
-      c_echo = false; c_echoe = false; c_echok = false; c_echonl = true; };
-  let v = f () in
-  reset ();
-  reset_terminal := None;
-  v
-
 let get_token () =
   let rec aux () =
     match read_line () with
@@ -155,29 +142,54 @@ let get_token () =
         print_newline ();
         raise e
   in
-  no_stdin_echo aux
+  aux ()
+
+let validate_token token =
+  let token = String.trim token in
+  if String.is_empty token || String.exists Char.Ascii.is_white token
+  then Error (R.msg "token is malformed")
+  else Ok token
 
 let token ~dry_run () =
   config_dir () >>= fun cfg ->
   let file = Fpath.(cfg / "github.token") in
   OS.File.exists file >>= fun exists ->
-  if exists then Ok file
-  else if dry_run then Ok Fpath.(v "${token}")
-  else (
-    Fmt.pr
-      "%a does not exist!\n\
-       \n\
-       To create a new token, please visit:\n\
-       \n\
-      \   https://github.com/settings/tokens/new\n\
-       \n\
-       And create a token with a nice name and and the %a scope only.\n\
-       \n\
-       Copy the token@ here: %!"
-      Fpath.pp file
-      Fmt.(styled `Bold string) "public_repo";
-    let token = get_token () in
-    OS.Dir.create Fpath.(parent file) >>= fun _ ->
-    OS.File.write ~mode:0o600 file token >>= fun () ->
-    Ok file
-  )
+  let is_valid =
+    if exists
+    then Sos.read_file ~dry_run file >>= validate_token
+    else Error (R.msg "does not exist")
+  in
+  match is_valid with
+  | Ok _ -> Ok file
+  | Error (`Msg msg) ->
+      if dry_run then Ok Fpath.(v "${token}")
+      else (
+        let error =
+          if exists
+          then ":" ^ msg
+          else " does not exists"
+        in
+        Fmt.pr
+          "%a%s!\n\
+           \n\
+           To create a new token, please visit:\n\
+           \n\
+          \   https://github.com/settings/tokens/new\n\
+           \n\
+           And create a token with a nice name and and the %a scope only.\n\
+           \n\
+           Copy the token@ here: %!"
+          Fpath.pp file error
+          Fmt.(styled `Bold string) "public_repo";
+        let rec get_valid_token () =
+          match validate_token (get_token ()) with
+          | Ok token -> token
+          | Error (`Msg msg) ->
+              Fmt.pr "Please try again, %s.%!" msg;
+              get_valid_token ()
+        in
+        let token = get_valid_token () in
+        OS.Dir.create Fpath.(parent file) >>= fun _ ->
+        OS.File.write ~mode:0o600 file token >>= fun () ->
+        Ok file
+      )
