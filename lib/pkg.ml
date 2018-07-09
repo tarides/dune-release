@@ -321,9 +321,28 @@ let infer_name () =
     if List.for_all (String.is_prefix ~affix:shortest) package_names
     then shortest
     else begin
-      Logs.err (fun m ->
-          m "cannot determine name automatically. Use `-p <name>`");
-      exit 1
+      let err () =
+        Logs.err (fun m ->
+            m "cannot determine name automatically (names are %a).\n\
+               Use `-p <name>`"
+              Fmt.(list ~sep:(unit ",@ ") string) package_names);
+        exit 1
+      in
+      (* look at the README title to infer the name ... *)
+      if Sys.file_exists "README.md" then begin
+        let ic = open_in "README.md" in
+        let title = input_line ic in
+        close_in ic;
+        let title =
+          String.trim ~drop:(function '#'|' ' -> true | _ -> false) title
+        in
+        match
+          List.filter (fun affix -> String.is_prefix ~affix title) package_names
+        with
+        | [name] -> name
+        | _ -> err ()
+
+      end else err ()
     end
   in
   name
