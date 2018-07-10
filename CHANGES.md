@@ -1,6 +1,7 @@
-## 0.3.0 (2018-07-09)
+## 0.3.0 (2018-07-10)
 
-- Store config files in `~/.config/dune/` (#27, @samoht)
+- Store config files in `~/.config/dune/` instead of `~/.dune`
+  to match what `dune` is doing (#27, @samoht)
 - Support opam 1.2.2 when linting (#29, @samoht)
 - Use `-p <pkg>` instead of `-n <pkg>` to follow dune convention
   (#30, #42, @samoht)

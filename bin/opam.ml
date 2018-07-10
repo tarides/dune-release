@@ -132,8 +132,13 @@ let submit ~dry_run opam_pkg_dir local_repo remote_repo pkgs =
           let auto_open =
             if OpamStd.Sys.(os () = Darwin) then "open" else "xdg-open"
           in
-          Sos.run ~dry_run Cmd.(v auto_open % url) >>= fun () ->
-          Ok 0
+          match Sos.run ~dry_run Cmd.(v auto_open % url) with
+          | Ok ()   -> Ok 0
+          | Error _ ->
+              Logs.app (fun m ->
+                  m "A new pull-request has been created at %s\n" url
+                );
+              Ok 0
 
 let field pkgs field = match field with
 | None -> Logs.err (fun m -> m "Missing FIELD positional argument"); Ok 1
