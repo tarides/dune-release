@@ -114,6 +114,7 @@ let config_dir () =
         Logs.app (fun m ->
             m "Upgrading configuration files: %a => %a"
               Fpath.pp old_d Fpath.pp cfg);
+        OS.Dir.create ~path:true cfg >>= fun _ ->
         OS.Cmd.run Cmd.(v "mv" % p old_d % p cfg)
   in
   upgrade () >>= fun () ->
