@@ -39,7 +39,7 @@ let publish_alt ~dry_run pkg kind =
   >>= fun msg     -> Delegate.publish_alt ~dry_run pkg ~kind ~msg ~archive
 
 let publish ()
-    build_dir keep_v name version opam delegate change_log distrib_uri
+    build_dir keep_v name opam delegate change_log distrib_uri
     distrib_file publish_msg dry_run publish_artefacts
   =
   begin
@@ -48,7 +48,7 @@ let publish ()
     | v -> Some v
     in
     let pkg =
-      Pkg.v ~dry_run ?name ?version ?build_dir ?opam ~drop_v:(not keep_v)
+      Pkg.v ~dry_run ?name ?build_dir ?opam ~drop_v:(not keep_v)
         ?change_log ?distrib_uri ?distrib_file ?publish_msg
         ?publish_artefacts ?delegate ()
     in
@@ -135,7 +135,7 @@ let man =
 
 let cmd =
   Term.(pure publish $ Cli.setup $ Cli.build_dir $ Cli.keep_v $
-        Cli.dist_name $ Cli.dist_version $ Cli.dist_opam $
+        Cli.pkg_name $ Cli.dist_opam $
         delegate $ Cli.change_log $ Cli.dist_uri $ Cli.dist_file $
         Cli.publish_msg $ Cli.dry_run $ artefacts),
   Term.info "publish" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs

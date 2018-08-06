@@ -158,7 +158,7 @@ let field pkgs field = match field with
 (* Command *)
 
 let opam () dry_run build_dir local_repo remote_repo user keep_v
-    dist_name dist_version dist_opam dist_uri dist_file
+    name dist_opam dist_uri dist_file
     pkg_opam_dir pkg_names pkg_version pkg_opam pkg_descr
     readme change_log publish_msg action field_name
   =
@@ -177,7 +177,7 @@ let opam () dry_run build_dir local_repo remote_repo user keep_v
   | `Pkg ->
       let dist_p =
         Pkg.v ~dry_run ~drop_v:(not keep_v)
-          ?build_dir ?name:dist_name ?version:dist_version ?opam:dist_opam
+          ?build_dir ?name ?opam:dist_opam
           ?distrib_uri:dist_uri ?distrib_file:dist_file ?readme ?change_log
           ?publish_msg ()
       in
@@ -320,7 +320,7 @@ let cmd =
   let t = Term.(pure opam $ Cli.setup $ Cli.dry_run $ Cli.build_dir $
                 local_repo $ remote_repo $
                 user $ Cli.keep_v $
-                Cli.dist_name $ Cli.dist_version $ Cli.dist_opam $
+                Cli.pkg_name $ Cli.dist_opam $
                 Cli.dist_uri $ Cli.dist_file $
                 pkg_opam_dir $ pkg_names $ pkg_version $ pkg_opam $
                 pkg_descr $ Cli.readme $ Cli.change_log $ Cli.publish_msg $

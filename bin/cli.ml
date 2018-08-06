@@ -26,21 +26,6 @@ let opam =
   let docv = "FILE" in
   Arg.(value & opt (some path_arg) None & info ["opam"] ~doc ~docv)
 
-let dist_name =
-  let doc = "The name $(docv) of the package to use for the package
-             distribution. If absent, provided by the package description."
-  in
-  let docv = "NAME" in
-  Arg.(value & opt (some string) None & info ["dist-name"] ~doc ~docv)
-
-let dist_version =
-  let doc = "The version string to use for the package distribution.
-             If absent, provided by the VCS tag description of the
-             HEAD commit."
-  in
-  let docv = "VERSION" in
-  Arg.(value & opt (some string) None & info ["dist-version"] ~doc ~docv)
-
 let keep_v =
   let doc = "Do not drop the initial 'v' in the version string." in
   Arg.(value & flag & info ["keep-v"] ~doc)

@@ -62,13 +62,11 @@ let log_wrote_archive ar =
   Logs.app (fun m -> m "Wrote archive %a" Text.Pp.path ar); Ok ()
 
 let distrib
-    () dry_run opam keep_v build_dir name version keep_dir skip_lint skip_build
+    () dry_run opam keep_v build_dir name keep_dir skip_lint skip_build
     skip_tests
   =
   begin
-    let pkg =
-      Pkg.v ~dry_run ?name ~drop_v:(not keep_v) ?version ?build_dir ?opam ()
-    in
+    let pkg = Pkg.v ~dry_run ?name ~drop_v:(not keep_v) ?build_dir ?opam () in
     Pkg.distrib_archive ~dry_run pkg ~keep_dir
     >>= fun ar -> log_wrote_archive ar
     >>= fun () -> check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests pkg ar
@@ -159,7 +157,7 @@ let man =
 
 let cmd =
   Term.(pure distrib $ Cli.setup $ Cli.dry_run $ Cli.dist_opam $ Cli.keep_v $
-        Cli.build_dir $ Cli.dist_name $ Cli.dist_version $ keep_build_dir $
+        Cli.build_dir $ Cli.pkg_name $ keep_build_dir $
         skip_lint $ skip_build $ skip_tests),
   Term.info "distrib" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
 

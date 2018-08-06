@@ -17,12 +17,6 @@ val path_arg : Fpath.t Arg.conv
 val pkg_name : string option Term.t
 (** A [--pkg-name] option to specify the opam package name. *)
 
-val dist_name : string option Term.t
-(** A [--dist-name] option to define the package name of the distribution. *)
-
-val dist_version : string option Term.t
-(** A [--dist-version] option to define the package version. *)
-
 val keep_v: bool Term.t
 (** A [--keep-v] option to not drop the 'v' at the beginning of
    version strings. *)
