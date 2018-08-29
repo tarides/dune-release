@@ -100,8 +100,8 @@ let submit ~dry_run opam_pkg_dir local_repo remote_repo pkgs =
         strf "[new release] %a (%s)" (pp_list Fmt.string) names version
       in
       Pkg.publish_msg pkg >>= fun changes ->
-      Pkg.distrib_user_and_repo pkg >>= fun (user, repo) ->
-      let changes = rewrite_github_refs user repo changes in
+      Pkg.distrib_user_and_repo pkg >>= fun (distrib_user, repo) ->
+      let changes = rewrite_github_refs distrib_user repo changes in
       let msg = strf "%s\n\n%s\n" title changes in
       Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~version names
       >>= fun branch ->
@@ -123,10 +123,15 @@ let submit ~dry_run opam_pkg_dir local_repo remote_repo pkgs =
           pp_space ()
           changes
       in
-      Github.open_pr ~token ~dry_run ~title ~user ~branch msg >>= function
+      let user =
+        match Github.user_from_remote remote_repo with
+        | Some user -> user
+        | None -> distrib_user
+      in
+      Github.open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch msg >>= function
       | `Already_exists -> Logs.app (fun m ->
           m "\nThe existing pull request for %a has been automatically updated."
-            Fmt.(styled `Bold string) (user ^ ":" ^ branch));
+            Fmt.(styled `Bold string) (distrib_user ^ ":" ^ branch));
           Ok 0
       | `Url url ->
           let auto_open =

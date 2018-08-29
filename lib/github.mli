@@ -8,6 +8,12 @@
 
 open Bos_setup
 
+val user_from_remote : string -> string option
+(** [user_from_remote remote_uri] is the username in the github URI [remote_uri]
+    ie [user_from_remote_uri "git@github.com:username/repo.git"] is [Some "username"].
+    Returns [None] if [remote_uri] isn't in the expected format.
+*)
+
 (** {1 Publish} *)
 
 val publish_distrib :
@@ -26,7 +32,7 @@ val publish_in_git_branch :
 
 val open_pr:
   token:Fpath.t -> dry_run:bool ->
-  title:string -> user:string -> branch:string ->
+  title:string -> distrib_user:string -> user:string -> branch:string ->
   string -> ([`Url of string | `Already_exists], R.msg) result
 
 (*---------------------------------------------------------------------------
