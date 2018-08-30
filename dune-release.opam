@@ -8,16 +8,15 @@ bug-reports: "https://github.com/samoht/dune-release/issues"
 doc: "https://samoht.github.io/dune-release/"
 
 build: [
-  ["jbuilder" "subst" "-p" name] {pinned}
-  ["jbuilder" "build" "-p" name "-j" jobs]
+  ["dune" "build" "-p" name "-j" jobs]
 ]
 
 build-test: [
-  ["jbuilder" "runtest" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name "-j" jobs]
 ]
 
 depends: [
-  "jbuilder" {build}
+  "dune" {build}
   "fmt"
   "bos"
   "cmdliner"
