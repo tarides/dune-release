@@ -13,6 +13,13 @@ module D = struct
   let fetch_head = "${fetch_head}"
 end
 
+let user_from_remote remote_uri =
+  let ssh_uri_regexp = Re.Emacs.compile_pat "git@github\\.com:\\(.+\\)/.+\\.git" in
+  try
+    let substrings = Re.exec ssh_uri_regexp remote_uri in
+    Some (Re.Group.get substrings 1)
+  with Not_found -> None
+
 (* Publish documentation *)
 
 let cwd = OS.Dir.current ()
@@ -202,7 +209,7 @@ let curl_upload_archive ~token ~dry_run curl archive user repo release_id =
   let cmd = Cmd.(curl %% ctype %% data % uri) in
   run_with_auth ~dry_run ~default:() auth cmd OS.Cmd.to_stdout
 
-let curl_open_pr ~token ~dry_run ~title ~user ~branch ~body curl =
+let curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body curl =
   let parse_url resp = (* FIXME this is nuts. *)
     let url = Re.(compile @@ seq [
         bol;
@@ -226,14 +233,14 @@ let curl_open_pr ~token ~dry_run ~title ~user ~branch ~body curl =
       title body user branch
   in
   let cmd = Cmd.(curl % "-D" % "-" % "--data" % data % uri) in
-  github_auth ~dry_run ~user token >>= fun auth ->
+  github_auth ~dry_run ~user:distrib_user token >>= fun auth ->
   let default = {|  "html_url": "${pr_url}",|} in
   run_with_auth ~dry_run ~default auth cmd (OS.Cmd.to_string ~trim:false)
   >>= parse_url
 
-let open_pr ~token ~dry_run ~title ~user ~branch body =
+let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch body =
   OS.Cmd.must_exist Cmd.(v "curl" % "-s" % "-S" % "-K" % "-") >>= fun curl ->
-  curl_open_pr ~token ~dry_run ~title ~user ~branch ~body curl
+  curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body curl
 
 let dev_repo p =
   Pkg.dev_repo p >>= function
