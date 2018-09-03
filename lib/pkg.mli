@@ -32,6 +32,9 @@ val v :
   ?distrib:Distrib.t -> ?lint_files:Fpath.t list option ->
   unit -> t
 
+val infer_name: unit -> string
+(** Infer the name of the package. *)
+
 val name : t -> (string, R.msg) result
 (** [name p] is [p]'s name. *)
 
@@ -94,6 +97,8 @@ val distrib_archive : dry_run:bool -> t -> keep_dir:bool -> (Fpath.t, R.msg) res
     [p] and returns its path. If [keep_dir] is [true] the repository
     checkout used to create the distribution archive is kept in the
     build directory. *)
+
+val distrib_archive_path: t -> (Fpath.t, Rresult.R.msg) result
 
 val distrib_filename : ?opam:bool -> t -> (Fpath.t, R.msg) result
 (** [distrib_filename ~opam p] is a distribution filename for [p].  If
