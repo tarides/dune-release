@@ -197,14 +197,27 @@ let distrib_uri ?(raw = false) p =
       opam_homepage_sld p >>= function
       | None -> not_found ()
       | Some (uri, sld) ->
-          if sld <> "github"
-          then (Ok (uri_append uri "releases/$(NAME)-$(VERSION_NUM).tbz"))
-          else
-          opam_field_hd p "dev-repo">>= function
-          | None -> not_found ()
-          | Some dev_repo ->
-              Ok (uri_append (chop_git_prefix (chop_ext dev_repo))
-                    "releases/download/$(VERSION)/$(NAME)-$(VERSION_NUM).tbz")
+          match p.distrib_file with
+          | None ->
+              if sld <> "github"
+              then (Ok (uri_append uri "releases/$(NAME)-$(VERSION_NUM).tbz"))
+              else (
+                opam_field_hd p "dev-repo">>= function
+                | None -> not_found ()
+                | Some dev_repo ->
+                    Ok (uri_append (chop_git_prefix (chop_ext dev_repo))
+                          "releases/download/$(VERSION)/$(NAME)-$(VERSION_NUM).tbz")
+              )
+          | Some f ->
+              let basename = Fpath.basename f in
+              if sld <> "github" then Ok (uri_append uri ("releases/" ^ basename))
+              else (
+                opam_field_hd p "dev-repo" >>= function
+                | None  -> not_found ()
+                | Some dev_repo ->
+                    Ok (uri_append (chop_git_prefix (chop_ext dev_repo))
+                          "releases/download/$(VERSION)/" ^ basename)
+              )
   in
   if raw then uri else subst_uri p uri
 
@@ -227,7 +240,6 @@ let distrib_file ~dry_run p = match p.distrib_file with
      >>= fun f -> Sos.file_must_exist ~dry_run f)
     |> R.reword_error_msg
       (fun _ -> R.msgf "Did you forget to call 'dune-release distrib' ?")
-
 
 let distrib_user_and_repo p =
   distrib_uri p >>= fun uri ->
