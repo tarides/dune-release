@@ -1,8 +1,0 @@
-(alias
- ((name runtest)
-  (deps (tests.exe))
-  (action (run ${<}))))
-
-(executable
- ((name tests)
-  (libraries (dune-release alcotest))))

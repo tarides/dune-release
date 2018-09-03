@@ -1,4 +1,0 @@
-(library
- ((name        dune_release)
-  (public_name dune-release)
-  (libraries   (fmt bos opam-format rresult bos.setup))))
