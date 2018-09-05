@@ -174,7 +174,6 @@ let opam () dry_run build_dir local_repo remote_repo user keep_v
     | Ok s    -> Some s
     | Error _ -> None
   in
-  Fmt.pr "XXX %a\n%!" Fmt.(Dump.option Fpath.pp) dist_file;
   let pkgs = List.map (fun name ->
       Pkg.v ~dry_run ~drop_v:(not keep_v)
         ?build_dir ?name ?version:pkg_version ?opam:dist_opam
