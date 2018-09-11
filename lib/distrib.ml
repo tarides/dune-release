@@ -180,7 +180,7 @@ let default_exclude_paths () =
   let l =
     List.map Fpath.v [
       ".git"; ".gitignore"; ".gitattributes"; ".hg"; ".hgignore"; "build";
-      "Makefile"; "_build"
+      "_build"
     ] in
   Ok l
 
