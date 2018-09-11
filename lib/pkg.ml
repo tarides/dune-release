@@ -381,9 +381,11 @@ let v ~dry_run
 let distrib_version_opam_files ~dry_run p ~version =
   let version = if p.drop_v then drop_initial_v version else version in
   opam p
-  >>= fun file -> OS.File.read file
-  >>= fun o -> Ok (Fmt.strf "version: \"%s\"\n%s" version o)
-  >>= fun o -> Sos.write_file ~dry_run file o
+  >>= fun file -> OS.File.read_lines file
+  >>= fun o ->
+  let o = List.filter (fun l -> not (String.is_prefix ~affix:"version" l)) o in
+  let o =  Fmt.strf "version: \"%s\"" version :: o in
+  Sos.write_file ~dry_run file (String.concat ~sep:"\n" o)
 
 let distrib_prepare ~dry_run p ~dist_build_dir ~name ~version ~opam =
   let d = p.distrib in
