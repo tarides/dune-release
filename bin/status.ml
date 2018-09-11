@@ -110,7 +110,7 @@ let man =
         list of commits that define the changes for the next distribution." ]
 
 let cmd =
-  Term.(pure status $ Cli.setup $ Cli.pkg_name $ after $ until),
+  Term.(pure status $ Cli.setup $ Cli.dist_name $ after $ until),
   Term.info "status" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 (*---------------------------------------------------------------------------

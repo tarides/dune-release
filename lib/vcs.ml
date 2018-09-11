@@ -65,7 +65,8 @@ let err_git_signal cmd c = R.error_msgf "%a exited with signal %d" Cmd.dump cmd 
 
 let run_git ~dry_run ?force ~default r args out =
   let git = Cmd.(cmd r %% args) in
-  Sos.run_out ~dry_run ~sandbox:false ?force git ~default out >>= function
+  Sos.run_out ~dry_run ~sandbox:false ?force git ~err:OS.Cmd.err_null
+    ~default out >>= function
   | (v, (_, `Exited 0)) -> Ok v
   | (_, (_, `Exited c)) -> err_git_exit git c
   | (_, (_, `Signaled c)) -> err_git_signal git c
@@ -117,11 +118,12 @@ let git_commit_id ~dirty r commit_ish =
   run_git ~dry_run:false r id ~default:D.string OS.Cmd.out_string >>= fun id ->
   dirtify_if ~dirty r id
 
-let git_commit_ptime_s r commit_ish =
+let git_commit_ptime_s ~dry_run r commit_ish =
+  let commit_ish = commit_ish ^ "^{commit}" in
   let time = Cmd.(v "show" % "-s" % "--format=%ct" % commit_ish) in
-  run_git ~dry_run:false r time ~default:D.string OS.Cmd.out_string
+  run_git ~dry_run ~force:true r time ~default:D.string OS.Cmd.out_string
   >>= fun ptime -> try Ok (int_of_string ptime) with
-  | Failure _ -> R.error_msgf "Could not parse timestamp from %S" ptime
+  | Failure e -> R.error_msgf "Could not parse timestamp from %S: %s" ptime e
 
 let git_describe ~dirty r commit_ish =
   let dirty = dirty && commit_ish = "HEAD" in
@@ -179,7 +181,8 @@ let git_checkout ~dry_run r ~branch ~commit_ish =
   | None -> Cmd.empty
   | Some branch -> Cmd.(v "-b" % branch)
   in
-  run_git ~dry_run r Cmd.(v "checkout" % "--quiet" %% branch % commit_ish)
+  run_git ~dry_run ~force:true r
+    Cmd.(git_work_tree r  % "checkout" % "--quiet" %% branch % commit_ish)
     ~default:D.string OS.Cmd.out_string
   >>= fun _ -> Ok ()
 
@@ -388,8 +391,8 @@ let commit_id ?(dirty = true) ?(commit_ish = "HEAD") = function
 | (`Git, _, _ as r) -> git_commit_id ~dirty r commit_ish
 | (`Hg, _, _ as r) -> hg_commit_id ~dirty r ~rev:(hg_rev commit_ish)
 
-let commit_ptime_s ?(commit_ish = "HEAD") = function
-| (`Git, _, _ as r) -> git_commit_ptime_s r commit_ish
+let commit_ptime_s ~dry_run ?(commit_ish = "HEAD") = function
+| (`Git, _, _ as r) -> git_commit_ptime_s ~dry_run r commit_ish
 | (`Hg, _, _ as r) -> hg_commit_ptime_s r ~rev:(hg_rev commit_ish)
 
 let describe ?(dirty = true) ?(commit_ish = "HEAD") = function

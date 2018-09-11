@@ -21,7 +21,7 @@ let user_from_remote_test_case =
   in
   ("user_from_remote", `Quick, test)
 
-let test_set =
+let suite =
   ( "Github"
   , [ user_from_remote_test_case
     ]

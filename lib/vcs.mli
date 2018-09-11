@@ -73,7 +73,7 @@ val commit_id : ?dirty:bool -> ?commit_ish:commit_ish -> t -> (string, R.msg) re
     and [dirty] is [true] (default) and indicator is appended to the
     identifier if the working tree is dirty. *)
 
-val commit_ptime_s : ?commit_ish:commit_ish -> t -> (int, R.msg) result
+val commit_ptime_s : dry_run:bool -> ?commit_ish:commit_ish -> t -> (int, R.msg) result
 (** [commit_ptime_s t ~commit_ish] is the POSIX time in seconds of
     commit [commit_ish] (defaults to ["HEAD"]) of repository [r]. *)
 

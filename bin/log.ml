@@ -122,7 +122,8 @@ etc.";
                         VCS.") ]
 
 let cmd =
-  Term.(pure log $ Cli.setup $ Cli.dry_run $ Cli.pkg_name $ Cli.change_log $ action $
+  Term.(pure log $ Cli.setup $ Cli.dry_run
+        $ Cli.dist_name $ Cli.change_log $ action $
         last $ last_version $ no_pager),
   Term.info "log" ~doc ~sdocs ~exits ~envs ~man
 

@@ -12,12 +12,33 @@ open Dune_release
 
 let path_arg = Arg.conv Fpath.(of_string, pp)
 
-let pkg_name =
-  let doc = "The name $(docv) of the opam package. If absent provided
-             by the package description."
+let dist_tag =
+  let doc = "The tag from which the distribution archive is built." in
+  Arg.(value & opt (some string) None & info ["t"; "tag"] ~doc ~docv:"DIST_TAG")
+
+let dist_name =
+  let doc = "The name $(docv) of the distribution. If absent provided by
+             i)   the $(i,name) field in $(b,dune-project);
+             ii)  the longest prefix of all the $(b,*.opam) files present in the
+                  current directory; and
+             iii) the first word in the title of $(b,README.md)."
   in
-  let docv = "PKG_NAME" in
-  Arg.(value & opt (some string) None & info ["p"; "pkg-name"] ~doc ~docv)
+  let docv = "DIST_NAME" in
+  Arg.(value & opt (some string) None & info ["n"; "name"] ~doc ~docv)
+
+let pkg_names =
+  let doc = "The names $(docv) of the opam packages to release. If absent provided
+             by the $(b,*.opam) files present in the current directory."
+  in
+  let docv = "PKG_NAMES" in
+  Arg.(value & opt (list string) [] & info ["p"; "pkg-names"] ~doc ~docv)
+
+let pkg_version =
+  let doc = "The version $(docv) of the opam package. If absent it is guessed
+             from the tag."
+  in
+  let docv = "PKG_VERSION" in
+  Arg.(value & opt (some string) None & info ["-V"; "pkg-version"] ~doc ~docv)
 
 let opam =
   let doc = "The opam file to use. If absent uses the default opam file

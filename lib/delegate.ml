@@ -24,7 +24,7 @@ let publish_distrib ~dry_run ~msg ~archive p =
   | None     -> Github.publish_distrib ~dry_run ~msg ~archive p
   | Some del ->
       Pkg.name p
-      >>= fun name -> Pkg.version p
+      >>= fun name -> Pkg.tag p
       >>= fun version -> Pkg.distrib_uri p
       >>= fun distrib_uri ->
       run_delegate ~dry_run del
