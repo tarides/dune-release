@@ -121,7 +121,7 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~version names =
   | h::t -> prepare_package h >>= fun () -> prepare_packages t
   in
   let commit_and_push () =
-    run Cmd.(git % "commit" %% msg) >>= fun () ->
+    Sos.run ~dry_run ~sandbox:false Cmd.(git % "commit" %% msg) >>= fun () ->
     Sos.run ~dry_run ~sandbox:false
       Cmd.(git % "push" % "--force" % remote_repo % branch)
   in
