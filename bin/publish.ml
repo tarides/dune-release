@@ -47,6 +47,7 @@ let publish ()
     | [] -> None
     | v  -> Some v
     in
+    Config.keep_v keep_v >>= fun keep_v ->
     let pkg =
       Pkg.v ~dry_run ?name ?version ?tag ~keep_v ?build_dir ?opam
         ?change_log ?distrib_uri ?distrib_file ?publish_msg

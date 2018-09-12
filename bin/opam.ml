@@ -72,7 +72,7 @@ let rec list_map f = function
 | []   -> Ok []
 | h::t -> f h >>= fun h -> list_map f t >>= fun t -> Ok (h :: t)
 
-let submit ~dry_run local_repo remote_repo pkgs no_auto_open =
+let submit ~dry_run local_repo remote_repo pkgs auto_open =
   Config.token ~dry_run () >>= fun token ->
   List.fold_left (fun acc pkg ->
       get_pkg_dir pkg
@@ -131,7 +131,7 @@ let submit ~dry_run local_repo remote_repo pkgs no_auto_open =
         Logs.app (fun m -> m "A new pull-request has been created at %s\n" url);
         Ok 0
       in
-      if no_auto_open then msg ()
+      if not auto_open then msg ()
       else
       let auto_open =
         if OpamStd.Sys.(os () = Darwin) then "open" else "xdg-open"
@@ -163,6 +163,8 @@ let opam () dry_run build_dir local_repo remote_repo user keep_v
     readme change_log publish_msg action field_name no_auto_open
   =
   begin
+    Config.keep_v keep_v >>= fun keep_v ->
+    Config.auto_open (not no_auto_open) >>= fun auto_open ->
     let distrib_file =
       let pkg =
         Pkg.v ?name ?opam ?tag ?version ?distrib_file
@@ -208,7 +210,7 @@ let opam () dry_run build_dir local_repo remote_repo user keep_v
             | Some r -> Ok r
             | None   -> R.error_msg "Unknown remote repository.")
         >>= fun remote_repo ->
-        submit ~dry_run local_repo remote_repo pkgs no_auto_open
+        submit ~dry_run local_repo remote_repo pkgs auto_open
     | `Field -> field pkgs field_name
   end
   |> Cli.handle_error
