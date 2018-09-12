@@ -42,8 +42,8 @@ dune-release opam submit   # Submit it to OCaml's opam repository";
         environment and that the package tests pass.";
     `Pre "\
 dune-release lint
-jbuilder build # Check out the generated opam install file too
-jbuilder runtest";
+dune build # Check out the generated opam install file too
+dune runtest";
     `S "WRITE THE RELEASE NOTES";
     `P "Carefully write the release notes in the package's change log, these
         are essential time savers for users of the package. It may help to

@@ -435,7 +435,7 @@ type f =
 
 let run ~dry_run ~dir ~args ~out ~default p cmd =
   let name = p.name in
-  let cmd = Cmd.(v "jbuilder" % cmd % "-p" % name %% args) in
+  let cmd = Cmd.(v "dune" % cmd % "-p" % name %% args) in
   let run () = Sos.run_out ~dry_run cmd ~default out in
   R.join @@ Sos.with_dir ~dry_run dir run ()
 
