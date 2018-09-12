@@ -72,7 +72,7 @@ let rec list_map f = function
 | []   -> Ok []
 | h::t -> f h >>= fun h -> list_map f t >>= fun t -> Ok (h :: t)
 
-let submit ~dry_run local_repo remote_repo pkgs =
+let submit ~dry_run local_repo remote_repo pkgs no_auto_open =
   Config.token ~dry_run () >>= fun token ->
   List.fold_left (fun acc pkg ->
       get_pkg_dir pkg
@@ -127,16 +127,18 @@ let submit ~dry_run local_repo remote_repo pkgs =
         Fmt.(styled `Bold string) (distrib_user ^ ":" ^ branch));
       Ok 0
   | `Url url ->
+      let msg () =
+        Logs.app (fun m -> m "A new pull-request has been created at %s\n" url);
+        Ok 0
+      in
+      if no_auto_open then msg ()
+      else
       let auto_open =
         if OpamStd.Sys.(os () = Darwin) then "open" else "xdg-open"
       in
       match Sos.run ~dry_run Cmd.(v auto_open % url) with
       | Ok ()   -> Ok 0
-      | Error _ ->
-          Logs.app (fun m ->
-              m "A new pull-request has been created at %s\n" url
-            );
-          Ok 0
+      | Error _ -> msg ()
 
 let field pkgs field = match field with
 | None -> Logs.err (fun m -> m "Missing FIELD positional argument"); Ok 1
@@ -158,7 +160,7 @@ let field pkgs field = match field with
 let opam () dry_run build_dir local_repo remote_repo user keep_v
     opam distrib_uri distrib_file tag
     name pkg_names version pkg_descr
-    readme change_log publish_msg action field_name
+    readme change_log publish_msg action field_name no_auto_open
   =
   begin
     let distrib_file =
@@ -206,7 +208,7 @@ let opam () dry_run build_dir local_repo remote_repo user keep_v
             | Some r -> Ok r
             | None   -> R.error_msg "Unknown remote repository.")
         >>= fun remote_repo ->
-        submit ~dry_run local_repo remote_repo pkgs
+        submit ~dry_run local_repo remote_repo pkgs no_auto_open
     | `Field -> field pkgs field_name
   end
   |> Cli.handle_error
@@ -228,6 +230,10 @@ let action =
 let field =
   let doc = "the field to output ($(b,field) action)" in
   Arg.(value & pos 1 (some string) None & info [] ~doc ~docv:"FIELD")
+
+let no_auto_open =
+  let doc = "Do not open a browser to view the new pull-request." in
+  Arg.(value & flag & info ["no-auto-open"] ~doc)
 
 let user =
   let doc =
@@ -299,7 +305,7 @@ let cmd =
                 Cli.dist_opam $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $
                 Cli.dist_name $ Cli.pkg_names $ Cli.pkg_version $
                 pkg_descr $ Cli.readme $ Cli.change_log $ Cli.publish_msg $
-                action $ field)
+                action $ field $ no_auto_open)
   in
   (t, info)
 
