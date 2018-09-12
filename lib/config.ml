@@ -115,7 +115,7 @@ let config_dir () =
             m "Upgrading configuration files: %a => %a"
               Fpath.pp old_d Fpath.pp cfg);
         OS.Dir.create ~path:true cfg >>= fun _ ->
-        OS.Cmd.run Cmd.(v "mv" % p old_d % p cfg)
+        OS.Path.move old_d Fpath.(cfg / "release.yml")
   in
   upgrade () >>= fun () ->
   Ok cfg
