@@ -11,8 +11,6 @@ let cmds =
    Publish.cmd; Opam.cmd; Help.cmd;
    Bistro.cmd; Lint.cmd; ]
 
-let main () = `Help (`Pager, None)
-
 (* Command line interface *)
 
 let doc = "Release dune packages to opam"
@@ -21,6 +19,9 @@ let exits = Cli.exits
 let man =
   [ `S Manpage.s_description;
     `P "$(mname) releases dune packages to opam.";
+    `P "Without arguments, $(mname) acts like $(b,dune-release bistro):
+        refer to $(b,dune-release help bistro) for help about the
+        default behavior.";
     `P "Use '$(mname) help release' for help to release a package.";
     `Noblank;
     `P "Use '$(mname) help troubleshoot' for a few troubleshooting tips.";
@@ -32,7 +33,7 @@ let man =
     `P "Daniel C. Buenzli, $(i,http://erratique.ch)"; ]
 
 let main =
-  Term.(ret (const main $ Cli.setup)),
+  fst Bistro.cmd,
   Term.info "dune-release" ~version:"%%VERSION%%" ~doc ~sdocs ~exits ~man
 
 let main () =
