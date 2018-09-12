@@ -17,9 +17,11 @@
 open Bos_setup
 
 type t = {
-  user  : string option;
-  remote: string option;
-  local : Fpath.t option;
+  user     : string option;
+  remote   : string option;
+  local    : Fpath.t option;
+  keep_v   : bool option;
+  auto_open: bool option;
 }
 
 let of_yaml_exn str = (* ouch *)
@@ -33,7 +35,11 @@ let of_yaml_exn str = (* ouch *)
   in
   let dict = dict () in
   let find k = try Some (List.assoc k dict) with Not_found -> None in
-  let valid = ["user"; "remote"; "local"] in
+  let find_b k = match find k with
+  | None   -> None
+  | Some s -> Some (bool_of_string s)
+  in
+  let valid = ["user"; "remote"; "local"; "auto-open"; "keep-v"] in
   List.iter (fun (k, _) ->
       if not (List.mem k valid) then
         Fmt.failwith "%S is not a valid configuration key." k
@@ -45,7 +51,8 @@ let of_yaml_exn str = (* ouch *)
       | Ok x    -> Some x
       | Error _ -> None
   in
-  { user = find "user"; remote = find "remote"; local }
+  { user = find "user"; remote = find "remote"; local;
+    auto_open = find_b "auto-open"; keep_v = find_b "keep-v" }
 
 let of_yaml str =
   try Ok (of_yaml_exn str)
@@ -101,7 +108,8 @@ let create_config ~user ~remote_repo ~local_repo pkgs file =
   let v = strf "user: %s\nremote: %s\nlocal: %a\n" user remote Fpath.pp local in
   OS.Dir.create Fpath.(parent file) >>= fun _ ->
   OS.File.write file v >>= fun () ->
-  Ok { user = Some user; remote = Some remote; local = Some local }
+  Ok { user = Some user; remote = Some remote; local = Some local;
+       auto_open = None; keep_v = None }
 
 let config_dir () =
   let cfg = Fpath.(v Xdg.config_dir / "dune") in
@@ -120,12 +128,20 @@ let config_dir () =
   upgrade () >>= fun () ->
   Ok cfg
 
-let v ~user ~remote_repo ~local_repo pkgs =
-  config_dir () >>= fun cfg ->
-  let file = Fpath.(cfg / "release.yml") in
+let file () =
+  config_dir () >>| fun cfg ->
+  Fpath.(cfg / "release.yml")
+
+let find () =
+  file () >>= fun file ->
   OS.File.exists file >>= fun exists ->
-  if exists then OS.File.read file >>= of_yaml
-  else create_config ~user ~remote_repo ~local_repo pkgs file
+  if exists then OS.File.read file >>= of_yaml >>| fun x -> Some x
+  else Ok None
+
+let v ~user ~remote_repo ~local_repo pkgs =
+  find () >>= function
+  | Some f -> Ok f
+  | None   -> file () >>= create_config ~user ~remote_repo ~local_repo pkgs
 
 let reset_terminal : (unit -> unit) option ref = ref None
 let cleanup () = match !reset_terminal with None -> () | Some f -> f ()
@@ -194,3 +210,19 @@ let token ~dry_run () =
         OS.File.write ~mode:0o600 file token >>= fun () ->
         Ok file
       )
+
+let file = lazy (find ())
+
+let read f default =
+  Lazy.force file >>| function
+  | None   -> default
+  | Some t -> match f t with
+  | None   -> default
+  | Some b -> b
+
+let keep_v v =
+  if v then Ok true else read (fun t -> t.keep_v) false
+
+let auto_open v =
+  if not v then Ok false
+  else read (fun t -> t.auto_open) true

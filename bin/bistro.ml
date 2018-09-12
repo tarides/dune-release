@@ -16,6 +16,7 @@ let add_l args name v = match v with
 
 let bistro () dry_run name pkg_names version tag keep_v =
   begin
+    Dune_release.Config.keep_v keep_v >>= fun keep_v ->
     let args = Cmd.(v "--verbosity" % Logs.(level_to_string (level ()))) in
     let args = if dry_run then Cmd.(args % "--dry-run") else args in
     let args = add args "--name" name in
