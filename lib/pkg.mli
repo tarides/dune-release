@@ -17,8 +17,9 @@ val v :
   dry_run:bool ->
   ?name:string ->
   ?version:string ->
+  ?tag:string ->
+  ?keep_v:bool ->
   ?delegate:Cmd.t ->
-  ?drop_v:bool ->
   ?build_dir:Fpath.t ->
   ?opam:Fpath.t ->
   ?opam_descr:Fpath.t ->
@@ -32,14 +33,23 @@ val v :
   ?distrib:Distrib.t -> ?lint_files:Fpath.t list option ->
   unit -> t
 
-val infer_name: unit -> string
-(** Infer the name of the package. *)
+val infer_name: unit -> (string, R.msg) result
+(** Infer the name of the projet. *)
+
+val infer_pkg_names: string list -> (string list, R.msg) result
+(** Infer the package list. *)
 
 val name : t -> (string, R.msg) result
 (** [name p] is [p]'s name. *)
 
+val with_name : t -> string -> t
+(** [with_name t n] is [r] such that like [name r] is [n] and [f r] is
+    [f t] otherwise. *)
+
 val version : t -> (string, R.msg) result
 (** [version p] is [p]'s version string.*)
+
+val tag : t -> (string, R.msg) result
 
 val delegate : t -> (Cmd.t option, R.msg) result
 (** [delegate p] is [p]'s delegate. *)
@@ -92,8 +102,8 @@ val publish_msg : t -> (string, R.msg) result
 
 (** {1 Distribution} *)
 
-val distrib_archive : dry_run:bool -> t -> keep_dir:bool -> (Fpath.t, R.msg) result
-(** [distrib_archive p ~keep_dir] creates a distribution archive for
+val distrib_archive : dry_run:bool -> keep_dir:bool -> t -> (Fpath.t, R.msg) result
+(** [distrib_archive ~keep_dir p] creates a distribution archive for
     [p] and returns its path. If [keep_dir] is [true] the repository
     checkout used to create the distribution archive is kept in the
     build directory. *)
@@ -148,11 +158,11 @@ val lint : dry_run:bool -> dir:Fpath.t -> t -> lint list -> (int, R.msg) result
 
 (** {1 Tag} *)
 
-val tag: t -> (string, Sos.error) result
+val extract_tag : t -> (string, Sos.error) result
 
 (** {1 Dev repo} *)
 
-val dev_repo: t -> (string option, Sos.error) result
+val dev_repo : t -> (string option, Sos.error) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

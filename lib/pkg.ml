@@ -32,10 +32,11 @@ let chop_git_prefix u = match String.cut ~sep:"git+" u with
 
 type t =
   { name : string;
+    tag : string option;
     version : string option;
+    drop_v : bool;
     delegate: Cmd.t option;
     build_dir : Fpath.t option;
-    drop_v: bool;
     opam : Fpath.t option;
     opam_descr : Fpath.t option;
     opam_fields : (string list String.map, R.msg) result Lazy.t;
@@ -65,10 +66,20 @@ let opam_doc_sld p = opam_doc p >>| function
   | Some uri -> match uri_sld uri with None -> None | Some sld -> Some (uri, sld)
 
 let name p = Ok p.name
+let with_name p name = { p with name }
+
+let tag p = match p.tag, p.version with
+| Some v, _      -> Ok v
+| None  , None   -> Vcs.get () >>= fun r -> Vcs.describe ~dirty:false r
+| None  , Some v -> Ok v
+
+let drop_initial_v version = match String.head version with
+| Some ('v' | 'V') -> String.with_index_range ~first:1 version
+| None | Some _ -> version
 
 let version p = match p.version with
 | Some v -> Ok v
-| None -> Vcs.get () >>= fun r -> Vcs.describe ~dirty:false r
+| None   -> tag p >>| fun t -> if p.drop_v then drop_initial_v t else t
 
 let delegate p =
   let not_found = function
@@ -162,10 +173,6 @@ let licenses p = match p.licenses with
 | Some f -> Ok f
 | None   -> Ok [Fpath.v "LICENSE.md"]
 
-let drop_initial_v version = match String.head version with
-| Some ('v' | 'V') -> String.with_index_range ~first:1 version
-| None | Some _ -> version
-
 let dev_repo p =
   opam_field_hd p "dev-repo" >>= function
   | None   -> Ok None
@@ -175,58 +182,78 @@ let dev_repo p =
       | Some ("", path) -> Ok (Some ("git@github.com:" ^ path))
       | _ -> Ok (Some uri)
 
+let err_not_found () =
+  R.error_msg "no distribution URI found, see dune-release's API documentation."
+
+let dev_repo_is_on_github p =
+  opam_field_hd p "dev-repo">>| function
+  | None   -> false
+  | Some r ->
+      match String.cut ~sep:"git@github.com:" r with
+      | Some ("", _) -> true
+      | _ -> match String.cut ~sep:"git+ssh://git@github.com/" r with
+      | Some ("", _) -> true
+      | _            -> false
+
+let homepage_is_on_github p =
+  opam_homepage_sld p >>| function
+  | None          -> false
+  | Some (_, sld) -> sld = "github"
+
+let path_of_distrib p =
+  match p.distrib_file with
+  | Some f -> Ok ("releases/" ^ Fpath.basename f)
+  | None   ->
+      dev_repo_is_on_github p >>= fun a ->
+      homepage_is_on_github p >>| fun b ->
+      if a || b then "releases/download/$(TAG)/$(NAME)-$(TAG).tbz"
+      else "releases/$(NAME)-$(TAG).tbz"
+
+let distrib_uri_of_dev_repo p =
+  opam_field_hd p "dev-repo">>= function
+  | None          -> Ok None
+  | Some dev_repo ->
+      let dev_repo =
+        match String.cut ~sep:"git@github.com:" dev_repo with
+        | Some ("", path) -> "https://github.com/" ^ chop_ext path
+        | _ -> match String.cut ~sep:"git+ssh://git@github.com/" dev_repo with
+        | Some ("", path) -> "https://github.com/" ^ chop_ext path
+        | _               -> chop_git_prefix (chop_ext dev_repo)
+      in
+      path_of_distrib p >>| fun path ->
+      Some (uri_append dev_repo path)
+
+let distrib_uri_of_homepage p =
+  opam_homepage_sld p >>= function
+  | None            -> Ok None
+  | Some (uri, _) ->
+      path_of_distrib p >>| fun path ->
+      Some (uri_append uri path)
+
 let distrib_uri ?(raw = false) p =
   let subst_uri p uri =
     uri
     >>= fun uri -> name p
-    >>= fun name -> version p
-    >>= fun vers -> (if p.drop_v then Ok (drop_initial_v vers) else Ok vers)
-    >>= fun version_num ->
-    let defs = String.Map.(empty
-                           |> add "NAME" name |> add "VERSION" vers
-                           |> add "VERSION_NUM" version_num)
-    in
+    >>= fun name -> tag p
+    >>= fun tag ->
+    let defs = String.Map.(empty |> add "NAME" name |> add "TAG" tag) in
     Pat.of_string uri >>| fun pat -> Pat.format defs pat
-  in
-  let not_found () =
-    R.error_msg "no distribution URI found, see dune-release's API documentation."
   in
   let uri = match p.distrib_uri with
   | Some u -> Ok u
-  | None ->
-      opam_homepage_sld p >>= function
-      | None -> not_found ()
-      | Some (uri, sld) ->
-          match p.distrib_file with
-          | None ->
-              if sld <> "github"
-              then (Ok (uri_append uri "releases/$(NAME)-$(VERSION_NUM).tbz"))
-              else (
-                opam_field_hd p "dev-repo">>= function
-                | None -> not_found ()
-                | Some dev_repo ->
-                    Ok (uri_append (chop_git_prefix (chop_ext dev_repo))
-                          "releases/download/$(VERSION)/$(NAME)-$(VERSION_NUM).tbz")
-              )
-          | Some f ->
-              let basename = Fpath.basename f in
-              if sld <> "github" then Ok (uri_append uri ("releases/" ^ basename))
-              else (
-                opam_field_hd p "dev-repo" >>= function
-                | None  -> not_found ()
-                | Some dev_repo ->
-                    Ok (uri_append (chop_git_prefix (chop_ext dev_repo))
-                          "releases/download/$(VERSION)/" ^ basename)
-              )
+  | None   -> distrib_uri_of_homepage p >>= function
+    | Some u -> Ok u
+    | None   -> distrib_uri_of_dev_repo p >>= function
+      | Some u -> Ok u
+      | None   -> err_not_found ()
   in
   if raw then uri else subst_uri p uri
 
 let distrib_filename ?(opam = false) p =
   let sep = if opam then '.' else '-' in
-  name p
-  >>= fun name -> version p
-  >>= fun vers -> (if p.drop_v then Ok (drop_initial_v vers) else Ok vers)
-  >>= fun version_num -> Fpath.of_string (strf "%s%c%s" name sep version_num)
+  name p >>= fun name ->
+  (if opam then version p else tag p) >>= fun version ->
+  Fpath.of_string (strf "%s%c%s" name sep version)
 
 let distrib_archive_path p =
   build_dir p
@@ -303,74 +330,87 @@ let publish_artefacts p = match p.publish_artefacts with
 | Some arts -> Ok arts
 | None -> Ok [`Doc; `Distrib]
 
-let infer_name () =
-  let opam_files =
-    Sys.readdir "."
-    |> Array.to_list
-    |> List.filter (String.is_suffix ~affix:".opam")
-  in
-  if opam_files = [] then begin
-    Logs.err (fun m -> m "no <package>.opam files found.");
-    exit 1
-  end;
-  let package_names =
-    let suffix_len = String.length ".opam" in
-    List.map (fun s ->
-        String.with_range s ~len:(String.length s - suffix_len)
-      ) opam_files
-  in
-  let name =
-    let shortest =
-      match package_names with
-      | [] -> assert false
-      | first :: rest ->
-          List.fold_left (fun acc s ->
-              if String.length s < String.length acc
-              then s
-              else acc
-            ) first rest
-    in
-    if List.for_all (String.is_prefix ~affix:shortest) package_names
-    then shortest
-    else begin
-      let err () =
-        Logs.err (fun m ->
-            m "cannot determine name automatically (names are %a).\n\
-               Use `-p <name>`"
-              Fmt.(list ~sep:(unit ",@ ") string) package_names);
-        exit 1
-      in
-      (* look at the README title to infer the name ... *)
-      if Sys.file_exists "README.md" then begin
-        let ic = open_in "README.md" in
-        let title = input_line ic in
-        close_in ic;
-        let title =
-          String.trim ~drop:(function '#'|' ' -> true | _ -> false) title
-        in
-        match
-          List.filter (fun affix -> String.is_prefix ~affix title) package_names
-        with
-        | [name] -> name
-        | _ -> err ()
+let infer_from_dune_project () =
+  if Sys.file_exists "dune-project" then
+    Bos.OS.File.read_lines (Fpath.v "dune-project") >>| fun lines ->
+    List.fold_left (fun acc line ->
+        (* sorry *)
+        match String.cut ~sep:"(name " (String.trim line) with
+        | Some (_, s) ->
+            Some (String.trim ~drop:(function ')' | ' ' -> true | _ -> false) s)
+        | _ -> acc
+      ) None lines
+  else
+  Ok None
 
-      end else err ()
-    end
+let infer_pkg_names = function
+| [] ->
+    Bos.OS.Dir.contents ~dotfiles:false ~rel:false Fpath.(v ".") >>= fun files ->
+    let opam_files = List.filter (fun p ->
+        String.is_suffix ~affix:".opam" Fpath.(to_string p)
+      ) files in
+    if opam_files = [] then Rresult.R.error_msg "no <package>.opam files found."
+    else Ok (List.map (fun p -> Fpath.(basename @@ rem_ext p)) opam_files)
+| x -> Ok x
+
+let infer_from_opam_files () =
+  infer_pkg_names [] >>= fun package_names ->
+  let shortest =
+    match package_names with
+    | [] -> assert false
+    | first :: rest ->
+        List.fold_left (fun acc s ->
+            if String.length s < String.length acc
+            then s
+            else acc
+          ) first rest
   in
-  name
+  if List.for_all (String.is_prefix ~affix:shortest) package_names
+  then Ok (Some shortest)
+  else Ok None
+
+let infer_from_readme () =
+  let file = Fpath.v "README.md" in
+  Bos.OS.File.exists file >>= function
+  | false -> Ok None
+  | true  ->
+      Bos.OS.File.read_lines file >>= function
+      | []     -> Ok None
+      | h :: _ ->
+          let name =
+            String.trim ~drop:(function '#'|' ' -> true | _ -> false) h
+          in
+          Bos.OS.File.exists (Fpath.v (name ^ ".opam")) >>| function
+          | false -> None
+          | true  -> Some name
+
+let infer_name () =
+  infer_from_dune_project () >>= function
+  | Some n -> Ok n
+  | None   -> infer_from_opam_files () >>= function
+      | Some n -> Ok n
+      | None   -> infer_from_readme () >>= function
+        | Some n -> Ok n
+        | None   ->
+            Logs.err (fun m ->
+                m "cannot determine name automatically: use `-p <name>`");
+            exit 1
 
 let v ~dry_run
-    ?name ?version ?delegate ?(drop_v=true) ?build_dir ?opam:opam_file ?opam_descr
+    ?name ?version ?tag ?(keep_v = false)
+    ?delegate ?build_dir ?opam:opam_file ?opam_descr
     ?readme ?change_log ?license ?distrib_uri ?distrib_file ?publish_msg
     ?publish_artefacts ?(distrib=Distrib.v ()) ?(lint_files = Some []) ()
   =
-  let name = match name with None -> infer_name () | Some v -> v in
+  let name = match name with None -> infer_name () | Some v -> Ok v in
   let readmes = match readme with Some r -> Some [r] | None -> None in
   let change_logs = match change_log with Some c -> Some [c] | None -> None in
   let licenses = match license with Some l -> Some [l] | None -> None in
+  let name = Rresult.R.error_msg_to_invalid_arg name in
   let rec opam_fields = lazy (opam p >>= fun o -> Opam.File.fields ~dry_run o)
   and p =
-    { name; version; delegate; drop_v; build_dir; opam = opam_file; opam_descr;
+    { name; version; tag; drop_v = not keep_v; delegate; build_dir;
+      opam = opam_file; opam_descr;
       opam_fields; readmes; change_logs; licenses; distrib_uri; distrib_file;
       publish_msg; publish_artefacts; distrib; lint_files }
   in
@@ -379,7 +419,6 @@ let v ~dry_run
 (* Distrib *)
 
 let distrib_version_opam_files ~dry_run p ~version =
-  let version = if p.drop_v then drop_initial_v version else version in
   opam p
   >>= fun file -> OS.File.read_lines file
   >>= fun o ->
@@ -387,10 +426,10 @@ let distrib_version_opam_files ~dry_run p ~version =
   let o =  Fmt.strf "version: \"%s\"" version :: o in
   Sos.write_file ~dry_run file (String.concat ~sep:"\n" o)
 
-let distrib_prepare ~dry_run p ~dist_build_dir ~name ~version ~opam =
+let distrib_prepare ~dry_run p ~dist_build_dir ~name ~tag ~version ~opam =
   let d = p.distrib in
   let ws = Distrib.watermarks d in
-  let ws_defs = Distrib.define_watermarks ws ~dry_run ~name ~version ~opam in
+  let ws_defs = Distrib.define_watermarks ws ~dry_run ~name ~tag ~opam in
   Sos.with_dir ~dry_run dist_build_dir (fun () ->
       Distrib.files_to_watermark d ()
       >>= fun files -> Distrib.watermark_files ws_defs files
@@ -400,23 +439,28 @@ let distrib_prepare ~dry_run p ~dist_build_dir ~name ~version ~opam =
     ) ()
   |> R.join
 
-let distrib_archive ~dry_run p ~keep_dir =
+let assert_tag_exists ~dry_run repo tag =
+  if Vcs.tag_exists ~dry_run repo tag then Ok ()
+  else R.error_msgf "%s is not a valid tag" tag
+
+let distrib_archive ~dry_run ~keep_dir p =
   Archive.ensure_bzip2 ()
   >>= fun () -> name p
   >>= fun name -> build_dir p
-  >>= fun build_dir -> version p
+  >>= fun build_dir -> tag p
+  >>= fun tag -> version p
   >>= fun version -> opam p
   >>= fun opam -> distrib_filename p
   >>= fun root -> Ok Fpath.(build_dir // root + ".build")
   >>= fun dist_build_dir -> Sos.delete_dir ~dry_run ~force:true dist_build_dir
   >>= fun () -> Vcs.get ()
-  >>= fun repo -> Vcs.commit_id repo ~dirty:false
-  >>= fun head -> Vcs.commit_ptime_s repo ~commit_ish:head
+  >>= fun repo -> assert_tag_exists ~dry_run repo tag
+  >>= fun () -> Vcs.commit_ptime_s repo ~dry_run ~commit_ish:tag
   >>= fun mtime -> Vcs.clone ~dry_run ~force:true repo ~dir:dist_build_dir
   >>= fun () -> Vcs.get ~dir:dist_build_dir ()
-  >>= fun clone -> Ok (Fmt.strf "dune-release-dist-%s" head)
-  >>= fun branch -> Vcs.checkout ~dry_run clone ~branch ~commit_ish:head
-  >>= fun () -> distrib_prepare ~dry_run p ~dist_build_dir ~name ~version ~opam
+  >>= fun clone -> Ok (Fmt.strf "dune-release-dist-%s" tag)
+  >>= fun branch -> Vcs.checkout ~dry_run clone ~branch ~commit_ish:tag
+  >>= fun () -> distrib_prepare ~dry_run p ~dist_build_dir ~name ~tag ~version ~opam
   >>= fun exclude_paths ->
   let exclude_paths = Fpath.Set.of_list exclude_paths in
   Archive.tar dist_build_dir ~exclude_paths ~root ~mtime
@@ -589,7 +633,7 @@ let extract_version change_log =
   Text.change_log_file_last_entry change_log
   >>= fun (version, _) -> Ok version
 
-let tag pkg = change_log pkg >>= fun cl -> extract_version cl
+let extract_tag pkg = change_log pkg >>= fun cl -> extract_version cl
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

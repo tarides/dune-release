@@ -7,9 +7,14 @@
 open Bos_setup
 open Dune_release
 
-let lint_distrib pkg ~dir =
+let lint_distrib ~dry_run ~dir ~pkg_names pkg =
   Logs.app (fun m -> m "@.Linting distrib in %a" Fpath.pp dir);
-  Pkg.lint pkg ~dir Pkg.lint_all
+  List.fold_left (fun acc name ->
+      acc >>= fun acc ->
+      let pkg = Pkg.with_name pkg name in
+      Pkg.lint ~dry_run ~dir pkg Pkg.lint_all >>= fun x ->
+      Ok (acc + x)
+    ) (Ok 0) pkg_names
 
 let build_distrib ~dry_run ~dir pkg =
   Logs.app (fun m -> m "@.Building package in %a" Fpath.pp dir);
@@ -32,9 +37,9 @@ let test_distrib ~dry_run ~dir pkg =
       Logs.app (fun m -> m "%s@\n%a package tests" stdout Text.Pp.status `Fail);
       Ok 1
 
-let check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests pkg ar =
-  Archive.untbz ~dry_run ~clean:true ar
-  >>= fun dir -> (if skip_lint then Ok 0 else lint_distrib ~dry_run ~dir pkg)
+let check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar =
+  Archive.untbz ~dry_run ~clean:true ar >>= fun dir ->
+  (if skip_lint then Ok 0 else lint_distrib ~dry_run ~dir ~pkg_names pkg)
   >>= fun c0 -> (if skip_build then Ok 0 else build_distrib ~dry_run ~dir pkg)
   >>= fun c1 -> (if skip_tests || skip_build then Ok 0 else
                  test_distrib ~dry_run ~dir pkg)
@@ -62,14 +67,15 @@ let log_wrote_archive ar =
   Logs.app (fun m -> m "Wrote archive %a" Text.Pp.path ar); Ok ()
 
 let distrib
-    () dry_run opam keep_v build_dir name keep_dir skip_lint skip_build
-    skip_tests
+    () dry_run build_dir name pkg_names version tag keep_v
+    keep_dir skip_lint skip_build skip_tests
   =
   begin
-    let pkg = Pkg.v ~dry_run ?name ~drop_v:(not keep_v) ?build_dir ?opam () in
-    Pkg.distrib_archive ~dry_run pkg ~keep_dir
+    let pkg = Pkg.v ~dry_run ?name ?version ~keep_v ?build_dir ?tag () in
+    Pkg.distrib_archive ~dry_run ~keep_dir pkg
     >>= fun ar -> log_wrote_archive ar
-    >>= fun () -> check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests pkg ar
+    >>= fun () -> Pkg.infer_pkg_names pkg_names >>= fun pkg_names ->
+    check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar
     >>= fun errs -> log_footprint pkg ar
     >>= fun () -> (if dry_run then Ok () else warn_if_vcs_dirty ())
     >>= fun () -> Ok errs
@@ -156,9 +162,10 @@ let man =
          across platforms."); ]
 
 let cmd =
-  Term.(pure distrib $ Cli.setup $ Cli.dry_run $ Cli.dist_opam $ Cli.keep_v $
-        Cli.build_dir $ Cli.pkg_name $ keep_build_dir $
-        skip_lint $ skip_build $ skip_tests),
+  Term.(pure distrib $ Cli.setup $ Cli.dry_run $
+        Cli.build_dir $ Cli.dist_name $ Cli.pkg_names
+        $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v
+        $ keep_build_dir $ skip_lint $ skip_build $ skip_tests),
   Term.info "distrib" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
 
 (*---------------------------------------------------------------------------

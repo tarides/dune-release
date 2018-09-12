@@ -156,58 +156,58 @@ let field pkgs field = match field with
 (* Command *)
 
 let opam () dry_run build_dir local_repo remote_repo user keep_v
-    dist_opam dist_uri dist_file
-    pkg_names pkg_version pkg_descr
+    opam distrib_uri distrib_file tag
+    name pkg_names version pkg_descr
     readme change_log publish_msg action field_name
   =
-  let pkg_names = match pkg_names with
-  | [] -> [None]
-  | l  -> List.map (fun n -> Some n) l
-  in
-  let distrib_file =
-    let pkg =
-      Pkg.v ~drop_v:(not keep_v) ?opam:dist_opam ?version:pkg_version
-        ~name:(Pkg.infer_name ())
-        ?distrib_file:dist_file ?distrib_uri:dist_uri ~dry_run:false ()
+  begin
+    let distrib_file =
+      let pkg =
+        Pkg.v ?name ?opam ?tag ?version ?distrib_file
+          ?distrib_uri ~dry_run:false ~keep_v ()
+      in
+      Pkg.distrib_archive_path pkg
     in
-    match Pkg.distrib_archive_path pkg with
-    | Ok s    -> Some s
-    | Error _ -> None
-  in
-  let pkgs = List.map (fun name ->
-      Pkg.v ~dry_run ~drop_v:(not keep_v)
-        ?build_dir ?name ?version:pkg_version ?opam:dist_opam
-        ?opam_descr:pkg_descr
-        ?distrib_uri:dist_uri ?distrib_file
-        ?readme ?change_log ?publish_msg ()
-    ) pkg_names
-  in
-  begin match action with
-  | `Descr -> descr pkgs
-  | `Pkg ->
-      List.fold_left (fun acc p ->
-          match acc, pkg ~dry_run p with
-          | Ok i, Ok () -> Ok i
-          | (Error _ as e), _ | _, (Error _ as e) -> e
-        ) (Ok 0) pkgs
-  | `Submit ->
-      Config.v ~user ~local_repo ~remote_repo pkgs >>= fun config ->
-      (match local_repo with
-      | Some r -> Ok Fpath.(v r)
-      | None   ->
-          match config.local with
-          | Some r -> Ok r
-          | None   -> R.error_msg "Unknown local repository.")
-      >>= fun local_repo ->
-      (match remote_repo with
-      | Some r -> Ok r
-      | None ->
-          match config.remote with
-          | Some r -> Ok r
-          | None   -> R.error_msg "Unknown remote repository.")
-      >>= fun remote_repo ->
-      submit ~dry_run local_repo remote_repo pkgs
-  | `Field -> field pkgs field_name
+    let pkgs =
+      Pkg.infer_pkg_names pkg_names >>= fun pkg_names ->
+      let pkg_names = List.map (fun n -> Some n) pkg_names in
+      distrib_file >>| fun distrib_file ->
+      List.map (fun name ->
+          Pkg.v ~dry_run
+            ?build_dir ?name ?version ?opam ?tag
+            ?opam_descr:pkg_descr ~keep_v
+            ?distrib_uri ~distrib_file
+            ?readme ?change_log ?publish_msg ()
+        ) pkg_names
+    in
+    pkgs >>= fun pkgs ->
+    match action with
+    | `Descr -> descr pkgs
+    | `Pkg ->
+        List.fold_left (fun acc p ->
+            match acc, pkg ~dry_run p with
+            | Ok i, Ok () -> Ok i
+            | (Error _ as e), _ | _, (Error _ as e) -> e
+
+          ) (Ok 0) pkgs
+    | `Submit ->
+        Config.v ~user ~local_repo ~remote_repo pkgs >>= fun config ->
+        (match local_repo with
+        | Some r -> Ok Fpath.(v r)
+        | None   ->
+            match config.local with
+            | Some r -> Ok r
+            | None   -> R.error_msg "Unknown local repository.")
+        >>= fun local_repo ->
+        (match remote_repo with
+        | Some r -> Ok r
+        | None ->
+            match config.remote with
+            | Some r -> Ok r
+            | None   -> R.error_msg "Unknown remote repository.")
+        >>= fun remote_repo ->
+        submit ~dry_run local_repo remote_repo pkgs
+    | `Field -> field pkgs field_name
   end
   |> Cli.handle_error
 
@@ -275,13 +275,6 @@ let doc = "Interaction with opam and the OCaml opam repository"
 let sdocs = Manpage.s_common_options
 let envs = [  ]
 
-let pkg_names =
-  let doc = "The names $(docv) of the opam package to release. If absent provided
-             by the package description."
-  in
-  let docv = "PKG_NAMES" in
-  Arg.(value & opt (list string) [] & info ["p"; "pkg-names"] ~doc ~docv)
-
 let man_xrefs = [`Main; `Cmd "distrib" ]
 let man =
   [ `S Manpage.s_synopsis;
@@ -310,9 +303,8 @@ let cmd =
   let t = Term.(pure opam $ Cli.setup $ Cli.dry_run $ Cli.build_dir $
                 local_repo $ remote_repo $
                 user $ Cli.keep_v $
-                Cli.dist_opam $
-                Cli.dist_uri $ Cli.dist_file $
-                pkg_names $ pkg_version $
+                Cli.dist_opam $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $
+                Cli.dist_name $ Cli.pkg_names $ pkg_version $
                 pkg_descr $ Cli.readme $ Cli.change_log $ Cli.publish_msg $
                 action $ field)
   in

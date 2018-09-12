@@ -260,11 +260,17 @@ let check_tag ~dry_run vcs tag =
      Did you forget to call 'dune-release tag' ?"
     tag
 
+let assert_tag_exists ~dry_run tag =
+  Vcs.get () >>= fun repo ->
+  if Vcs.tag_exists ~dry_run repo tag then Ok ()
+  else R.error_msgf "%s is not a valid tag" tag
+
 let publish_distrib ~dry_run ~msg ~archive p =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   (if dry_run then Ok (D.user, D.repo) else Pkg.distrib_user_and_repo p)
-  >>= fun (user, repo) -> Pkg.version p
-  >>= fun version -> OS.Cmd.must_exist Cmd.(v "curl" % "-s" % "-S" % "-K" % "-")
+  >>= fun (user, repo) -> Pkg.tag p
+  >>= fun tag ->  assert_tag_exists ~dry_run tag
+  >>= fun () -> OS.Cmd.must_exist Cmd.(v "curl" % "-s" % "-S" % "-K" % "-")
   >>= fun curl -> Vcs.get ()
   >>= fun vcs -> Ok (git_for_repo vcs)
   >>= fun git -> Pkg.tag p
@@ -272,7 +278,7 @@ let publish_distrib ~dry_run ~msg ~archive p =
   >>= fun () -> dev_repo p
   >>= fun upstr -> Sos.run ~dry_run Cmd.(git % "push" % "--force" % upstr % tag)
   >>= fun () -> Config.token ~dry_run ()
-  >>= fun token -> curl_create_release ~token ~dry_run curl version msg user repo
+  >>= fun token -> curl_create_release ~token ~dry_run curl tag msg user repo
   >>= fun id -> curl_upload_archive ~token ~dry_run curl archive user repo id
 
 

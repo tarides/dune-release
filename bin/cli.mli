@@ -14,12 +14,21 @@ open Rresult
 val path_arg : Fpath.t Arg.conv
 (** [path_arg] is a path argument converter. *)
 
-val pkg_name : string option Term.t
-(** A [--pkg-name] option to specify the opam package name. *)
+val pkg_names : string list Term.t
+(** A [--pkg-names] option to specify the packages to release. *)
+
+val pkg_version: string option Term.t
+(** A [--pkg-version] option to specify the packages version. *)
 
 val keep_v: bool Term.t
 (** A [--keep-v] option to not drop the 'v' at the beginning of
    version strings. *)
+
+val dist_name : string option Term.t
+(** A [--name] option to specify the distribution name. *)
+
+val dist_tag: string option Term.t
+(** A [--tag] option to define the tag to build the distribution from. *)
 
 val dist_file : Fpath.t option Term.t
 (** A [--dist-file] option to define the distribution archive file. *)
