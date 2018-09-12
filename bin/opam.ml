@@ -247,13 +247,6 @@ let remote_repo =
   Arg.(value & opt (some string) None
        & info ~env ["r"; "--remote-repo"] ~doc ~docv:"URI")
 
-let pkg_version =
-  let doc = "The version string $(docv) of the opam package. If absent provided
-             provided by the VCS tag description of the HEAD commit."
-  in
-  let docv = "PKG_NAME" in
-  Arg.(value & opt (some string) None & info ["pkg-version"] ~doc ~docv)
-
 let pkg_descr =
   let doc = "The opam descr file to use for the opam package. If absent and
              the opam file name (see $(b,--pkg-opam)) has a `.opam`
@@ -304,7 +297,7 @@ let cmd =
                 local_repo $ remote_repo $
                 user $ Cli.keep_v $
                 Cli.dist_opam $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $
-                Cli.dist_name $ Cli.pkg_names $ pkg_version $
+                Cli.dist_name $ Cli.pkg_names $ Cli.pkg_version $
                 pkg_descr $ Cli.readme $ Cli.change_log $ Cli.publish_msg $
                 action $ field)
   in
