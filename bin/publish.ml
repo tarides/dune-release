@@ -8,7 +8,7 @@ open Bos_setup
 open Dune_release
 
 let gen_doc ~dry_run ~force dir pkg_name =
-  let build_doc = Cmd.(v "jbuilder" % "build" % "-p" % pkg_name % "@doc") in
+  let build_doc = Cmd.(v "dune" % "build" % "-p" % pkg_name % "@doc") in
   let doc_dir = Fpath.(v "_build" / "default" / "_doc") in
   let html_dir = Fpath.(doc_dir / "_html") in
   let do_doc () =

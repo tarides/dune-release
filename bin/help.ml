@@ -42,8 +42,8 @@ dune-release opam submit   # Submit it to OCaml's opam repository";
         environment and that the package tests pass.";
     `Pre "\
 dune-release lint
-jbuilder build # Check out the generated opam install file too
-jbuilder runtest";
+dune build # Check out the generated opam install file too
+dune runtest";
     `S "WRITE THE RELEASE NOTES";
     `P "Carefully write the release notes in the package's change log, these
         are essential time savers for users of the package. It may help to
@@ -269,19 +269,13 @@ let troubleshoot =
     `P "If you get into trouble try the following to get a better undersanding
         of what is happening.";
     `S "ASK FOR MORE LOGGING";
-    `P "Invoke $(b,dune-release) with $(b,-v), $(b,-v -v), or use the
+    `P "Invoke $(b,dune-release) with $(b,-v), $(b,-v -v), $(b,--dry-run)
+        or use the
         DUNE_RELEASE_VERBOSITY environment variable; see the $(b,--verbosity)
         option.";
     `P "Messages comming from the $(b,dune-release) tool are prefixed
         by 'dune-release:' while those comming from the package description are
         prefixed by its base name, usually 'pkg.ml:'.";
-    `S "DEBUG THE GENERATED OPAM INSTALL FILE";
-    `P "To debug the generated opam install file according to the build
-        configuration you don't need to build the package. Use the
-        $(b,--dry-run) (or $(b,-d)) option and add a little bit of logging to
-        output the build configuration that was determined:";
-    `Pre "pkg/pkg.ml build -d -v [OPTION]...";`Noblank;
-    `Pre "dune-release build -d -v [OPTION]...      # mostly equivalent";
     `S "DEBUG DEV PACKAGE INSTALLS";
     `P "If you need more information about what happens when dev packages
          are installed (VCS pins or VCS packages) in opam, for example the
