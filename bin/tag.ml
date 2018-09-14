@@ -21,7 +21,7 @@ let tag () dry_run name change_log tag commit_ish force sign delete msg =
     let pkg = Pkg.v ~dry_run ?change_log ?name () in
     let tag = match tag with
     | Some t -> Ok t
-    | None   -> Pkg.tag pkg
+    | None   -> Pkg.extract_tag pkg
     in
     tag
     >>= fun tag -> vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg
