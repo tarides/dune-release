@@ -201,13 +201,13 @@ let homepage_is_on_github p =
   | Some (_, sld) -> sld = "github"
 
 let path_of_distrib p =
-  match p.distrib_file with
-  | Some f -> Ok ("releases/" ^ Fpath.basename f)
-  | None   ->
-      dev_repo_is_on_github p >>= fun a ->
-      homepage_is_on_github p >>| fun b ->
-      if a || b then "releases/download/$(TAG)/$(NAME)-$(TAG).tbz"
-      else "releases/$(NAME)-$(TAG).tbz"
+  let basename = match p.distrib_file with
+  | Some f -> Fpath.basename f
+  | None   -> "$(NAME)-$(TAG).tbz"
+  in
+  dev_repo_is_on_github p >>= fun a ->
+  homepage_is_on_github p >>| fun b ->
+  (if a || b then "releases/download/$(TAG)/" else "releases/") ^ basename
 
 let distrib_uri_of_dev_repo p =
   opam_field_hd p "dev-repo">>= function
