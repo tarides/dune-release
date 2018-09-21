@@ -126,9 +126,16 @@ let build_dir p = match p.build_dir with
 | Some b -> Ok b
 | None   -> Ok (Fpath.v "_build")
 
+let find_file path name =
+  let open Fpath in
+  OS.Dir.contents path >>| fun files ->
+    List.filter (fun file ->
+      let name_no_ext = to_string (normalize (rem_ext file)) in
+        String.equal name (String.Ascii.lowercase name_no_ext)) files
+
 let readmes p = match p.readmes with
 | Some f -> Ok f
-| None  ->  Ok [Fpath.v "README.md"]
+| None  -> find_file (Fpath.v ".") "readme"
 
 let readme p = readmes p >>= function
   | [] -> R.error_msgf "No readme file specified in the package description"
@@ -163,7 +170,7 @@ let opam_descr p =
 
 let change_logs p = match p.change_logs with
 | Some f -> Ok f
-| None   -> Ok [Fpath.v "CHANGES.md"]
+| None   -> find_file (Fpath.v ".") "changes"
 
 let change_log p = change_logs p >>= function
   | [] -> R.error_msgf "No change log specified in the package description."
@@ -171,7 +178,7 @@ let change_log p = change_logs p >>= function
 
 let licenses p = match p.licenses with
 | Some f -> Ok f
-| None   -> Ok [Fpath.v "LICENSE.md"]
+| None   -> find_file (Fpath.v ".") "license"
 
 let dev_repo p =
   opam_field_hd p "dev-repo" >>= function
