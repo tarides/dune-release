@@ -53,6 +53,7 @@ let pkg ~dry_run pkg =
     opam
     |> OpamFile.OPAM.with_url url
     |> OpamFile.OPAM.with_descr descr
+    |> OpamFile.OPAM.with_opam_version (OpamVersion.current_nopatch)
     |> OpamFile.OPAM.write_to_string
   in
   Sos.write_file ~dry_run Fpath.(dir / "opam") opam
