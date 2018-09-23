@@ -1,9 +1,9 @@
-opam-version: "1.2"
+opam-version: "2.0"
 maintainer: "Thomas Gazagnaire <thomas@gazagnaire.org>"
 authors: ["Daniel Bünzli" "Thomas Gazagnaire"]
 homepage: "https://github.com/samoht/dune-release"
 license: "ISC"
-dev-repo: "https://github.com/samoht/dune-release.git"
+dev-repo: "git+https://github.com/samoht/dune-release.git"
 bug-reports: "https://github.com/samoht/dune-release/issues"
 doc: "https://samoht.github.io/dune-release/"
 
@@ -11,11 +11,12 @@ build: [
   ["dune" "build" "-p" name "-j" jobs]
 ]
 
-build-test: [
-  ["dune" "runtest" "-p" name "-j" jobs]
+run-test: [
+  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
 
 depends: [
+  "ocaml" {>= "4.06.0"}
   "dune" {build}
   "fmt"
   "bos"
@@ -25,9 +26,5 @@ depends: [
   "rresult"
   "logs"
   "odoc"
-  "alcotest" {test}
-]
-
-available: [
-  ocaml-version >= "4.06.0"
+  "alcotest" {with-test}
 ]
