@@ -45,9 +45,17 @@ let pkg ~dry_run pkg =
   >>= fun url -> OS.Dir.exists dir
   >>= fun exists -> (if exists then Sos.delete_dir ~dry_run dir else Ok ())
   >>= fun () -> OS.Dir.create dir
-  >>= fun _ -> Sos.write_file ~dry_run Fpath.(dir / "descr") descr
-  >>= fun () -> Sos.write_file ~dry_run Fpath.(dir / "opam") opam
-  >>= fun () -> Sos.write_file ~dry_run Fpath.(dir / "url") url
+  >>= fun _ ->
+  let opam = OpamFile.OPAM.read_from_string opam in
+  let url = OpamFile.URL.read_from_string url in
+  let descr = OpamFile.Descr.read_from_string descr in
+  let opam =
+    opam
+    |> OpamFile.OPAM.with_url url
+    |> OpamFile.OPAM.with_descr descr
+    |> OpamFile.OPAM.write_to_string
+  in
+  Sos.write_file ~dry_run Fpath.(dir / "opam") opam
   >>= fun () -> log_pkg dir; (if not dry_run then warn_if_vcs_dirty () else Ok ())
 
 let github_issue = Re.(compile @@ seq [
