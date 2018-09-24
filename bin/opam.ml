@@ -24,6 +24,34 @@ module D = struct
   let distrib_uri = "${distrib_uri}"
 end
 
+let format_upgrade ~dry_run ~url ~opam_f pkg opam dir =
+  let opam_t = OpamFile.OPAM.read_from_string opam in
+  let url = OpamFile.URL.read_from_string url in
+  match OpamVersion.to_string (OpamFile.OPAM.opam_version opam_t) with
+  | "2.0" ->
+      let file x = OpamFile.make (OpamFilename.of_string (Fpath.to_string x)) in
+      let opam_t = OpamFile.OPAM.with_url url opam_t in
+      if not dry_run then
+        OpamFile.OPAM.write_with_preserved_format
+          ~format_from:(file opam_f)
+          (file Fpath.(dir / "opam"))
+          opam_t;
+      Ok ()
+  | "1.0"|"1.1"|"1.2" ->
+      Pkg.opam_descr pkg >>= fun descr ->
+      let descr =
+        OpamFile.Descr.read_from_string (Opam.Descr.to_string descr)
+      in
+      let opam =
+        opam_t
+        |> OpamFormatUpgrade.opam_file_from_1_2_to_2_0
+        |> OpamFile.OPAM.with_url url
+        |> OpamFile.OPAM.with_descr descr
+        |> OpamFile.OPAM.write_to_string
+      in
+      Sos.write_file ~dry_run Fpath.(dir / "opam") opam
+  | s -> Fmt.kstrf (fun x -> Error (`Msg x)) "invalid opam version: %s" s
+
 let pkg ~dry_run pkg =
   let log_pkg dir =
     Logs.app (fun m -> m "Wrote opam package %a" Text.Pp.path dir)
@@ -32,32 +60,19 @@ let pkg ~dry_run pkg =
     Cli.warn_if_vcs_dirty "The opam package may be inconsistent with the \
                            distribution."
   in
-  get_pkg_dir pkg
-  >>= fun dir -> Pkg.opam pkg
-  >>= fun opam_f -> OS.File.read opam_f
-  >>= fun opam -> Pkg.opam_descr pkg
-  >>= fun descr -> Ok (Opam.Descr.to_string descr)
-  >>= fun descr -> OS.Path.exists opam_f
-  >>= fun exists -> Pkg.distrib_file ~dry_run pkg
-  >>= fun distrib_file ->
+  get_pkg_dir pkg >>= fun dir ->
+  Pkg.opam pkg >>= fun opam_f ->
+  OS.File.read opam_f >>= fun opam ->
+  OS.Path.exists opam_f >>= fun exists ->
+  Pkg.distrib_file ~dry_run pkg >>= fun distrib_file ->
   (if dry_run && not exists then Ok D.distrib_uri else Pkg.distrib_uri pkg)
-  >>= fun uri -> Opam.Url.with_distrib_file ~dry_run ~uri distrib_file
-  >>= fun url -> OS.Dir.exists dir
-  >>= fun exists -> (if exists then Sos.delete_dir ~dry_run dir else Ok ())
-  >>= fun () -> OS.Dir.create dir
-  >>= fun _ ->
-  let opam = OpamFile.OPAM.read_from_string opam in
-  let url = OpamFile.URL.read_from_string url in
-  let descr = OpamFile.Descr.read_from_string descr in
-  let opam =
-    opam
-    |> OpamFile.OPAM.with_url url
-    |> OpamFile.OPAM.with_descr descr
-    |> OpamFile.OPAM.with_opam_version (OpamVersion.current_nopatch)
-    |> OpamFile.OPAM.write_to_string
-  in
-  Sos.write_file ~dry_run Fpath.(dir / "opam") opam
-  >>= fun () -> log_pkg dir; (if not dry_run then warn_if_vcs_dirty () else Ok ())
+  >>= fun uri ->
+  Opam.Url.with_distrib_file ~dry_run ~uri distrib_file >>= fun url ->
+  OS.Dir.exists dir >>= fun exists ->
+  (if exists then Sos.delete_dir ~dry_run dir else Ok ()) >>= fun () ->
+  OS.Dir.create dir >>= fun _ ->
+  format_upgrade ~dry_run ~url ~opam_f pkg opam dir >>= fun () ->
+  log_pkg dir; (if not dry_run then warn_if_vcs_dirty () else Ok ())
 
 let github_issue = Re.(compile @@ seq [
     group (compl [alpha]);
