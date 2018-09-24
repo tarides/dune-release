@@ -1,3 +1,7 @@
+## 1.0.1 (2018-09-24)
+
+- Fix opam2 format upgrade when submitting a PR (#91, @samoht)
+
 ## 1.0.0 (2018-09-23)
 
 - Determine opam-repository fork user from URI (#64, @NathanReb and @diml)
