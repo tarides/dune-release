@@ -40,9 +40,6 @@ DESCRIPTION
        The basic release script is the following. Each step is refined and
        explained with more details below.
 
-       dune-release status        # Review the changes since last version
-       dune-release log edit      # Write the release notes
-       dune-release log commit    # Commit the release notes
        dune-release tag           # Tag the distribution with a version
        dune-release distrib       # Create the distribution archive
        dune-release publish       # Publish it on the WWW with its documentation
@@ -50,7 +47,7 @@ DESCRIPTION
        dune-release opam submit   # Submit it to OCaml's opam repository
 
        The last four steps can be performed via a single invocation to
-       dune-release-bistro(1).
+       dune-release(1).
 ```
 
 ### Important Notes
