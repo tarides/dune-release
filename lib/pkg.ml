@@ -337,22 +337,23 @@ let publish_artefacts p = match p.publish_artefacts with
 | Some arts -> Ok arts
 | None -> Ok [`Doc; `Distrib]
 
-let infer_from_dune_project () =
-  if Sys.file_exists "dune-project" then
-    Bos.OS.File.read_lines (Fpath.v "dune-project") >>| fun lines ->
-    List.fold_left (fun acc line ->
-        (* sorry *)
-        match String.cut ~sep:"(name " (String.trim line) with
-        | Some (_, s) ->
-            Some (String.trim ~drop:(function ')' | ' ' -> true | _ -> false) s)
-        | _ -> acc
-      ) None lines
-  else
-  Ok None
+let infer_from_dune_project dir =
+  let file = Fpath.(dir / "dune-project") in
+  Bos.OS.Dir.exists file >>= function
+  | false -> Ok None
+  | true  ->
+      Bos.OS.File.read_lines file >>| fun lines ->
+      List.fold_left (fun acc line ->
+          (* sorry *)
+          match String.cut ~sep:"(name " (String.trim line) with
+          | Some (_, s) ->
+              Some (String.trim ~drop:(function ')' | ' ' -> true | _ -> false) s)
+          | _ -> acc
+        ) None lines
 
-let infer_pkg_names = function
+let infer_pkg_names dir = function
 | [] ->
-    Bos.OS.Dir.contents ~dotfiles:false ~rel:false Fpath.(v ".") >>= fun files ->
+    Bos.OS.Dir.contents ~dotfiles:false ~rel:false dir >>= fun files ->
     let opam_files = List.filter (fun p ->
         String.is_suffix ~affix:".opam" Fpath.(to_string p)
       ) files in
@@ -360,8 +361,8 @@ let infer_pkg_names = function
     else Ok (List.map (fun p -> Fpath.(basename @@ rem_ext p)) opam_files)
 | x -> Ok x
 
-let infer_from_opam_files () =
-  infer_pkg_names [] >>= fun package_names ->
+let infer_from_opam_files dir =
+  infer_pkg_names dir [] >>= fun package_names ->
   let shortest =
     match package_names with
     | [] -> assert false
@@ -376,8 +377,8 @@ let infer_from_opam_files () =
   then Ok (Some shortest)
   else Ok None
 
-let infer_from_readme () =
-  let file = Fpath.v "README.md" in
+let infer_from_readme dir =
+  let file = Fpath.(dir / "README.md") in
   Bos.OS.File.exists file >>= function
   | false -> Ok None
   | true  ->
@@ -391,12 +392,12 @@ let infer_from_readme () =
           | false -> None
           | true  -> Some name
 
-let infer_name () =
-  infer_from_dune_project () >>= function
+let infer_name dir =
+  infer_from_dune_project dir >>= function
   | Some n -> Ok n
-  | None   -> infer_from_opam_files () >>= function
+  | None   -> infer_from_opam_files dir >>= function
       | Some n -> Ok n
-      | None   -> infer_from_readme () >>= function
+      | None   -> infer_from_readme dir >>= function
         | Some n -> Ok n
         | None   ->
             Logs.err (fun m ->
@@ -409,7 +410,7 @@ let v ~dry_run
     ?readme ?change_log ?license ?distrib_uri ?distrib_file ?publish_msg
     ?publish_artefacts ?(distrib=Distrib.v ()) ?(lint_files = Some []) ()
   =
-  let name = match name with None -> infer_name () | Some v -> Ok v in
+  let name = match name with None -> infer_name Fpath.(v ".") | Some v -> Ok v in
   let readmes = match readme with Some r -> Some [r] | None -> None in
   let change_logs = match change_log with Some c -> Some [c] | None -> None in
   let licenses = match license with Some l -> Some [l] | None -> None in
