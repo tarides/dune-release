@@ -197,7 +197,7 @@ let opam () dry_run build_dir local_repo remote_repo user keep_v
       Pkg.distrib_archive_path pkg
     in
     let pkgs =
-      Pkg.infer_pkg_names pkg_names >>= fun pkg_names ->
+      Pkg.infer_pkg_names Fpath.(v ".") pkg_names >>= fun pkg_names ->
       let pkg_names = List.map (fun n -> Some n) pkg_names in
       distrib_file >>| fun distrib_file ->
       List.map (fun name ->

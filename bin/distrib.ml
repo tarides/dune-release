@@ -39,6 +39,7 @@ let test_distrib ~dry_run ~dir pkg =
 
 let check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar =
   Archive.untbz ~dry_run ~clean:true ar >>= fun dir ->
+  Pkg.infer_pkg_names dir pkg_names  >>= fun pkg_names ->
   (if skip_lint then Ok 0 else lint_distrib ~dry_run ~dir ~pkg_names pkg)
   >>= fun c0 -> (if skip_build then Ok 0 else build_distrib ~dry_run ~dir pkg)
   >>= fun c1 -> (if skip_tests || skip_build then Ok 0 else
@@ -75,7 +76,7 @@ let distrib
     let pkg = Pkg.v ~dry_run ?name ?version ~keep_v ?build_dir ?tag () in
     Pkg.distrib_archive ~dry_run ~keep_dir pkg
     >>= fun ar -> log_wrote_archive ar
-    >>= fun () -> Pkg.infer_pkg_names pkg_names >>= fun pkg_names ->
+    >>= fun () ->
     check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar
     >>= fun errs -> log_footprint pkg ar
     >>= fun () -> (if dry_run then Ok () else warn_if_vcs_dirty ())
