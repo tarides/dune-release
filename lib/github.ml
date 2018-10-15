@@ -267,10 +267,11 @@ let assert_tag_exists ~dry_run tag =
 
 let publish_distrib ~dry_run ~msg ~archive p =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
+  let curl = Cmd.(v "curl" % "-L" % "-s" % "-S" % "-K" % "-") in
   (if dry_run then Ok (D.user, D.repo) else Pkg.distrib_user_and_repo p)
   >>= fun (user, repo) -> Pkg.tag p
   >>= fun tag ->  assert_tag_exists ~dry_run tag
-  >>= fun () -> OS.Cmd.must_exist Cmd.(v "curl" % "-s" % "-S" % "-K" % "-")
+  >>= fun () -> OS.Cmd.must_exist curl
   >>= fun curl -> Vcs.get ()
   >>= fun vcs -> Ok (git_for_repo vcs)
   >>= fun git -> Pkg.tag p
