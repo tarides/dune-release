@@ -8,12 +8,13 @@ open Bos_setup
 
 (* Misc *)
 
-let uri_sld uri = match Text.split_uri uri with
-| None -> None
-| Some (_, host, _) ->
-    match List.rev (String.cuts ~sep:"." host) with
-    | _ :: snd :: _ -> Some snd
-    | _ -> None
+let uri_domain uri = match Text.split_uri uri with
+| None -> []
+| Some (_, host, _) -> List.rev (String.cuts ~sep:"." host)
+
+let uri_sld uri = match uri_domain uri with
+| _ :: sld :: _ -> Some sld
+| _ -> None
 
 let uri_append u s = match String.head ~rev:true u with
 | None -> s
@@ -239,8 +240,7 @@ let distrib_uri_of_homepage p =
 
 let distrib_uri ?(raw = false) p =
   let subst_uri p uri =
-    uri
-    >>= fun uri -> name p
+    name p
     >>= fun name -> tag p
     >>= fun tag ->
     let defs = String.Map.(empty |> add "NAME" name |> add "TAG" tag) in
@@ -254,7 +254,15 @@ let distrib_uri ?(raw = false) p =
       | Some u -> Ok u
       | None   -> err_not_found ()
   in
-  if raw then uri else subst_uri p uri
+  uri >>= fun uri ->
+  (match uri_domain uri with
+  | ["io"; "github"; user] ->
+      (match Text.split_uri ~rel:true uri with
+      | None -> R.error_msgf "invalid uri: %s" uri
+      | Some (_, _, path) -> Ok ("https://github.com/" ^ user ^ "/" ^ path))
+  | _ -> Ok uri)
+  >>= fun uri ->
+  if raw then Ok uri else subst_uri p uri
 
 let distrib_filename ?(opam = false) p =
   let sep = if opam then '.' else '-' in
