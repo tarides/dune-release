@@ -330,6 +330,11 @@ let doc_user_repo_and_path p =
             field value %a; expected the pattern \
             $SCHEME://$USER.github.io/$REPO/$PATH" String.dump uri
   in
+  (* If path is left empty, the docs are copied to a directory
+     called _html, which won't be picked up by github pages. *)
+  let path_error =
+    R.msgf "Publication directory $PATH should not be an empty string."
+  in
   match Text.split_uri ~rel:true uri with
   | None -> Error (uri_error uri)
   | Some (_, host, path) ->
@@ -340,7 +345,7 @@ let doc_user_repo_and_path p =
       >>= fun user ->
       match String.cut ~sep:"/" path with
       | None -> Error (uri_error uri)
-      | Some (repo, "") -> Ok (user, repo, Fpath.v ".")
+      | Some (_, "") -> Error (path_error)
       | Some (repo, path) ->
           (Fpath.of_string path >>| fun p -> user, repo, Fpath.rem_empty_seg p)
           |> R.reword_error_msg (fun _ -> uri_error uri)
