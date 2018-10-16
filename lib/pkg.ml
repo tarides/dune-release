@@ -339,7 +339,7 @@ let publish_artefacts p = match p.publish_artefacts with
 
 let infer_from_dune_project dir =
   let file = Fpath.(dir / "dune-project") in
-  Bos.OS.Dir.exists file >>= function
+  Bos.OS.File.exists file >>= function
   | false -> Ok None
   | true  ->
       Bos.OS.File.read_lines file >>| fun lines ->
