@@ -80,8 +80,13 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~version names =
     let delete_branch () =
       if not (Vcs.branch_exists ~dry_run:false repo branch) then Ok ()
       else (
-        run Cmd.(git % "checkout" % "master") >>= fun () ->
-        run Cmd.(git % "branch" % "-D" % branch)
+        match run Cmd.(git % "checkout" % "master") with
+        | Ok ()   -> run Cmd.(git % "branch" % "-D" % branch)
+        | Error _ ->
+            let out = OS.Cmd.run_out Cmd.(git % "status") in
+            OS.Cmd.out_lines out >>= fun (out, _) ->
+            R.error_msgf "git checkout in %a failed:\n %s"
+              Fpath.pp local_repo (String.concat ~sep:"\n" out)
       )
     in
     delete_branch () >>= fun () ->
