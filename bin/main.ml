@@ -7,7 +7,7 @@
 open Cmdliner
 
 let cmds =
-  [Status.cmd; Log.cmd; Tag.cmd; Distrib.cmd;
+  [Tag.cmd; Distrib.cmd;
    Publish.cmd; Opam.cmd; Help.cmd;
    Bistro.cmd; Lint.cmd; ]
 

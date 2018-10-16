@@ -25,16 +25,13 @@ let release =
     `P "The basic release script is the following. Each step is
         refined and explained with more details below.";
     `Pre "\
-dune-release status        # Review the changes since last version
-dune-release log edit      # Write the release notes
-dune-release log commit    # Commit the release notes
 dune-release tag           # Tag the distribution with a version
 dune-release distrib       # Create the distribution archive
 dune-release publish       # Publish it on the WWW with its documentation
 dune-release opam pkg      # Create an opam package
 dune-release opam submit   # Submit it to OCaml's opam repository";
     `P "The last four steps can be performed via a single invocation
-        to dune-release-bistro(1).";
+        to dune-release(1).";
     `S "BASIC CHECKS";
     `P "Basic checks are performed on the distribution archive when it is
         created, but save time by catching errors early. Hence test that
@@ -46,29 +43,14 @@ dune build # Check out the generated opam install file too
 dune runtest";
     `S "WRITE THE RELEASE NOTES";
     `P "Carefully write the release notes in the package's change log, these
-        are essential time savers for users of the package. It may help to
-        consult the list of changes that were committed since the last VCS
-        version tag with:";
-    `Pre "dune-release status";
-    `P "You can then write the release notes and commit them to the VCS with:";
-    `Pre "\
-dune-release log edit
-dune-release log commit";
-    `P "The next step is simplified if the change log follows a certain
-        format, see dune-release-log(1) for details.";
-    `P "The last two commands mentioned perform no magic, it is entirely up
-        to you to use them or not. The first one simply opens the change log
-        of the package in your \\$EDITOR and the second one commits it to
-        your VCS with a dull, canned, commit message.";
+        are essential time savers for users of the package.";
     `S "VCS TAG THE RELEASE";
     `P "Here again dune-release provides a magic-less command that will simply
         extract the latest version tag from the package's change log
         and tag the VCS HEAD commit with it:";
     `Pre "dune-release tag";
     `P "This will only work if the change log follows a certain format,
-        see tokpg-log(1) for details. You can check the extracted tag is
-        the one you wish before with:";
-    `Pre "dune-release log -t";
+        see dune-release-log(1) for details.";
     `P "If you do not want to rely on dune-release's broken extraction algorithms
         just specify it on the command line:";
     `Pre "dune-release tag v1.0.1";
