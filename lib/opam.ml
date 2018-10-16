@@ -170,6 +170,8 @@ module File = struct
     opt_field "dev-repo" OpamFile.OPAM.dev_repo (list OpamUrl.to_string);
     field "depends" OpamFile.OPAM.depends deps_conv;
     field "depopts" OpamFile.OPAM.depopts deps_conv;
+    opt_field "description" OpamFile.OPAM.descr_body (list id);
+    opt_field "synopsis" OpamFile.OPAM.synopsis (list id);
   ]
 
   let field_names =
