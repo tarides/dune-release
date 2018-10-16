@@ -155,19 +155,30 @@ let opam_descr p =
   match p.opam_descr with
   | Some f -> read f
   | None ->
-      opam p
-      >>= fun opam -> Ok (descr_file_for_opam opam)
-      >>= fun descr_file -> OS.File.exists descr_file
-      >>= function
-      | true ->
-          Logs.info (fun m -> m "Found opam descr file %a" Fpath.pp descr_file);
-          read descr_file
-      | false ->
-          readme p
-          >>= fun readme ->
-          Logs.info
-            (fun m -> m "Extracting opam descr from %a" Fpath.pp readme);
-          Opam.Descr.of_readme_file readme
+      opam p  >>= fun opam ->
+      opam_field_hd p "opam-version" >>= function
+      | Some "2.0" -> (
+          opam_field_hd p "synopsis" >>= fun s ->
+          opam_field_hd p "description" >>= fun d ->
+          match s, d with
+          | Some s, Some d -> Ok (s, d)
+          | None  , _ -> R.error_msgf "missing synopsis"
+          | _, None   -> R.error_msgf "missing description"
+        )
+      | Some ("1.2" | "1.0") -> (
+          let descr_file = descr_file_for_opam opam in
+          OS.File.exists descr_file >>= function
+          | true ->
+              Logs.info (fun m -> m "Found opam descr file %a" Fpath.pp descr_file);
+              read descr_file
+          | false ->
+              readme p >>= fun readme ->
+              Logs.info
+                (fun m -> m "Extracting opam descr from %a" Fpath.pp readme);
+              Opam.Descr.of_readme_file readme
+        )
+      | Some v -> R.error_msgf "unsupported opam version: %s" v
+      | None   -> R.error_msgf "missing opam-version field"
 
 let change_logs p = match p.change_logs with
 | Some f -> Ok f
@@ -618,6 +629,17 @@ let lint_opams ~dry_run p =
             m "Skipping opam lint as `opam-version` field is \"2.0\" \
                while `opam --version` is 1.2.2");
         Ok 0
+    | Some ["2.0"], _ ->
+        (* check that the descr and synopsis fields are not empty *)
+        opam_field p "description" >>= fun descr ->
+        opam_field p "synopsis" >>= fun synopsis ->
+        opam p >>= fun opam ->
+        if descr = None then
+          R.error_msgf "%a does not have a 'description' field." Fpath.pp opam
+        else if synopsis = None || synopsis = Some [""] then
+          R.error_msgf "%a does not have a 'synopsis' field" Fpath.pp opam
+        else
+        lint opam_version
     | _ -> lint opam_version)
 
 type lint = [ `Std_files | `Opam ]
