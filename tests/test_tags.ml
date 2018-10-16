@@ -47,25 +47,27 @@ let distrib_filename () =
   check_true  ~tag:"v0" ~version:"x"  "foo.x"
 
 let distrib_uri () =
-  let check = check ~name:"foo" (fun x -> Pkg.distrib_uri x >>| Fpath.v) in
+  let check = check ~name:"yo" (fun x -> Pkg.distrib_uri x >>| Fpath.v) in
   let dev_repo = ["dev-repo", "git@github.com:foo/bar.git"] in
   let homepage = ["homepage", "https://github.com/foo/bar"] in
   check ~opam:dev_repo ~tag:"v0"
-    "https://github.com/foo/bar/releases/download/v0/foo-v0.tbz";
+    "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
   check ~opam:homepage ~tag:"v0"
-    "https://github.com/foo/bar/releases/download/v0/foo-v0.tbz";
+    "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
   check ~opam:dev_repo ~version:"v0"
-    "https://github.com/foo/bar/releases/download/v0/foo-v0.tbz";
+    "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
   check ~opam:homepage ~version:"v0"
-    "https://github.com/foo/bar/releases/download/v0/foo-v0.tbz";
+    "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
   check ~opam:dev_repo ~tag:"v0" ~keep_v:false
-    "https://github.com/foo/bar/releases/download/v0/foo-v0.tbz";
+    "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
   check ~opam:homepage ~tag:"v0" ~keep_v:true
-    "https://github.com/foo/bar/releases/download/v0/foo-v0.tbz";
+    "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
   check ~opam:dev_repo ~tag:"v0" ~version:"x"
-    "https://github.com/foo/bar/releases/download/v0/foo-v0.tbz";
+    "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
   check ~opam:homepage ~tag:"v0" ~version:"x"
-    "https://github.com/foo/bar/releases/download/v0/foo-v0.tbz"
+    "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
+  check ~opam:["homepage", "https://foo.github.io/bar"] ~tag:"v0"
+    "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz"
 
 let suite: unit Alcotest.test = "tags", [
   "distrib_file"    , `Quick, distrib_file;
