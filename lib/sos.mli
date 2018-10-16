@@ -53,3 +53,4 @@ val dir_exists: dry_run:bool -> Fpath.t -> (bool, error) result
 val file_must_exist: dry_run:bool -> Fpath.t -> (Fpath.t, error) result
 
 val out: 'a -> 'a * Bos.OS.Cmd.run_status
+val mkdir: dry_run:bool -> Fpath.t -> (bool, error) result

@@ -166,6 +166,14 @@ let with_dir ~dry_run dir f x =
       let _ = show "chdir %a" Fpath.pp dir in
       Ok (f x)
 
+let mkdir ~dry_run dir =
+  if not dry_run then OS.Dir.create dir
+  else match OS.Dir.exists dir with
+  | Ok true -> Ok true
+  | _ ->
+      let _ = show "mkdir %a" Fpath.pp dir in
+      Ok false
+
 let file_must_exist ~dry_run f =
   if not dry_run then OS.File.must_exist f
   else
