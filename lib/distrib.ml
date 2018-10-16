@@ -161,10 +161,10 @@ let default_files_to_watermark =
     let module Set = Set.Make (String) in
     let exts =
       Set.(empty |>
-           add ".flv" |> add ".gif" |> add ".ico" |> add ".jpeg" |>
-           add ".jpg" |> add ".mov" |> add ".mp3" |> add ".mp4" |>
-           add ".otf" |> add ".pdf" |> add ".png" |> add ".ttf" |>
-           add ".woff")
+           add ".eps" |> add ".flv" |> add ".gif" |> add ".ico" |>
+           add ".jpeg" |> add ".jpg" |> add ".mov" |> add ".mp3" |>
+           add ".mp4" |> add ".otf" |> add ".pdf" |> add ".png" |>
+           add ".ps" |> add ".ttf" |> add ".woff")
     in
     Set.mem ext exts
   in
