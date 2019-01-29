@@ -184,7 +184,9 @@ module File = struct
     List.fold_left add String.Set.empty fields
 
   let fields ~dry_run file =
-    if not (Sys.file_exists (Fpath.to_string file)) then assert false;
+    if not (Sys.file_exists (Fpath.to_string file))
+    then R.error_msgf "Internal error: file %a not found" Fpath.pp file
+    else
     let parse file  =
       let file = OpamFilename.of_string (Fpath.to_string file) in
       let opam = OpamFile.OPAM.read (OpamFile.make file) in
