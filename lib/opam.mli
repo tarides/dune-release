@@ -87,12 +87,12 @@ module Url : sig
 
   (** {1:url Url file} *)
 
-  val v : uri:string -> checksum:string -> string
-  (** [v ~uri ~checksum] is an URL file for URI [uri] with
-      checksum [checksum]. *)
+  val v : uri:string -> file:string -> OpamFile.URL.t
+  (** [v ~uri ~file] is an URL file for URI [uri] with
+      checksums computes on [file]. *)
 
   val with_distrib_file :
-    dry_run:bool -> uri:string -> Fpath.t -> (string, R.msg) result
+    dry_run:bool -> uri:string -> Fpath.t -> (OpamFile.URL.t, R.msg) result
   (** [with_distrib_file ~uri f] is an URL file for URI [uri] with
       the checksum of file [f]. *)
 end
