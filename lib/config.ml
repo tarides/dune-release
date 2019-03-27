@@ -184,7 +184,7 @@ let token ~dry_run () =
         let error =
           if exists
           then ":" ^ msg
-          else " does not exists"
+          else " does not exist"
         in
         Fmt.pr
           "%a%s!\n\
