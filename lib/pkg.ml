@@ -339,7 +339,7 @@ let doc_user_repo_and_path p =
       | _ -> Error (uri_error uri))
       >>= fun user ->
       match String.cut ~sep:"/" path with
-      | None -> Error (uri_error uri)
+      | None -> Ok (user, path, Fpath.v ".")
       | Some (repo, "") -> Ok (user, repo, Fpath.v ".")
       | Some (repo, path) ->
           (Fpath.of_string path >>| fun p -> user, repo, Fpath.rem_empty_seg p)
