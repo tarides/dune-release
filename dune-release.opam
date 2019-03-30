@@ -25,6 +25,7 @@ depends: [
   "re"
   "opam-format"
   "opam-state"
+  "opam-core"
   "rresult"
   "logs"
   "odoc"

@@ -26,7 +26,6 @@ end
 
 let format_upgrade ~dry_run ~url ~opam_f pkg opam dir =
   let opam_t = OpamFile.OPAM.read_from_string opam in
-  let url = OpamFile.URL.read_from_string url in
   match OpamVersion.to_string (OpamFile.OPAM.opam_version opam_t) with
   | "2.0" ->
       let file x = OpamFile.make (OpamFilename.of_string (Fpath.to_string x)) in

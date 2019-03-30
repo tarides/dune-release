@@ -271,14 +271,18 @@ module Descr = struct
 end
 
 module Url = struct
-  let v ~uri ~checksum = strf "archive: \"%s\"\nchecksum: \"%s\"" uri checksum
+  let v ~uri ~file =
+    let hash algo = OpamHash.compute ~kind:algo file in
+    let checksum = List.map hash [ `SHA256 ; `SHA512 ] in
+    let url = OpamUrl.parse uri in
+    OpamFile.URL.create ~checksum url
   let with_distrib_file ~dry_run ~uri distrib_file =
     match OS.File.exists distrib_file with
     | Ok true ->
-        let checksum = Digest.(to_hex @@ file (Fpath.to_string distrib_file)) in
-        Ok (v ~uri ~checksum)
+        let file = Fpath.to_string distrib_file in
+        Ok (v ~uri ~file)
     | _ ->
-        if dry_run then Ok "<dry-run>"
+        if dry_run then Ok OpamFile.URL.empty
         else (OS.File.must_exist distrib_file >>= fun _ -> assert false)
 end
 
