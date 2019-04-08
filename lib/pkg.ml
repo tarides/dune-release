@@ -445,13 +445,17 @@ let v ~dry_run
 
 (* Distrib *)
 
-let distrib_version_opam_files ~dry_run p ~version =
-  opam p
-  >>= fun file -> OS.File.read_lines file
-  >>= fun o ->
-  let o = List.filter (fun l -> not (String.is_prefix ~affix:"version" l)) o in
-  let o =  Fmt.strf "version: \"%s\"" version :: o in
-  Sos.write_file ~dry_run file (String.concat ~sep:"\n" o)
+let distrib_version_opam_files ~dry_run ~version =
+  infer_pkg_names Fpath.(v ".") [] >>= fun names ->
+  List.fold_left (fun acc name ->
+      acc >>= fun _acc ->
+      let file = Fpath.(v name + "opam") in
+      OS.File.read_lines file
+      >>= fun o ->
+      let o = List.filter (fun l -> not (String.is_prefix ~affix:"version" l)) o in
+      let o =  Fmt.strf "version: \"%s\"" version :: o in
+      Sos.write_file ~dry_run file (String.concat ~sep:"\n" o))
+    (Ok ()) names
 
 let distrib_prepare ~dry_run p ~dist_build_dir ~name ~tag ~version ~opam =
   let d = p.distrib in
@@ -460,7 +464,7 @@ let distrib_prepare ~dry_run p ~dist_build_dir ~name ~tag ~version ~opam =
   Sos.with_dir ~dry_run dist_build_dir (fun () ->
       Distrib.files_to_watermark d ()
       >>= fun files -> Distrib.watermark_files ws_defs files
-      >>= fun () -> distrib_version_opam_files ~dry_run p ~version
+      >>= fun () -> distrib_version_opam_files ~dry_run ~version
       >>= fun () -> Distrib.massage d ()
       >>= fun () -> Distrib.exclude_paths d ()
     ) ()
