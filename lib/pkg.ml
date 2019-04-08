@@ -445,7 +445,7 @@ let v ~dry_run
 
 (* Distrib *)
 
-let distrib_version_opam_files ~dry_run _p ~version =
+let distrib_version_opam_files ~dry_run ~version =
   infer_pkg_names Fpath.(v ".") [] >>= fun names ->
   List.fold_left (fun acc name ->
       acc >>= fun _acc ->
@@ -464,7 +464,7 @@ let distrib_prepare ~dry_run p ~dist_build_dir ~name ~tag ~version ~opam =
   Sos.with_dir ~dry_run dist_build_dir (fun () ->
       Distrib.files_to_watermark d ()
       >>= fun files -> Distrib.watermark_files ws_defs files
-      >>= fun () -> distrib_version_opam_files ~dry_run p ~version
+      >>= fun () -> distrib_version_opam_files ~dry_run ~version
       >>= fun () -> Distrib.massage d ()
       >>= fun () -> Distrib.exclude_paths d ()
     ) ()
