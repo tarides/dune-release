@@ -27,6 +27,10 @@ type error = Bos_setup.R.msg
 val run: dry_run:bool -> ?force:bool -> ?sandbox:bool ->
   Bos.Cmd.t -> (unit, error) result
 
+(** Same as run but redirects err and out to null *)
+val run_quiet: dry_run:bool -> ?force:bool -> ?sandbox:bool ->
+  Bos.Cmd.t -> (unit, error) result
+
 val run_io:
   dry_run:bool -> ?force:bool -> ?sandbox:bool ->
   default:'a -> Bos.Cmd.t -> Bos.OS.Cmd.run_in ->

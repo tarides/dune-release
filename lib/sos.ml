@@ -71,6 +71,10 @@ let run_gen ?err ~dry_run ?(force=false) ?sandbox ~default v i f =
     OS.Cmd.run_io ?err v i |> f
   )
 
+let run_quiet ~dry_run ?(force=false) ?sandbox v =
+  let open OS.Cmd in
+  run_gen ~err:err_null ~dry_run ~force ?sandbox ~default:() v in_stdin to_null
+
 let run ~dry_run ?(force=false) ?sandbox v =
   let open OS.Cmd in
   run_gen ~dry_run ~force ?sandbox ~default:() v in_stdin to_stdout
