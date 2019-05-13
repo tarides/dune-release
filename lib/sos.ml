@@ -187,3 +187,14 @@ let out y =
   match OS.Cmd.run_out Cmd.(v "true") |> OS.Cmd.out_string with
   | Ok (_, x) -> y, x
   | Error _   -> assert false
+
+let cp ~dry_run ~rec_ ~force ~src ~dst =
+  let base_cmd =
+    match rec_, force with
+    | true, true -> Cmd.(v "cp" % "-r" % "-f")
+    | true, _ -> Cmd.(v "cp" % "-r")
+    | _, true -> Cmd.(v "cp" % "-f")
+    | _, _ -> Cmd.v "cp"
+  in
+  let cmd = Cmd.(base_cmd % p src % p dst) in
+  run ~dry_run cmd
