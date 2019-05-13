@@ -99,6 +99,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
   | true ->
       let push_spec = strf "%s:%s" branch branch in
       Ok (git_for_repo repo) >>= fun git ->
+      Logs.app (fun l -> l "Pushing new documentation to %s#gh-pages" remote);
       Sos.run ~dry_run Cmd.(git % "push" % remote % push_spec)
       >>= fun () -> Sos.delete_dir ~dry_run clonedir
       >>= fun () ->
@@ -146,7 +147,6 @@ let publish_doc ~dry_run ~msg:_ ~docdir p =
   >>= fun id ->
   Sos.run_quiet ~dry_run ~force Cmd.(git % "branch" % "-f" % "gh-pages" % id)
   >>= fun () ->
-  Logs.app (fun l -> l "Pushing new documentation to %s/%s gh-pages" user repo);
   publish_in_git_branch
     ~dry_run ~remote ~branch:"gh-pages" ~name ~version ~docdir ~dir
 
