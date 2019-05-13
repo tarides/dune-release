@@ -131,12 +131,14 @@ let publish_doc ~dry_run ~msg:_ ~docdir p =
       ) () |> R.join
   in
   Vcs.get ()
-  >>= fun repo -> Ok (git_for_repo repo)
+  >>= fun vcs -> Ok (git_for_repo vcs)
   >>= fun git ->
   let git_fetch = Cmd.(git % "fetch" % remote % "gh-pages") in
   (match Sos.run ~dry_run ~force git_fetch with
   | Ok () -> Ok ()
-  | Error _ -> create_empty_gh_pages git)
+  | Error _ ->
+      Logs.app (fun l -> l "Creating new gh-pages branch with inital commit on %s/%s" user repo);
+      create_empty_gh_pages git)
   >>= fun () ->
   Sos.run_out ~dry_run ~force Cmd.(git % "rev-parse" % "FETCH_HEAD")
     ~default:D.fetch_head
@@ -144,6 +146,7 @@ let publish_doc ~dry_run ~msg:_ ~docdir p =
   >>= fun id ->
   Sos.run ~dry_run ~force Cmd.(git % "branch" % "-f" % "gh-pages" % id)
   >>= fun () ->
+  Logs.app (fun l -> l "Pushing new documentation to %s/%s gh-pages" user repo);
   publish_in_git_branch
     ~dry_run ~remote ~branch:"gh-pages" ~name ~version ~docdir ~dir
 
@@ -293,10 +296,17 @@ let publish_distrib ~dry_run ~msg ~archive p =
   >>= fun git -> Pkg.tag p
   >>= fun tag -> check_tag ~dry_run vcs tag
   >>= fun () -> dev_repo p
-  >>= fun upstr -> Sos.run ~dry_run Cmd.(git % "push" % "--force" % upstr % tag)
+  >>= fun upstr ->
+  Logs.app (fun l -> l "Pushing tag %s to %s" tag upstr);
+  Sos.run ~dry_run Cmd.(git % "push" % "--force" % upstr % tag)
   >>= fun () -> Config.token ~dry_run ()
-  >>= fun token -> curl_create_release ~token ~dry_run curl tag msg user repo
-  >>= fun id -> curl_upload_archive ~token ~dry_run curl archive user repo id
+  >>= fun token ->
+  Logs.app (fun l -> l "Creating release %s on %s/%s through github's API" tag user repo);
+  curl_create_release ~token ~dry_run curl tag msg user repo
+  >>= fun id ->
+  Logs.app (fun l -> l "Succesfully created release with id %d" id);
+  Logs.app (fun l -> l "Uploading %a as a release asset for %s through github's API" Fpath.pp archive tag);
+  curl_upload_archive ~token ~dry_run curl archive user repo id
 
 
 (*---------------------------------------------------------------------------

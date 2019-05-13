@@ -21,8 +21,11 @@ let run_delegate ~dry_run del args =
 
 let publish_distrib ~dry_run ~msg ~archive p =
   Pkg.delegate p >>= function
-  | None     -> Github.publish_distrib ~dry_run ~msg ~archive p
+  | None     ->
+      Logs.app (fun l -> l "Publishing to github");
+      Github.publish_distrib ~dry_run ~msg ~archive p
   | Some del ->
+      Logs.app (fun l -> l "Using delegate %a" Cmd.pp del);
       Pkg.name p
       >>= fun name -> Pkg.tag p
       >>= fun version -> Pkg.distrib_uri p
@@ -33,8 +36,11 @@ let publish_distrib ~dry_run ~msg ~archive p =
 
 let publish_doc ~dry_run ~msg ~docdir p =
   Pkg.delegate p >>= function
-  | None     -> Github.publish_doc ~dry_run ~msg ~docdir p
+  | None     ->
+      Logs.app (fun l -> l "Publishing to github");
+      Github.publish_doc ~dry_run ~msg ~docdir p
   | Some del ->
+      Logs.app (fun l -> l "Using delegate %a" Cmd.pp del);
       let doc_uri p = Pkg.opam_field_hd p "doc" >>= function
         | None -> Ok ""
         | Some uri -> Ok uri
@@ -51,6 +57,7 @@ let publish_alt ~dry_run ~kind ~msg ~archive p =
   Pkg.delegate p >>= function
   | None     -> R.error_msgf "No default delegate to publish %s" kind
   | Some del ->
+      Logs.app (fun l -> l "Using delegate %a" Cmd.pp del);
       Pkg.name p
       >>= fun name -> Pkg.version p
       >>= fun version -> Pkg.distrib_uri p
