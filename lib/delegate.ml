@@ -49,7 +49,7 @@ let publish_doc ~dry_run ~msg ~docdir p =
 
 let publish_alt ~dry_run ~kind ~msg ~archive p =
   Pkg.delegate p >>= function
-  | None     -> R.error_msgf "Action unsupported"
+  | None     -> R.error_msgf "No default delegate to publish %s" kind
   | Some del ->
       Pkg.name p
       >>= fun name -> Pkg.version p
