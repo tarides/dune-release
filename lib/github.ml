@@ -297,15 +297,21 @@ let publish_distrib ~dry_run ~msg ~archive p =
   >>= fun tag -> check_tag ~dry_run vcs tag
   >>= fun () -> dev_repo p
   >>= fun upstr ->
-  Logs.app (fun l -> l "Pushing tag %s to %s" tag upstr);
+  Logs.app (fun l -> l "Pushing tag %a to %a" Styled_pp.tag tag Styled_pp.url upstr);
   Sos.run_quiet ~dry_run Cmd.(git % "push" % "--force" % upstr % tag)
   >>= fun () -> Config.token ~dry_run ()
   >>= fun token ->
-  Logs.app (fun l -> l "Creating release %s on %s/%s through github's API" tag user repo);
+  Logs.app
+    (fun l -> l "Creating release %a on %a through github's API" Styled_pp.tag tag Styled_pp.url upstr);
   curl_create_release ~token ~dry_run curl tag msg user repo
   >>= fun id ->
   Logs.app (fun l -> l "Succesfully created release with id %d" id);
-  Logs.app (fun l -> l "Uploading %a as a release asset for %s through github's API" Fpath.pp archive tag);
+  Logs.app
+    (fun l -> l "Uploading %a as a release asset for %a through github's API"
+        Styled_pp.archive
+        archive
+        Styled_pp.tag
+        tag);
   curl_upload_archive ~token ~dry_run curl archive user repo id
 
 
