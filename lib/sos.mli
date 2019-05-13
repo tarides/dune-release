@@ -65,3 +65,7 @@ val cp:
   src: Fpath.t ->
   dst: Fpath.t ->
   (unit, error) result
+
+(** [relativize ~src ~dst] return a relative path from [src] to [dst]. If such a path can't be
+    expressed, i.e. [srs] and [dst] don't have a common root, returns an error. *)
+val relativize: src: Fpath.t -> dst: Fpath.t -> (Fpath.t, error) result

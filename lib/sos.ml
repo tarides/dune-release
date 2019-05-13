@@ -198,3 +198,8 @@ let cp ~dry_run ~rec_ ~force ~src ~dst =
   in
   let cmd = Cmd.(base_cmd % p src % p dst) in
   run ~dry_run cmd
+
+let relativize ~src ~dst =
+  R.of_option
+    ~none:(fun () -> R.error_msgf "Could define path from %a to %a" Fpath.pp src Fpath.pp dst)
+    (Fpath.relativize ~root:src dst)
