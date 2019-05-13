@@ -16,14 +16,14 @@ let gen_doc ~dry_run ~force dir pkg_names =
   Ok Fpath.(dir // doc_dir)
 
 let publish_doc ~dry_run pkg_names pkg =
-  Logs.app
-    (fun l -> l "Publishing documentation of packages: %s" (String.concat ~sep:" " pkg_names));
+  Logs.app (fun l -> l "Publishing documentation");
   Pkg.distrib_file ~dry_run pkg
   >>= fun archive -> Pkg.publish_msg pkg
   >>= fun msg -> Archive.untbz ~dry_run ~clean:true archive
   >>= fun dir -> OS.Dir.exists dir
   >>= fun force -> Pkg.infer_pkg_names dir pkg_names
   >>= fun pkg_names ->
+  Logs.app (fun l -> l "Selected packages: %s" (String.concat ~sep:" " pkg_names));
   Logs.app (fun l -> l "Generating documentation from %a" Fpath.pp archive);
   gen_doc ~dry_run ~force dir pkg_names
   >>= fun docdir -> Delegate.publish_doc ~dry_run pkg ~msg ~docdir
