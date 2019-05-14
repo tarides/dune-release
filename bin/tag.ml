@@ -14,14 +14,21 @@ let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg =
   | true -> Vcs.delete_tag ~dry_run repo tag
   | false ->
       Vcs.tag repo ~dry_run ~force ~sign ~msg ~commit_ish tag >>| fun () ->
-      Logs.app (fun m -> m "Tagged version %a" Text.Pp.version tag)
+      Logs.app (fun m -> m "Tagged %s with version %a" commit_ish Text.Pp.version tag)
 
 let tag () dry_run name change_log tag commit_ish force sign delete msg =
   begin
     let pkg = Pkg.v ~dry_run ?change_log ?name () in
     let tag = match tag with
-    | Some t -> Ok t
-    | None   -> Pkg.extract_tag pkg
+    | Some t ->
+        Logs.app (fun l -> l "Using provided tag %S" t);
+        Ok t
+    | None   ->
+        Pkg.change_log pkg >>= fun changelog ->
+        Logs.app (fun l -> l "Extracting tag from first entry in %a" Fpath.pp changelog);
+        Pkg.extract_tag pkg >>| fun t ->
+        Logs.app (fun l -> l "Using tag %S" t);
+        t
     in
     tag
     >>= fun tag -> vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg
