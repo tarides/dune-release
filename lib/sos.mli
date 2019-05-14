@@ -54,3 +54,18 @@ val file_must_exist: dry_run:bool -> Fpath.t -> (Fpath.t, error) result
 
 val out: 'a -> 'a * Bos.OS.Cmd.run_status
 val mkdir: dry_run:bool -> Fpath.t -> (bool, error) result
+
+(** [cp ~dry_run ~rec ~force ~src ~dst] copies [src] to [dst]. If [rec] is true, copies directories
+    recursively. If [force] is true, overwrite existing files. The usual [force] arguments from
+    other functions in this module is renamed [force_side_effects] here. *)
+val cp:
+  dry_run: bool ->
+  rec_: bool ->
+  force: bool ->
+  src: Fpath.t ->
+  dst: Fpath.t ->
+  (unit, error) result
+
+(** [relativize ~src ~dst] return a relative path from [src] to [dst]. If such a path can't be
+    expressed, i.e. [srs] and [dst] don't have a common root, returns an error. *)
+val relativize: src: Fpath.t -> dst: Fpath.t -> (Fpath.t, error) result

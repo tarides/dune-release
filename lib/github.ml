@@ -24,8 +24,6 @@ let user_from_remote remote_uri =
 
 (* Publish documentation *)
 
-let cwd = OS.Dir.current ()
-
 let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
   let pp_distrib ppf (name, version) =
     Fmt.pf ppf "%a %a" Text.Pp.name name Text.Pp.version version
@@ -34,31 +32,10 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
     Logs.app (fun m -> m "%s %a@ in@ directory@ %a@ of@ gh-pages@ branch"
                  msg pp_distrib distrib Fpath.pp dir)
   in
-  cwd >>= fun cwd ->
-  let cp src dst =
-    let src = Fpath.(cwd // src) in
-    let src = Fpath.to_dir_path src in
-    let rec copy_dir src dst =
-      OS.Dir.contents ~dotfiles:true ~rel:true src >>= fun files ->
-      List.fold_left (fun acc file ->
-          acc >>= fun () ->
-          let src = Fpath.(src // file) in
-          let dst = Fpath.(dst // file) in
-          OS.File.exists src >>= function
-          | false ->
-              Sos.mkdir ~dry_run dst >>= fun _ ->
-              copy_dir src dst
-          | true  ->
-              Sos.read_file ~dry_run src >>= fun file ->
-              Sos.write_file ~dry_run dst file
-        ) (Ok ()) files
-    in
-    copy_dir src dst
-  in
   let delete dir =
     if not (Fpath.is_current_dir dir) then Sos.delete_dir ~dry_run dir else
     let delete acc p = acc >>= fun () -> Sos.delete_path ~dry_run p in
-    let gitdir = Fpath.v ".git" in
+    let gitdir = Fpath.v".git" in
     let not_git p = not (Fpath.equal p gitdir) in
     OS.Dir.contents dir
     >>= fun files -> List.fold_left delete (Ok ()) (List.filter not_git files)
@@ -71,7 +48,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
     >>= fun git ->
     Sos.run ~dry_run ~force:(dir <> D.dir) Cmd.(git % "checkout" % branch)
     >>= fun () -> delete dir
-    >>= fun () -> cp docdir dir
+    >>= fun () -> Sos.cp ~dry_run ~rec_:true ~force:true ~src:docdir ~dst:dir
     >>= fun () -> (if dry_run then Ok true else Vcs.is_dirty repo)
     >>= function
     | false -> Ok false
@@ -90,7 +67,8 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
   Sos.delete_dir ~dry_run ~force:true clonedir
   >>= fun () -> Vcs.get ()
   >>= fun repo -> Vcs.clone ~dry_run ~force:true ~dir:clonedir repo
-  >>= fun () -> Sos.with_dir ~dry_run clonedir (replace_dir_and_push docdir) dir
+  >>= fun () -> Sos.relativize ~src:clonedir ~dst:docdir
+  >>= fun rel_docdir -> Sos.with_dir ~dry_run clonedir (replace_dir_and_push rel_docdir) dir
   >>= fun res -> res
   >>= function
   | false (* no changes *) ->
