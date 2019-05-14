@@ -61,33 +61,29 @@ let show ?sandbox ?(action=`Skip) fmt =
       Ok ()
     ) fmt
 
-let run ~dry_run ?(force=false) ?sandbox v =
-  if not dry_run then OS.Cmd.run v
-  else if not force then show ?sandbox "exec:@[@ %a@]" pp_cmd v
+let run_gen ?err ~dry_run ?(force=false) ?sandbox ~default v i f =
+  if not dry_run then OS.Cmd.run_io ?err v i |> f
+  else if not force then
+    let _ = show ?sandbox "exec:@[@ %a@]" pp_cmd v in
+    Ok default
   else (
     let _ = show ?sandbox ~action:`Done "exec:@[@ %a@]" pp_cmd v in
-    OS.Cmd.run v
+    OS.Cmd.run_io ?err v i |> f
   )
+
+let run_quiet ~dry_run ?(force=false) ?sandbox v =
+  let open OS.Cmd in
+  run_gen ~err:err_null ~dry_run ~force ?sandbox ~default:() v in_stdin to_null
+
+let run ~dry_run ?(force=false) ?sandbox v =
+  let open OS.Cmd in
+  run_gen ~dry_run ~force ?sandbox ~default:() v in_stdin to_stdout
 
 let run_out ~dry_run ?(force=false) ?sandbox ?err ~default v f =
-  if not dry_run then OS.Cmd.run_out ?err v |> f
-  else if not force then
-    let _ = show ?sandbox "exec:@[@ %a@]" pp_cmd v in
-    Ok default
-  else (
-    let _ = show ?sandbox ~action:`Done "exec:@[@ %a@]" pp_cmd v in
-    OS.Cmd.run_out ?err v |> f
-  )
+  run_gen ?err ~dry_run ~force ?sandbox ~default v OS.Cmd.in_stdin f
 
 let run_io ~dry_run ?(force=false) ?sandbox ~default v i f =
-  if not dry_run then OS.Cmd.run_io v i |> f
-  else if not force then
-    let _ = show ?sandbox "exec:@[@ %a@]" pp_cmd v in
-    Ok default
-  else (
-    let _ = show ?sandbox ~action:`Done "exec:@[@ %a@]" pp_cmd v in
-    OS.Cmd.run_io v i |> f
-  )
+  run_gen ~dry_run ~force ?sandbox ~default v i f
 
 let run_status ~dry_run ?(force=false) ?sandbox v =
   if not dry_run then OS.Cmd.run_status v

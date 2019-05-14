@@ -46,7 +46,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
     Vcs.get ()
     >>= fun repo -> Ok (git_for_repo repo)
     >>= fun git ->
-    Sos.run ~dry_run ~force:(dir <> D.dir) Cmd.(git % "checkout" % branch)
+    Sos.run_quiet ~dry_run ~force:(dir <> D.dir) Cmd.(git % "checkout" % branch)
     >>= fun () -> delete dir
     >>= fun () -> Sos.cp ~dry_run ~rec_:true ~force:true ~src:docdir ~dst:dir
     >>= fun () -> (if dry_run then Ok true else Vcs.is_dirty repo)
@@ -77,6 +77,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
   | true ->
       let push_spec = strf "%s:%s" branch branch in
       Ok (git_for_repo repo) >>= fun git ->
+      Logs.app (fun l -> l "Pushing new documentation to %s#gh-pages" remote);
       Sos.run ~dry_run Cmd.(git % "push" % remote % push_spec)
       >>= fun () -> Sos.delete_dir ~dry_run clonedir
       >>= fun () ->
@@ -94,33 +95,35 @@ let publish_doc ~dry_run ~msg:_ ~docdir p =
   let create_empty_gh_pages git =
     let msg = "Initial commit by dune-release." in
     let create () =
-      Sos.run ~dry_run Cmd.(v "git" % "init")
+      Sos.run_quiet ~dry_run Cmd.(v "git" % "init")
       >>= fun () -> Vcs.get ()
       >>= fun repo -> Ok (git_for_repo repo)
-      >>= fun git -> Sos.run ~dry_run Cmd.(git % "checkout" % "--orphan" % "gh-pages")
+      >>= fun git -> Sos.run_quiet ~dry_run Cmd.(git % "checkout" % "--orphan" % "gh-pages")
       >>= fun () -> Sos.write_file ~dry_run (Fpath.v "README") "" (* need some file *)
-      >>= fun () -> Sos.run ~dry_run Cmd.(git % "add" % "README")
-      >>= fun () -> Sos.run ~dry_run Cmd.(git % "commit" % "README" % "-m" % msg)
+      >>= fun () -> Sos.run_quiet ~dry_run Cmd.(git % "add" % "README")
+      >>= fun () -> Sos.run_quiet ~dry_run Cmd.(git % "commit" % "README" % "-m" % msg)
     in
     OS.Dir.with_tmp "gh-pages-%s.tmp" (fun dir () ->
         Sos.with_dir ~dry_run dir create () |> R.join >>= fun () ->
         let git_fetch = Cmd.(git % "fetch" % Fpath.to_string dir % "gh-pages") in
-        Sos.run ~dry_run ~force git_fetch
+        Sos.run_quiet ~dry_run ~force git_fetch
       ) () |> R.join
   in
   Vcs.get ()
-  >>= fun repo -> Ok (git_for_repo repo)
+  >>= fun vcs -> Ok (git_for_repo vcs)
   >>= fun git ->
   let git_fetch = Cmd.(git % "fetch" % remote % "gh-pages") in
-  (match Sos.run ~dry_run ~force git_fetch with
+  (match Sos.run_quiet ~dry_run ~force git_fetch with
   | Ok () -> Ok ()
-  | Error _ -> create_empty_gh_pages git)
+  | Error _ ->
+      Logs.app (fun l -> l "Creating new gh-pages branch with inital commit on %s/%s" user repo);
+      create_empty_gh_pages git)
   >>= fun () ->
   Sos.run_out ~dry_run ~force Cmd.(git % "rev-parse" % "FETCH_HEAD")
     ~default:D.fetch_head
     OS.Cmd.to_string
   >>= fun id ->
-  Sos.run ~dry_run ~force Cmd.(git % "branch" % "-f" % "gh-pages" % id)
+  Sos.run_quiet ~dry_run ~force Cmd.(git % "branch" % "-f" % "gh-pages" % id)
   >>= fun () ->
   publish_in_git_branch
     ~dry_run ~remote ~branch:"gh-pages" ~name ~version ~docdir ~dir
@@ -201,7 +204,7 @@ let curl_upload_archive ~token ~dry_run curl archive user repo release_id =
   let data = Cmd.(v "--data-binary" % strf "@@%s" (Fpath.to_string archive)) in
   let ctype = Cmd.(v "-H" % "Content-Type:application/x-tar") in
   let cmd = Cmd.(curl %% ctype %% data % uri) in
-  run_with_auth ~dry_run ~default:() auth cmd OS.Cmd.to_stdout
+  run_with_auth ~dry_run ~default:() auth cmd OS.Cmd.to_null
 
 let curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body curl =
   let parse_url resp = (* FIXME this is nuts. *)
@@ -271,10 +274,23 @@ let publish_distrib ~dry_run ~msg ~archive p =
   >>= fun git -> Pkg.tag p
   >>= fun tag -> check_tag ~dry_run vcs tag
   >>= fun () -> dev_repo p
-  >>= fun upstr -> Sos.run ~dry_run Cmd.(git % "push" % "--force" % upstr % tag)
+  >>= fun upstr ->
+  Logs.app (fun l -> l "Pushing tag %a to %a" Styled_pp.tag tag Styled_pp.url upstr);
+  Sos.run_quiet ~dry_run Cmd.(git % "push" % "--force" % upstr % tag)
   >>= fun () -> Config.token ~dry_run ()
-  >>= fun token -> curl_create_release ~token ~dry_run curl tag msg user repo
-  >>= fun id -> curl_upload_archive ~token ~dry_run curl archive user repo id
+  >>= fun token ->
+  Logs.app
+    (fun l -> l "Creating release %a on %a through github's API" Styled_pp.tag tag Styled_pp.url upstr);
+  curl_create_release ~token ~dry_run curl tag msg user repo
+  >>= fun id ->
+  Logs.app (fun l -> l "Succesfully created release with id %d" id);
+  Logs.app
+    (fun l -> l "Uploading %a as a release asset for %a through github's API"
+        Styled_pp.archive
+        archive
+        Styled_pp.tag
+        tag);
+  curl_upload_archive ~token ~dry_run curl archive user repo id
 
 
 (*---------------------------------------------------------------------------

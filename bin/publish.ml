@@ -16,20 +16,26 @@ let gen_doc ~dry_run ~force dir pkg_names =
   Ok Fpath.(dir // doc_dir)
 
 let publish_doc ~dry_run pkg_names pkg =
+  Logs.app (fun l -> l "Publishing documentation");
   Pkg.distrib_file ~dry_run pkg
   >>= fun archive -> Pkg.publish_msg pkg
   >>= fun msg -> Archive.untbz ~dry_run ~clean:true archive
   >>= fun dir -> OS.Dir.exists dir
   >>= fun force -> Pkg.infer_pkg_names dir pkg_names
-  >>= fun pkg_names -> gen_doc ~dry_run ~force dir pkg_names
+  >>= fun pkg_names ->
+  Logs.app (fun l -> l "Selected packages: %a" Fmt.(list (styled `Bold string)) pkg_names);
+  Logs.app (fun l -> l "Generating documentation from %a" (Fmt.styled `Bold Fpath.pp) archive);
+  gen_doc ~dry_run ~force dir pkg_names
   >>= fun docdir -> Delegate.publish_doc ~dry_run pkg ~msg ~docdir
 
 let publish_distrib ~dry_run pkg =
+  Logs.app (fun l -> l "Publishing distribution");
   Pkg.distrib_file ~dry_run pkg
   >>= fun archive -> Pkg.publish_msg pkg
   >>= fun msg     -> Delegate.publish_distrib ~dry_run pkg ~msg ~archive
 
 let publish_alt ~dry_run pkg kind =
+  Logs.app (fun l -> l "Publishing %s" kind);
   Pkg.distrib_file ~dry_run pkg
   >>= fun archive -> Pkg.publish_msg pkg
   >>= fun msg     -> Delegate.publish_alt ~dry_run pkg ~kind ~msg ~archive
