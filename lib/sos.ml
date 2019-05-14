@@ -185,14 +185,7 @@ let out y =
   | Error _   -> assert false
 
 let cp ~dry_run ~rec_ ~force ~src ~dst =
-  let base_cmd =
-    match rec_, force with
-    | true, true -> Cmd.(v "cp" % "-r" % "-f")
-    | true, _ -> Cmd.(v "cp" % "-r")
-    | _, true -> Cmd.(v "cp" % "-f")
-    | _, _ -> Cmd.v "cp"
-  in
-  let cmd = Cmd.(base_cmd % p src % p dst) in
+  let cmd = Cmd.(v "cp" %% on rec_ (v "-r") %% on force (v "-f") % p src % p dst) in
   run ~dry_run cmd
 
 let relativize ~src ~dst =
