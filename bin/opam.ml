@@ -104,9 +104,7 @@ let submit ~dry_run local_repo remote_repo pkgs auto_open =
       get_pkg_dir pkg
       >>= fun pkg_dir -> Sos.dir_exists ~dry_run pkg_dir
       >>= function
-      | true  ->
-          Logs.app (fun m -> m "Submitting %a" Text.Pp.path pkg_dir);
-          acc
+      | true  -> acc
       | false ->
           Logs.err (fun m ->
               m "Package@ %a@ does@ not@ exist. Did@ you@ forget@ \
@@ -122,6 +120,7 @@ let submit ~dry_run local_repo remote_repo pkgs auto_open =
   Pkg.distrib_user_and_repo pkg >>= fun (distrib_user, repo) ->
   let changes = rewrite_github_refs distrib_user repo changes in
   let msg = strf "%s\n\n%s\n" title changes in
+  Logs.app (fun l -> l "Preparing pull request to ocaml/opam-repository");
   Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~version names
   >>= fun branch ->
   (* open a new PR *)
@@ -147,6 +146,13 @@ let submit ~dry_run local_repo remote_repo pkgs auto_open =
     | Some user -> user
     | None -> distrib_user
   in
+  Logs.app
+    (fun l ->
+       l "Opening pull request to merge branch %a of %a into ocaml/opam-repository"
+         Text.Pp.commit
+         branch
+         Text.Pp.url
+         remote_repo);
   Github.open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch msg >>= function
   | `Already_exists -> Logs.app (fun m ->
       m "\nThe existing pull request for %a has been automatically updated."
@@ -198,8 +204,8 @@ let opam () dry_run build_dir local_repo remote_repo user keep_v
       in
       Pkg.distrib_archive_path pkg
     in
+    Pkg.infer_pkg_names Fpath.(v ".") pkg_names >>= fun pkg_names ->
     let pkgs =
-      Pkg.infer_pkg_names Fpath.(v ".") pkg_names >>= fun pkg_names ->
       let pkg_names = List.map (fun n -> Some n) pkg_names in
       distrib_file >>| fun distrib_file ->
       List.map (fun name ->
@@ -236,6 +242,7 @@ let opam () dry_run build_dir local_repo remote_repo user keep_v
             | Some r -> Ok r
             | None   -> R.error_msg "Unknown remote repository.")
         >>= fun remote_repo ->
+        Logs.app (fun m -> m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
         submit ~dry_run local_repo remote_repo pkgs auto_open
     | `Field -> field pkgs field_name
   end
