@@ -24,7 +24,7 @@ module D = struct
   let distrib_uri = "${distrib_uri}"
 end
 
-let format_upgrade ~dry_run ~url ~opam_f pkg opam dir =
+let format_upgrade ~dry_run ~url ~opam_f pkg opam dest_opam_file =
   let opam_t = OpamFile.OPAM.read_from_string opam in
   match OpamVersion.to_string (OpamFile.OPAM.opam_version opam_t) with
   | "2.0" ->
@@ -33,10 +33,12 @@ let format_upgrade ~dry_run ~url ~opam_f pkg opam dir =
       if not dry_run then
         OpamFile.OPAM.write_with_preserved_format
           ~format_from:(file opam_f)
-          (file Fpath.(dir / "opam"))
+          (file dest_opam_file)
           opam_t;
       Ok ()
-  | "1.0"|"1.1"|"1.2" ->
+  | ("1.0"|"1.1"|"1.2" as v) ->
+      Logs.app
+        (fun l -> l "Upgrading opam file %a from opam format %s to 2.0" Text.Pp.path opam_f v);
       Pkg.opam_descr pkg >>= fun descr ->
       let descr =
         OpamFile.Descr.read_from_string (Opam.Descr.to_string descr)
@@ -48,17 +50,16 @@ let format_upgrade ~dry_run ~url ~opam_f pkg opam dir =
         |> OpamFile.OPAM.with_descr descr
         |> OpamFile.OPAM.write_to_string
       in
-      Sos.write_file ~dry_run Fpath.(dir / "opam") opam
+      Sos.write_file ~dry_run dest_opam_file opam
   | s -> Fmt.kstrf (fun x -> Error (`Msg x)) "invalid opam version: %s" s
 
 let pkg ~dry_run pkg =
-  let log_pkg dir =
-    Logs.app (fun m -> m "Wrote opam package %a" Text.Pp.path dir)
-  in
   let warn_if_vcs_dirty () =
     Cli.warn_if_vcs_dirty "The opam package may be inconsistent with the \
                            distribution."
   in
+  Pkg.name pkg >>= fun pkg_name ->
+  Logs.app (fun l -> l "Creating opam package description for %a" Text.Pp.name pkg_name);
   get_pkg_dir pkg >>= fun dir ->
   Pkg.opam pkg >>= fun opam_f ->
   OS.File.read opam_f >>= fun opam ->
@@ -70,8 +71,10 @@ let pkg ~dry_run pkg =
   OS.Dir.exists dir >>= fun exists ->
   (if exists then Sos.delete_dir ~dry_run dir else Ok ()) >>= fun () ->
   OS.Dir.create dir >>= fun _ ->
-  format_upgrade ~dry_run ~url ~opam_f pkg opam dir >>= fun () ->
-  log_pkg dir; (if not dry_run then warn_if_vcs_dirty () else Ok ())
+  let dest_opam_file = Fpath.(dir / "opam") in
+  format_upgrade ~dry_run ~url ~opam_f pkg opam dest_opam_file >>= fun () ->
+  Logs.app (fun m -> m "Wrote opam package description %a" Text.Pp.path dest_opam_file);
+  (if not dry_run then warn_if_vcs_dirty () else Ok ())
 
 let github_issue = Re.(compile @@ seq [
     group (compl [alpha]);
