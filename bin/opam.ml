@@ -140,7 +140,7 @@ let submit ~dry_run local_repo remote_repo pkgs auto_open =
       changes
   in
   let user =
-    match Github.user_from_remote remote_repo with
+    match Github.Parse.user_from_remote remote_repo with
     | Some user -> user
     | None -> distrib_user
   in

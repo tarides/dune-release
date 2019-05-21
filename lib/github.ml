@@ -13,14 +13,16 @@ module D = struct
   let fetch_head = "${fetch_head}"
 end
 
-let user_from_remote remote_uri =
-  let ssh_uri_regexp =
-    Re.Emacs.compile_pat "git@github\\.com:\\(.+\\)/.+\\(\\.git\\)?"
-  in
-  try
-    let substrings = Re.exec ssh_uri_regexp remote_uri in
-    Some (Re.Group.get substrings 1)
-  with Not_found -> None
+module Parse = struct
+  let user_from_remote remote_uri =
+    let ssh_uri_regexp =
+      Re.Emacs.compile_pat "git@github\\.com:\\(.+\\)/.+\\(\\.git\\)?"
+    in
+    try
+      let substrings = Re.exec ssh_uri_regexp remote_uri in
+      Some (Re.Group.get substrings 1)
+    with Not_found -> None
+end
 
 (* Publish documentation *)
 
