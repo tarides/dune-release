@@ -110,6 +110,9 @@ val distrib_archive : dry_run:bool -> keep_dir:bool -> t -> (Fpath.t, R.msg) res
 
 val distrib_archive_path: t -> (Fpath.t, Rresult.R.msg) result
 
+val archive_url_path: t -> (Fpath.t, R.msg) result
+(** [archive_url_path] is the path to the file where the archive download URL is saved *)
+
 val distrib_filename : ?opam:bool -> t -> (Fpath.t, R.msg) result
 (** [distrib_filename ~opam p] is a distribution filename for [p].  If
     [opam] is [true] (defaults to [false]), the name follows opam's
