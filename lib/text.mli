@@ -97,6 +97,9 @@ module Pp : sig
   val path : Fpath.t Fmt.t
   (** [path] formats a bold path *)
 
+  val url : string Fmt.t
+  (** [url] formats an underlined URL *)
+
   val status : [`Ok | `Fail] Fmt.t
   (** [status] formats a result status. *)
 end
