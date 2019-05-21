@@ -286,6 +286,11 @@ let distrib_archive_path p =
   >>= fun build_dir -> distrib_filename ~opam:false p
   >>| fun b -> Fpath.(build_dir // b + ".tbz")
 
+let archive_url_path p =
+  build_dir p >>= fun build_dir ->
+  distrib_filename ~opam:false p >>| fun b ->
+  Fpath.(build_dir // b + "url")
+
 let distrib_file ~dry_run p = match p.distrib_file with
 | Some f -> Ok f
 | None ->

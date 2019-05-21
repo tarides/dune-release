@@ -19,16 +19,19 @@ let run_delegate ~dry_run del args =
 
 (* Publish request *)
 
-let publish_distrib ~dry_run ~msg ~archive p =
-  Pkg.delegate p >>= function
+let publish_distrib ~dry_run ~msg ~archive pkg =
+  Pkg.delegate pkg >>= function
   | None     ->
       Logs.app (fun l -> l "Publishing to github");
-      Github.publish_distrib ~dry_run ~msg ~archive p
+      Github.publish_distrib ~dry_run ~msg ~archive pkg >>= fun url ->
+      Pkg.archive_url_path pkg >>= fun url_file ->
+      Sos.write_file ~dry_run url_file url >>= fun () ->
+      Ok ()
   | Some del ->
       Logs.app (fun l -> l "Using delegate %a" Cmd.pp del);
-      Pkg.name p
-      >>= fun name -> Pkg.tag p
-      >>= fun version -> Pkg.distrib_uri p
+      Pkg.name pkg
+      >>= fun name -> Pkg.tag pkg
+      >>= fun version -> Pkg.distrib_uri pkg
       >>= fun distrib_uri ->
       run_delegate ~dry_run del
         Cmd.(v "publish" % "distrib" % distrib_uri %

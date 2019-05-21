@@ -277,6 +277,7 @@ module Url = struct
     let checksum = List.map hash [ `SHA256 ; `SHA512 ] in
     let url = OpamUrl.parse uri in
     OpamFile.URL.create ~checksum url
+
   let with_distrib_file ~dry_run ~uri distrib_file =
     match OS.File.exists distrib_file with
     | Ok true ->

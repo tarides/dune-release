@@ -13,14 +13,33 @@ module D = struct
   let fetch_head = "${fetch_head}"
 end
 
-let user_from_remote remote_uri =
-  let ssh_uri_regexp =
-    Re.Emacs.compile_pat "git@github\\.com:\\(.+\\)/.+\\(\\.git\\)?"
-  in
-  try
-    let substrings = Re.exec ssh_uri_regexp remote_uri in
-    Some (Re.Group.get substrings 1)
-  with Not_found -> None
+module Parse = struct
+  let user_from_remote remote_uri =
+    let ssh_uri_regexp =
+      Re.Emacs.compile_pat "git@github\\.com:\\(.+\\)/.+\\(\\.git\\)?"
+    in
+    try
+      let substrings = Re.exec ssh_uri_regexp remote_uri in
+      Some (Re.Group.get substrings 1)
+    with Not_found -> None
+
+  let archive_upload_url response =
+    let open Re in
+    let re =
+      seq
+        [ str "\"browser_download_url\":"
+        ; rep space
+        ; char '"'
+        ; group (non_greedy (rep any))
+        ; char '"'
+        ]
+    in
+    let compiled = compile re in
+    let error () = R.error_msgf "Could not extract archive url from:\n %s" response in
+    match exec_opt compiled response with
+    | Some groups when Group.test groups 1 -> Ok (Group.get groups 1)
+    | Some _ | None -> error ()
+end
 
 (* Publish documentation *)
 
@@ -204,7 +223,7 @@ let curl_upload_archive ~token ~dry_run curl archive user repo release_id =
   let data = Cmd.(v "--data-binary" % strf "@@%s" (Fpath.to_string archive)) in
   let ctype = Cmd.(v "-H" % "Content-Type:application/x-tar") in
   let cmd = Cmd.(curl %% ctype %% data % uri) in
-  run_with_auth ~dry_run ~default:() auth cmd OS.Cmd.to_null
+  run_with_auth ~dry_run ~default:"No response" auth cmd (OS.Cmd.to_string ~trim:false)
 
 let curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body curl =
   let parse_url resp = (* FIXME this is nuts. *)
@@ -291,6 +310,7 @@ let publish_distrib ~dry_run ~msg ~archive p =
         Text.Pp.version
         tag);
   curl_upload_archive ~token ~dry_run curl archive user repo id
+  >>= Parse.archive_upload_url
 
 
 (*---------------------------------------------------------------------------
