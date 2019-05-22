@@ -17,6 +17,7 @@ val cmd : Cmd.t
 
 val prepare : dry_run:bool -> ?msg:string ->
   local_repo:Fpath.t -> remote_repo:string ->
+  opam_repo: (string * string) ->
   version:string -> string list -> (string, R.msg) result
 (** [prepare ~local_repo ~version pkgs] adds the packages
    [pkg.version] to a new branch in the local opam repository
