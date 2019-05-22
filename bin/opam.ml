@@ -111,7 +111,11 @@ let rec list_map f = function
 | []   -> Ok []
 | h::t -> f h >>= fun h -> list_map f t >>= fun t -> Ok (h :: t)
 
-let submit ~dry_run local_repo remote_repo pkgs auto_open =
+let pp_opam_repo fmt opam_repo =
+  let user, repo = opam_repo in
+  Format.fprintf fmt "%s/%s" user repo
+
+let submit ~dry_run ~opam_repo local_repo remote_repo pkgs auto_open =
   Config.token ~dry_run () >>= fun token ->
   List.fold_left (fun acc pkg ->
       get_pkg_dir pkg
@@ -133,8 +137,8 @@ let submit ~dry_run local_repo remote_repo pkgs auto_open =
   Pkg.distrib_user_and_repo pkg >>= fun (distrib_user, repo) ->
   let changes = rewrite_github_refs distrib_user repo changes in
   let msg = strf "%s\n\n%s\n" title changes in
-  Logs.app (fun l -> l "Preparing pull request to ocaml/opam-repository");
-  Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~version names
+  Logs.app (fun l -> l "Preparing pull request to %a" pp_opam_repo opam_repo);
+  Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~opam_repo ~version names
   >>= fun branch ->
   (* open a new PR *)
   Pkg.opam_descr pkg >>= fun (syn, _) ->
@@ -161,12 +165,14 @@ let submit ~dry_run local_repo remote_repo pkgs auto_open =
   in
   Logs.app
     (fun l ->
-       l "Opening pull request to merge branch %a of %a into ocaml/opam-repository"
+       l "Opening pull request to merge branch %a of %a into %a"
          Text.Pp.commit
          branch
          Text.Pp.url
-         remote_repo);
-  Github.open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch msg >>= function
+         remote_repo
+         pp_opam_repo
+         opam_repo);
+  Github.open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo msg >>= function
   | `Already_exists -> Logs.app (fun m ->
       m "\nThe existing pull request for %a has been automatically updated."
         Fmt.(styled `Bold string) (distrib_user ^ ":" ^ branch));
@@ -202,7 +208,7 @@ let field pkgs field = match field with
 
 (* Command *)
 
-let opam () dry_run build_dir local_repo remote_repo user keep_v
+let opam () dry_run build_dir local_repo remote_repo opam_repo user keep_v
     opam distrib_uri distrib_file tag
     name pkg_names version pkg_descr
     readme change_log publish_msg action field_name no_auto_open
@@ -229,6 +235,7 @@ let opam () dry_run build_dir local_repo remote_repo user keep_v
             ?readme ?change_log ?publish_msg ()
         ) pkg_names
     in
+    let opam_repo = match opam_repo with None -> ("ocaml", "opam_repository") | Some r -> r in
     pkgs >>= fun pkgs ->
     match action with
     | `Descr -> descr pkgs
@@ -256,7 +263,7 @@ let opam () dry_run build_dir local_repo remote_repo user keep_v
             | None   -> R.error_msg "Unknown remote repository.")
         >>= fun remote_repo ->
         Logs.app (fun m -> m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
-        submit ~dry_run local_repo remote_repo pkgs auto_open
+        submit ~dry_run ~opam_repo local_repo remote_repo pkgs auto_open
     | `Field -> field pkgs field_name
   end
   |> Cli.handle_error
@@ -300,6 +307,15 @@ let remote_repo =
   let env = Arg.env_var "DUNE_RELEASE_REMOTE_REPO" in
   Arg.(value & opt (some string) None
        & info ~env ["r"; "--remote-repo"] ~doc ~docv:"URI")
+
+let opam_repo =
+  let doc =
+    "The Github opam-repository to which packages should be released. Use this to release to a \
+    custom repo. Useful for testing purposes."
+  in
+  let docv = "GITHUB_USER_OR_ORG/REPO_NAME" in
+  let env = Arg.env_var "DUNE_RELEASE_OPAM_REPO" in
+  Arg.(value & opt (some (pair ~sep:'/' string string)) None & info ~env ["opam-repo"] ~doc ~docv)
 
 let pkg_descr =
   let doc = "The opam descr file to use for the opam package. If absent and
@@ -348,7 +364,7 @@ let man =
 let cmd =
   let info = Term.info "opam" ~doc ~sdocs ~envs ~man ~man_xrefs in
   let t = Term.(pure opam $ Cli.setup $ Cli.dry_run $ Cli.build_dir $
-                local_repo $ remote_repo $
+                local_repo $ remote_repo $ opam_repo $
                 user $ Cli.keep_v $
                 Cli.dist_opam $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $
                 Cli.dist_name $ Cli.pkg_names $ Cli.pkg_version $

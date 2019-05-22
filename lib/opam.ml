@@ -45,7 +45,7 @@ let cmd = Cmd.of_list @@ Cmd.to_list @@ tool "opam" `Host_os
 let shortest x =
   List.hd (List.sort (fun x y -> compare (String.length x) (String.length y)) x)
 
-let prepare ~dry_run ?msg ~local_repo ~remote_repo ~version names =
+let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
   let msg = match msg with
   | None -> Ok (Cmd.empty)
   | Some msg ->
@@ -63,7 +63,10 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~version names =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   Vcs.get () >>= fun repo ->
   let git = git_for_repo repo in
-  let upstream = "https://github.com/ocaml/opam-repository.git" in
+  let upstream =
+    let user, repo = opam_repo in
+    Printf.sprintf "https://github.com/%s/%s.git" user repo
+  in
   let remote_branch = "master" in
   let pkg = shortest names in
   let branch = Fmt.strf "release-%s-%s" pkg version in

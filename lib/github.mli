@@ -41,6 +41,7 @@ val publish_in_git_branch :
 val open_pr:
   token:Fpath.t -> dry_run:bool ->
   title:string -> distrib_user:string -> user:string -> branch:string ->
+  opam_repo: (string * string) ->
   string -> ([`Url of string | `Already_exists], R.msg) result
 
 (*---------------------------------------------------------------------------

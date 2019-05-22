@@ -225,7 +225,7 @@ let curl_upload_archive ~token ~dry_run curl archive user repo release_id =
   let cmd = Cmd.(curl %% ctype %% data % uri) in
   run_with_auth ~dry_run ~default:"No response" auth cmd (OS.Cmd.to_string ~trim:false)
 
-let curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body curl =
+let curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body ~opam_repo curl =
   let parse_url resp = (* FIXME this is nuts. *)
     let url = Re.(compile @@ seq [
         bol;
@@ -241,8 +241,7 @@ let curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body curl =
       if Re.execp alread_exists resp then Ok `Already_exists
       else R.error_msgf "Could not find html_url id in response:\n%s." resp
   in
-  let base = "ocaml" in
-  let repo = "opam-repository" in
+  let base, repo = opam_repo in
   let uri = strf "https://api.github.com/repos/%s/%s/pulls" base repo in
   let data =
     strf {|{"title": %S,"base": "master", "body": %S, "head": "%s:%s"}|}
@@ -254,9 +253,9 @@ let curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body curl =
   run_with_auth ~dry_run ~default auth cmd (OS.Cmd.to_string ~trim:false)
   >>= parse_url
 
-let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch body =
+let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo body =
   OS.Cmd.must_exist Cmd.(v "curl" % "-s" % "-S" % "-K" % "-") >>= fun curl ->
-  curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body curl
+  curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body ~opam_repo curl
 
 let dev_repo p =
   Pkg.dev_repo p >>= function
