@@ -1,7 +1,7 @@
 let ask f =
   Logs.app (fun l -> f (fun ?header ?tags fmt -> l ?header ?tags (fmt ^^ " [Y/n]")))
 
-let confirm ~question =
+let confirm ~question ~yes =
   let rec loop () =
     ask question;
     match String.lowercase_ascii (read_line ()) with
@@ -13,10 +13,10 @@ let confirm ~question =
              l "Please answer with \"y\" for yes, \"n\" for no or just hit enter for the default");
         loop ()
   in
-  loop ()
+  if not yes then loop () else true
 
-let confirm_or_abort ~question =
-  if confirm ~question then
+let confirm_or_abort ~question ~yes =
+  if confirm ~question ~yes then
     Ok ()
   else
     Error (`Msg "Aborting on user demand")

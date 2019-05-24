@@ -7,22 +7,22 @@
 open Bos_setup
 open Dune_release
 
-let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg =
+let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
   let msg = match msg with None -> strf "Distribution %s" tag | Some m -> m in
   Vcs.get ()
   >>= fun repo -> match delete with
   | true ->
-      Prompt.confirm_or_abort
+      Prompt.confirm_or_abort ~yes
         ~question:(fun l -> l "Delete tag %a?" Text.Pp.version tag) >>= fun () ->
       Vcs.delete_tag ~dry_run repo tag
   | false ->
-      Prompt.confirm_or_abort
+      Prompt.confirm_or_abort ~yes
         ~question:(fun l -> l "Create git tag %a for %a?" Text.Pp.version tag Text.Pp.commit commit_ish)
       >>= fun () ->
       Vcs.tag repo ~dry_run ~force ~sign ~msg ~commit_ish tag >>| fun () ->
       Logs.app (fun m -> m "Tagged %a with version %a" Text.Pp.commit commit_ish Text.Pp.version tag)
 
-let tag () dry_run name change_log tag commit_ish force sign delete msg =
+let tag () dry_run name change_log tag commit_ish force sign delete msg yes =
   begin
     let pkg = Pkg.v ~dry_run ?change_log ?name () in
     let tag = match tag with
@@ -37,7 +37,7 @@ let tag () dry_run name change_log tag commit_ish force sign delete msg =
         t
     in
     tag
-    >>= fun tag -> vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg
+    >>= fun tag -> vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes
     >>= fun () -> Ok 0
   end
   |> Cli.handle_error
@@ -74,6 +74,10 @@ let delete =
   let doc = "Delete the specified tag rather than create it." in
   Arg.(value & flag & info ["d"; "delete"] ~doc)
 
+let yes =
+  let doc = "Do not prompt for confirmation and keep going instead" in
+  Arg.(value & flag & info ["y"; "yes"] ~doc)
+
 let doc = "Tag the package's source repository with a version"
 let sdocs = Manpage.s_common_options
 let exits = Cli.exits
@@ -88,7 +92,7 @@ let man =
 let cmd =
   Term.(pure tag $ Cli.setup $ Cli.dry_run
         $ Cli.dist_name $ Cli.change_log $
-        version $ commit $ force $ sign $ delete $ msg),
+        version $ commit $ force $ sign $ delete $ msg $ yes),
   Term.info "tag" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 (*---------------------------------------------------------------------------
