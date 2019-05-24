@@ -11,8 +11,14 @@ let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg =
   let msg = match msg with None -> strf "Distribution %s" tag | Some m -> m in
   Vcs.get ()
   >>= fun repo -> match delete with
-  | true -> Vcs.delete_tag ~dry_run repo tag
+  | true ->
+      Prompt.confirm_or_abort
+        ~question:(fun l -> l "Delete tag %a?" Text.Pp.version tag) >>= fun () ->
+      Vcs.delete_tag ~dry_run repo tag
   | false ->
+      Prompt.confirm_or_abort
+        ~question:(fun l -> l "Create git tag %a for %a?" Text.Pp.version tag Text.Pp.commit commit_ish)
+      >>= fun () ->
       Vcs.tag repo ~dry_run ~force ~sign ~msg ~commit_ish tag >>| fun () ->
       Logs.app (fun m -> m "Tagged %a with version %a" Text.Pp.commit commit_ish Text.Pp.version tag)
 
