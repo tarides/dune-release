@@ -31,7 +31,7 @@ let tag () dry_run name change_log tag commit_ish force sign delete msg yes =
         Ok t
     | None   ->
         Pkg.change_log pkg >>= fun changelog ->
-        Logs.app (fun l -> l "Extracting tag from first entry in %a" Text.Pp.path (Fpath.normalize changelog));
+        Logs.app (fun l -> l "Extracting tag from first entry in %a" Text.Pp.path changelog);
         Pkg.extract_tag pkg >>| fun t ->
         Logs.app (fun l -> l "Using tag %S" t);
         t
