@@ -24,7 +24,7 @@ let publish_doc ~dry_run pkg_names pkg =
   >>= fun force -> Pkg.infer_pkg_names dir pkg_names
   >>= fun pkg_names ->
   Logs.app (fun l -> l "Selected packages: %a" Fmt.(list (styled `Bold string)) pkg_names);
-  Logs.app (fun l -> l "Generating documentation from %a" (Fmt.styled `Bold Fpath.pp) archive);
+  Logs.app (fun l -> l "Generating documentation from %a" Text.Pp.path archive);
   gen_doc ~dry_run ~force dir pkg_names
   >>= fun docdir -> Delegate.publish_doc ~dry_run pkg ~msg ~docdir
 
