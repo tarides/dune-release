@@ -109,6 +109,10 @@ let dry_run =
   in
   Arg.(value & flag & info ["dry-run"] ~doc)
 
+let yes =
+  let doc = "Do not prompt for confirmation and keep going instead" in
+  Arg.(value & flag & info ["y"; "yes"] ~doc)
+
 (* Terms *)
 
 let setup style_renderer log_level cwd =
