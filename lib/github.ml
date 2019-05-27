@@ -73,8 +73,8 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
     | false -> Ok false
     | true ->
         Sos.run ~dry_run Cmd.(git % "add" % p dir)
-        >>= fun () -> Sos.run ~dry_run Cmd.(git % "commit" % "-m" % msg)
-        >>= fun () -> Sos.run ~dry_run Cmd.(git % "push")
+        >>= fun () -> Sos.run_quiet ~dry_run Cmd.(git % "commit" % "-m" % msg)
+        >>= fun () -> Sos.run_quiet ~dry_run Cmd.(git % "push")
         >>= fun () -> Ok true
   in
   if not (Fpath.is_rooted ~root:Fpath.(v ".") dir)
