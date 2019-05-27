@@ -1,3 +1,15 @@
+## unreleased
+
+- Add confirmation prompts in some commands. (#144, @NathanReb)
+- Use github returned archive URL instead of guessing it. Fixes a bug
+  when releasing a version with URL incompatible characters to github.
+  (#143, @NathanReb)
+- Add logs to better describe commands behaviour. (#141, #137, #135, @NathanReb)
+- Fix a bug when publishing documentation to a repo for the first time
+  (#136, @NathanReb)
+- Allow to submit package to a different opam-repository hosted on github.
+  (#140, @NathanReb)
+
 ## 1.2.0 (2019-04-08)
 
 - Remove assert false in favor of error message. (#125, @ejgallego)
