@@ -9,6 +9,7 @@
   (#136, @NathanReb)
 - Allow to submit package to a different opam-repository hosted on github.
   (#140, @NathanReb)
+- Use `dune subst` for watermarking. (#147, @NathanReb)
 
 ## 1.2.0 (2019-04-08)
 
