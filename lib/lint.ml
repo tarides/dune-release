@@ -110,16 +110,24 @@ let lint_opams ~dry_run pkg =
         lint opam_version
     | _ -> lint opam_version)
 
-let ts =
+let t_to_fun =
   [`Std_files, lint_std_files;
    `Opam, lint_opams ]
 
-let all = List.map fst ts
+let all = List.map fst t_to_fun
+
+let apply_lint ~dry_run t pkg =
+  let f = List.assoc t t_to_fun in
+  f ~dry_run pkg
 
 let lint_pkg ~dry_run ~dir pkg todo =
   let lint pkg =
-    let do_lint acc (t, f) = acc + if List.mem t todo then f ~dry_run pkg else 0 in
-    match List.fold_left do_lint 0 ts with
+    let do_lint acc t =
+      let errs = apply_lint t ~dry_run pkg in
+      acc + errs
+    in
+    let total_errs = List.fold_left do_lint 0 todo in
+    match total_errs with
     | 0 ->
         Logs.app
           (fun m -> m "%a lint %a %a" Text.Pp.status `Ok Text.Pp.path dir (Fmt.styled_unit `Green "success") ());
