@@ -60,12 +60,12 @@ let lint_opam_github_fields pkg =
   + lint_res (Pkg.distrib_user_and_repo pkg)
 
 let opam_lint_cmd ~opam_file_version ~opam_tool_version =
-  let lint_old_format =
+  let lint_older_format =
     match opam_file_version, opam_tool_version with
     | Some "1.2", `v2 -> true
     | _ -> false
   in
-  Cmd.(Opam.cmd % "lint" %% (on lint_old_format (v "--warn=-21-32-48")))
+  Cmd.(Opam.cmd % "lint" %% (on lint_older_format (v "--warn=-21-32-48")))
 
 (* We first run opam lint with -s and if there's something beyond 5
    we rerun it without it for the error messages. It's ugly since 5
@@ -82,7 +82,16 @@ let handle_opam_lint_exit ~dry_run ~verbose_lint_cmd ~opam_file status output =
       | Ok (out, _)
       | Error (`Msg out) -> `Fail out
 
-let lint_opam_file ~dry_run ~base_lint_cmd opam_file =
+let check_has_description ~opam_file pkg =
+  Pkg.opam_field_hd pkg "description" >>= function
+  | None -> R.error_msgf "%a does not have a 'description' field." Fpath.pp opam_file
+  | Some _ -> Ok ()
+
+let lint_descr ~opam_file pkg =
+  lint_res (check_has_description ~opam_file pkg)
+
+let opam_lint ~dry_run ~opam_file_version ~opam_tool_version opam_file =
+  let base_lint_cmd = opam_lint_cmd ~opam_file_version ~opam_tool_version in
   let short_lint_cmd = Cmd.(base_lint_cmd % "-s") in
   let verbose_lint_cmd = base_lint_cmd in
   lint_file_with_cmd
@@ -93,42 +102,29 @@ let lint_opam_file ~dry_run ~base_lint_cmd opam_file =
     opam_file
     0
 
-let check_has_description ~opam_file pkg =
-  Pkg.opam_field_hd pkg "description" >>= function
-  | None -> R.error_msgf "%a does not have a 'description' field." Fpath.pp opam_file
-  | Some _ -> Ok ()
-
-let lint_descr ~opam_file pkg =
-  lint_res (check_has_description ~opam_file pkg)
+let extra_opam_lint ~opam_file_version ~opam_file pkg =
+  let is_2_0_format = match opam_file_version with Some "2.0" -> true | _ -> false in
+  let descr_err = if is_2_0_format then lint_descr ~opam_file pkg else 0 in
+  let github_field_errs = lint_opam_github_fields pkg in
+  descr_err + github_field_errs
 
 let lint_opam ~dry_run pkg =
   let opam_tool_version = Lazy.force Opam.version in
-  let lint opam_file_version =
-    let base_lint_cmd = opam_lint_cmd ~opam_file_version ~opam_tool_version in
-    Pkg.opam pkg >>= fun opam ->
-    let errs = lint_opam_file ~dry_run ~base_lint_cmd opam in
-    if dry_run then
+  Pkg.opam_field_hd pkg "opam-version" >>= fun opam_file_version ->
+  match opam_file_version, opam_tool_version with
+  | Some "2.0", `v1_2_2 ->
+      Logs.app
+        (fun l ->
+           l "Skipping opam lint as `opam-version` field is \"2.0\" while `opam --version` is 1.2.2");
       Ok 0
-    else
-      let github_field_errs = lint_opam_github_fields pkg in
-      Ok (github_field_errs + errs)
-  in
-  Logs.on_error_msg ~use:(fun () -> 1) (
-    (* remove opam.1.2-related warnings *)
-    Pkg.opam_field_hd pkg "opam-version" >>= fun opam_version ->
-    match opam_version, opam_tool_version with
-    | Some "2.0", `v1_2_2 ->
-        Logs.app (fun m ->
-            m "Skipping opam lint as `opam-version` field is \"2.0\" \
-               while `opam --version` is 1.2.2");
-        Ok 0
-    | Some "2.0", _ ->
-        (* check that the descr and synopsis fields are not empty *)
-        Pkg.opam pkg >>= fun opam_file ->
-        let descr_err = lint_descr ~opam_file pkg in
-        lint opam_version >>| fun opam_lint_errs ->
-        descr_err + opam_lint_errs
-    | _ -> lint opam_version)
+  | _ ->
+      Pkg.opam pkg >>= fun opam_file ->
+      let opam_lint_errors = opam_lint ~dry_run ~opam_file_version ~opam_tool_version opam_file in
+      let extra_errors = extra_opam_lint ~opam_file_version ~opam_file pkg in
+      Ok (opam_lint_errors + extra_errors)
+
+let lint_opam ~dry_run pkg =
+  Logs.on_error_msg ~use:(fun () -> 1) (lint_opam ~dry_run pkg)
 
 let t_to_fun =
   [`Std_files, lint_std_files;
