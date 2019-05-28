@@ -29,7 +29,7 @@ let lint_std_files ~dry_run pkg =
   end
   |> Logs.on_error_msg ~use:(fun () -> 1)
 
-let lint_file_with_cmd ~dry_run file_kind ~cmd file errs handle_exit =
+let lint_file_with_cmd ~dry_run ~file_kind ~cmd ~handle_exit file errs =
   let run_linter cmd file ~exists =
     if not (exists || dry_run) then
       Ok (`Fail (strf "%a: No such file" Fpath.pp file))
@@ -53,51 +53,63 @@ let lint_file_with_cmd ~dry_run file_kind ~cmd file errs handle_exit =
   end
   |> Logs.on_error_msg ~use:(fun () -> errs + 1)
 
+let opam_lint_cmd ~opam_file_version ~opam_tool_version =
+  let lint_old_format =
+    match opam_file_version, opam_tool_version with
+    | Some "1.2", `v2 -> true
+    | _ -> false
+  in
+  Cmd.(Opam.cmd % "lint" %% (on lint_old_format (v "--warn=-21-32-48")))
+
+(* We first run opam lint with -s and if there's something beyond 5
+   we rerun it without it for the error messages. It's ugly since 5
+   will still but opam lint's cli is broken. *)
+let handle_opam_lint_exit ~dry_run ~verbose_lint_cmd ~opam_file status output =
+  match status, output with
+  | `Exited 0, ("" | "5") -> `Ok
+  | _ ->
+      let default = Sos.out "" in
+      let err = OS.Cmd.err_run_out in
+      let cmd = Cmd.(verbose_lint_cmd % p opam_file) in
+      let verbose_lint_output = Sos.run_out ~dry_run ~err ~default cmd OS.Cmd.out_string in
+      match verbose_lint_output with
+      | Ok (out, _)
+      | Error (`Msg out) -> `Fail out
+
+let lint_opam_file ~dry_run ~base_lint_cmd opam_file =
+  let short_lint_cmd = Cmd.(base_lint_cmd % "-s") in
+  let verbose_lint_cmd = base_lint_cmd in
+  lint_file_with_cmd
+    ~dry_run
+    ~file_kind:"opam file"
+    ~cmd:short_lint_cmd
+    ~handle_exit:(handle_opam_lint_exit ~dry_run ~verbose_lint_cmd ~opam_file)
+    opam_file
+    0
+
 let lint_opams ~dry_run pkg =
-  let tool_version = Lazy.force Opam.version in
-  let lint opam_version =
-    let args = match opam_version, Lazy.force Opam.version with
-    | Some ["1.2"], `v2 -> Cmd.v "--warn=-21-32-48"
-    | _ -> Cmd.empty
-    in
+  let opam_tool_version = Lazy.force Opam.version in
+  let lint opam_file_version =
+    let base_lint_cmd = opam_lint_cmd ~opam_file_version ~opam_tool_version in
     Pkg.opam pkg >>= fun opam ->
-    (* We first run opam lint with -s and if there's something beyond 5
-       we rerun it without it for the error messages. It's ugly since 5
-       will still but opam lint's cli is broken. *)
-    let cmd = Cmd.(Opam.cmd % "lint" %% args) in
-    let handle_exit file status out = match status, out with
-    | `Exited 0,
-      ("" | "5" (* dirname version vs opam file version *)) -> `Ok
-    | _ ->
-        let err = OS.Cmd.err_run_out in
-        let cmd = Cmd.(cmd % p file)  in
-        let default = Sos.out "" in
-        match Sos.run_out ~dry_run ~err cmd ~default OS.Cmd.out_string with
-        | Ok (out, _     ) -> `Fail out
-        | Error (`Msg out) -> `Fail out
-    in
-    let cmd = Cmd.(cmd % "-s") in
-    let d =
-      lint_file_with_cmd ~dry_run "opam file" ~cmd opam 0 (handle_exit opam)
-    in
-    (* lint fields *)
+    let errs = lint_opam_file ~dry_run ~base_lint_cmd opam in
     if dry_run then Ok 0
     else (
       Pkg.doc_user_repo_and_path pkg >>= fun _ ->
       Pkg.distrib_user_and_repo pkg >>| fun _ ->
-      d
+      errs
     )
   in
   Logs.on_error_msg ~use:(fun () -> 1) (
     (* remove opam.1.2-related warnings *)
-    Pkg.opam_field pkg "opam-version" >>= fun opam_version ->
-    match opam_version, tool_version with
-    | Some ["2.0"], `v1_2_2 ->
+    Pkg.opam_field_hd pkg "opam-version" >>= fun opam_version ->
+    match opam_version, opam_tool_version with
+    | Some "2.0", `v1_2_2 ->
         Logs.app (fun m ->
             m "Skipping opam lint as `opam-version` field is \"2.0\" \
                while `opam --version` is 1.2.2");
         Ok 0
-    | Some ["2.0"], _ ->
+    | Some "2.0", _ ->
         (* check that the descr and synopsis fields are not empty *)
         Pkg.opam_field pkg "description" >>= fun descr ->
         Pkg.opam_field pkg "synopsis" >>= fun synopsis ->
