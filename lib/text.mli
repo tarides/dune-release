@@ -95,7 +95,7 @@ module Pp : sig
   (** [dirty] formats a "dirty" string. *)
 
   val path : Fpath.t Fmt.t
-  (** [path] formats a bold path *)
+  (** [path] formats a bold normalized path *)
 
   val url : string Fmt.t
   (** [url] formats an underlined URL *)

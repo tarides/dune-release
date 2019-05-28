@@ -13,7 +13,7 @@ let confirm ~question ~yes =
              l "Please answer with \"y\" for yes, \"n\" for no or just hit enter for the default");
         loop ()
   in
-  if not yes then loop () else true
+  if yes then true else loop ()
 
 let confirm_or_abort ~question ~yes =
   if confirm ~question ~yes then

@@ -26,17 +26,21 @@ end
     release archive download URL *)
 val publish_distrib :
   dry_run: bool -> msg:string -> archive:Fpath.t ->
+  yes: bool ->
   Pkg.t -> (string, R.msg) Result.result
 
 val publish_doc :
   dry_run: bool -> msg:string -> docdir:Fpath.t ->
+  yes: bool ->
   Pkg.t -> (unit, R.msg) Result.result
 
 val publish_in_git_branch :
   dry_run: bool ->
   remote:string -> branch:string ->
   name:string -> version:string -> docdir:Fpath.t ->
-  dir:Fpath.t -> (unit, R.msg) result
+  dir:Fpath.t ->
+  yes: bool ->
+  (unit, R.msg) result
 
 val open_pr:
   token:Fpath.t -> dry_run:bool ->

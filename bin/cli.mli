@@ -57,6 +57,9 @@ val publish_msg : string option Term.t
 val dry_run: bool Term.t
 (** A [--dry-run] option to do not perform any action. *)
 
+val yes: bool Term.t
+(** A [--yes] option to skip confirmation prompts. *)
+
 (** {1 Terms} *)
 
 val setup : unit Term.t

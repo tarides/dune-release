@@ -15,7 +15,7 @@ let gen_doc ~dry_run ~force dir pkg_names =
   R.join @@ Sos.with_dir ~dry_run dir do_doc () >>= fun () ->
   Ok Fpath.(dir // doc_dir)
 
-let publish_doc ~dry_run pkg_names pkg =
+let publish_doc ~dry_run ~yes pkg_names pkg =
   Logs.app (fun l -> l "Publishing documentation");
   Pkg.distrib_file ~dry_run pkg
   >>= fun archive -> Pkg.publish_msg pkg
@@ -24,15 +24,15 @@ let publish_doc ~dry_run pkg_names pkg =
   >>= fun force -> Pkg.infer_pkg_names dir pkg_names
   >>= fun pkg_names ->
   Logs.app (fun l -> l "Selected packages: %a" Fmt.(list (styled `Bold string)) pkg_names);
-  Logs.app (fun l -> l "Generating documentation from %a" (Fmt.styled `Bold Fpath.pp) archive);
+  Logs.app (fun l -> l "Generating documentation from %a" Text.Pp.path archive);
   gen_doc ~dry_run ~force dir pkg_names
-  >>= fun docdir -> Delegate.publish_doc ~dry_run pkg ~msg ~docdir
+  >>= fun docdir -> Delegate.publish_doc ~dry_run ~yes pkg ~msg ~docdir
 
-let publish_distrib ~dry_run pkg =
+let publish_distrib ~dry_run ~yes pkg =
   Logs.app (fun l -> l "Publishing distribution");
   Pkg.distrib_file ~dry_run pkg
   >>= fun archive -> Pkg.publish_msg pkg
-  >>= fun msg     -> Delegate.publish_distrib ~dry_run pkg ~msg ~archive
+  >>= fun msg     -> Delegate.publish_distrib ~dry_run ~yes pkg ~msg ~archive
 
 let publish_alt ~dry_run pkg kind =
   Logs.app (fun l -> l "Publishing %s" kind);
@@ -42,7 +42,7 @@ let publish_alt ~dry_run pkg kind =
 
 let publish ()
     build_dir name pkg_names version tag keep_v opam delegate change_log
-    distrib_uri distrib_file publish_msg dry_run publish_artefacts
+    distrib_uri distrib_file publish_msg dry_run publish_artefacts yes
   =
   begin
     let publish_artefacts = match publish_artefacts with
@@ -57,8 +57,8 @@ let publish ()
     in
     let publish_artefact acc artefact =
       acc >>= fun () -> match artefact with
-      | `Doc      -> publish_doc ~dry_run pkg_names pkg
-      | `Distrib  -> publish_distrib ~dry_run pkg
+      | `Doc      -> publish_doc ~dry_run ~yes pkg_names pkg
+      | `Distrib  -> publish_distrib ~dry_run ~yes pkg
       | `Alt kind -> publish_alt ~dry_run pkg kind
     in
     Pkg.publish_artefacts pkg
@@ -141,7 +141,7 @@ let cmd =
         Cli.dist_name $ Cli.pkg_names
         $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v
         $ Cli.dist_opam $ delegate $ Cli.change_log $ Cli.dist_uri $ Cli.dist_file $
-        Cli.publish_msg $ Cli.dry_run $ artefacts),
+        Cli.publish_msg $ Cli.dry_run $ artefacts $ Cli.yes),
   Term.info "publish" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
 
 (*---------------------------------------------------------------------------

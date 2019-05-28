@@ -1,6 +1,6 @@
 ## unreleased
 
-- Add confirmation prompts in some commands. (#144, @NathanReb)
+- Add confirmation prompts in some commands. (#144, #146, @NathanReb)
 - Use github returned archive URL instead of guessing it. Fixes a bug
   when releasing a version with URL incompatible characters to github.
   (#143, @NathanReb)

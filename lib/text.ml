@@ -160,7 +160,7 @@ module Pp = struct
   let version = Fmt.(styled `Cyan string)
   let commit = Fmt.(styled `Yellow string)
   let dirty = Fmt.(styled_unit `Red "dirty")
-  let path = Fmt.(styled `Bold Fpath.pp)
+  let path fmt path = Fmt.(styled `Bold Fpath.pp) fmt (Fpath.normalize path)
   let url = Fmt.(styled `Underline string)
   let status ppf = function
   | `Ok -> Fmt.(brackets @@ styled_unit `Green " OK ") ppf ()

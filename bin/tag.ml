@@ -12,8 +12,8 @@ let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
   Vcs.get ()
   >>= fun repo -> match delete with
   | true ->
-      Prompt.confirm_or_abort ~yes
-        ~question:(fun l -> l "Delete tag %a?" Text.Pp.version tag) >>= fun () ->
+      Prompt.confirm_or_abort ~yes ~question:(fun l -> l "Delete tag %a?" Text.Pp.version tag)
+      >>= fun () ->
       Vcs.delete_tag ~dry_run repo tag
   | false ->
       Prompt.confirm_or_abort ~yes
@@ -31,7 +31,7 @@ let tag () dry_run name change_log tag commit_ish force sign delete msg yes =
         Ok t
     | None   ->
         Pkg.change_log pkg >>= fun changelog ->
-        Logs.app (fun l -> l "Extracting tag from first entry in %a" Text.Pp.path (Fpath.normalize changelog));
+        Logs.app (fun l -> l "Extracting tag from first entry in %a" Text.Pp.path changelog);
         Pkg.extract_tag pkg >>| fun t ->
         Logs.app (fun l -> l "Using tag %S" t);
         t
@@ -74,10 +74,6 @@ let delete =
   let doc = "Delete the specified tag rather than create it." in
   Arg.(value & flag & info ["d"; "delete"] ~doc)
 
-let yes =
-  let doc = "Do not prompt for confirmation and keep going instead" in
-  Arg.(value & flag & info ["y"; "yes"] ~doc)
-
 let doc = "Tag the package's source repository with a version"
 let sdocs = Manpage.s_common_options
 let exits = Cli.exits
@@ -92,7 +88,7 @@ let man =
 let cmd =
   Term.(pure tag $ Cli.setup $ Cli.dry_run
         $ Cli.dist_name $ Cli.change_log $
-        version $ commit $ force $ sign $ delete $ msg $ yes),
+        version $ commit $ force $ sign $ delete $ msg $ Cli.yes),
   Term.info "tag" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 (*---------------------------------------------------------------------------

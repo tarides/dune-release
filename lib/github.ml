@@ -43,7 +43,7 @@ end
 
 (* Publish documentation *)
 
-let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
+let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir ~yes =
   let pp_distrib ppf (name, version) =
     Fmt.pf ppf "%a %a" Text.Pp.name name Text.Pp.version version
   in
@@ -87,7 +87,9 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
   >>= fun () -> Vcs.get ()
   >>= fun repo -> Vcs.clone ~dry_run ~force:true ~dir:clonedir repo
   >>= fun () -> Sos.relativize ~src:clonedir ~dst:docdir
-  >>= fun rel_docdir -> Sos.with_dir ~dry_run clonedir (replace_dir_and_push rel_docdir) dir
+  >>= fun rel_docdir ->
+  Logs.app (fun l -> l "Updating local %a branch" Text.Pp.commit "gh-pages");
+  Sos.with_dir ~dry_run clonedir (replace_dir_and_push rel_docdir) dir
   >>= fun res -> res
   >>= function
   | false (* no changes *) ->
@@ -96,14 +98,17 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir =
   | true ->
       let push_spec = strf "%s:%s" branch branch in
       Ok (git_for_repo repo) >>= fun git ->
-      Logs.app (fun l -> l "Pushing new documentation to %s#gh-pages" remote);
+      Prompt.confirm_or_abort ~yes
+        ~question:(fun l -> l "Push new documentation to %a?" Text.Pp.url (remote ^ "#gh-pages"))
+      >>= fun () ->
+      Logs.app (fun l -> l "Pushing new documentation to %a" Text.Pp.url (remote ^ "#gh-pages"));
       Sos.run ~dry_run Cmd.(git % "push" % remote % push_spec)
       >>= fun () -> Sos.delete_dir ~dry_run clonedir
       >>= fun () ->
       log_publish_result "Published documentation for" (name, version) dir;
       Ok ()
 
-let publish_doc ~dry_run ~msg:_ ~docdir p =
+let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
   (if dry_run then Ok D.(user, repo, dir) else Pkg.doc_user_repo_and_path p)
   >>= fun (user, repo, dir) -> Pkg.name p
   >>= fun name -> Pkg.version p
@@ -145,7 +150,7 @@ let publish_doc ~dry_run ~msg:_ ~docdir p =
   Sos.run_quiet ~dry_run ~force Cmd.(git % "branch" % "-f" % "gh-pages" % id)
   >>= fun () ->
   publish_in_git_branch
-    ~dry_run ~remote ~branch:"gh-pages" ~name ~version ~docdir ~dir
+    ~dry_run ~remote ~branch:"gh-pages" ~name ~version ~docdir ~dir ~yes
 
 (* Publish releases *)
 
@@ -278,7 +283,7 @@ let assert_tag_exists ~dry_run tag =
   if Vcs.tag_exists ~dry_run repo tag then Ok ()
   else R.error_msgf "%s is not a valid tag" tag
 
-let publish_distrib ~dry_run ~msg ~archive p =
+let publish_distrib ~dry_run ~msg ~archive ~yes p =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   let curl = Cmd.(v "curl" % "-L" % "-s" % "-S" % "-K" % "-") in
   (match Pkg.distrib_user_and_repo p with
@@ -293,17 +298,26 @@ let publish_distrib ~dry_run ~msg ~archive p =
   >>= fun tag -> check_tag ~dry_run vcs tag
   >>= fun () -> dev_repo p
   >>= fun upstr ->
+  Prompt.confirm_or_abort ~yes
+    ~question:(fun l -> l "Push tag %a to %a?" Text.Pp.version tag Text.Pp.url upstr)
+  >>= fun () ->
   Logs.app (fun l -> l "Pushing tag %a to %a" Text.Pp.version tag Text.Pp.url upstr);
   Sos.run_quiet ~dry_run Cmd.(git % "push" % "--force" % upstr % tag)
   >>= fun () -> Config.token ~dry_run ()
   >>= fun token ->
+  Prompt.confirm_or_abort ~yes
+    ~question:(fun l -> l "Create release %a on %a?" Text.Pp.version tag Text.Pp.url upstr)
+  >>= fun () ->
   Logs.app
-    (fun l -> l "Creating release %a on %a through github's API" Text.Pp.version tag Text.Pp.url upstr);
+    (fun l -> l "Creating release %a on %a via github's API" Text.Pp.version tag Text.Pp.url upstr);
   curl_create_release ~token ~dry_run curl tag msg user repo
   >>= fun id ->
   Logs.app (fun l -> l "Succesfully created release with id %d" id);
+  Prompt.confirm_or_abort ~yes
+    ~question:(fun l -> l "Upload %a as release asset?" Text.Pp.path archive)
+  >>= fun () ->
   Logs.app
-    (fun l -> l "Uploading %a as a release asset for %a through github's API"
+    (fun l -> l "Uploading %a as a release asset for %a via github's API"
         Text.Pp.path
         archive
         Text.Pp.version

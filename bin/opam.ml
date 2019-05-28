@@ -115,32 +115,9 @@ let pp_opam_repo fmt opam_repo =
   let user, repo = opam_repo in
   Format.fprintf fmt "%s/%s" user repo
 
-let submit ~dry_run ~opam_repo local_repo remote_repo pkgs auto_open =
-  Config.token ~dry_run () >>= fun token ->
-  List.fold_left (fun acc pkg ->
-      get_pkg_dir pkg
-      >>= fun pkg_dir -> Sos.dir_exists ~dry_run pkg_dir
-      >>= function
-      | true  -> acc
-      | false ->
-          Logs.err (fun m ->
-              m "Package@ %a@ does@ not@ exist. Did@ you@ forget@ \
-                 to@ invoke 'dune-release opam pkg' ?" Fpath.pp pkg_dir);
-          Ok 1
-    ) (Ok 0) pkgs
-  >>= fun _ ->
-  let pkg = List.hd pkgs in
-  Pkg.version pkg >>= fun version ->
-  list_map Pkg.name pkgs >>= fun names ->
-  let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
-  Pkg.publish_msg pkg >>= fun changes ->
-  Pkg.distrib_user_and_repo pkg >>= fun (distrib_user, repo) ->
-  let changes = rewrite_github_refs distrib_user repo changes in
-  let msg = strf "%s\n\n%s\n" title changes in
-  Logs.app (fun l -> l "Preparing pull request to %a" pp_opam_repo opam_repo);
-  Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~opam_repo ~version names
-  >>= fun branch ->
-  (* open a new PR *)
+let open_pr
+    ~dry_run ~changes ~remote_repo ~distrib_user ~branch ~token ~title ~opam_repo ~auto_open ~yes
+    pkg =
   Pkg.opam_descr pkg >>= fun (syn, _) ->
   Pkg.opam_homepage pkg >>= fun homepage ->
   Pkg.opam_doc pkg >>= fun doc ->
@@ -163,6 +140,8 @@ let submit ~dry_run ~opam_repo local_repo remote_repo pkgs auto_open =
     | Some user -> user
     | None -> distrib_user
   in
+  Prompt.confirm_or_abort ~yes ~question:(fun l -> l "Open PR to %a?" pp_opam_repo opam_repo)
+  >>= fun () ->
   Logs.app
     (fun l ->
        l "Opening pull request to merge branch %a of %a into %a"
@@ -191,6 +170,36 @@ let submit ~dry_run ~opam_repo local_repo remote_repo pkgs auto_open =
       | Ok ()   -> Ok 0
       | Error _ -> msg ()
 
+let submit ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open =
+  Config.token ~dry_run () >>= fun token ->
+  List.fold_left (fun acc pkg ->
+      get_pkg_dir pkg
+      >>= fun pkg_dir -> Sos.dir_exists ~dry_run pkg_dir
+      >>= function
+      | true  -> acc
+      | false ->
+          Logs.err
+            (fun m ->
+               m "Package %a does not exist. Did you forget to invoke 'dune-release opam pkg' ?"
+                 Fpath.pp
+                 pkg_dir);
+          Ok 1
+    ) (Ok 0) pkgs
+  >>= fun _ ->
+  let pkg = List.hd pkgs in
+  Pkg.version pkg >>= fun version ->
+  list_map Pkg.name pkgs >>= fun names ->
+  let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
+  Pkg.publish_msg pkg >>= fun changes ->
+  Pkg.distrib_user_and_repo pkg >>= fun (distrib_user, repo) ->
+  let changes = rewrite_github_refs distrib_user repo changes in
+  let msg = strf "%s\n\n%s\n" title changes in
+  Logs.app (fun l -> l "Preparing pull request to %a" pp_opam_repo opam_repo);
+  Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~opam_repo ~version names
+  >>= fun branch ->
+  open_pr ~dry_run ~changes ~remote_repo ~distrib_user ~branch ~token ~title ~opam_repo ~auto_open
+    ~yes pkg
+
 let field pkgs field = match field with
 | None -> Logs.err (fun m -> m "Missing FIELD positional argument"); Ok 1
 | Some field ->
@@ -211,7 +220,7 @@ let field pkgs field = match field with
 let opam () dry_run build_dir local_repo remote_repo opam_repo user keep_v
     opam distrib_uri distrib_file tag
     name pkg_names version pkg_descr
-    readme change_log publish_msg action field_name no_auto_open
+    readme change_log publish_msg action field_name no_auto_open yes
   =
   begin
     Config.keep_v keep_v >>= fun keep_v ->
@@ -244,7 +253,6 @@ let opam () dry_run build_dir local_repo remote_repo opam_repo user keep_v
             match acc, pkg ~dry_run p with
             | Ok i, Ok () -> Ok i
             | (Error _ as e), _ | _, (Error _ as e) -> e
-
           ) (Ok 0) pkgs
     | `Submit ->
         Config.v ~user ~local_repo ~remote_repo pkgs >>= fun config ->
@@ -263,7 +271,7 @@ let opam () dry_run build_dir local_repo remote_repo opam_repo user keep_v
             | None   -> R.error_msg "Unknown remote repository.")
         >>= fun remote_repo ->
         Logs.app (fun m -> m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
-        submit ~dry_run ~opam_repo local_repo remote_repo pkgs auto_open
+        submit ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open
     | `Field -> field pkgs field_name
   end
   |> Cli.handle_error
@@ -369,7 +377,7 @@ let cmd =
                 Cli.dist_opam $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $
                 Cli.dist_name $ Cli.pkg_names $ Cli.pkg_version $
                 pkg_descr $ Cli.readme $ Cli.change_log $ Cli.publish_msg $
-                action $ field $ no_auto_open)
+                action $ field $ no_auto_open $ Cli.yes)
   in
   (t, info)
 

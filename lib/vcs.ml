@@ -205,7 +205,7 @@ let git_tag ~dry_run r ~force ~sign ~msg ~commit_ish tag =
     ~default:D.unit OS.Cmd.out_stdout
 
 let git_delete_tag ~dry_run r tag =
-  run_git ~dry_run r Cmd.(v "tag" % "-d" % tag) ~default:D.unit OS.Cmd.out_stdout
+  run_git ~dry_run r Cmd.(v "tag" % "-d" % tag) ~default:D.unit OS.Cmd.out_null
 
 (* Hg support *)
 
