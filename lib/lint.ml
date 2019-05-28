@@ -12,11 +12,14 @@ let lint_files pkg =
   @ changelogs
   @ [opam]
 
+let report_status status f =
+  Logs.app (fun l -> f (fun ?header ?tags fmt -> l ?header ?tags ("%a " ^^ fmt) Text.Pp.status status))
+
 let lint_std_files ~dry_run pkg =
   let lint_exists file errs =
     let report exists =
       let status, errs = if exists then `Ok, errs else `Fail, errs + 1 in
-      Logs.app (fun m -> m "%a @[File %a@ is@ present.@]" Text.Pp.status status Text.Pp.path file);
+      report_status status (fun m -> m "@[File %a@ is@ present.@]" Text.Pp.path file);
       errs
     in
     (Sos.file_exists ~dry_run file >>= fun exists -> Ok (report exists))
@@ -53,11 +56,35 @@ let lint_file_with_cmd ~dry_run ~file_kind ~cmd ~handle_exit file errs =
   end
   |> Logs.on_error_msg ~use:(fun () -> errs + 1)
 
-let lint_res res = Logs.on_error_msg ~use:(fun () -> 1) (res >>| fun _ -> 0)
+let lint_res ~msgf = function
+  | Ok _ ->
+      report_status `Ok msgf;
+      0
+  | Error _ as err ->
+      report_status `Fail msgf;
+      Logs.on_error_msg ~use:(fun () -> 1) err
+
+let pp_field = Fmt.(styled `Bold string)
+
+let lint_opam_doc pkg =
+  lint_res
+    ~msgf:(fun l -> l "opam field %a can be parsed by dune-release" pp_field "doc")
+    (Pkg.doc_user_repo_and_path pkg)
+
+let lint_opam_home_and_dev pkg =
+  lint_res
+    ~msgf:
+      (fun l ->
+         l "opam fields %a and %a can be parsed by dune-release"
+           pp_field
+           "homepage"
+           pp_field
+           "dev-repo")
+    (Pkg.distrib_user_and_repo pkg)
 
 let lint_opam_github_fields pkg =
-  lint_res (Pkg.doc_user_repo_and_path pkg)
-  + lint_res (Pkg.distrib_user_and_repo pkg)
+  lint_opam_doc pkg
+  + lint_opam_home_and_dev pkg
 
 let opam_lint_cmd ~opam_file_version ~opam_tool_version =
   let lint_older_format =
@@ -88,7 +115,9 @@ let check_has_description ~opam_file pkg =
   | Some _ -> Ok ()
 
 let lint_descr ~opam_file pkg =
-  lint_res (check_has_description ~opam_file pkg)
+  lint_res
+    ~msgf:(fun l -> l "opam field %a is present" pp_field "description")
+    (check_has_description ~opam_file pkg)
 
 let opam_lint ~dry_run ~opam_file_version ~opam_tool_version opam_file =
   let base_lint_cmd = opam_lint_cmd ~opam_file_version ~opam_tool_version in
