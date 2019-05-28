@@ -462,13 +462,10 @@ let distrib_version_opam_files ~dry_run ~version =
       Sos.write_file ~dry_run file (String.concat ~sep:"\n" o))
     (Ok ()) names
 
-let distrib_prepare ~dry_run p ~dist_build_dir ~name ~tag ~version ~opam =
+let distrib_prepare ~dry_run p ~dist_build_dir ~version =
   let d = p.distrib in
-  let ws = Distrib.watermarks d in
-  let ws_defs = Distrib.define_watermarks ws ~dry_run ~name ~tag ~opam in
   Sos.with_dir ~dry_run dist_build_dir (fun () ->
-      Distrib.files_to_watermark d ()
-      >>= fun files -> Distrib.watermark_files ws_defs files
+      Sos.run ~dry_run Cmd.(v "dune" % "subst")
       >>= fun () -> distrib_version_opam_files ~dry_run ~version
       >>= fun () -> Distrib.massage d ()
       >>= fun () -> Distrib.exclude_paths d ()
@@ -481,12 +478,10 @@ let assert_tag_exists ~dry_run repo tag =
 
 let distrib_archive ~dry_run ~keep_dir p =
   Archive.ensure_bzip2 ()
-  >>= fun () -> name p
-  >>= fun name -> build_dir p
+  >>= fun () -> build_dir p
   >>= fun build_dir -> tag p
   >>= fun tag -> version p
-  >>= fun version -> opam p
-  >>= fun opam -> distrib_filename p
+  >>= fun version -> distrib_filename p
   >>= fun root -> Ok Fpath.(build_dir // root + ".build")
   >>= fun dist_build_dir -> Sos.delete_dir ~dry_run ~force:true dist_build_dir
   >>= fun () -> Vcs.get ()
@@ -496,7 +491,7 @@ let distrib_archive ~dry_run ~keep_dir p =
   >>= fun () -> Vcs.get ~dir:dist_build_dir ()
   >>= fun clone -> Ok (Fmt.strf "dune-release-dist-%s" tag)
   >>= fun branch -> Vcs.checkout ~dry_run clone ~branch ~commit_ish:tag
-  >>= fun () -> distrib_prepare ~dry_run p ~dist_build_dir ~name ~tag ~version ~opam
+  >>= fun () -> distrib_prepare ~dry_run p ~dist_build_dir ~version
   >>= fun exclude_paths ->
   let exclude_paths = Fpath.Set.of_list exclude_paths in
   Archive.tar dist_build_dir ~exclude_paths ~root ~mtime
