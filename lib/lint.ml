@@ -98,15 +98,8 @@ let check_has_description ~opam_file pkg =
   | None -> R.error_msgf "%a does not have a 'description' field." Fpath.pp opam_file
   | Some _ -> Ok ()
 
-let check_has_non_empty_synopsis ~opam_file pkg =
-  Pkg.opam_field_hd pkg "synopsis" >>= function
-  | None
-  | Some "" -> R.error_msgf "%a does not have a 'synopsis' field" Fpath.pp opam_file
-  | Some _ -> Ok ()
-
-let lint_descr_and_synopsis ~opam_file pkg =
-  lint_res (check_has_non_empty_synopsis ~opam_file pkg)
-  + lint_res (check_has_description ~opam_file pkg)
+let lint_descr ~opam_file pkg =
+  lint_res (check_has_description ~opam_file pkg)
 
 let lint_opam ~dry_run pkg =
   let opam_tool_version = Lazy.force Opam.version in
@@ -132,9 +125,9 @@ let lint_opam ~dry_run pkg =
     | Some "2.0", _ ->
         (* check that the descr and synopsis fields are not empty *)
         Pkg.opam pkg >>= fun opam_file ->
-        let descr_and_sin_errs = lint_descr_and_synopsis ~opam_file pkg in
+        let descr_err = lint_descr ~opam_file pkg in
         lint opam_version >>| fun opam_lint_errs ->
-        descr_and_sin_errs + opam_lint_errs
+        descr_err + opam_lint_errs
     | _ -> lint opam_version)
 
 let t_to_fun =
