@@ -12,7 +12,7 @@ let lint_distrib ~dry_run ~dir ~pkg_names pkg =
   List.fold_left (fun acc name ->
       acc >>= fun acc ->
       let pkg = Pkg.with_name pkg name in
-      Pkg.lint ~dry_run ~dir pkg Pkg.lint_all >>= fun x ->
+      Lint.lint_pkg ~dry_run ~dir pkg Lint.all >>= fun x ->
       Ok (acc + x)
     ) (Ok 0) pkg_names
 
