@@ -47,7 +47,6 @@ type t =
     distrib: Distrib.t;
     distrib_uri : string option;
     distrib_file : Fpath.t option;
-    lint_files: Fpath.t list option;
     publish_msg : string option;
     publish_artefacts : [`Distrib | `Doc | `Alt of string] list option }
 
@@ -432,7 +431,7 @@ let v ~dry_run
     ?name ?version ?tag ?(keep_v = false)
     ?delegate ?build_dir ?opam:opam_file ?opam_descr
     ?readme ?change_log ?license ?distrib_uri ?distrib_file ?publish_msg
-    ?publish_artefacts ?(distrib=Distrib.v ()) ?(lint_files = Some []) ()
+    ?publish_artefacts ?(distrib=Distrib.v ()) ()
   =
   let name = match name with None -> infer_name Fpath.(v ".") | Some v -> Ok v in
   let readmes = match readme with Some r -> Some [r] | None -> None in
@@ -444,7 +443,7 @@ let v ~dry_run
     { name; version; tag; drop_v = not keep_v; delegate; build_dir;
       opam = opam_file; opam_descr;
       opam_fields; readmes; change_logs; licenses; distrib_uri; distrib_file;
-      publish_msg; publish_artefacts; distrib; lint_files }
+      publish_msg; publish_artefacts; distrib }
   in
   p
 
@@ -530,18 +529,10 @@ let clean ~dry_run ~dir ~args ~out p =
 let pp_path = Text.Pp.path
 let pp_status = Text.Pp.status
 
-let lint_disabled test =
-  Logs.info (fun m -> m ~header:"LINT" "Package@ disabled@ %a." Fmt.text test);
-  0
-
-let std_files p =
+let lint_files p =
   let v = function Some x -> x | None -> [] in
   v p.readmes @ v p.licenses @
   v p.change_logs @ match p.opam with Some v -> [v] | None -> []
-
-let lint_files p = match p.lint_files with
-| None (* disabled *) -> None
-| Some fs -> Some (List.rev_append (std_files p) fs)
 
 let lint_std_files ~dry_run p =
   let lint_exists file errs =
@@ -555,11 +546,9 @@ let lint_std_files ~dry_run p =
     |> Logs.on_error_msg ~use:(fun () -> errs + 1)
   in
   begin
-    match lint_files p with
-    | None -> Ok (lint_disabled "standard files linting")
-    | Some files ->
-        let files = Fpath.Set.of_list files in
-        Ok (Fpath.Set.fold lint_exists files 0)
+    let files = lint_files p in
+    let files = Fpath.Set.of_list files in
+    Ok (Fpath.Set.fold lint_exists files 0)
   end
   |> Logs.on_error_msg ~use:(fun () -> 1)
 

@@ -30,7 +30,7 @@ val v :
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
   ?publish_artefacts:[`Distrib | `Doc | `Alt of string] list ->
-  ?distrib:Distrib.t -> ?lint_files:Fpath.t list option ->
+  ?distrib:Distrib.t ->
   unit -> t
 
 val infer_name: Fpath.t -> (string, R.msg) result
