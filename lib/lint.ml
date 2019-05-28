@@ -55,6 +55,10 @@ let lint_file_with_cmd ~dry_run ~file_kind ~cmd ~handle_exit file errs =
 
 let lint_res res = Logs.on_error_msg ~use:(fun () -> 1) (res >>| fun _ -> 0)
 
+let lint_opam_github_fields pkg =
+  lint_res (Pkg.doc_user_repo_and_path pkg)
+  + lint_res (Pkg.distrib_user_and_repo pkg)
+
 let opam_lint_cmd ~opam_file_version ~opam_tool_version =
   let lint_old_format =
     match opam_file_version, opam_tool_version with
@@ -110,12 +114,11 @@ let lint_opam ~dry_run pkg =
     let base_lint_cmd = opam_lint_cmd ~opam_file_version ~opam_tool_version in
     Pkg.opam pkg >>= fun opam ->
     let errs = lint_opam_file ~dry_run ~base_lint_cmd opam in
-    if dry_run then Ok 0
-    else (
-      Pkg.doc_user_repo_and_path pkg >>= fun _ ->
-      Pkg.distrib_user_and_repo pkg >>| fun _ ->
-      errs
-    )
+    if dry_run then
+      Ok 0
+    else
+      let github_field_errs = lint_opam_github_fields pkg in
+      Ok (github_field_errs + errs)
   in
   Logs.on_error_msg ~use:(fun () -> 1) (
     (* remove opam.1.2-related warnings *)
