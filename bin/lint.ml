@@ -16,7 +16,7 @@ let lint () dry_run name pkg_names version tag keep_v lints =
     List.fold_left (fun acc name ->
         acc >>= fun acc ->
         let pkg = Pkg.with_name pkg name in
-        Pkg.lint ~dry_run ~dir pkg lints >>= fun n ->
+        Lint.lint_pkg ~dry_run ~dir pkg lints >>= fun n ->
         Ok (acc + n)
       ) (Ok 0) pkg_names
   end
@@ -35,7 +35,7 @@ let lints =
   in
   let test = Arg.enum test in
   let docv = "TEST" in
-  Arg.(value & pos_all test Pkg.lint_all & info [] ~doc ~docv)
+  Arg.(value & pos_all test Lint.all & info [] ~doc ~docv)
 
 let doc = "Check package distribution consistency and conventions"
 let sdocs = Manpage.s_common_options

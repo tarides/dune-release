@@ -30,7 +30,7 @@ val v :
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
   ?publish_artefacts:[`Distrib | `Doc | `Alt of string] list ->
-  ?distrib:Distrib.t -> ?lint_files:Fpath.t list option ->
+  ?distrib:Distrib.t ->
   unit -> t
 
 val infer_name: Fpath.t -> (string, R.msg) result
@@ -145,19 +145,6 @@ val build : f
 (** {1 Clean} *)
 
 val clean : f
-
-(** {1 Lint} *)
-
-type lint = [ `Std_files |`Opam ]
-(** The type for lints. *)
-
-val lint_all : lint list
-(** [lint_all] is a list with all lint values. *)
-
-val lint : dry_run:bool -> dir:Fpath.t -> t -> lint list -> (int, R.msg) result
-(** [distrib ~ignore_pkg p ~dir lints] performs the lints mentioned in
-    [lints] in a directory [dir] on the package [p].  If [ignore_pkg]
-    is [true] [p]'s definitions are ignored. *)
 
 (** {1 Tag} *)
 
