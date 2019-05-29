@@ -102,7 +102,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir ~
         ~question:(fun l -> l "Push new documentation to %a?" Text.Pp.url (remote ^ "#gh-pages"))
       >>= fun () ->
       Logs.app (fun l -> l "Pushing new documentation to %a" Text.Pp.url (remote ^ "#gh-pages"));
-      Sos.run ~dry_run Cmd.(git % "push" % remote % push_spec)
+      Sos.run_quiet ~dry_run Cmd.(git % "push" % remote % push_spec)
       >>= fun () -> Sos.delete_dir ~dry_run clonedir
       >>= fun () ->
       log_publish_result "Published documentation for" (name, version) dir;
