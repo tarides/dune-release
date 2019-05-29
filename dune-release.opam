@@ -1,6 +1,6 @@
 opam-version: "2.0"
 maintainer: "Thomas Gazagnaire <thomas@gazagnaire.org>"
-authors: ["Daniel Bünzli" "Thomas Gazagnaire"]
+authors: ["Daniel Bünzli" "Thomas Gazagnaire" "Nathan Rebours"]
 homepage: "https://github.com/samoht/dune-release"
 license: "ISC"
 dev-repo: "git+https://github.com/samoht/dune-release.git"
