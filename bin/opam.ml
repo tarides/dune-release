@@ -244,7 +244,7 @@ let opam () dry_run build_dir local_repo remote_repo opam_repo user keep_v
             ?readme ?change_log ?publish_msg ()
         ) pkg_names
     in
-    let opam_repo = match opam_repo with None -> ("ocaml", "opam_repository") | Some r -> r in
+    let opam_repo = match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r in
     pkgs >>= fun pkgs ->
     match action with
     | `Descr -> descr pkgs
