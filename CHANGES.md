@@ -1,4 +1,4 @@
-## 1.3.0 (2019-05-29)
+## unreleased
 
 - Add confirmation prompts in some commands. (#144, #146, @NathanReb)
 - Use github returned archive URL instead of guessing it. Fixes a bug
