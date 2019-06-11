@@ -1,3 +1,9 @@
+## unreleased
+
+- Fix a bug in documentation publication where under certain circumstances the
+  doc would be published in a `_html` folder instead of being published at the
+  root of `gh-pages` (#157, @NathanReb)
+
 ## 1.3.0 (2019-05-29)
 
 - Add confirmation prompts in some commands. (#144, #146, @NathanReb)

@@ -67,7 +67,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir ~
     >>= fun git ->
     Sos.run_quiet ~dry_run ~force:(dir <> D.dir) Cmd.(git % "checkout" % branch)
     >>= fun () -> delete dir
-    >>= fun () -> Sos.cp ~dry_run ~rec_:true ~force:true ~src:docdir ~dst:dir
+    >>= fun () -> Sos.cp ~dry_run ~rec_:true ~force:true ~src:Fpath.(docdir / ".") ~dst:dir
     >>= fun () -> (if dry_run then Ok true else Vcs.is_dirty repo)
     >>= function
     | false -> Ok false
