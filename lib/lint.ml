@@ -18,6 +18,10 @@ let std_files =
   ; {generic_name = "opam"; get_path = (fun pkg -> Pkg.opam pkg >>| fun o -> [o]); missing = `Fail}
   ]
 
+let status_to_presence = function
+  | `Ok -> "present"
+  | `Fail | `Warn -> "missing"
+
 let lint_exists_file ~dry_run {generic_name; get_path; missing} pkg =
   let missing :> [`Ok | `Fail | `Warn] = missing in
   let status =
@@ -28,7 +32,9 @@ let lint_exists_file ~dry_run {generic_name; get_path; missing} pkg =
         Ok (if exists then `Ok else missing)
   in
   status >>= fun status ->
-  report_status status (fun m -> m "@[File %a@ is@ present.@]" Text.Pp.path (Fpath.v generic_name));
+  let presence = status_to_presence status in
+  report_status status
+    (fun m -> m "@[File %a@ is@ %s.@]" Text.Pp.path (Fpath.v generic_name) presence);
   let err_count = match status with `Ok | `Warn -> 0 | `Fail -> 1 in
   Ok err_count
 
