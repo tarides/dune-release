@@ -5,14 +5,19 @@ type t = [ `Std_files | `Opam ]
 let report_status status f =
   Logs.app (fun l -> f (fun ?header ?tags fmt -> l ?header ?tags ("%a " ^^ fmt) Text.Pp.status status))
 
+type std_file =
+  { generic_name : string
+  ; get_path : Pkg.t -> (Fpath.t list, R.msg) result
+  }
+
 let std_files =
-  [ ("README", Pkg.readmes)
-  ; ("LICENSE", Pkg.licenses)
-  ; ("CHANGES", Pkg.change_logs)
-  ; ("opam", fun pkg -> Pkg.opam pkg >>| fun o -> [o])
+  [ {generic_name = "README"; get_path = Pkg.readmes}
+  ; {generic_name = "LICENSE"; get_path = Pkg.licenses}
+  ; {generic_name = "CHANGES"; get_path = Pkg.change_logs}
+  ; {generic_name = "opam"; get_path = fun pkg -> Pkg.opam pkg >>| fun o -> [o]}
   ]
 
-let lint_exists_file ~dry_run (kind, get_path) pkg =
+let lint_exists_file ~dry_run {generic_name; get_path} pkg =
   let status =
     get_path pkg >>= function
     | [] -> Ok `Fail
@@ -21,7 +26,7 @@ let lint_exists_file ~dry_run (kind, get_path) pkg =
         Ok (if exists then `Ok else `Fail)
   in
   status >>= fun status ->
-  report_status status (fun m -> m "@[File %a@ is@ present.@]" Text.Pp.path (Fpath.v kind));
+  report_status status (fun m -> m "@[File %a@ is@ present.@]" Text.Pp.path (Fpath.v generic_name));
   let err_count = match status with `Ok -> 0 | `Fail -> 1 in
   Ok err_count
 
