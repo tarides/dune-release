@@ -164,6 +164,7 @@ module Pp = struct
   let url = Fmt.(styled `Underline string)
   let status ppf = function
   | `Ok -> Fmt.(brackets @@ styled_unit `Green " OK ") ppf ()
+  | `Warn -> Fmt.(brackets @@ styled_unit `Yellow "WARN") ppf ()
   | `Fail -> Fmt.(brackets @@ styled_unit `Red "FAIL") ppf ()
 end
 

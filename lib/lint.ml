@@ -8,26 +8,28 @@ let report_status status f =
 type std_file =
   { generic_name : string
   ; get_path : Pkg.t -> (Fpath.t list, R.msg) result
+  ; missing : [`Warn | `Fail]
   }
 
 let std_files =
-  [ {generic_name = "README"; get_path = Pkg.readmes}
-  ; {generic_name = "LICENSE"; get_path = Pkg.licenses}
-  ; {generic_name = "CHANGES"; get_path = Pkg.change_logs}
-  ; {generic_name = "opam"; get_path = fun pkg -> Pkg.opam pkg >>| fun o -> [o]}
+  [ {generic_name = "README"; get_path = Pkg.readmes; missing = `Warn}
+  ; {generic_name = "LICENSE"; get_path = Pkg.licenses; missing = `Warn}
+  ; {generic_name = "CHANGES"; get_path = Pkg.change_logs; missing = `Fail}
+  ; {generic_name = "opam"; get_path = (fun pkg -> Pkg.opam pkg >>| fun o -> [o]); missing = `Fail}
   ]
 
-let lint_exists_file ~dry_run {generic_name; get_path} pkg =
+let lint_exists_file ~dry_run {generic_name; get_path; missing} pkg =
+  let missing :> [`Ok | `Fail | `Warn] = missing in
   let status =
     get_path pkg >>= function
-    | [] -> Ok `Fail
+    | [] -> Ok missing
     | path::_ ->
         Sos.file_exists ~dry_run path >>= fun exists ->
-        Ok (if exists then `Ok else `Fail)
+        Ok (if exists then `Ok else missing)
   in
   status >>= fun status ->
   report_status status (fun m -> m "@[File %a@ is@ present.@]" Text.Pp.path (Fpath.v generic_name));
-  let err_count = match status with `Ok -> 0 | `Fail -> 1 in
+  let err_count = match status with `Ok | `Warn -> 0 | `Fail -> 1 in
   Ok err_count
 
 let lint_std_files ~dry_run pkg =
