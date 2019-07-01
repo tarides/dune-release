@@ -2,35 +2,35 @@ open Bos_setup
 
 type t = [ `Std_files | `Opam ]
 
-let lint_files pkg =
-  Pkg.readmes pkg >>= fun readmes ->
-  Pkg.licenses pkg >>= fun licenses ->
-  Pkg.change_logs pkg >>= fun changelogs ->
-  Pkg.opam pkg >>| fun opam ->
-  readmes
-  @ licenses
-  @ changelogs
-  @ [opam]
-
 let report_status status f =
   Logs.app (fun l -> f (fun ?header ?tags fmt -> l ?header ?tags ("%a " ^^ fmt) Text.Pp.status status))
 
-let lint_std_files ~dry_run pkg =
-  let lint_exists file errs =
-    let report exists =
-      let status, errs = if exists then `Ok, errs else `Fail, errs + 1 in
-      report_status status (fun m -> m "@[File %a@ is@ present.@]" Text.Pp.path file);
-      errs
-    in
-    (Sos.file_exists ~dry_run file >>= fun exists -> Ok (report exists))
-    |> Logs.on_error_msg ~use:(fun () -> errs + 1)
+let std_files =
+  [ ("README", Pkg.readmes)
+  ; ("LICENSE", Pkg.licenses)
+  ; ("CHANGES", Pkg.change_logs)
+  ; ("opam", fun pkg -> Pkg.opam pkg >>| fun o -> [o])
+  ]
+
+let lint_exists_file ~dry_run (kind, get_path) pkg =
+  let status =
+    get_path pkg >>= function
+    | [] -> Ok `Fail
+    | path::_ ->
+        Sos.file_exists ~dry_run path >>= fun exists ->
+        Ok (if exists then `Ok else `Fail)
   in
-  begin
-    lint_files pkg >>= fun files ->
-    let files = Fpath.Set.of_list files in
-    Ok (Fpath.Set.fold lint_exists files 0)
-  end
-  |> Logs.on_error_msg ~use:(fun () -> 1)
+  status >>= fun status ->
+  report_status status (fun m -> m "@[File %a@ is@ present.@]" Text.Pp.path (Fpath.v kind));
+  let err_count = match status with `Ok -> 0 | `Fail -> 1 in
+  Ok err_count
+
+let lint_std_files ~dry_run pkg =
+  let go errs file =
+    let new_err = Logs.on_error_msg ~use:(fun () -> 1) (lint_exists_file ~dry_run file pkg) in
+    errs + new_err
+  in
+  List.fold_left go 0 std_files
 
 let lint_file_with_cmd ~dry_run ~file_kind ~cmd ~handle_exit file errs =
   let run_linter cmd file ~exists =
