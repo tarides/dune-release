@@ -100,7 +100,7 @@ module Pp : sig
   val url : string Fmt.t
   (** [url] formats an underlined URL *)
 
-  val status : [`Ok | `Fail | `Warn] Fmt.t
+  val status : [`Ok | `Fail] Fmt.t
   (** [status] formats a result status. *)
 end
 
