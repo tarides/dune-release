@@ -5,11 +5,6 @@
 - Fix a bug where file presence lint check wouldn't be run for `CHANGES`,
   `LICENSE` and `README` (#161, @NathanReb)
 
-### Changed
-
-- Only warn during lint checks when `LICENSE` and `README` are missing
-  (#161, @NathanReb)
-
 ## 1.3.1 (2019-06-11)
 
 - Fix a bug in documentation publication where under certain circumstances the
