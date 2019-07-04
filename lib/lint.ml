@@ -153,7 +153,7 @@ let lint_opam ~dry_run pkg =
   Pkg.opam_field_hd pkg "opam-version" >>= fun opam_file_version ->
   match opam_file_version, opam_tool_version with
   | Some "2.0", `v1_2_2 ->
-      Logs.app
+      App_log.status
         (fun l ->
            l "Skipping opam lint as `opam-version` field is \"2.0\" while `opam --version` is 1.2.2");
       Ok 0

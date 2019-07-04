@@ -1,5 +1,5 @@
 let ask f =
-  Logs.app (fun l -> f (fun ?header ?tags fmt -> l ?header ?tags (fmt ^^ " [Y/n]")))
+  App_log.question (fun l -> f (fun ?header ?tags fmt -> l ?header ?tags (fmt ^^ " [Y/n]")))
 
 let confirm ~question ~yes =
   let rec loop () =
@@ -8,7 +8,7 @@ let confirm ~question ~yes =
     | "" | "y" | "yes" -> true
     | "n" | "no" -> false
     | _ ->
-        Logs.app
+        App_log.unhappy
           (fun l ->
              l "Please answer with \"y\" for yes, \"n\" for no or just hit enter for the default");
         loop ()

@@ -119,9 +119,8 @@ let config_dir () =
     OS.Dir.exists old_d >>= function
     | false -> Ok ()
     | true  ->
-        Logs.app (fun m ->
-            m "Upgrading configuration files: %a => %a"
-              Fpath.pp old_d Fpath.pp cfg);
+        App_log.status
+          (fun m -> m "Upgrading configuration files: %a => %a" Fpath.pp old_d Fpath.pp cfg);
         OS.Dir.create ~path:true cfg >>= fun _ ->
         OS.Path.move old_d Fpath.(cfg / "release.yml")
   in
