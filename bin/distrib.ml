@@ -8,7 +8,8 @@ open Bos_setup
 open Dune_release
 
 let lint_distrib ~dry_run ~dir ~pkg_names pkg =
-  Logs.app (fun m -> m "@.Linting distrib in %a" Fpath.pp dir);
+  App_log.blank_line ();
+  App_log.status (fun m -> m "Linting distrib in %a" Fpath.pp dir);
   List.fold_left (fun acc name ->
       acc >>= fun acc ->
       let pkg = Pkg.with_name pkg name in
@@ -17,7 +18,8 @@ let lint_distrib ~dry_run ~dir ~pkg_names pkg =
     ) (Ok 0) pkg_names
 
 let build_distrib ~dry_run ~dir pkg =
-  Logs.app (fun m -> m "@.Building package in %a" Fpath.pp dir);
+  App_log.blank_line ();
+  App_log.status (fun m -> m "Building package in %a" Fpath.pp dir);
   let args = Cmd.empty (* XXX(samoht): Cmd.(v "--dev") *) in
   let out = OS.Cmd.out_string in
   Pkg.build ~dry_run pkg ~dir ~args ~out >>= function
@@ -28,7 +30,8 @@ let build_distrib ~dry_run ~dir pkg =
                    stdout Text.Pp.status `Fail); Ok 1
 
 let test_distrib ~dry_run ~dir pkg =
-  Logs.app (fun m -> m "@.Running package tests in %a" Fpath.pp dir);
+  App_log.blank_line ();
+  App_log.status (fun m -> m "Running package tests in %a" Fpath.pp dir);
   let out = OS.Cmd.out_string in
   Pkg.test ~dry_run ~dir ~args:Cmd.empty ~out pkg >>= function
   | (_, (_, `Exited 0)) ->
@@ -57,21 +60,21 @@ let log_footprint pkg archive =
   >>= fun version -> Vcs.get ()
   >>= fun repo -> Vcs.commit_id repo ~dirty:false ~commit_ish:"HEAD"
   >>= fun commit_ish ->
-  Logs.app
-    (fun m -> m "@.@[<v>@[Distribution for %a@ %a@]@,@[Commit %a@]@,\
-                 @[Archive %a@]@]"
-        Text.Pp.name name Text.Pp.version version
-        Text.Pp.commit commit_ish Text.Pp.path archive);
+  App_log.blank_line ();
+  App_log.success (fun l -> l "Distribution for %a %a" Text.Pp.name name Text.Pp.version version);
+  App_log.success (fun l -> l "Commit %a" Text.Pp.commit commit_ish);
+  App_log.success (fun l -> l "Archive %a" Text.Pp.path archive);
   Ok ()
 
 let log_wrote_archive ar =
-  Logs.app (fun m -> m "Wrote archive %a" Text.Pp.path ar); Ok ()
+  App_log.success (fun m -> m "Wrote archive %a" Text.Pp.path ar); Ok ()
 
 let distrib
     () dry_run build_dir name pkg_names version tag keep_v
     keep_dir skip_lint skip_build skip_tests
   =
   begin
+    App_log.status (fun l -> l "Building source archive");
     Config.keep_v keep_v >>= fun keep_v ->
     let pkg = Pkg.v ~dry_run ?name ?version ~keep_v ?build_dir ?tag () in
     Pkg.distrib_archive ~dry_run ~keep_dir pkg

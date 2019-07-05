@@ -74,7 +74,7 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
   let run_out = Sos.run_out ~sandbox:false ~dry_run ~force:true in
   let prepare_repo () =
     let git_fetch = Cmd.(git % "fetch" % upstream % remote_branch) in
-    Logs.app (fun l -> l "Fetching %a" Text.Pp.url (upstream ^ "#" ^ remote_branch));
+    App_log.status (fun l -> l "Fetching %a" Text.Pp.url (upstream ^ "#" ^ remote_branch));
     run git_fetch >>= fun () ->
     run_out Cmd.(git % "rev-parse" % "FETCH_HEAD")
       ~default:"${fetch_head}" OS.Cmd.to_string
@@ -93,7 +93,7 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
       )
     in
     delete_branch () >>= fun () ->
-    Logs.app (fun l -> l "Checking out a local %a branch" Text.Pp.commit branch);
+    App_log.status (fun l -> l "Checking out a local %a branch" Text.Pp.commit branch);
     Vcs.checkout repo ~dry_run:false ~branch ~commit_ish:id
   in
   OS.Dir.current () >>= fun cwd ->
@@ -127,7 +127,7 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
   in
   let commit_and_push () =
     Sos.run_quiet ~dry_run ~sandbox:false Cmd.(git % "commit" %% msg) >>= fun () ->
-    Logs.app (fun l -> l "Pushing %a to %a" Text.Pp.commit branch Text.Pp.url remote_repo);
+    App_log.status (fun l -> l "Pushing %a to %a" Text.Pp.commit branch Text.Pp.url remote_repo);
     Sos.run_quiet ~dry_run ~sandbox:false Cmd.(git % "push" % "--force" % remote_repo % branch)
   in
   Sos.with_dir ~dry_run local_repo (fun () ->

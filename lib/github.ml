@@ -48,8 +48,8 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir ~
     Fmt.pf ppf "%a %a" Text.Pp.name name Text.Pp.version version
   in
   let log_publish_result msg distrib dir =
-    Logs.app (fun m -> m "%s %a@ in@ directory@ %a@ of@ gh-pages@ branch"
-                 msg pp_distrib distrib Fpath.pp dir)
+    App_log.success
+      (fun m -> m "%s %a in directory %a of gh-pages branch" msg pp_distrib distrib Fpath.pp dir)
   in
   let delete dir =
     if not (Fpath.is_current_dir dir) then Sos.delete_dir ~dry_run dir else
@@ -88,7 +88,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir ~
   >>= fun repo -> Vcs.clone ~dry_run ~force:true ~dir:clonedir repo
   >>= fun () -> Sos.relativize ~src:clonedir ~dst:docdir
   >>= fun rel_docdir ->
-  Logs.app (fun l -> l "Updating local %a branch" Text.Pp.commit "gh-pages");
+  App_log.status (fun l -> l "Updating local %a branch" Text.Pp.commit "gh-pages");
   Sos.with_dir ~dry_run clonedir (replace_dir_and_push rel_docdir) dir
   >>= fun res -> res
   >>= function
@@ -101,7 +101,8 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir ~
       Prompt.confirm_or_abort ~yes
         ~question:(fun l -> l "Push new documentation to %a?" Text.Pp.url (remote ^ "#gh-pages"))
       >>= fun () ->
-      Logs.app (fun l -> l "Pushing new documentation to %a" Text.Pp.url (remote ^ "#gh-pages"));
+      App_log.status
+        (fun l -> l "Pushing new documentation to %a" Text.Pp.url (remote ^ "#gh-pages"));
       Sos.run_quiet ~dry_run Cmd.(git % "push" % remote % push_spec)
       >>= fun () -> Sos.delete_dir ~dry_run clonedir
       >>= fun () ->
@@ -140,7 +141,8 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
   (match Sos.run_quiet ~dry_run ~force git_fetch with
   | Ok () -> Ok ()
   | Error _ ->
-      Logs.app (fun l -> l "Creating new gh-pages branch with inital commit on %s/%s" user repo);
+      App_log.status
+        (fun l -> l "Creating new gh-pages branch with inital commit on %s/%s" user repo);
       create_empty_gh_pages git)
   >>= fun () ->
   Sos.run_out ~dry_run ~force Cmd.(git % "rev-parse" % "FETCH_HEAD")
@@ -301,22 +303,22 @@ let publish_distrib ~dry_run ~msg ~archive ~yes p =
   Prompt.confirm_or_abort ~yes
     ~question:(fun l -> l "Push tag %a to %a?" Text.Pp.version tag Text.Pp.url upstr)
   >>= fun () ->
-  Logs.app (fun l -> l "Pushing tag %a to %a" Text.Pp.version tag Text.Pp.url upstr);
+  App_log.status (fun l -> l "Pushing tag %a to %a" Text.Pp.version tag Text.Pp.url upstr);
   Sos.run_quiet ~dry_run Cmd.(git % "push" % "--force" % upstr % tag)
   >>= fun () -> Config.token ~dry_run ()
   >>= fun token ->
   Prompt.confirm_or_abort ~yes
     ~question:(fun l -> l "Create release %a on %a?" Text.Pp.version tag Text.Pp.url upstr)
   >>= fun () ->
-  Logs.app
+  App_log.status
     (fun l -> l "Creating release %a on %a via github's API" Text.Pp.version tag Text.Pp.url upstr);
   curl_create_release ~token ~dry_run curl tag msg user repo
   >>= fun id ->
-  Logs.app (fun l -> l "Succesfully created release with id %d" id);
+  App_log.success (fun l -> l "Succesfully created release with id %d" id);
   Prompt.confirm_or_abort ~yes
     ~question:(fun l -> l "Upload %a as release asset?" Text.Pp.path archive)
   >>= fun () ->
-  Logs.app
+  App_log.status
     (fun l -> l "Uploading %a as a release asset for %a via github's API"
         Text.Pp.path
         archive

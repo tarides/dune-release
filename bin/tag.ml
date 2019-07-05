@@ -14,26 +14,28 @@ let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
   | true ->
       Prompt.confirm_or_abort ~yes ~question:(fun l -> l "Delete tag %a?" Text.Pp.version tag)
       >>= fun () ->
-      Vcs.delete_tag ~dry_run repo tag
+      Vcs.delete_tag ~dry_run repo tag >>| fun () ->
+      App_log.success (fun m -> m "Deleted tag %a" Text.Pp.version tag)
   | false ->
       Prompt.confirm_or_abort ~yes
         ~question:(fun l -> l "Create git tag %a for %a?" Text.Pp.version tag Text.Pp.commit commit_ish)
       >>= fun () ->
       Vcs.tag repo ~dry_run ~force ~sign ~msg ~commit_ish tag >>| fun () ->
-      Logs.app (fun m -> m "Tagged %a with version %a" Text.Pp.commit commit_ish Text.Pp.version tag)
+      App_log.success
+        (fun m -> m "Tagged %a with version %a" Text.Pp.commit commit_ish Text.Pp.version tag)
 
 let tag () dry_run name change_log tag commit_ish force sign delete msg yes =
   begin
     let pkg = Pkg.v ~dry_run ?change_log ?name () in
     let tag = match tag with
     | Some t ->
-        Logs.app (fun l -> l "Using provided tag %S" t);
+        App_log.status (fun l -> l "Using provided tag %S" t);
         Ok t
     | None   ->
         Pkg.change_log pkg >>= fun changelog ->
-        Logs.app (fun l -> l "Extracting tag from first entry in %a" Text.Pp.path changelog);
+        App_log.status (fun l -> l "Extracting tag from first entry in %a" Text.Pp.path changelog);
         Pkg.extract_tag pkg >>| fun t ->
-        Logs.app (fun l -> l "Using tag %S" t);
+        App_log.status (fun l -> l "Using tag %S" t);
         t
     in
     tag

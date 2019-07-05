@@ -37,7 +37,7 @@ let format_upgrade ~dry_run ~url ~opam_f pkg opam dest_opam_file =
           opam_t;
       Ok ()
   | ("1.0"|"1.1"|"1.2" as v) ->
-      Logs.app
+      App_log.status
         (fun l -> l "Upgrading opam file %a from opam format %s to 2.0" Text.Pp.path opam_f v);
       Pkg.opam_descr pkg >>= fun descr ->
       let descr =
@@ -74,7 +74,7 @@ let pkg ~dry_run pkg =
                            distribution."
   in
   Pkg.name pkg >>= fun pkg_name ->
-  Logs.app (fun l -> l "Creating opam package description for %a" Text.Pp.name pkg_name);
+  App_log.status (fun l -> l "Creating opam package description for %a" Text.Pp.name pkg_name);
   get_pkg_dir pkg >>= fun dir ->
   Pkg.opam pkg >>= fun opam_f ->
   OS.File.read opam_f >>= fun opam ->
@@ -86,7 +86,7 @@ let pkg ~dry_run pkg =
   OS.Dir.create dir >>= fun _ ->
   let dest_opam_file = Fpath.(dir / "opam") in
   format_upgrade ~dry_run ~url ~opam_f pkg opam dest_opam_file >>= fun () ->
-  Logs.app (fun m -> m "Wrote opam package description %a" Text.Pp.path dest_opam_file);
+  App_log.success (fun m -> m "Wrote opam package description %a" Text.Pp.path dest_opam_file);
   (if not dry_run then warn_if_vcs_dirty () else Ok ())
 
 let github_issue = Re.(compile @@ seq [
@@ -142,7 +142,7 @@ let open_pr
   in
   Prompt.confirm_or_abort ~yes ~question:(fun l -> l "Open PR to %a?" pp_opam_repo opam_repo)
   >>= fun () ->
-  Logs.app
+  App_log.status
     (fun l ->
        l "Opening pull request to merge branch %a of %a into %a"
          Text.Pp.commit
@@ -152,13 +152,16 @@ let open_pr
          pp_opam_repo
          opam_repo);
   Github.open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo msg >>= function
-  | `Already_exists -> Logs.app (fun m ->
-      m "\nThe existing pull request for %a has been automatically updated."
-        Fmt.(styled `Bold string) (distrib_user ^ ":" ^ branch));
+  | `Already_exists ->
+      App_log.blank_line ();
+      App_log.success
+        (fun l ->
+           l "The existing pull request for %a has been automatically updated."
+             Fmt.(styled `Bold string) (distrib_user ^ ":" ^ branch));
       Ok 0
   | `Url url ->
       let msg () =
-        Logs.app (fun m -> m "A new pull-request has been created at %s\n" url);
+        App_log.success (fun m -> m "A new pull-request has been created at %s\n" url);
         Ok 0
       in
       if not auto_open then msg ()
@@ -194,7 +197,7 @@ let submit ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open =
   Pkg.distrib_user_and_repo pkg >>= fun (distrib_user, repo) ->
   let changes = rewrite_github_refs distrib_user repo changes in
   let msg = strf "%s\n\n%s\n" title changes in
-  Logs.app (fun l -> l "Preparing pull request to %a" pp_opam_repo opam_repo);
+  App_log.status (fun l -> l "Preparing pull request to %a" pp_opam_repo opam_repo);
   Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~opam_repo ~version names
   >>= fun branch ->
   open_pr ~dry_run ~changes ~remote_repo ~distrib_user ~branch ~token ~title ~opam_repo ~auto_open
@@ -270,7 +273,7 @@ let opam () dry_run build_dir local_repo remote_repo opam_repo user keep_v
             | Some r -> Ok r
             | None   -> R.error_msg "Unknown remote repository.")
         >>= fun remote_repo ->
-        Logs.app (fun m -> m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
+        App_log.status (fun m -> m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
         submit ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open
     | `Field -> field pkgs field_name
   end
