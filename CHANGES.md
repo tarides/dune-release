@@ -5,6 +5,11 @@
 - Fix a bug where file presence lint check wouldn't be run for `CHANGES`,
   `LICENSE` and `README` (#161, @NathanReb)
 
+### Changed
+
+- Add headers to better distinguish various `dune-release` logs such as user
+  prompts and informational logs
+
 ## 1.3.1 (2019-06-11)
 
 - Fix a bug in documentation publication where under certain circumstances the
