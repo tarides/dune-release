@@ -159,10 +159,9 @@ let opam_descr p =
       | Some "2.0" -> (
           opam_field_hd p "synopsis" >>= fun s ->
           opam_field_hd p "description" >>= fun d ->
-          match s, d with
-          | Some s, Some d -> Ok (s, d)
-          | None  , _ -> R.error_msgf "missing synopsis"
-          | _, None   -> R.error_msgf "missing description"
+          match s with
+          | Some s -> Ok (s, d)
+          | None -> R.error_msgf "missing synopsis"
         )
       | Some ("1.2" | "1.0") -> (
           let descr_file = descr_file_for_opam opam in
