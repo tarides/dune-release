@@ -1,3 +1,10 @@
+## unreleased
+
+### Fixed
+
+- Fix a bug where `opam submit` would fail if the opam files had no description
+  (#165, @NathanReb)
+
 ## 1.3.2 (2019-07-12)
 
 ### Fixed
