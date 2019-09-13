@@ -62,7 +62,7 @@ module Descr : sig
 
   (** {1:descr Descr file} *)
 
-  type t = string * string
+  type t = string * string option
   (** The type for opam [descr] files, the package synopsis and the
       description. *)
 

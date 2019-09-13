@@ -222,13 +222,17 @@ module File = struct
 end
 
 module Descr = struct
-  type t = string * string
+  type t = string * string option
 
   let of_string s = match String.cuts ~sep:"\n" s with
-  | [] ->  R.error_msgf "Cannot extract opam descr."
-  | synopsis :: descr -> Ok (synopsis, String.concat ~sep:"\n" descr)
+  | [] ->  assert false (* String.cuts never returns the empty list *)
+  | [synopsis]
+  | [synopsis; ""] -> Ok (synopsis, None)
+  | synopsis :: descr -> Ok (synopsis, Some (String.concat ~sep:"\n" descr))
 
-  let to_string (synopsis, descr) = strf "%s\n%s" synopsis descr
+  let to_string = function
+  | (synopsis, None) -> synopsis
+  | (synopsis, Some descr) -> strf "%s\n%s" synopsis descr
 
   let of_readme ?flavour r =
     let parse_synopsis l =
@@ -264,7 +268,9 @@ module Descr = struct
         parse_synopsis title
         >>= fun synopsis -> Ok (String.cuts ~sep text)
         >>= fun text -> Ok (List.filter keep_line text)
-        >>= fun text -> Ok (synopsis, String.concat ~sep text)
+        >>= function
+        | [] | [""] -> Ok (synopsis, None)
+        | text -> Ok (synopsis, Some (String.concat ~sep text))
 
   let of_readme_file file =
     let flavour = Text.flavour_of_fpath file in
