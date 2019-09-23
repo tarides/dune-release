@@ -4,6 +4,8 @@
 
 - Fix a bug where `opam submit` would fail if the opam files had no description
   (#165, @NathanReb)
+- Fix a bug where opam files could be inproperly tempered with while building
+  the distribution tarball (#168, @NathanReb)
 
 ## 1.3.2 (2019-07-12)
 
