@@ -448,16 +448,26 @@ let v ~dry_run
 
 (* Distrib *)
 
+let version_line_re =
+  let open Re in
+  seq
+    [bos; str "version:"; rep space; char '"'; rep1 any; char '"'; rep space; eos]
+
+let prepare_opam_for_distrib ~version ~content =
+  let re = Re.compile version_line_re in
+  let is_not_version_field line = not (Re.execp re line) in
+  let without_version = List.filter is_not_version_field content in
+  Fmt.strf "version: \"%s\"" version :: without_version
+
 let distrib_version_opam_files ~dry_run ~version =
   infer_pkg_names Fpath.(v ".") [] >>= fun names ->
   List.fold_left (fun acc name ->
       acc >>= fun _acc ->
       let file = Fpath.(v name + "opam") in
       OS.File.read_lines file
-      >>= fun o ->
-      let o = List.filter (fun l -> not (String.is_prefix ~affix:"version" l)) o in
-      let o =  Fmt.strf "version: \"%s\"" version :: o in
-      Sos.write_file ~dry_run file (String.concat ~sep:"\n" o))
+      >>= fun content ->
+      let content = prepare_opam_for_distrib ~version ~content in
+      Sos.write_file ~dry_run file (String.concat ~sep:"\n" content))
     (Ok ()) names
 
 let distrib_prepare ~dry_run p ~dist_build_dir ~version =
