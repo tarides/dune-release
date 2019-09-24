@@ -1,3 +1,4 @@
 (test
  (name tests)
- (libraries dune-release alcotest))
+ (libraries dune-release alcotest)
+ (action (run %{test} -e)))

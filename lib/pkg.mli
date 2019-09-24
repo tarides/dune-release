@@ -154,6 +154,14 @@ val extract_tag : t -> (string, Sos.error) result
 
 val dev_repo : t -> (string option, Sos.error) result
 
+(**/**)
+
+val version_line_re : Re.t
+
+val prepare_opam_for_distrib : version: string -> content: string list -> string list
+
+(**/**)
+
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
 
