@@ -19,11 +19,11 @@ let run_delegate ~dry_run del args =
 
 (* Publish request *)
 
-let publish_distrib ~dry_run ~msg ~archive ~yes pkg =
+let publish_distrib ~dry_run ~msg ~archive ~yes ~draft_release pkg =
   Pkg.delegate pkg >>= function
   | None     ->
       App_log.status (fun l -> l "Publishing to github");
-      Github.publish_distrib ~dry_run ~yes ~msg ~archive pkg >>= fun url ->
+      Github.publish_distrib ~dry_run ~yes ~msg ~archive ~draft_release pkg >>= fun url ->
       Pkg.archive_url_path pkg >>= fun url_file ->
       Sos.write_file ~dry_run url_file url >>= fun () ->
       Ok ()

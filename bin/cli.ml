@@ -113,6 +113,10 @@ let yes =
   let doc = "Do not prompt for confirmation and keep going instead" in
   Arg.(value & flag & info ["y"; "yes"] ~doc)
 
+let draft_release =
+  let doc = "When publishing to github, create a draft release" in
+  Arg.(value & flag & info ~doc ["draft-release"])
+
 (* Terms *)
 
 let setup style_renderer log_level cwd =

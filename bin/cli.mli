@@ -60,6 +60,9 @@ val dry_run: bool Term.t
 val yes: bool Term.t
 (** A [--yes] option to skip confirmation prompts. *)
 
+val draft_release : bool Term.t
+(** A [--draft-release] option to create a draft release on Github. *)
+
 (** {1 Terms} *)
 
 val setup : unit Term.t

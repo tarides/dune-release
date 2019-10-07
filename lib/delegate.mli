@@ -13,7 +13,8 @@ open Bos_setup
 (** {1 Publish} *)
 
 val publish_distrib:
-  dry_run:bool -> msg:string -> archive:Fpath.t -> yes: bool -> Pkg.t -> (unit, R.msg) result
+  dry_run:bool -> msg:string -> archive:Fpath.t -> yes: bool -> draft_release: bool -> Pkg.t ->
+  (unit, R.msg) result
 
 val publish_doc:
   dry_run:bool -> msg:string -> docdir:Fpath.t -> yes: bool -> Pkg.t -> (unit, R.msg) result

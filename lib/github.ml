@@ -160,7 +160,7 @@ let github_auth ~dry_run ~user token =
   Sos.read_file ~dry_run token >>= fun token ->
   Ok (strf "%s:%s" user token)
 
-let create_release_json version msg =
+let create_release_json ~draft_release version msg =
   let escape_for_json s =
     let len = String.length s in
     let max = len - 1 in
@@ -189,14 +189,16 @@ let create_release_json version msg =
     in
     loop 0 0
   in
-  strf "{ \"tag_name\" : \"%s\", \
-          \"body\" : \"%s\" }" (escape_for_json version) (escape_for_json msg)
+  strf "{ \"tag_name\" : \"%s\", \"body\" : \"%s\", \"draft\" : %B }"
+    (escape_for_json version)
+    (escape_for_json msg)
+    draft_release
 
 let run_with_auth ~dry_run auth curl k =
   let auth = strf "-u %s" auth in
   Sos.run_io ~dry_run curl (OS.Cmd.in_string auth) k
 
-let curl_create_release ~token ~dry_run curl version msg user repo =
+let curl_create_release ~token ~dry_run ~draft_release curl version msg user repo =
   let parse_release_id resp = (* FIXME this is retired. *)
     let headers = String.cuts ~sep:"\r\n" resp in
     try
@@ -211,7 +213,7 @@ let curl_create_release ~token ~dry_run curl version msg user repo =
       R.error_msgf "Could not find release id in response:\n%s."
         (String.concat ~sep:"\n" headers)
   in
-  let data = create_release_json version msg in
+  let data = create_release_json ~draft_release version msg in
   let uri = strf "https://api.github.com/repos/%s/%s/releases" user repo in
   github_auth ~dry_run ~user token >>= fun auth ->
   let cmd = Cmd.(curl % "-D" % "-" % "--data" % data % uri) in
@@ -285,7 +287,7 @@ let assert_tag_exists ~dry_run tag =
   if Vcs.tag_exists ~dry_run repo tag then Ok ()
   else R.error_msgf "%s is not a valid tag" tag
 
-let publish_distrib ~dry_run ~msg ~archive ~yes p =
+let publish_distrib ~dry_run ~msg ~archive ~yes ~draft_release p =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   let curl = Cmd.(v "curl" % "-L" % "-s" % "-S" % "-K" % "-") in
   (match Pkg.distrib_user_and_repo p with
@@ -312,7 +314,7 @@ let publish_distrib ~dry_run ~msg ~archive ~yes p =
   >>= fun () ->
   App_log.status
     (fun l -> l "Creating release %a on %a via github's API" Text.Pp.version tag Text.Pp.url upstr);
-  curl_create_release ~token ~dry_run curl tag msg user repo
+  curl_create_release ~token ~dry_run ~draft_release curl tag msg user repo
   >>= fun id ->
   App_log.success (fun l -> l "Succesfully created release with id %d" id);
   Prompt.confirm_or_abort ~yes

@@ -27,6 +27,7 @@ end
 val publish_distrib :
   dry_run: bool -> msg:string -> archive:Fpath.t ->
   yes: bool ->
+  draft_release: bool ->
   Pkg.t -> (string, R.msg) Result.result
 
 val publish_doc :
