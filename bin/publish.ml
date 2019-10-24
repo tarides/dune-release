@@ -23,7 +23,9 @@ let publish_doc ~dry_run ~yes pkg_names pkg =
   >>= fun dir -> OS.Dir.exists dir
   >>= fun force -> Pkg.infer_pkg_names dir pkg_names
   >>= fun pkg_names ->
-  App_log.status (fun l -> l "Selected packages: %a" Fmt.(list (styled `Bold string)) pkg_names);
+  App_log.status (fun l -> l "Selected packages: %a"
+                     Fmt.(list ~sep:(unit "@,") (styled `Bold string))
+                     pkg_names);
   App_log.status (fun l -> l "Generating documentation from %a" Text.Pp.path archive);
   gen_doc ~dry_run ~force dir pkg_names
   >>= fun docdir -> Delegate.publish_doc ~dry_run ~yes pkg ~msg ~docdir
