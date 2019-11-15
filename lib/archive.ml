@@ -5,6 +5,7 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
+open Stdext
 
 (* Ustar archives *)
 
@@ -23,59 +24,70 @@ module Tar = struct
 
   let set_filename h f =
     let s = to_unix_path_string f in
+    let error = strf "%a: file name too long" Fpath.pp f in
+    let blit a b c d e =
+      R.reword_error (fun _ -> R.msg error) (Sbytes.blit_string a b c d e)
+    in
     match String.length s with
-    | n when n <= 100 -> Bytes.blit_string s 0 h 0 (String.length s)
+    | n when n <= 100 ->
+        blit s 0 h 0 (String.length s)
     | _ ->
-        try match String.cut ~rev:true ~sep:"/" s with
-        | None -> raise Exit
+        match String.cut ~rev:true ~sep:"/" s with
         | Some (p, n) ->
             (* This could be made more clever by trying to find
                the slash nearest to the half string position. *)
-            if String.length p > 155 || String.length n > 100 then raise Exit;
-            Bytes.blit_string n 0 h 0 (String.length n);
-            Bytes.blit_string p 0 h 345 (String.length p);
-        with
-        | Exit -> failwith (strf "%a: file name too long" Fpath.pp f)
+            if String.length p > 155 || String.length n > 100 then
+              R.error_msg error
+            else
+              blit n 0 h 0 (String.length n) >>= fun () ->
+              blit p 0 h 345 (String.length p)
+        | None -> R.error_msg error
 
-  let set_string off h s = Bytes.blit_string s 0 h off (String.length s)
+  let set_string off h s =
+    R.reword_error
+      (fun _ -> R.msgf "%S too long" s)
+      (Sbytes.blit_string s 0 h off (String.length s))
+
   let set_octal field off len (* terminating NULL included *) h n =
     let octal = Printf.sprintf "%0*o" (len - 1) n in
-    if String.length octal < len
-    then Bytes.blit_string octal 0 h off (String.length octal) else
-    failwith (strf "field %s: can't encode %d in %d-digit octal number"
-                field (len - 1) n)
+    if String.length octal < len then
+      R.reword_error
+        (fun _ -> R.msgf "field %s: cannot set %d at offset %d" field n off)
+        (Sbytes.blit_string octal 0 h off (String.length octal))
+    else
+      R.error_msg
+        (strf "field %s: can't encode %d in %d-digit octal number"
+           field (len - 1) n)
 
   let header_checksum h =
     let len = Bytes.length h in
     let rec loop acc i =
-      if i > len then acc else
-      loop (acc + (Char.to_int @@ Bytes.unsafe_get h i)) (i + 1)
+      if i > len then acc
+      else loop (acc + (Char.to_int @@ Bytes.unsafe_get h i)) (i + 1)
     in
     loop 0 0
 
   let header fname mode mtime size typeflag =
-    try
-      let h = Bytes.make 512 '\x00' in
-      set_filename h fname;
-      set_octal "mode"  100 8 h mode;
-      set_octal "owner" 108 8 h 0;
-      set_octal "group" 116 8 h 0;
-      set_octal "size"  124 12 h size;
-      set_octal "mtime" 136 12 h mtime;
-      set_string        148 h "        "; (* Checksum *)
-      set_string        156 h typeflag;
-      set_string        257 h "ustar";
-      set_string        263 h "00";
-      set_octal "devmajor" 329 8 h 0;
-      set_octal "devminor" 329 8 h 0;
-      let c = header_checksum h in
-      set_octal "checksum" 148 9 (* not NULL terminated *) h c;
-      Ok (Bytes.unsafe_to_string h)
-    with Failure msg -> R.error_msg msg
+    Sbytes.make 512 '\x00' >>= fun h ->
+    set_filename h fname >>= fun () ->
+    set_octal "mode"  100 8 h mode >>= fun () ->
+    set_octal "owner" 108 8 h 0 >>= fun () ->
+    set_octal "group" 116 8 h 0 >>= fun () ->
+    set_octal "size"  124 12 h size >>= fun () ->
+    set_octal "mtime" 136 12 h mtime >>= fun () ->
+    set_string        148 h "        " (* Checksum *) >>= fun () ->
+    set_string        156 h typeflag >>= fun () ->
+    set_string        257 h "ustar" >>= fun () ->
+    set_string        263 h "00" >>= fun () ->
+    set_octal "devmajor" 329 8 h 0 >>= fun () ->
+    set_octal "devminor" 329 8 h 0 >>= fun () ->
+    let c = header_checksum h in
+    set_octal "checksum" 148 9 (* not NULL terminated *) h c >>= fun () ->
+    Ok (Bytes.unsafe_to_string h)
 
   (* Files *)
 
-  let padding content = match String.length content mod 512  with
+  let padding content = match String.length content mod 512 with
   | 0 -> ""
   | n -> Bytes.unsafe_to_string (Bytes.make (512 - n) '\x00')
 
@@ -84,8 +96,8 @@ module Tar = struct
     | `Dir -> "5", 0, []
     | `File cont -> "0", String.length cont, [cont; padding cont]
     in
-    header fname mode mtime size typeflag
-    >>| fun header -> List.rev_append data (header :: t)
+    header fname mode mtime size typeflag >>| fun header ->
+    List.rev_append data (header :: t)
 
   (* Encode *)
 
@@ -111,20 +123,18 @@ let tar dir ~exclude_paths ~root ~mtime =
     | Some file -> Fpath.(root // file)
     in
     Logs.info (fun m -> m "Archiving %a" Fpath.pp fname);
-    tar
-    >>= fun tar -> OS.Dir.exists file
-    >>= function
+    tar >>= fun tar ->
+    OS.Dir.exists file >>= function
     | true -> Tar.add tar fname ~mode:0o775 ~mtime `Dir
     | false ->
-        OS.Path.Mode.get file
-        >>= fun mode -> OS.File.read file
-        >>= fun contents ->
+        OS.Path.Mode.get file >>= fun mode ->
+        OS.File.read file >>= fun contents ->
         let mode = if 0o100 land mode > 0 then 0o775 else 0o664 in
         Tar.add tar fname ~mode ~mtime (`File contents)
   in
-  path_set_of_dir dir ~exclude_paths
-  >>= fun fset -> Fpath.Set.fold tar_add fset (Ok Tar.empty)
-  >>| fun tar -> Tar.to_string tar
+  path_set_of_dir dir ~exclude_paths >>= fun fset ->
+  Fpath.Set.fold tar_add fset (Ok Tar.empty) >>| fun tar ->
+  Tar.to_string tar
 
 (* Bzip2 compression and unarchiving *)
 
@@ -145,11 +155,11 @@ let untbz ~dry_run ?(clean = false) ar =
   let archive_dir, ar = Fpath.split_base ar in
   let unarchive ar =
     let dir = Fpath.rem_ext ar in
-    OS.Cmd.must_exist tar_cmd
-    >>= fun _  -> clean_dir dir
-    >>= fun () -> OS.File.exists ar
-    >>= fun force -> Sos.run ~dry_run ~force Cmd.(tar_cmd % "-xjf" % p ar)
-    >>= fun () -> Ok Fpath.(archive_dir // dir)
+    OS.Cmd.must_exist tar_cmd >>= fun _ ->
+    clean_dir dir >>= fun () ->
+    OS.File.exists ar >>= fun force ->
+    Sos.run ~dry_run ~force Cmd.(tar_cmd % "-xjf" % p ar) >>= fun () ->
+    Ok Fpath.(archive_dir // dir)
   in
   R.join @@ Sos.with_dir ~dry_run archive_dir unarchive ar
 
