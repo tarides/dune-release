@@ -38,6 +38,8 @@
 - Improve the output of VCS command errors (#193, @gpetiot)
 - Better error handling when checking opam version (#195, @gpetiot)
 - Do not write 'version' and 'name' fields in opam file (#200, @gpetiot)
+- Use Yojson to parse github json response and avoid parsing bugs.
+  (#177, @gpetiot)
 
 ### Removed
 

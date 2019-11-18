@@ -16,6 +16,8 @@ module D = struct
   let fetch_head = "${fetch_head}"
 
   let token = "${token}"
+
+  let pr_url = "${pr_url}"
 end
 
 module Parse = struct
@@ -30,26 +32,6 @@ module Parse = struct
     | _ when Bos_setup.String.is_prefix uri ~affix:"https://" ->
         user_from_regexp_opt uri "https://github\\.com/\\(.+\\)/.+\\(\\.git\\)?"
     | _ -> None
-
-  let archive_upload_url response =
-    let open Re in
-    let re =
-      seq
-        [
-          str "\"browser_download_url\":";
-          rep space;
-          char '"';
-          group (non_greedy (rep any));
-          char '"';
-        ]
-    in
-    let compiled = compile re in
-    let error () =
-      R.error_msgf "Could not extract archive url from:\n %s" response
-    in
-    match exec_opt compiled response with
-    | Some groups when Group.test groups 1 -> Ok (Group.get groups 1)
-    | Some _ | None -> error ()
 end
 
 (* Publish documentation *)
@@ -183,78 +165,37 @@ let github_auth ~dry_run ~user token =
   else
     Sos.read_file ~dry_run token >>= fun token -> Ok (strf "%s:%s" user token)
 
-let run_with_auth ?(default_body = "") ~dry_run ~auth curl_t =
+let run_with_auth ?(default_body = `Null) ~dry_run ~auth curl_t =
   let Curl.{ url; args } = Curl.with_auth ~auth curl_t in
   if dry_run then
-    let open Format in
-    let _ =
-      Sos.show "exec:@[@ curl %a@]"
-        (pp_print_list ~pp_sep:pp_print_space pp_print_string)
-        args
-    in
-    Ok Curly.Response.{ code = 0; headers = []; body = default_body }
+    Sos.show "exec:@[@ curl %a@]"
+      Format.(pp_print_list ~pp_sep:pp_print_space pp_print_string)
+      args
+    >>| fun () -> default_body
   else
     OS.Cmd.must_exist (Cmd.v "curl") >>= fun _ ->
     match Curly.(run ~args (Request.make ~url ~meth:`POST ())) with
-    | Ok x -> Ok x
+    | Ok Curly.Response.{ body; _ } -> Json.from_string body
     | Error e -> R.error_msgf "curl execution failed: %a" Curly.Error.pp e
 
-let response_body r = r.Curly.Response.body
-
 let curl_create_release ~token ~dry_run version msg user repo =
-  let parse_release_id resp =
-    let headers = resp.Curly.Response.headers in
-    match List.assoc_opt "Location" headers with
-    | Some loc -> (
-        let not_slash c = not (Char.equal '/' c) in
-        let id = String.take ~rev:true ~sat:not_slash loc in
-        match String.to_int id with
-        | Some id -> Ok id
-        | None ->
-            R.error_msgf "Could not parse id from location header %S: %S" loc id
-        )
-    | None ->
-        let colon fs _ = Fmt.char fs ':' in
-        R.error_msgf "Could not find release id in response:\n%a"
-          Fmt.(list (pair ~sep:colon string string))
-          headers
-  in
   github_auth ~dry_run ~user token >>= fun auth ->
   let curl_t = Curl.create_release ~version ~msg ~user ~repo in
-  run_with_auth ~dry_run ~auth curl_t >>= parse_release_id
+  run_with_auth ~dry_run ~auth curl_t >>= fun resp ->
+  Github_v3_api.Release_response.release_id resp
 
 let curl_upload_archive ~token ~dry_run archive user repo release_id =
   let curl_t = Curl.upload_archive ~archive ~user ~repo ~release_id in
   github_auth ~dry_run ~user token >>= fun auth ->
-  run_with_auth ~dry_run ~auth curl_t
-  >>| response_body >>= Parse.archive_upload_url
+  run_with_auth ~dry_run ~auth curl_t >>= fun resp ->
+  Github_v3_api.Upload_response.browser_download_url resp
 
 let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo body =
-  let parse_url resp =
-    (* FIXME this is nuts. *)
-    let url =
-      Re.(
-        compile
-        @@ seq
-             [
-               bol;
-               str {|  "html_url":|};
-               rep space;
-               char '"';
-               group (rep (compl [ char '"' ]));
-             ])
-    in
-    let alread_exists = Re.(compile @@ str "A pull request already exists") in
-    try Ok (`Url Re.(Group.get (exec url resp) 1))
-    with Not_found ->
-      if Re.execp alread_exists resp then Ok `Already_exists
-      else R.error_msgf "Could not find html_url id in response:\n%s." resp
-  in
   let curl_t = Curl.open_pr ~title ~user ~branch ~body ~opam_repo in
   github_auth ~dry_run ~user:distrib_user token >>= fun auth ->
-  let default_body = {|  "html_url": "${pr_url}",|} in
-  run_with_auth ~dry_run ~default_body ~auth curl_t
-  >>| response_body >>= parse_url
+  let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
+  run_with_auth ~dry_run ~default_body ~auth curl_t >>= fun resp ->
+  Github_v3_api.Pull_request_response.html_url resp
 
 let dev_repo p =
   Pkg.dev_repo p >>= function

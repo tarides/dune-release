@@ -18,10 +18,6 @@ module Parse : sig
       - [user_from_remote_uri "https://github.com/username/repo.git"] returns
         [Some "username"].
       - Returns [None] if [remote_uri] isn't in the expected format. *)
-
-  val archive_upload_url : string -> (string, R.msg) Result.result
-  (** [archive_upload_url response] extracts the browser_download_url field from
-      a github release asset upload response. *)
 end
 
 (** {1 Publish} *)
