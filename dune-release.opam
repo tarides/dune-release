@@ -27,6 +27,7 @@ depends: [
   "logs"
   "odoc"
   "alcotest" {with-test}
+  "yaml"
 ]
 
 synopsis: "Release dune packages in opam"

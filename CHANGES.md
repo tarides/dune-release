@@ -9,6 +9,8 @@
 ### Fixed
 
 - Separate packages names by spaces in `publish` logs (#171, @hannesm)
+- Use Yaml to parse .yaml configuration files and avoid parsing bugs
+  (#178, @gpetiot)
 
 ### Removed
 

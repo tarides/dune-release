@@ -24,39 +24,50 @@ type t = {
   auto_open: bool option;
 }
 
-let of_yaml_exn str = (* ouch *)
-  let lines = String.cuts ~empty:false ~sep:"\n" str in
-  let dict () =
-    List.map (fun line ->
-        match String.cut ~sep:":" line with
-        | Some (k, v) -> String.trim k, String.trim v
-        | _ -> failwith "invalid format"
-      ) lines
-  in
-  let dict = dict () in
-  let find k = try Some (List.assoc k dict) with Not_found -> None in
-  let find_b k = match find k with
-  | None   -> None
-  | Some s -> Some (bool_of_string s)
-  in
-  let valid = ["user"; "remote"; "local"; "auto-open"; "keep-v"] in
-  List.iter (fun (k, _) ->
-      if not (List.mem k valid) then
-        Fmt.failwith "%S is not a valid configuration key." k
-    ) dict;
-  let local = match find "local" with
-  | None    -> None
-  | Some v  ->
-      match Fpath.of_string v with
-      | Ok x    -> Some x
-      | Error _ -> None
-  in
-  { user = find "user"; remote = find "remote"; local;
-    auto_open = find_b "auto-open"; keep_v = find_b "keep-v" }
-
-let of_yaml str =
-  try Ok (of_yaml_exn str)
-  with Failure s -> R.error_msg s
+let of_yaml ~filename ~content =
+  Yaml.of_string content >>= function
+  | `O fields ->
+      let check_valid_fields () =
+        let valid = ["user"; "remote"; "local"; "auto-open"; "keep-v"] in
+        List.fold_left (fun acc (k, _) ->
+            acc >>= fun () ->
+            if List.mem k valid then R.ok ()
+            else
+              R.error_msgf "%s: %S is not a valid configuration key." filename k
+          ) (R.ok()) fields
+      in
+      let read_string field =
+        match List.assoc_opt field fields with
+        | None -> R.ok None
+        | Some `Null -> R.ok None
+        | Some (`String s) -> R.ok (Some s)
+        | Some _ ->
+            R.error_msgf "%s: string expected for field %S" filename field
+      in
+      let read_bool field =
+        match List.assoc_opt field fields with
+        | None -> R.ok None
+        | Some `Null -> R.ok None
+        | Some (`Bool b) -> R.ok (Some b)
+        | Some _ ->
+            R.error_msgf "%s: boolean expected for field %S" filename field
+      in
+      check_valid_fields () >>= fun () ->
+      read_string "user" >>= fun user ->
+      read_string "remote" >>= fun remote ->
+      read_string "local" >>= fun local ->
+      read_bool "auto-open" >>= fun auto_open ->
+      read_bool "keep-v" >>= fun keep_v ->
+      let local =
+        match local with
+        | None -> None
+        | Some v ->
+            match Fpath.of_string v with
+            | Ok x    -> Some x
+            | Error _ -> None
+      in
+      R.ok { user; remote; local; auto_open; keep_v }
+  | _ -> R.error_msgf "%s: invalid format" filename
 
 let read_string default ~descr =
   let read () =
@@ -134,7 +145,8 @@ let file () =
 let find () =
   file () >>= fun file ->
   OS.File.exists file >>= fun exists ->
-  if exists then OS.File.read file >>= of_yaml >>| fun x -> Some x
+  if exists then OS.File.read file >>= fun content ->
+    of_yaml ~filename:(Fpath.to_string file) ~content >>| fun x -> Some x
   else Ok None
 
 let v ~user ~remote_repo ~local_repo pkgs =
