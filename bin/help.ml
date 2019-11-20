@@ -123,126 +123,6 @@ dune runtest";
          problem, start over with a new patch version release.");
     `Blocks (see_also ~cmds:[]); ]
 
-let delegate =
-  ("DUNE-RELEASE-DELEGATE", 7, "", version, dune_release_manual),
-  [ `S Manpage.s_name;
-    `P "dune-release-delegate - The dune-release publish delegate";
-    `S Manpage.s_description;
-    `P "The delegate of a package is a program invoked by dune-release to perform
-        actions that are difficult or not desirable to standardize within
-        dune-release itself, namely:";
-    `I ("$(b,dune-release publish)",
-        "Publish distribution archives and derived artefacts.");
-    `P "A sample delegate is provided at the end of this man page.";
-    `S "DELEGATE LOOKUP PROCEDURE";
-    `P "The delegate used by a package is defined by the first match in the
-        following lookup procedure.";
-    `I ("1. Command line", "Specified with the $(b,--delegate) option on
-         the command line.");
-    `I ("2. Environment variable.", "Specified in the DUNE_RELEASE_DELEGATE
-         environment variable.");
-    `I ("3. Homepage derived discovery.", "Consult the 'homepage' field of the
-        package's opam file, extract the second-level domain of the URI as
-        \\$NAME and uses the tool $(b,\\$NAME-dune-release-delegate) iff it exists
-        in the executable search path. For example if the homepage is
-        http://www.example.org/mypackage, an existing
-        $(b,example-dune-release-delegate) tool will be used.");
-    `I ("4. GitHub fallback.", "If the previous step yields
-         $(b,github-dune-release-delegate) but that it doesn't exist in the
-         executable search path.");
-    `S "DELEGATE PROTOCOL";
-    `P "The delegate is invoked by $(b,dune-release) with a request in order to
-        finish its own execution. This means that the delegate takes over
-        $(b,dune-release)'s standard channels and is in charge until the end of
-        execution (except on errors, see below).";
-    `P "The delegate always gets information as command line arguments with
-        file paths arguments given as absolute paths. The first argument is
-        always 'ipc' and is followed by a verbosity parameter:";
-    `P "my-dune-release-delegate ipc $(i,VERB) $(i,ARG) ...";
-    `P "$(i,VERB) will be either `quiet', `error', `warning', `info' or
-        `debug' and the delegate must adjust its logging level appropriately.
-        The remaining arguments are the request, see below for requests
-        made by $(b,dune-release).";
-    `P "The delegate must always exit with one of the following exit codes:";
-    `I ("0", "The request is successful."); `Noblank;
-    `I ("1", "The request is unsupported."); `Noblank;
-    `I ("2", "The request errored.");
-    `P "Exit 0 must be returned iff the request could be fulfilled according
-        to its semantics.";
-    `P "Exit 1 must be returned iff the request arguments cannot be
-        understood or if the request is not implemented by the delegate.
-        In this case the delegate must produce no output.";
-    `P "Exit 2 must be returned iff the request could not be fulfilled
-        according to its semantics. In this case it is the delegate's duty
-        to provide good error messages for diagnosis on standard output";
-    `P "In both non-zero exit codes, it is not the delegate's duty to
-        try to save request data. In these cases $(b,dune-release) will take over
-        again in order to prevent user input data loss. This
-        occurs for example on issue creation, so that the issue
-        description the user may have input interactively is not
-        lost but \"saved\" to standard output.";
-    `S "PUBLISH DELEGATION";
-    `P "Publish delegation requests have the form:";
-    `P "publish $(i,ACTION) $(i,ARG)...";
-    `P "The following actions are currently defined.";
-    `I ("publish distrib $(i,DISTRIB_URI) $(i,NAME) $(i,VERSION)
-         $(i,MSG) $(i,ARCHIVE)",
-        "Publish the distribution archive file $(i,ARCHIVE) for the package
-         named $(i,NAME) at version $(i,VERSION) with publication
-         message $(i,MSG). See dune-release API's documentation
-         for information about the value of $(i,DISTRIB_URI).");
-    `I ("publish doc $(i,DOC_URI) $(i,NAME) $(i,VERSION) $(i,MSG) $(i,DOCDIR)",
-        "Publish the documentation directory $(i,DOCDIR) for the package
-         named $(i,NAME) at version $(i,VERSION) with publication message
-         $(i,MSG). $(i,DOC_URI) has the value of the doc field of the
-         package's opam file.");
-    `I ("publish alt $(i,DISTRIB_URI) $(i,KIND) $(i,NAME) $(i,VERSION)
-         $(i,MSG) $(i,ARCHIVE)",
-        "Alternative publication artefact named $(i,KIND). The semantics
-         of the action is left to the delegate. The request arguments
-         are the same as those of the distrib action.");
-    `S "SAMPLE UNSUPPORTIVE DELEGATE";
-    `P "This delegate script can be used as a blueprint. All requests
-        are simply unsupported.";
-`Pre "\
-#!/usr/bin/env ocaml
-#use \"topfind\"
-#require \"bos.setup\"
-open Bos_setup
-
-let unsupported = Ok 1
-
-let publish = function
-| \"distrib\" :: uri :: name :: version :: msg :: archive :: _ ->
-    unsupported
-| \"doc\" :: uri :: name :: version :: msg :: docdir :: _ ->
-    unsupported
-| \"alt\" :: kind :: uri :: name :: version :: msg :: archive :: _ ->
-    unsupported
-| args ->
-    unsupported
-
-let request = function
-| \"publish\" :: args -> publish args
-| args -> unsupported
-
-let main () =
-  let doc = \"the unsupportive delegate\" in
-  begin match OS.Arg.(parse ~doc ~pos:string ()) with
-  | \"ipc\" :: verbosity :: req ->
-      Logs.level_of_string verbosity
-      >>= fun level -> Logs.set_level level; request req
-  | \"ipc\" :: [] ->
-      R.error_msg \"malformed delegate request, verbosity is missing\"
-  | args ->
-      R.error_msgf \"unknown arguments: %s\" (String.concat ~sep:\" \" args)
-  end
-  |> Logs.on_error_msg ~use:(fun () -> 2)
-
-let () = exit (main ())
-";
-    `Blocks (see_also ~cmds:["dune-release-issue"; "dune-release-publish"]); ]
-
 let troubleshoot =
   ("DUNE-RELEASE-TROUBLESHOOT", 7, "", version, dune_release_manual),
   [ `S Manpage.s_name;
@@ -307,7 +187,6 @@ let files =
 
 let pages =
   [ "release", release;
-    "delegate", delegate;
     "troubleshoot", troubleshoot;
     "files", files]
 

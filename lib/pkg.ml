@@ -36,7 +36,6 @@ type t =
     tag : string option;
     version : string option;
     drop_v : bool;
-    delegate: Cmd.t option;
     build_dir : Fpath.t option;
     opam : Fpath.t option;
     opam_descr : Fpath.t option;
@@ -48,7 +47,7 @@ type t =
     distrib_uri : string option;
     distrib_file : Fpath.t option;
     publish_msg : string option;
-    publish_artefacts : [`Distrib | `Doc | `Alt of string] list option }
+    publish_artefacts : [`Distrib | `Doc] list option }
 
 let opam_fields p = Lazy.force p.opam_fields
 let opam_field p f = opam_fields p >>| fun fields -> String.Map.find f fields
@@ -59,9 +58,6 @@ let opam_field_hd p f = opam_field p f >>| function
 let opam_homepage p = opam_field_hd p "homepage"
 let opam_doc p = opam_field_hd p "doc"
 let opam_homepage_sld p = opam_homepage p >>| function
-  | None -> None
-  | Some uri -> match uri_sld uri with None -> None | Some sld -> Some (uri, sld)
-let opam_doc_sld p = opam_doc p >>| function
   | None -> None
   | Some uri -> match uri_sld uri with None -> None | Some sld -> Some (uri, sld)
 
@@ -80,47 +76,6 @@ let drop_initial_v version = match String.head version with
 let version p = match p.version with
 | Some v -> Ok v
 | None   -> tag p >>| fun t -> if p.drop_v then drop_initial_v t else t
-
-let delegate p =
-  let not_found = function
-  | None ->
-    R.error_msg
-      "Package delegate command cannot be found (no homepage or doc field). \
-       Try `dune-release help delegate` for more information."
-  | Some cmd ->
-    R.error_msgf
-      "%a: package delegate cannot be found. \
-       Try `dune-release help delegate` for more information."
-      Cmd.pp cmd
-  in
-  match p.delegate with
-  | Some cmd -> Ok (Some cmd)
-  | None ->
-      let delegate =
-        match OS.Env.(value "DUNE_RELEASE_DELEGATE" (some string) ~absent:None) with
-        | Some cmd -> Some cmd
-        | None     -> None
-      in
-      let guess_delegate () =
-        match delegate with
-        | Some d -> Ok d
-        | None   ->
-            let cmd sld = strf "%s-dune-release-delegate" sld in
-            (* first look at `doc:` then `homepage:` *)
-            opam_doc_sld p >>= function
-            | Some (_, sld) -> Ok (cmd sld)
-            | None -> opam_homepage_sld p >>= function
-              | Some (_, sld) -> Ok (cmd sld)
-              | None -> not_found None
-      in
-      guess_delegate () >>= fun cmd ->
-      let x = Cmd.v cmd in
-      OS.Cmd.exists x >>= function
-      | true -> Ok (Some x)
-      | false ->
-          if cmd <> "github-dune-release-delegate"
-          then not_found (Some x)
-          else Ok None
 
 let build_dir p = match p.build_dir with
 | Some b -> Ok b
@@ -428,7 +383,7 @@ let infer_name dir =
 
 let v ~dry_run
     ?name ?version ?tag ?(keep_v = false)
-    ?delegate ?build_dir ?opam:opam_file ?opam_descr
+    ?build_dir ?opam:opam_file ?opam_descr
     ?readme ?change_log ?license ?distrib_uri ?distrib_file ?publish_msg
     ?publish_artefacts ?(distrib=Distrib.v ()) ()
   =
@@ -439,7 +394,7 @@ let v ~dry_run
   let name = Rresult.R.error_msg_to_invalid_arg name in
   let rec opam_fields = lazy (opam p >>= fun o -> Opam.File.fields ~dry_run o)
   and p =
-    { name; version; tag; drop_v = not keep_v; delegate; build_dir;
+    { name; version; tag; drop_v = not keep_v; build_dir;
       opam = opam_file; opam_descr;
       opam_fields; readmes; change_logs; licenses; distrib_uri; distrib_file;
       publish_msg; publish_artefacts; distrib }

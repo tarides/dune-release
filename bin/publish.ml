@@ -28,22 +28,21 @@ let publish_doc ~dry_run ~yes pkg_names pkg =
                      pkg_names);
   App_log.status (fun l -> l "Generating documentation from %a" Text.Pp.path archive);
   gen_doc ~dry_run ~force dir pkg_names
-  >>= fun docdir -> Delegate.publish_doc ~dry_run ~yes pkg ~msg ~docdir
+  >>= fun docdir ->
+  App_log.status (fun l -> l "Publishing to github");
+  Github.publish_doc ~dry_run ~msg ~docdir ~yes pkg
 
 let publish_distrib ~dry_run ~yes pkg =
   App_log.status (fun l -> l "Publishing distribution");
-  Pkg.distrib_file ~dry_run pkg
-  >>= fun archive -> Pkg.publish_msg pkg
-  >>= fun msg     -> Delegate.publish_distrib ~dry_run ~yes pkg ~msg ~archive
-
-let publish_alt ~dry_run pkg kind =
-  App_log.status (fun l -> l "Publishing %s" kind);
-  Pkg.distrib_file ~dry_run pkg
-  >>= fun archive -> Pkg.publish_msg pkg
-  >>= fun msg     -> Delegate.publish_alt ~dry_run pkg ~kind ~msg ~archive
+  Pkg.distrib_file ~dry_run pkg >>= fun archive ->
+  Pkg.publish_msg pkg >>= fun msg ->
+  App_log.status (fun l -> l "Publishing to github");
+  Github.publish_distrib ~dry_run ~yes ~msg ~archive pkg >>= fun url ->
+  Pkg.archive_url_path pkg >>= fun url_file ->
+  Sos.write_file ~dry_run url_file url
 
 let publish ()
-    build_dir name pkg_names version tag keep_v opam delegate change_log
+    build_dir name pkg_names version tag keep_v opam change_log
     distrib_uri distrib_file publish_msg dry_run publish_artefacts yes
   =
   begin
@@ -55,13 +54,12 @@ let publish ()
     let pkg =
       Pkg.v ~dry_run ?name ?version ?tag ~keep_v ?build_dir ?opam
         ?change_log ?distrib_uri ?distrib_file ?publish_msg
-        ?publish_artefacts ?delegate ()
+        ?publish_artefacts ()
     in
     let publish_artefact acc artefact =
       acc >>= fun () -> match artefact with
       | `Doc      -> publish_doc ~dry_run ~yes pkg_names pkg
       | `Distrib  -> publish_distrib ~dry_run ~yes pkg
-      | `Alt kind -> publish_alt ~dry_run pkg kind
     in
     Pkg.publish_artefacts pkg
     >>= fun todo -> List.fold_left publish_artefact (Ok ()) todo
@@ -73,33 +71,15 @@ let publish ()
 
 open Cmdliner
 
-let delegate =
-  let doc =
-    "The delegate tool $(docv) to use. If absent, see dune-release-delegate(7)
-     for the lookup procedure."
-  in
-  let docv = "TOOL" in
-  let to_cmd = function None -> None | Some s -> Some (Cmd.v s) in
-  Term.(const to_cmd $
-        Arg.(value & opt (some string) None & info ["delegate"] ~doc ~docv))
-
 let artefacts =
-  let alt_prefix = "alt-" in
   let parser = function
   | "do" | "doc" -> `Ok `Doc
   | "di" | "dis" | "dist" | "distr" | "distri" | "distrib" -> `Ok `Distrib
-  | s when String.is_prefix ~affix:alt_prefix s ->
-      begin match String.(with_range ~first:(length alt_prefix) s) with
-      | "" -> `Error ("`alt-' alternative artefact kind is missing")
-      | kind -> `Ok (`Alt kind)
-      end
-
   | s -> `Error (strf "`%s' unknown publication artefact" s)
   in
   let printer ppf = function
   | `Doc     -> Fmt.string ppf "doc"
   | `Distrib -> Fmt.string ppf "distrib"
-  | `Alt a   -> Fmt.pf ppf "alt-%s" a
   in
   let artefact = parser, printer in
   let doc = strf "The artefact to publish. $(docv) must be either `doc` or
@@ -112,9 +92,6 @@ let artefacts =
 let doc = "Publish package distribution archives and derived artefacts"
 let sdocs = Manpage.s_common_options
 let exits = Cli.exits
-let envs =
-  [ Term.env_info "DUNE_RELEASE_DELEGATE" ~doc:"The package delegate to use, see
-    dune-release-delegate(7)."; ]
 
 let man_xrefs = [`Main; `Cmd "distrib" ]
 let man =
@@ -130,21 +107,15 @@ let man =
         "Publishes a distribution archive on the WWW.");
     `I ("$(b,doc)",
         "Publishes the documentation of a distribution archive on the WWW.");
-    `I ("$(b,alt)-$(i,KIND)",
-        "Publishes the alternative artefact of kind $(i,KIND) of
-         a distribution archive. The semantics of alternative artefacts
-         is left to the delegate, it could be anything, an email,
-         a pointless tweet, a feed entry etc. See dune-release-delegate(7) for
-         more details.");
   ]
 
 let cmd =
   Term.(pure publish $ Cli.setup $ Cli.build_dir $
         Cli.dist_name $ Cli.pkg_names
         $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v
-        $ Cli.dist_opam $ delegate $ Cli.change_log $ Cli.dist_uri $ Cli.dist_file $
+        $ Cli.dist_opam $ Cli.change_log $ Cli.dist_uri $ Cli.dist_file $
         Cli.publish_msg $ Cli.dry_run $ artefacts $ Cli.yes),
-  Term.info "publish" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
+  Term.info "publish" ~doc ~sdocs ~exits ~envs:[] ~man ~man_xrefs
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

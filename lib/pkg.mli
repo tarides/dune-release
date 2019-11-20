@@ -19,7 +19,6 @@ val v :
   ?version:string ->
   ?tag:string ->
   ?keep_v:bool ->
-  ?delegate:Cmd.t ->
   ?build_dir:Fpath.t ->
   ?opam:Fpath.t ->
   ?opam_descr:Fpath.t ->
@@ -29,7 +28,7 @@ val v :
   ?distrib_uri:string ->
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
-  ?publish_artefacts:[`Distrib | `Doc | `Alt of string] list ->
+  ?publish_artefacts:[`Distrib | `Doc] list ->
   ?distrib:Distrib.t ->
   unit -> t
 
@@ -50,9 +49,6 @@ val version : t -> (string, R.msg) result
 (** [version p] is [p]'s version string.*)
 
 val tag : t -> (string, R.msg) result
-
-val delegate : t -> (Cmd.t option, R.msg) result
-(** [delegate p] is [p]'s delegate. *)
 
 val build_dir : t -> (Fpath.t, R.msg) result
 (** [build_dir p] is [p]'s build directory. *)
@@ -118,7 +114,7 @@ val distrib_filename : ?opam:bool -> t -> (Fpath.t, R.msg) result
     [opam] is [true] (defaults to [false]), the name follows opam's
     naming conventions. *)
 
-val publish_artefacts : t -> ([`Distrib | `Doc | `Alt of string] list, R.msg) result
+val publish_artefacts : t -> ([`Distrib | `Doc] list, R.msg) result
 (** [publish_artefacts p] are [p]'s publication artefacts. *)
 
 (** {1 Uri} *)

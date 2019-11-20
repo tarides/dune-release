@@ -12,6 +12,8 @@
 
 ### Removed
 
+- Remove the delegate API (#180, @gpetiot)
+
 ### Security
 
 ## 1.3.3 (2019-09-30)
