@@ -16,7 +16,7 @@ val cmd : Cmd.t
 (** {1:publish Publish} *)
 
 val prepare : dry_run:bool -> ?msg:string ->
-  local_repo:Fpath.t -> remote_repo:string ->
+  local_repo:Fpath.t -> remote_repo:Remote_repo.t ->
   opam_repo: (string * string) ->
   version:string -> string list -> (string, R.msg) result
 (** [prepare ~local_repo ~version pkgs] adds the packages

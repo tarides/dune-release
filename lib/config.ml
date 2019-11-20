@@ -89,7 +89,7 @@ let create_config ~user ~remote_repo ~local_repo pkgs file =
   >>= fun default_user ->
   let user = read_string default_user ~descr:"What is your GitHub ID?" in
   let default_remote = match remote_repo with
-  | Some r -> r
+  | Some r -> Remote_repo.uri r
   | None   -> strf "git@github.com:%s/opam-repository" user
   in
   let default_local = match local_repo with

@@ -9,12 +9,6 @@
 open Bos_setup
 
 module Parse : sig
-  val user_from_remote : string -> string option
-  (** [user_from_remote remote_uri] is the username in the github URI [remote_uri]
-      ie [user_from_remote_uri "git@github.com:username/repo.git"] is [Some "username"].
-      Returns [None] if [remote_uri] isn't in the expected format.
-  *)
-
   val archive_upload_url : string -> (string, R.msg) Result.result
   (** [archive_upload_url response] extracts the browser_download_url field from a github
       release asset upload response. *)

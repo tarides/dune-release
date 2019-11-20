@@ -135,11 +135,7 @@ let open_pr
       pp_space ()
       changes
   in
-  let user =
-    match Github.Parse.user_from_remote remote_repo with
-    | Some user -> user
-    | None -> distrib_user
-  in
+  let user = Option.value (Remote_repo.user remote_repo) ~default:distrib_user in
   Prompt.confirm_or_abort ~yes ~question:(fun l -> l "Open PR to %a?" pp_opam_repo opam_repo)
   >>= fun () ->
   App_log.status
@@ -148,7 +144,7 @@ let open_pr
          Text.Pp.commit
          branch
          Text.Pp.url
-         remote_repo
+         (Remote_repo.uri remote_repo)
          pp_opam_repo
          opam_repo);
   Github.open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo msg >>= function
@@ -248,6 +244,7 @@ let opam () dry_run build_dir local_repo remote_repo opam_repo user keep_v
         ) pkg_names
     in
     let opam_repo = match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r in
+    let remote_repo = Option.map Remote_repo.make remote_repo in
     pkgs >>= fun pkgs ->
     match action with
     | `Descr -> descr pkgs
@@ -270,7 +267,7 @@ let opam () dry_run build_dir local_repo remote_repo opam_repo user keep_v
         | Some r -> Ok r
         | None ->
             match config.remote with
-            | Some r -> Ok r
+            | Some r -> Ok (Remote_repo.make r)
             | None   -> R.error_msg "Unknown remote repository.")
         >>= fun remote_repo ->
         App_log.status (fun m -> m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);

@@ -9,6 +9,7 @@
 ### Fixed
 
 - Separate packages names by spaces in `publish` logs (#171, @hannesm)
+- Fix the parsing of the user name from https remote uri (#179, @gpetiot)
 
 ### Removed
 

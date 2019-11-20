@@ -14,15 +14,6 @@ module D = struct
 end
 
 module Parse = struct
-  let user_from_remote remote_uri =
-    let ssh_uri_regexp =
-      Re.Emacs.compile_pat "git@github\\.com:\\(.+\\)/.+\\(\\.git\\)?"
-    in
-    try
-      let substrings = Re.exec ssh_uri_regexp remote_uri in
-      Some (Re.Group.get substrings 1)
-    with Not_found -> None
-
   let archive_upload_url response =
     let open Re in
     let re =

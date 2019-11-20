@@ -25,7 +25,7 @@ type t = {
 
 val v:
   user:string option ->
-  remote_repo:string option ->
+  remote_repo:Remote_repo.t option ->
   local_repo:string option -> Pkg.t list -> (t, Bos_setup.R.msg) result
 
 val find: unit -> (t option, Bos_setup.R.msg) result

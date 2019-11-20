@@ -126,9 +126,10 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
   | h::t -> prepare_package h >>= fun () -> prepare_packages t
   in
   let commit_and_push () =
+    let uri = Remote_repo.uri remote_repo in
     Sos.run_quiet ~dry_run ~sandbox:false Cmd.(git % "commit" %% msg) >>= fun () ->
-    App_log.status (fun l -> l "Pushing %a to %a" Text.Pp.commit branch Text.Pp.url remote_repo);
-    Sos.run_quiet ~dry_run ~sandbox:false Cmd.(git % "push" % "--force" % remote_repo % branch)
+    App_log.status (fun l -> l "Pushing %a to %a" Text.Pp.commit branch Text.Pp.url uri);
+    Sos.run_quiet ~dry_run ~sandbox:false Cmd.(git % "push" % "--force" % uri % branch)
   in
   Sos.with_dir ~dry_run local_repo (fun () ->
       prepare_repo () >>= fun () ->
