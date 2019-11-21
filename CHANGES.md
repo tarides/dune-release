@@ -8,6 +8,8 @@
 
 ### Fixed
 
+- Separate packages names by spaces in `publish` logs (#171, @hannesm)
+
 ### Removed
 
 ### Security
