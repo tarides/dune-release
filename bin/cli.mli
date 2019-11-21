@@ -17,17 +17,17 @@ val path_arg : Fpath.t Arg.conv
 val pkg_names : string list Term.t
 (** A [--pkg-names] option to specify the packages to release. *)
 
-val pkg_version: string option Term.t
+val pkg_version : string option Term.t
 (** A [--pkg-version] option to specify the packages version. *)
 
-val keep_v: bool Term.t
+val keep_v : bool Term.t
 (** A [--keep-v] option to not drop the 'v' at the beginning of
    version strings. *)
 
 val dist_name : string option Term.t
 (** A [--name] option to specify the distribution name. *)
 
-val dist_tag: string option Term.t
+val dist_tag : string option Term.t
 (** A [--tag] option to define the tag to build the distribution from. *)
 
 val dist_file : Fpath.t option Term.t
@@ -54,10 +54,10 @@ val build_dir : Fpath.t option Term.t
 val publish_msg : string option Term.t
 (** A [--msg] option to define a publication message. *)
 
-val dry_run: bool Term.t
+val dry_run : bool Term.t
 (** A [--dry-run] option to do not perform any action. *)
 
-val yes: bool Term.t
+val yes : bool Term.t
 (** A [--yes] option to skip confirmation prompts. *)
 
 (** {1 Terms} *)

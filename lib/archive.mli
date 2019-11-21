@@ -11,7 +11,10 @@ open Bos_setup
 (** {1 Ustar archives} *)
 
 val tar :
-  Fpath.t -> exclude_paths:Fpath.set -> root:Fpath.t -> mtime:int ->
+  Fpath.t ->
+  exclude_paths:Fpath.set ->
+  root:Fpath.t ->
+  mtime:int ->
   (string, R.msg) result
 (** [tar dir ~exclude_paths ~root ~mtime] is a (us)tar archive that
     contains the file hierarchy [dir] except the relative hierarchies
@@ -30,8 +33,8 @@ val tar :
 val ensure_bzip2 : unit -> (unit, R.msg) result
 (** [ensure_bzip2 ()] makes sure the [bzip2] utility is available. *)
 
-val bzip2 : dry_run:bool -> ?force:bool ->
-  dst:Fpath.t -> string -> (unit, R.msg) result
+val bzip2 :
+  dry_run:bool -> ?force:bool -> dst:Fpath.t -> string -> (unit, R.msg) result
 (** [bzip2 dst s] compresses [s] to [dst] using bzip2. *)
 
 val ensure_tar : unit -> (unit, R.msg) result

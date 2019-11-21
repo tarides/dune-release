@@ -15,10 +15,15 @@ val cmd : Cmd.t
 
 (** {1:publish Publish} *)
 
-val prepare : dry_run:bool -> ?msg:string ->
-  local_repo:Fpath.t -> remote_repo:string ->
-  opam_repo: (string * string) ->
-  version:string -> string list -> (string, R.msg) result
+val prepare :
+  dry_run:bool ->
+  ?msg:string ->
+  local_repo:Fpath.t ->
+  remote_repo:string ->
+  opam_repo:string * string ->
+  version:string ->
+  string list ->
+  (string, R.msg) result
 (** [prepare ~local_repo ~version pkgs] adds the packages
    [pkg.version] to a new branch in the local opam repository
    [local_repo], using the commit message [msg] (if any). Return the
@@ -35,7 +40,6 @@ val ocaml_base_packages : String.set
 
 (** opam files *)
 module File : sig
-
   (** {1:file opam file} *)
 
   val field_names : String.set
@@ -43,7 +47,7 @@ module File : sig
       {!fields}, excluding extension fields (not yet supported by
       [opam-lib] 1.2.2). *)
 
-  val fields : dry_run:bool -> Fpath.t -> ((string list) String.map , R.msg) result
+  val fields : dry_run:bool -> Fpath.t -> (string list String.map, R.msg) result
   (** [fields f] returns a simplified model of the fields of the opam
       file [f]. The domain of the result is included in
       {!field_names}. Note that the [depends:] and [depopts:] fields
@@ -51,7 +55,7 @@ module File : sig
 
   (** {1:deps Dependencies} *)
 
-  val deps : ?opts:bool -> (string list) String.map -> String.set
+  val deps : ?opts:bool -> string list String.map -> String.set
   (** [deps ~opts fields] returns the packages mentioned in the [depends:]
       fields, if [opts] is [true] (default) those from [depopts:] are added
       aswell. *)
@@ -59,7 +63,6 @@ end
 
 (** [descr] files. *)
 module Descr : sig
-
   (** {1:descr Descr file} *)
 
   type t = string * string option
@@ -72,8 +75,7 @@ module Descr : sig
   val to_string : t -> string
   (** [to_string d] is [d] as a string. *)
 
-  val of_readme :
-    ?flavour:Text.flavour -> string -> (t, R.msg) result
+  val of_readme : ?flavour:Text.flavour -> string -> (t, R.msg) result
   (** [of_readme r] extracts an opam description file from a readme [r]
       with a certain structure. *)
 
@@ -85,7 +87,6 @@ end
 
 (** [url] files. *)
 module Url : sig
-
   (** {1:url Url file} *)
 
   val v : uri:string -> file:string -> OpamFile.URL.t
@@ -98,7 +99,7 @@ module Url : sig
       the checksum of file [f]. *)
 end
 
-val version: [`v1_2_2 | `v2] Lazy.t
+val version : [ `v1_2_2 | `v2 ] Lazy.t
 (** [version] is the output of [opam --version]. *)
 
 (*---------------------------------------------------------------------------

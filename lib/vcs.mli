@@ -67,17 +67,20 @@ val head : ?dirty:bool -> t -> (string, R.msg) result
     [r]. If [dirty] is [true] (default), and indicator is appended to
     the commit identifier if the working tree of [r] {!is_dirty}. *)
 
-val commit_id : ?dirty:bool -> ?commit_ish:commit_ish -> t -> (string, R.msg) result
+val commit_id :
+  ?dirty:bool -> ?commit_ish:commit_ish -> t -> (string, R.msg) result
 (** [commit_id ~dirty ~commit_ish r] is the object name (identifier)
     of [commit_ish] (defaults to ["HEAD"]). If [commit_ish] is ["HEAD"]
     and [dirty] is [true] (default) and indicator is appended to the
     identifier if the working tree is dirty. *)
 
-val commit_ptime_s : dry_run:bool -> ?commit_ish:commit_ish -> t -> (int, R.msg) result
+val commit_ptime_s :
+  dry_run:bool -> ?commit_ish:commit_ish -> t -> (int, R.msg) result
 (** [commit_ptime_s t ~commit_ish] is the POSIX time in seconds of
     commit [commit_ish] (defaults to ["HEAD"]) of repository [r]. *)
 
-val describe : ?dirty:bool -> ?commit_ish:commit_ish -> t -> (string, R.msg) result
+val describe :
+  ?dirty:bool -> ?commit_ish:commit_ish -> t -> (string, R.msg) result
 (** [describe ~dirty ~commit_ish r] identifies [commit_ish] (defaults
     to ["HEAD"]) using tags from the repository [r]. If [commit_ish] is
     ["HEAD"] and [dirty] is [true] (default) an indicator is appended
@@ -86,11 +89,15 @@ val describe : ?dirty:bool -> ?commit_ish:commit_ish -> t -> (string, R.msg) res
 val tags : t -> (string list, R.msg) result
 (** [tags r] is the list of tags in the repo [r]. *)
 
-val tag_exists: dry_run:bool -> t -> string -> bool
-val branch_exists: dry_run:bool -> t -> string -> bool
+val tag_exists : dry_run:bool -> t -> string -> bool
+
+val branch_exists : dry_run:bool -> t -> string -> bool
 
 val changes :
-  ?until:commit_ish -> t -> after:commit_ish -> ((string * string) list, R.msg) result
+  ?until:commit_ish ->
+  t ->
+  after:commit_ish ->
+  ((string * string) list, R.msg) result
 (** [changes r ~after ~until] is the list of commits with their
     one-line message from commit-ish [after] to commit-ish [until]
     (defaults to ["HEAD"]). *)
@@ -101,23 +108,38 @@ val tracked_files : ?tree_ish:string -> t -> (Fpath.t list, R.msg) result
 
 (** {1:ops Repository operations} *)
 
-val clone : dry_run:bool -> ?force:bool -> ?branch:string -> dir:Fpath.t ->
-  t -> (unit, R.msg) result
+val clone :
+  dry_run:bool ->
+  ?force:bool ->
+  ?branch:string ->
+  dir:Fpath.t ->
+  t ->
+  (unit, R.msg) result
 (** [clone ~dir r] clones [r] in directory [dir]. *)
 
-val checkout : dry_run:bool ->
-  ?branch:string -> t -> commit_ish:commit_ish -> (unit, R.msg) result
+val checkout :
+  dry_run:bool ->
+  ?branch:string ->
+  t ->
+  commit_ish:commit_ish ->
+  (unit, R.msg) result
 (** [checkout r ~branch commit_ish] checks out [commit_ish]. Checks
     out in a new branch [branch] if provided. *)
 
-val commit_files : dry_run:bool ->
-  ?msg:string -> t -> Fpath.t list -> (unit, R.msg) result
+val commit_files :
+  dry_run:bool -> ?msg:string -> t -> Fpath.t list -> (unit, R.msg) result
 (** [commit_files r ~msg files] commits the file [files] with message
     [msg] (if unspecified the VCS should prompt). *)
 
 val tag :
-  dry_run:bool -> ?force:bool -> ?sign:bool -> ?msg:string -> ?commit_ish:string -> t ->
-  string -> (unit, R.msg) result
+  dry_run:bool ->
+  ?force:bool ->
+  ?sign:bool ->
+  ?msg:string ->
+  ?commit_ish:string ->
+  t ->
+  string ->
+  (unit, R.msg) result
 (** [tag r ~force ~sign ~msg ~commit_ish t] tags [commit_ish] with [t]
     and message [msg] (if unspecified the VCS should prompt).  if
     [sign] is [true] (defaults to [false]) signs the tag ([`Git] repos
