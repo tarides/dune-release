@@ -39,7 +39,7 @@ type t = {
   build_dir : Fpath.t option;
   opam : Fpath.t option;
   opam_descr : Fpath.t option;
-  opam_fields : (string list String.map, R.msg) result Lazy.t;
+  opam_fields : (string list String.map, R.msg) result;
   readmes : Fpath.t list option;
   change_logs : Fpath.t list option;
   licenses : Fpath.t list option;
@@ -50,7 +50,7 @@ type t = {
   publish_artefacts : [ `Distrib | `Doc | `Alt of string ] list option;
 }
 
-let opam_fields p = Lazy.force p.opam_fields
+let opam_fields p = p.opam_fields
 
 let opam_field p f = opam_fields p >>| fun fields -> String.Map.find f fields
 
@@ -459,9 +459,9 @@ let infer_name dir =
                   m "cannot determine name automatically: use `-p <name>`");
               exit 1 ) )
 
-let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
-    ?opam:opam_file ?opam_descr ?readme ?change_log ?license ?distrib_uri
-    ?distrib_file ?publish_msg ?publish_artefacts ?(distrib = Distrib.v ()) () =
+let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir ?opam
+    ?opam_descr ?readme ?change_log ?license ?distrib_uri ?distrib_file
+    ?publish_msg ?publish_artefacts ?(distrib = Distrib.v ()) () =
   let name =
     match name with None -> infer_name Fpath.(v ".") | Some v -> Ok v
   in
@@ -471,29 +471,31 @@ let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
   in
   let licenses = match license with Some l -> Some [ l ] | None -> None in
   let name = Rresult.R.error_msg_to_invalid_arg name in
-  let rec opam_fields = lazy (opam p >>= fun o -> Opam.File.fields ~dry_run o)
-  and p =
-    {
-      name;
-      version;
-      tag;
-      drop_v = not keep_v;
-      delegate;
-      build_dir;
-      opam = opam_file;
-      opam_descr;
-      opam_fields;
-      readmes;
-      change_logs;
-      licenses;
-      distrib_uri;
-      distrib_file;
-      publish_msg;
-      publish_artefacts;
-      distrib;
-    }
+  let opam_fields =
+    ( match opam with
+    | Some f -> Ok f
+    | None -> Ok name >>| fun name -> Fpath.v (name ^ ".opam") )
+    >>= fun o -> Opam.File.fields ~dry_run o
   in
-  p
+  {
+    name;
+    version;
+    tag;
+    drop_v = not keep_v;
+    delegate;
+    build_dir;
+    opam;
+    opam_descr;
+    opam_fields;
+    readmes;
+    change_logs;
+    licenses;
+    distrib_uri;
+    distrib_file;
+    publish_msg;
+    publish_artefacts;
+    distrib;
+  }
 
 (* Distrib *)
 
