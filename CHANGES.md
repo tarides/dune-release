@@ -11,6 +11,8 @@
 - Separate packages names by spaces in `publish` logs (#171, @hannesm)
 - Fix uncaught exceptions in distrib subcommand and replace them with proper
   error messages (#176, @gpetiot)
+- Use the 'user' field in the configuration before inferring it from repo URI
+  and handles HTTPS URIs (#183, @gpetiot)
 
 ### Removed
 

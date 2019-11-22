@@ -116,7 +116,7 @@ let pp_opam_repo fmt opam_repo =
   Format.fprintf fmt "%s/%s" user repo
 
 let open_pr
-    ~dry_run ~changes ~remote_repo ~distrib_user ~branch ~token ~title ~opam_repo ~auto_open ~yes
+    ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token ~title ~opam_repo ~auto_open ~yes
     pkg =
   Pkg.opam_descr pkg >>= fun (syn, _) ->
   Pkg.opam_homepage pkg >>= fun homepage ->
@@ -134,11 +134,6 @@ let open_pr
       (pp_link "Documentation") doc
       pp_space ()
       changes
-  in
-  let user =
-    match Github.Parse.user_from_remote remote_repo with
-    | Some user -> user
-    | None -> distrib_user
   in
   Prompt.confirm_or_abort ~yes ~question:(fun l -> l "Open PR to %a?" pp_opam_repo opam_repo)
   >>= fun () ->
@@ -173,7 +168,7 @@ let open_pr
       | Ok ()   -> Ok 0
       | Error _ -> msg ()
 
-let submit ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open =
+let submit ~dry_run ~yes ~opam_repo ~user local_repo remote_repo pkgs auto_open =
   Config.token ~dry_run () >>= fun token ->
   List.fold_left (fun acc pkg ->
       get_pkg_dir pkg
@@ -195,12 +190,20 @@ let submit ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open =
   let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
   Pkg.publish_msg pkg >>= fun changes ->
   Pkg.distrib_user_and_repo pkg >>= fun (distrib_user, repo) ->
+  let user =
+    match user with
+    | Some user -> user (* from the .yaml configuration file *)
+    | None ->
+        match Github.Parse.user_from_remote remote_repo with
+        | Some user -> user (* trying to infer it from the remote repo URI *)
+        | None -> distrib_user
+  in
   let changes = rewrite_github_refs distrib_user repo changes in
   let msg = strf "%s\n\n%s\n" title changes in
   App_log.status (fun l -> l "Preparing pull request to %a" pp_opam_repo opam_repo);
   Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~opam_repo ~version names
   >>= fun branch ->
-  open_pr ~dry_run ~changes ~remote_repo ~distrib_user ~branch ~token ~title ~opam_repo ~auto_open
+  open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token ~title ~opam_repo ~auto_open
     ~yes pkg
 
 let field pkgs field = match field with
@@ -274,7 +277,7 @@ let opam () dry_run build_dir local_repo remote_repo opam_repo user keep_v
             | None   -> R.error_msg "Unknown remote repository.")
         >>= fun remote_repo ->
         App_log.status (fun m -> m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
-        submit ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open
+        submit ~dry_run ~yes ~opam_repo ~user:config.user local_repo remote_repo pkgs auto_open
     | `Field -> field pkgs field_name
   end
   |> Cli.handle_error

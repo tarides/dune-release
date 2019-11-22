@@ -15,7 +15,7 @@ let user_from_remote () =
   check "git@github.com:user-name-123/repo" (Some "user-name-123");
   check "git@github.com:123/repo" (Some "123");
   check "wrong" None;
-  check "https://github.com/username/repo.git" None
+  check "https://github.com/username/repo.git" (Some "username")
 
 let archive_upload_url () =
   let check response expected =
