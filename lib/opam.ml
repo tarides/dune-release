@@ -11,32 +11,34 @@ let os_tool_env name os =
   pre ^ String.Ascii.uppercase name
 
 let os_bin_dir_env = function
-| `Build_os -> "BUILD_OS_BIN"
-| `Host_os -> "HOST_OS_XBIN"
+  | `Build_os -> "BUILD_OS_BIN"
+  | `Host_os -> "HOST_OS_XBIN"
 
 let os_suff_env = function
-| `Build_os -> "BUILD_OS_SUFF"
-| `Host_os -> "HOST_OS_SUFF"
+  | `Build_os -> "BUILD_OS_SUFF"
+  | `Host_os -> "HOST_OS_SUFF"
 
-let ocamlfindable name = match name with
-| "ocamlc" | "ocamlcp" | "ocamlmktop" | "ocamlopt" | "ocamldoc" | "ocamldep"
-| "ocamlmklib" | "ocamlbrowser" as tool ->
-    let toolchain = Cmd.empty in
-    Some Cmd.(v "ocamlfind" %% toolchain % tool)
-| _ -> None
+let ocamlfindable name =
+  match name with
+  | ( "ocamlc" | "ocamlcp" | "ocamlmktop" | "ocamlopt" | "ocamldoc" | "ocamldep"
+    | "ocamlmklib" | "ocamlbrowser" ) as tool ->
+      let toolchain = Cmd.empty in
+      Some Cmd.(v "ocamlfind" %% toolchain % tool)
+  | _ -> None
 
-let tool name os = match OS.Env.var (os_tool_env name os) with
-| Some cmd -> Cmd.v cmd
-| None ->
-    match OS.Env.var (os_bin_dir_env os) with
-    | Some path -> Cmd.v Fpath.(to_string @@ v path / name)
-    | None ->
-        match OS.Env.var (os_suff_env os) with
-        | Some suff -> Cmd.v (name ^ suff)
-        | None ->
-            match ocamlfindable name with
-            | Some cmd -> cmd
-            | None -> Cmd.v name
+let tool name os =
+  match OS.Env.var (os_tool_env name os) with
+  | Some cmd -> Cmd.v cmd
+  | None -> (
+      match OS.Env.var (os_bin_dir_env os) with
+      | Some path -> Cmd.v Fpath.(to_string @@ (v path / name))
+      | None -> (
+          match OS.Env.var (os_suff_env os) with
+          | Some suff -> Cmd.v (name ^ suff)
+          | None -> (
+              match ocamlfindable name with
+              | Some cmd -> cmd
+              | None -> Cmd.v name ) ) )
 
 let cmd = Cmd.of_list @@ Cmd.to_list @@ tool "opam" `Host_os
 
@@ -46,19 +48,19 @@ let shortest x =
   List.hd (List.sort (fun x y -> compare (String.length x) (String.length y)) x)
 
 let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
-  let msg = match msg with
-  | None -> Ok (Cmd.empty)
-  | Some msg ->
-      OS.Dir.current () >>= fun cwd ->
-      let file = Fpath.(cwd / "_build" / "submit-msg") in
-      Sos.write_file ~dry_run ~force:true file msg >>| fun () ->
-      Cmd.(v "--file" % p file)
+  let msg =
+    match msg with
+    | None -> Ok Cmd.empty
+    | Some msg ->
+        OS.Dir.current () >>= fun cwd ->
+        let file = Fpath.(cwd / "_build" / "submit-msg") in
+        Sos.write_file ~dry_run ~force:true file msg >>| fun () ->
+        Cmd.(v "--file" % p file)
   in
   msg >>= fun msg ->
-  Sos.dir_exists ~dry_run Fpath.(local_repo / ".git")
-  >>= fun exists ->
-  (if exists then Ok ()
-   else R.error_msgf "%a is not a valid Git repository." Fpath.pp local_repo)
+  Sos.dir_exists ~dry_run Fpath.(local_repo / ".git") >>= fun exists ->
+  ( if exists then Ok ()
+  else R.error_msgf "%a is not a valid Git repository." Fpath.pp local_repo )
   >>= fun () ->
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   Vcs.get () >>= fun repo ->
@@ -74,26 +76,28 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
   let run_out = Sos.run_out ~sandbox:false ~dry_run ~force:true in
   let prepare_repo () =
     let git_fetch = Cmd.(git % "fetch" % upstream % remote_branch) in
-    App_log.status (fun l -> l "Fetching %a" Text.Pp.url (upstream ^ "#" ^ remote_branch));
+    App_log.status (fun l ->
+        l "Fetching %a" Text.Pp.url (upstream ^ "#" ^ remote_branch));
     run git_fetch >>= fun () ->
-    run_out Cmd.(git % "rev-parse" % "FETCH_HEAD")
+    run_out
+      Cmd.(git % "rev-parse" % "FETCH_HEAD")
       ~default:"${fetch_head}" OS.Cmd.to_string
     >>= fun id ->
     (* make a branch *)
     let delete_branch () =
       if not (Vcs.branch_exists ~dry_run:false repo branch) then Ok ()
-      else (
+      else
         match run Cmd.(git % "checkout" % "master") with
-        | Ok ()   -> run Cmd.(git % "branch" % "-D" % branch)
+        | Ok () -> run Cmd.(git % "branch" % "-D" % branch)
         | Error _ ->
             let out = OS.Cmd.run_out Cmd.(git % "status") in
             OS.Cmd.out_lines out >>= fun (out, _) ->
-            R.error_msgf "git checkout in %a failed:\n %s"
-              Fpath.pp local_repo (String.concat ~sep:"\n" out)
-      )
+            R.error_msgf "git checkout in %a failed:\n %s" Fpath.pp local_repo
+              (String.concat ~sep:"\n" out)
     in
     delete_branch () >>= fun () ->
-    App_log.status (fun l -> l "Checking out a local %a branch" Text.Pp.commit branch);
+    App_log.status (fun l ->
+        l "Checking out a local %a branch" Text.Pp.commit branch);
     Vcs.checkout repo ~dry_run:false ~branch ~commit_ish:id
   in
   OS.Dir.current () >>= fun cwd ->
@@ -105,118 +109,132 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
     let cp f =
       OS.File.exists Fpath.(src / f) >>= function
       | true -> run Cmd.(v "cp" % p Fpath.(src / f) % p Fpath.(dst / f))
-      | _    -> Ok ()
+      | _ -> Ok ()
     in
     OS.Dir.exists src >>= fun exists ->
-    (if exists then Ok ()
-     else
-     R.error_msgf
-       "%a does not exist, did you run:\n  dune-release opam pkg -p %s\n"
-       Fpath.pp src name
-    ) >>= fun () ->
+    ( if exists then Ok ()
+    else
+      R.error_msgf
+        "%a does not exist, did you run:\n  dune-release opam pkg -p %s\n"
+        Fpath.pp src name )
+    >>= fun () ->
     OS.Dir.create ~path:true dst >>= fun _ ->
-    cp "opam"  >>= fun () ->
-    cp "url"   >>= fun () ->
+    cp "opam" >>= fun () ->
+    cp "url" >>= fun () ->
     cp "descr" >>= fun () ->
     (* git add *)
     run Cmd.(git % "add" % p dst)
   in
   let rec prepare_packages = function
-  | []   -> Ok ()
-  | h::t -> prepare_package h >>= fun () -> prepare_packages t
+    | [] -> Ok ()
+    | h :: t -> prepare_package h >>= fun () -> prepare_packages t
   in
   let commit_and_push () =
-    Sos.run_quiet ~dry_run ~sandbox:false Cmd.(git % "commit" %% msg) >>= fun () ->
-    App_log.status (fun l -> l "Pushing %a to %a" Text.Pp.commit branch Text.Pp.url remote_repo);
-    Sos.run_quiet ~dry_run ~sandbox:false Cmd.(git % "push" % "--force" % remote_repo % branch)
+    Sos.run_quiet ~dry_run ~sandbox:false Cmd.(git % "commit" %% msg)
+    >>= fun () ->
+    App_log.status (fun l ->
+        l "Pushing %a to %a" Text.Pp.commit branch Text.Pp.url remote_repo);
+    Sos.run_quiet ~dry_run ~sandbox:false
+      Cmd.(git % "push" % "--force" % remote_repo % branch)
   in
-  Sos.with_dir ~dry_run local_repo (fun () ->
+  Sos.with_dir ~dry_run local_repo
+    (fun () ->
       prepare_repo () >>= fun () ->
       prepare_packages names >>= fun () ->
-      commit_and_push () >>= fun () ->
-      Ok branch
-    ) () |> R.join
+      commit_and_push () >>= fun () -> Ok branch)
+    ()
+  |> R.join
 
 (* Packages *)
 
-let ocaml_base_packages = String.Set.of_list
-    [ "base-bigarray"; "base-bytes"; "base-threads"; "base-unix"; ]
+let ocaml_base_packages =
+  String.Set.of_list
+    [ "base-bigarray"; "base-bytes"; "base-threads"; "base-unix" ]
 
 (* Files *)
 
 module File = struct
-
   (* Try to compose with the OpamFile.OPAM API *)
 
   let id x = x
-  let list f = fun v -> [f v]
+
+  let list f v = [ f v ]
+
   let field name field conv =
-    name, fun acc o -> String.Map.add name (conv (field o)) acc
+    (name, fun acc o -> String.Map.add name (conv (field o)) acc)
 
   let opt_field name field conv =
-    name, fun acc o -> match field o with
-    | None -> acc
-    | Some v -> String.Map.add name (conv v) acc
+    ( name,
+      fun acc o ->
+        match field o with
+        | None -> acc
+        | Some v -> String.Map.add name (conv v) acc )
 
   let deps_conv d =
     let add_pkg acc (n, _) = OpamPackage.Name.to_string n :: acc in
     OpamFormula.fold_left add_pkg [] d
 
-  let fields = [
-    opt_field "name" OpamFile.OPAM.name_opt (list OpamPackage.Name.to_string);
-    opt_field "version" OpamFile.OPAM.version_opt
-      (list OpamPackage.Version.to_string);
-    field "opam-version" OpamFile.OPAM.opam_version
-      (list OpamVersion.to_string);
-    field "available" OpamFile.OPAM.available (list OpamFilter.to_string);
-    field "maintainer" OpamFile.OPAM.maintainer id;
-    field "homepage" OpamFile.OPAM.homepage id;
-    field "authors" OpamFile.OPAM.author id;
-    field "license" OpamFile.OPAM.license id;
-    field "doc" OpamFile.OPAM.doc id;
-    field "tags" OpamFile.OPAM.tags id;
-    field "bug-reports" OpamFile.OPAM.bug_reports id;
-    opt_field "dev-repo" OpamFile.OPAM.dev_repo (list OpamUrl.to_string);
-    field "depends" OpamFile.OPAM.depends deps_conv;
-    field "depopts" OpamFile.OPAM.depopts deps_conv;
-    opt_field "description" OpamFile.OPAM.descr_body (list id);
-    opt_field "synopsis" OpamFile.OPAM.synopsis (list id);
-  ]
+  let fields =
+    [
+      opt_field "name" OpamFile.OPAM.name_opt (list OpamPackage.Name.to_string);
+      opt_field "version" OpamFile.OPAM.version_opt
+        (list OpamPackage.Version.to_string);
+      field "opam-version" OpamFile.OPAM.opam_version
+        (list OpamVersion.to_string);
+      field "available" OpamFile.OPAM.available (list OpamFilter.to_string);
+      field "maintainer" OpamFile.OPAM.maintainer id;
+      field "homepage" OpamFile.OPAM.homepage id;
+      field "authors" OpamFile.OPAM.author id;
+      field "license" OpamFile.OPAM.license id;
+      field "doc" OpamFile.OPAM.doc id;
+      field "tags" OpamFile.OPAM.tags id;
+      field "bug-reports" OpamFile.OPAM.bug_reports id;
+      opt_field "dev-repo" OpamFile.OPAM.dev_repo (list OpamUrl.to_string);
+      field "depends" OpamFile.OPAM.depends deps_conv;
+      field "depopts" OpamFile.OPAM.depopts deps_conv;
+      opt_field "description" OpamFile.OPAM.descr_body (list id);
+      opt_field "synopsis" OpamFile.OPAM.synopsis (list id);
+    ]
 
   let field_names =
     let add acc (name, _) = String.Set.add name acc in
     List.fold_left add String.Set.empty fields
 
   let fields ~dry_run file =
-    if not (Sys.file_exists (Fpath.to_string file))
-    then R.error_msgf "Internal error: file %a not found" Fpath.pp file
+    if not (Sys.file_exists (Fpath.to_string file)) then
+      R.error_msgf "Internal error: file %a not found" Fpath.pp file
     else
-    let parse file  =
-      let file = OpamFilename.of_string (Fpath.to_string file) in
-      let opam = OpamFile.OPAM.read (OpamFile.make file) in
-      let known_fields =
-        let add_field acc (_, field) = field acc opam in
-        List.fold_left add_field String.Map.empty fields
+      let parse file =
+        let file = OpamFilename.of_string (Fpath.to_string file) in
+        let opam = OpamFile.OPAM.read (OpamFile.make file) in
+        let known_fields =
+          let add_field acc (_, field) = field acc opam in
+          List.fold_left add_field String.Map.empty fields
+        in
+        (* FIXME add OpamFile.OPAM.extensions when supported *)
+        known_fields
       in
-      (* FIXME add OpamFile.OPAM.extensions when supported *)
-      known_fields
-    in
-    Logs.info (fun m -> m "Parsing opam file %a" Fpath.pp file);
-    try Ok (parse file) with
-    | _ ->
-        if dry_run then Ok String.Map.empty else
-        (* Apparently in at least opam-lib 1.2.2, the error will be
+      Logs.info (fun m -> m "Parsing opam file %a" Fpath.pp file);
+      try Ok (parse file)
+      with _ ->
+        if dry_run then Ok String.Map.empty
+        else
+          (* Apparently in at least opam-lib 1.2.2, the error will be
            logged on stdout. *)
-        R.error_msgf "%a: could not parse opam file" Fpath.pp file
+          R.error_msgf "%a: could not parse opam file" Fpath.pp file
 
   let deps ?(opts = true) fields =
-    let deps = match String.Map.find "depends" fields with
-    | None -> [] | Some deps -> deps
+    let deps =
+      match String.Map.find "depends" fields with
+      | None -> []
+      | Some deps -> deps
     in
     let dep_opts =
-      if not opts then [] else
-      match String.Map.find "depopts" fields with
-      | None -> []  | Some deps -> deps
+      if not opts then []
+      else
+        match String.Map.find "depopts" fields with
+        | None -> []
+        | Some deps -> deps
     in
     String.Set.of_list (List.rev_append dep_opts deps)
 end
@@ -224,15 +242,15 @@ end
 module Descr = struct
   type t = string * string option
 
-  let of_string s = match String.cuts ~sep:"\n" s with
-  | [] ->  assert false (* String.cuts never returns the empty list *)
-  | [synopsis]
-  | [synopsis; ""] -> Ok (synopsis, None)
-  | synopsis :: descr -> Ok (synopsis, Some (String.concat ~sep:"\n" descr))
+  let of_string s =
+    match String.cuts ~sep:"\n" s with
+    | [] -> assert false (* String.cuts never returns the empty list *)
+    | [ synopsis ] | [ synopsis; "" ] -> Ok (synopsis, None)
+    | synopsis :: descr -> Ok (synopsis, Some (String.concat ~sep:"\n" descr))
 
   let to_string = function
-  | (synopsis, None) -> synopsis
-  | (synopsis, Some descr) -> strf "%s\n%s" synopsis descr
+    | synopsis, None -> synopsis
+    | synopsis, Some descr -> strf "%s\n%s" synopsis descr
 
   let of_readme ?flavour r =
     let parse_synopsis l =
@@ -241,49 +259,47 @@ module Descr = struct
       let not_white c = not (Char.Ascii.is_white c) in
       let skip_non_white l = String.Sub.drop ~sat:not_white l in
       let skip_white l = String.Sub.drop ~sat:Char.Ascii.is_white l in
-      let start =
-        String.sub l |> skip_white |> skip_non_white |> skip_white
-      in
+      let start = String.sub l |> skip_white |> skip_non_white |> skip_white in
       match String.Sub.head start with
       | None -> error l
       | Some c when Char.Ascii.is_letter c -> ok start
-      | Some _ -> (* Try to skip a separator. *)
+      | Some _ -> (
+          (* Try to skip a separator. *)
           let start = start |> skip_non_white |> skip_white in
           match String.Sub.head start with
           | None -> error l
-          | Some _ -> ok start
+          | Some _ -> ok start )
     in
     let drop_line l =
-      String.is_prefix ~affix:"Home page:" l ||
-      String.is_prefix ~affix:"Homepage:" l ||
-      String.is_prefix ~affix:"Contact:" l ||
-      String.is_prefix ~affix:"%%VERSION" l
+      String.is_prefix ~affix:"Home page:" l
+      || String.is_prefix ~affix:"Homepage:" l
+      || String.is_prefix ~affix:"Contact:" l
+      || String.is_prefix ~affix:"%%VERSION" l
     in
     let keep_line l = not (drop_line l) in
     match Text.head ?flavour r with
     | None -> R.error_msgf "Could not extract opam description."
-    | Some (title, text) ->
+    | Some (title, text) -> (
         let sep = "\n" in
         let title = Text.header_title ?flavour title in
-        parse_synopsis title
-        >>= fun synopsis -> Ok (String.cuts ~sep text)
-        >>= fun text -> Ok (List.filter keep_line text)
-        >>= function
-        | [] | [""] -> Ok (synopsis, None)
-        | text -> Ok (synopsis, Some (String.concat ~sep text))
+        parse_synopsis title >>= fun synopsis ->
+        Ok (String.cuts ~sep text) >>= fun text ->
+        Ok (List.filter keep_line text) >>= function
+        | [] | [ "" ] -> Ok (synopsis, None)
+        | text -> Ok (synopsis, Some (String.concat ~sep text)) )
 
   let of_readme_file file =
     let flavour = Text.flavour_of_fpath file in
-    (OS.File.read file
-     >>= fun text -> of_readme ?flavour text)
-    |> R.reword_error_msg ~replace:true
-      (fun m -> R.msgf "%a: %s" Fpath.pp file m)
+    OS.File.read file
+    >>= (fun text -> of_readme ?flavour text)
+    |> R.reword_error_msg ~replace:true (fun m ->
+           R.msgf "%a: %s" Fpath.pp file m)
 end
 
 module Url = struct
   let v ~uri ~file =
     let hash algo = OpamHash.compute ~kind:algo file in
-    let checksum = List.map hash [ `SHA256 ; `SHA512 ] in
+    let checksum = List.map hash [ `SHA256; `SHA512 ] in
     let url = OpamUrl.parse uri in
     OpamFile.URL.create ~checksum url
 
@@ -294,7 +310,7 @@ module Url = struct
         Ok (v ~uri ~file)
     | _ ->
         if dry_run then Ok OpamFile.URL.empty
-        else (OS.File.must_exist distrib_file >>= fun _ -> assert false)
+        else OS.File.must_exist distrib_file >>= fun _ -> assert false
 end
 
 let opam_version () =
@@ -302,11 +318,11 @@ let opam_version () =
     OS.Cmd.run_out Cmd.(cmd % "--version") |> OS.Cmd.out_string ~trim:true
   in
   let of_str = function
-  | "1.2.2" -> `v1_2_2
-  | s       ->
-      match String.cut ~sep:"2." s with
-      | Some ("", _) -> `v2
-      | _ -> Fmt.failwith "opam: invalid version %s" s
+    | "1.2.2" -> `v1_2_2
+    | s -> (
+        match String.cut ~sep:"2." s with
+        | Some ("", _) -> `v2
+        | _ -> Fmt.failwith "opam: invalid version %s" s )
   in
   match v with
   | Ok (v, (_, `Exited 0)) -> of_str v

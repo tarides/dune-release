@@ -26,31 +26,45 @@ end
 
 (** {1 Publish} *)
 
+val publish_distrib :
+  dry_run:bool ->
+  msg:string ->
+  archive:Fpath.t ->
+  yes:bool ->
+  Pkg.t ->
+  (string, R.msg) Result.result
 (** Push the tag, create a Github release, upload the distribution archive and return the
     release archive download URL *)
-val publish_distrib :
-  dry_run: bool -> msg:string -> archive:Fpath.t ->
-  yes: bool ->
-  Pkg.t -> (string, R.msg) Result.result
 
 val publish_doc :
-  dry_run: bool -> msg:string -> docdir:Fpath.t ->
-  yes: bool ->
-  Pkg.t -> (unit, R.msg) Result.result
+  dry_run:bool ->
+  msg:string ->
+  docdir:Fpath.t ->
+  yes:bool ->
+  Pkg.t ->
+  (unit, R.msg) Result.result
 
 val publish_in_git_branch :
-  dry_run: bool ->
-  remote:string -> branch:string ->
-  name:string -> version:string -> docdir:Fpath.t ->
+  dry_run:bool ->
+  remote:string ->
+  branch:string ->
+  name:string ->
+  version:string ->
+  docdir:Fpath.t ->
   dir:Fpath.t ->
-  yes: bool ->
+  yes:bool ->
   (unit, R.msg) result
 
-val open_pr:
-  token:Fpath.t -> dry_run:bool ->
-  title:string -> distrib_user:string -> user:string -> branch:string ->
-  opam_repo: (string * string) ->
-  string -> ([`Url of string | `Already_exists], R.msg) result
+val open_pr :
+  token:Fpath.t ->
+  dry_run:bool ->
+  title:string ->
+  distrib_user:string ->
+  user:string ->
+  branch:string ->
+  opam_repo:string * string ->
+  string ->
+  ([ `Url of string | `Already_exists ], R.msg) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

@@ -12,24 +12,31 @@ let default_massage () = Ok ()
 
 let default_exclude_paths () =
   let l =
-    List.map Fpath.v [
-      ".git"; ".gitignore"; ".gitattributes"; ".hg"; ".hgignore"; "build";
-      "_build"
-    ] in
+    List.map Fpath.v
+      [
+        ".git";
+        ".gitignore";
+        ".gitattributes";
+        ".hg";
+        ".hgignore";
+        "build";
+        "_build";
+      ]
+  in
   Ok l
 
 (* Distribution *)
 
-type t =
-  { massage : unit -> (unit, R.msg) result;
-    exclude_paths : unit -> (Fpath.t list, R.msg) result; }
+type t = {
+  massage : unit -> (unit, R.msg) result;
+  exclude_paths : unit -> (Fpath.t list, R.msg) result;
+}
 
-let v
-    ?(massage = fun () -> Ok ())
-    ?(exclude_paths = default_exclude_paths) () =
+let v ?(massage = fun () -> Ok ()) ?(exclude_paths = default_exclude_paths) () =
   { massage; exclude_paths }
 
 let massage d = d.massage
+
 let exclude_paths d = d.exclude_paths
 
 (*---------------------------------------------------------------------------

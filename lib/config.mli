@@ -14,23 +14,25 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-
 type t = {
-  user     : string option;
-  remote   : string option;
-  local    : Fpath.t option;
-  keep_v   : bool option;
-  auto_open: bool option;
+  user : string option;
+  remote : string option;
+  local : Fpath.t option;
+  keep_v : bool option;
+  auto_open : bool option;
 }
 
-val v:
+val v :
   user:string option ->
   remote_repo:string option ->
-  local_repo:string option -> Pkg.t list -> (t, Bos_setup.R.msg) result
+  local_repo:string option ->
+  Pkg.t list ->
+  (t, Bos_setup.R.msg) result
 
-val find: unit -> (t option, Bos_setup.R.msg) result
+val find : unit -> (t option, Bos_setup.R.msg) result
 
-val token: dry_run:bool -> unit -> (Fpath.t, Bos_setup.R.msg) result
+val token : dry_run:bool -> unit -> (Fpath.t, Bos_setup.R.msg) result
 
-val keep_v: bool -> (bool, Bos_setup.R.msg) result
-val auto_open: bool -> (bool, Bos_setup.R.msg) result
+val keep_v : bool -> (bool, Bos_setup.R.msg) result
+
+val auto_open : bool -> (bool, Bos_setup.R.msg) result

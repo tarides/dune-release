@@ -10,7 +10,6 @@ open Stdext
 (* Ustar archives *)
 
 module Tar = struct
-
   let empty = []
 
   (* Header.
@@ -19,8 +18,8 @@ module Tar = struct
          pax.html#tag_20_92_13_06  *)
 
   let to_unix_path_string =
-    if Fpath.dir_sep = "/" then Fpath.to_string else
-    fun f -> String.concat ~sep:"/" (Fpath.segs f)
+    if Fpath.dir_sep = "/" then Fpath.to_string
+    else fun f -> String.concat ~sep:"/" (Fpath.segs f)
 
   let set_filename h f =
     let s = to_unix_path_string f in
@@ -29,9 +28,8 @@ module Tar = struct
       R.reword_error (fun _ -> R.msg error) (Sbytes.blit_string a b c d e)
     in
     match String.length s with
-    | n when n <= 100 ->
-        blit s 0 h 0 (String.length s)
-    | _ ->
+    | n when n <= 100 -> blit s 0 h 0 (String.length s)
+    | _ -> (
         match String.cut ~rev:true ~sep:"/" s with
         | Some (p, n) ->
             (* This could be made more clever by trying to find
@@ -41,7 +39,7 @@ module Tar = struct
             else
               blit n 0 h 0 (String.length n) >>= fun () ->
               blit p 0 h 345 (String.length p)
-        | None -> R.error_msg error
+        | None -> R.error_msg error )
 
   let set_string off h s =
     R.reword_error
@@ -56,8 +54,8 @@ module Tar = struct
         (Sbytes.blit_string octal 0 h off (String.length octal))
     else
       R.error_msg
-        (strf "field %s: can't encode %d in %d-digit octal number"
-           field (len - 1) n)
+        (strf "field %s: can't encode %d in %d-digit octal number" field
+           (len - 1) n)
 
   let header_checksum h =
     let len = Bytes.length h in
@@ -70,15 +68,15 @@ module Tar = struct
   let header fname mode mtime size typeflag =
     Sbytes.make 512 '\x00' >>= fun h ->
     set_filename h fname >>= fun () ->
-    set_octal "mode"  100 8 h mode >>= fun () ->
+    set_octal "mode" 100 8 h mode >>= fun () ->
     set_octal "owner" 108 8 h 0 >>= fun () ->
     set_octal "group" 116 8 h 0 >>= fun () ->
-    set_octal "size"  124 12 h size >>= fun () ->
+    set_octal "size" 124 12 h size >>= fun () ->
     set_octal "mtime" 136 12 h mtime >>= fun () ->
-    set_string        148 h "        " (* Checksum *) >>= fun () ->
-    set_string        156 h typeflag >>= fun () ->
-    set_string        257 h "ustar" >>= fun () ->
-    set_string        263 h "00" >>= fun () ->
+    set_string 148 h "        " (* Checksum *) >>= fun () ->
+    set_string 156 h typeflag >>= fun () ->
+    set_string 257 h "ustar" >>= fun () ->
+    set_string 263 h "00" >>= fun () ->
     set_octal "devmajor" 329 8 h 0 >>= fun () ->
     set_octal "devminor" 329 8 h 0 >>= fun () ->
     let c = header_checksum h in
@@ -87,14 +85,16 @@ module Tar = struct
 
   (* Files *)
 
-  let padding content = match String.length content mod 512 with
-  | 0 -> ""
-  | n -> Bytes.unsafe_to_string (Bytes.make (512 - n) '\x00')
+  let padding content =
+    match String.length content mod 512 with
+    | 0 -> ""
+    | n -> Bytes.unsafe_to_string (Bytes.make (512 - n) '\x00')
 
   let add t fname ~mode ~mtime kind =
-    let typeflag, size, data = match kind with
-    | `Dir -> "5", 0, []
-    | `File cont -> "0", String.length cont, [cont; padding cont]
+    let typeflag, size, data =
+      match kind with
+      | `Dir -> ("5", 0, [])
+      | `File cont -> ("0", String.length cont, [ cont; padding cont ])
     in
     header fname mode mtime size typeflag >>| fun header ->
     List.rev_append data (header :: t)
@@ -113,14 +113,15 @@ let path_set_of_dir dir ~exclude_paths =
   let traverse = `Sat not_excluded in
   let elements = `Sat not_excluded in
   let err _ e = e in
-  OS.Dir.fold_contents ~dotfiles:true ~err ~elements ~traverse
-    Fpath.Set.add Fpath.Set.empty dir
+  OS.Dir.fold_contents ~dotfiles:true ~err ~elements ~traverse Fpath.Set.add
+    Fpath.Set.empty dir
 
 let tar dir ~exclude_paths ~root ~mtime =
   let tar_add file tar =
-    let fname = match Fpath.rem_prefix dir file with
-    | None -> assert false
-    | Some file -> Fpath.(root // file)
+    let fname =
+      match Fpath.rem_prefix dir file with
+      | None -> assert false
+      | Some file -> Fpath.(root // file)
     in
     Logs.info (fun m -> m "Archiving %a" Fpath.pp fname);
     tar >>= fun tar ->
@@ -133,22 +134,25 @@ let tar dir ~exclude_paths ~root ~mtime =
         Tar.add tar fname ~mode ~mtime (`File contents)
   in
   path_set_of_dir dir ~exclude_paths >>= fun fset ->
-  Fpath.Set.fold tar_add fset (Ok Tar.empty) >>| fun tar ->
-  Tar.to_string tar
+  Fpath.Set.fold tar_add fset (Ok Tar.empty) >>| fun tar -> Tar.to_string tar
 
 (* Bzip2 compression and unarchiving *)
 
 let bzip2_cmd = OS.Env.(value "DUNE_RELEASE_BZIP2" cmd ~absent:(Cmd.v "bzip2"))
+
 let ensure_bzip2 () = OS.Cmd.must_exist bzip2_cmd >>| fun _ -> ()
 
 let bzip2 ~dry_run ?force ~dst s =
-  Sos.run_io ~dry_run ?force ~default:()
-    bzip2_cmd (OS.Cmd.in_string s) (OS.Cmd.to_file dst)
+  Sos.run_io ~dry_run ?force ~default:() bzip2_cmd (OS.Cmd.in_string s)
+    (OS.Cmd.to_file dst)
 
 let tar_cmd = OS.Env.(value "DUNE_RELEASE_TAR" cmd ~absent:(Cmd.v "tar"))
+
 let ensure_tar () = OS.Cmd.must_exist tar_cmd >>| fun _ -> ()
+
 let untbz ~dry_run ?(clean = false) ar =
-  let clean_dir dir = OS.Dir.exists dir >>= function
+  let clean_dir dir =
+    OS.Dir.exists dir >>= function
     | true when clean -> Sos.delete_dir ~dry_run ~force:true dir
     | _ -> Ok ()
   in

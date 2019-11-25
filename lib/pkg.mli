@@ -29,14 +29,15 @@ val v :
   ?distrib_uri:string ->
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
-  ?publish_artefacts:[`Distrib | `Doc | `Alt of string] list ->
+  ?publish_artefacts:[ `Distrib | `Doc | `Alt of string ] list ->
   ?distrib:Distrib.t ->
-  unit -> t
+  unit ->
+  t
 
-val infer_name: Fpath.t -> (string, R.msg) result
+val infer_name : Fpath.t -> (string, R.msg) result
 (** Infer the name of the projet. *)
 
-val infer_pkg_names: Fpath.t -> string list -> (string list, R.msg) result
+val infer_pkg_names : Fpath.t -> string list -> (string list, R.msg) result
 (** Infer the package list. *)
 
 val name : t -> (string, R.msg) result
@@ -63,13 +64,14 @@ val opam : t -> (Fpath.t, R.msg) result
 val opam_descr : t -> (Opam.Descr.t, R.msg) result
 (** [opam_descr p] is [p]'s opam description. *)
 
-val opam_homepage: t -> (string option, R.msg) result
-val opam_doc: t -> (string option, R.msg) result
+val opam_homepage : t -> (string option, R.msg) result
+
+val opam_doc : t -> (string option, R.msg) result
 
 val opam_field : t -> string -> (string list option, R.msg) result
 (** [opam_field p f] looks up field [f] of [p]'s opam file. *)
 
-val opam_field_hd: t -> string -> (string option, Sos.error) result
+val opam_field_hd : t -> string -> (string option, Sos.error) result
 
 val opam_fields : t -> (string list String.map, R.msg) result
 (** [opam_fields p] are [p]'s opam file fields. *)
@@ -102,15 +104,16 @@ val publish_msg : t -> (string, R.msg) result
 
 (** {1 Distribution} *)
 
-val distrib_archive : dry_run:bool -> keep_dir:bool -> t -> (Fpath.t, R.msg) result
+val distrib_archive :
+  dry_run:bool -> keep_dir:bool -> t -> (Fpath.t, R.msg) result
 (** [distrib_archive ~keep_dir p] creates a distribution archive for
     [p] and returns its path. If [keep_dir] is [true] the repository
     checkout used to create the distribution archive is kept in the
     build directory. *)
 
-val distrib_archive_path: t -> (Fpath.t, Rresult.R.msg) result
+val distrib_archive_path : t -> (Fpath.t, Rresult.R.msg) result
 
-val archive_url_path: t -> (Fpath.t, R.msg) result
+val archive_url_path : t -> (Fpath.t, R.msg) result
 (** [archive_url_path] is the path to the file where the archive download URL is saved *)
 
 val distrib_filename : ?opam:bool -> t -> (Fpath.t, R.msg) result
@@ -118,7 +121,8 @@ val distrib_filename : ?opam:bool -> t -> (Fpath.t, R.msg) result
     [opam] is [true] (defaults to [false]), the name follows opam's
     naming conventions. *)
 
-val publish_artefacts : t -> ([`Distrib | `Doc | `Alt of string] list, R.msg) result
+val publish_artefacts :
+  t -> ([ `Distrib | `Doc | `Alt of string ] list, R.msg) result
 (** [publish_artefacts p] are [p]'s publication artefacts. *)
 
 (** {1 Uri} *)
@@ -132,7 +136,8 @@ type f =
   dir:Fpath.t ->
   args:Cmd.t ->
   out:(OS.Cmd.run_out -> (string * OS.Cmd.run_status, Sos.error) result) ->
-  t -> (string * OS.Cmd.run_status, Sos.error) result
+  t ->
+  (string * OS.Cmd.run_status, Sos.error) result
 
 (** {1 Test} *)
 
@@ -158,7 +163,8 @@ val dev_repo : t -> (string option, Sos.error) result
 
 val version_line_re : Re.t
 
-val prepare_opam_for_distrib : version: string -> content: string list -> string list
+val prepare_opam_for_distrib :
+  version:string -> content:string list -> string list
 
 (**/**)
 

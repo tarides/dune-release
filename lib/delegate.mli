@@ -12,16 +12,29 @@ open Bos_setup
 
 (** {1 Publish} *)
 
-val publish_distrib:
-  dry_run:bool -> msg:string -> archive:Fpath.t -> yes: bool -> Pkg.t -> (unit, R.msg) result
+val publish_distrib :
+  dry_run:bool ->
+  msg:string ->
+  archive:Fpath.t ->
+  yes:bool ->
+  Pkg.t ->
+  (unit, R.msg) result
 
-val publish_doc:
-  dry_run:bool -> msg:string -> docdir:Fpath.t -> yes: bool -> Pkg.t -> (unit, R.msg) result
+val publish_doc :
+  dry_run:bool ->
+  msg:string ->
+  docdir:Fpath.t ->
+  yes:bool ->
+  Pkg.t ->
+  (unit, R.msg) result
 
-val publish_alt:
-  dry_run:bool -> kind:string -> msg:string -> archive:Fpath.t ->
-  Pkg.t -> (unit, R.msg) result
-
+val publish_alt :
+  dry_run:bool ->
+  kind:string ->
+  msg:string ->
+  archive:Fpath.t ->
+  Pkg.t ->
+  (unit, R.msg) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

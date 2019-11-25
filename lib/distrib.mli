@@ -16,7 +16,8 @@ type t
 val v :
   ?massage:(unit -> (unit, R.msg) result) ->
   ?exclude_paths:(unit -> (Fpath.t list, R.msg) result) ->
-  unit -> t
+  unit ->
+  t
 (** [distrib ~massage ~exclude_paths ()] influences the distribution creation
       process performed by the [dune-release] tool.
       See the {{!distdetails}full details about distribution creation}.
@@ -47,8 +48,9 @@ val default_exclude_paths : unit -> (Fpath.t list, R.msg) result
       fun () -> Ok [".git"; ".gitignore"; ".gitattributes"; ".hg"; ".hgignore";
                     "build"; "Makefile"; "_build"]]} *)
 
-val massage : t -> (unit -> (unit, R.msg) result)
-val exclude_paths : t -> (unit -> (Fpath.t list, R.msg) result)
+val massage : t -> unit -> (unit, R.msg) result
+
+val exclude_paths : t -> unit -> (Fpath.t list, R.msg) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

@@ -51,7 +51,7 @@ val change_log_last_entry :
     [header] (see [dune-release-log(2)] for details). *)
 
 val change_log_file_last_entry :
-  Fpath.t -> ((string * (string * string)), R.msg) result
+  Fpath.t -> (string * (string * string), R.msg) result
 (** [change_log_file_last_entry file] tries to parse the last
     change log entry of the file [file] using {!flavour_of_fpath} and
     and {!change_log_last_entry}. *)
@@ -79,7 +79,6 @@ val find_pager : don't:bool -> (Cmd.t option, R.msg) result
 
 (** Pretty printers. *)
 module Pp : sig
-
   (** {1 Pretty printers} *)
 
   val name : string Fmt.t
@@ -100,7 +99,7 @@ module Pp : sig
   val url : string Fmt.t
   (** [url] formats an underlined URL *)
 
-  val status : [`Ok | `Fail] Fmt.t
+  val status : [ `Ok | `Fail ] Fmt.t
   (** [status] formats a result status. *)
 end
 

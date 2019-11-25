@@ -6,56 +6,58 @@
 
 open Bos_setup
 
-let add args name v = match v with
-| None   -> args
-| Some x -> Cmd.(args % name % x)
+let add args name v =
+  match v with None -> args | Some x -> Cmd.(args % name % x)
 
-let add_l args name v = match v with
-| [] -> args
-| x  -> Cmd.(args % name % String.concat ~sep:"," x)
+let add_l args name v =
+  match v with [] -> args | x -> Cmd.(args % name % String.concat ~sep:"," x)
 
 let bistro () dry_run name pkg_names version tag keep_v =
-  begin
-    Dune_release.Config.keep_v keep_v >>= fun keep_v ->
-    let args = Cmd.(v "--verbosity" % Logs.(level_to_string (level ()))) in
-    let args = if dry_run then Cmd.(args % "--dry-run") else args in
-    let args = add args "--name" name in
-    let args = add args "--pkg-version" version in
-    let args = if keep_v then Cmd.(args % "--keep-v") else args in
-    let args = add args "--tag" tag in
-    let args = add_l args "--pkg-names" pkg_names in
-    let dune_release = Cmd.(v "dune-release") in
-    OS.Cmd.run Cmd.(dune_release % "distrib" %% args)
-    >>= fun () -> OS.Cmd.run Cmd.(dune_release % "publish" %% args)
-    >>= fun () -> OS.Cmd.run Cmd.(dune_release % "opam" %% args % "pkg")
-    >>= fun () -> OS.Cmd.run Cmd.(dune_release % "opam" %% args % "submit")
-    >>= fun () -> Ok 0
-  end
-  |> Cli.handle_error
+  Cli.handle_error
+    ( Dune_release.Config.keep_v keep_v >>= fun keep_v ->
+      let args = Cmd.(v "--verbosity" % Logs.(level_to_string (level ()))) in
+      let args = if dry_run then Cmd.(args % "--dry-run") else args in
+      let args = add args "--name" name in
+      let args = add args "--pkg-version" version in
+      let args = if keep_v then Cmd.(args % "--keep-v") else args in
+      let args = add args "--tag" tag in
+      let args = add_l args "--pkg-names" pkg_names in
+      let dune_release = Cmd.(v "dune-release") in
+      OS.Cmd.run Cmd.(dune_release % "distrib" %% args) >>= fun () ->
+      OS.Cmd.run Cmd.(dune_release % "publish" %% args) >>= fun () ->
+      OS.Cmd.run Cmd.(dune_release % "opam" %% args % "pkg") >>= fun () ->
+      OS.Cmd.run Cmd.(dune_release % "opam" %% args % "submit") >>= fun () ->
+      Ok 0 )
 
 (* Command line interface *)
 
 open Cmdliner
 
 let doc = "For when you are in a hurry or need to go for a drink"
+
 let sdocs = Manpage.s_common_options
+
 let exits = Cli.exits
+
 let man_xrefs = [ `Main; `Cmd "distrib"; `Cmd "publish"; `Cmd "opam" ]
+
 let man =
-  [ `S Manpage.s_description;
+  [
+    `S Manpage.s_description;
     `P "The $(tname) command (quick in Russian) is equivalent to invoke:";
-    `Pre "\
-dune-release distrib       # Create the distribution archive
-dune-release publish       # Publish it on the WWW with its documentation
-dune-release opam pkg      # Create an opam package
-dune-release opam submit   # Submit it to OCaml's opam repository";
-    `P "See dune-release(7) for more information."; ]
+    `Pre
+      "dune-release distrib       # Create the distribution archive\n\
+       dune-release publish       # Publish it on the WWW with its documentation\n\
+       dune-release opam pkg      # Create an opam package\n\
+       dune-release opam submit   # Submit it to OCaml's opam repository";
+    `P "See dune-release(7) for more information.";
+  ]
 
 let cmd =
-  Term.(pure bistro $ Cli.setup $ Cli.dry_run
-        $ Cli.dist_name $ Cli.pkg_names
-        $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v),
-  Term.info "bistro" ~doc ~sdocs ~exits ~man ~man_xrefs
+  ( Term.(
+      pure bistro $ Cli.setup $ Cli.dry_run $ Cli.dist_name $ Cli.pkg_names
+      $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v),
+    Term.info "bistro" ~doc ~sdocs ~exits ~man ~man_xrefs )
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

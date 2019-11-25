@@ -7,21 +7,25 @@
 open Cmdliner
 
 let cmds =
-  [Tag.cmd; Distrib.cmd;
-   Publish.cmd; Opam.cmd; Help.cmd;
-   Bistro.cmd; Lint.cmd; ]
+  [
+    Tag.cmd; Distrib.cmd; Publish.cmd; Opam.cmd; Help.cmd; Bistro.cmd; Lint.cmd;
+  ]
 
 (* Command line interface *)
 
 let doc = "Release dune packages to opam"
+
 let sdocs = Manpage.s_common_options
+
 let exits = Cli.exits
+
 let man =
-  [ `S Manpage.s_description;
+  [
+    `S Manpage.s_description;
     `P "$(mname) releases dune packages to opam.";
-    `P "Without arguments, $(mname) acts like $(b,dune-release bistro):
-        refer to $(b,dune-release help bistro) for help about the
-        default behavior.";
+    `P
+      "Without arguments, $(mname) acts like $(b,dune-release bistro): refer \
+       to $(b,dune-release help bistro) for help about the default behavior.";
     `P "Use '$(mname) help release' for help to release a package.";
     `Noblank;
     `P "Use '$(mname) help troubleshoot' for a few troubleshooting tips.";
@@ -30,14 +34,14 @@ let man =
     `S Manpage.s_bugs;
     `P "Report them, see $(i,%%PKG_HOMEPAGE%%) for contact information.";
     `S Manpage.s_authors;
-    `P "Daniel C. Buenzli, $(i,http://erratique.ch)"; ]
+    `P "Daniel C. Buenzli, $(i,http://erratique.ch)";
+  ]
 
 let main =
-  fst Bistro.cmd,
-  Term.info "dune-release" ~version:"%%VERSION%%" ~doc ~sdocs ~exits ~man
+  ( fst Bistro.cmd,
+    Term.info "dune-release" ~version:"%%VERSION%%" ~doc ~sdocs ~exits ~man )
 
-let main () =
-  Term.(exit_status @@ eval_choice main cmds)
+let main () = Term.(exit_status @@ eval_choice main cmds)
 
 let () = main ()
 
