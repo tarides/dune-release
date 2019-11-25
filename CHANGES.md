@@ -6,6 +6,8 @@
 
 ### Deprecated
 
+- Deprecate opam 1.x (#195, @gpetiot)
+
 ### Fixed
 
 - Separate packages names by spaces in `publish` logs (#171, @hannesm)
@@ -17,6 +19,7 @@
   (#194, @gpetiot)
 - Do not echo input characters when reading token (#199, @gpetiot)
 - Improve the output of VCS command errors (#193, @gpetiot)
+- Better error handling when checking opam version (#195, @gpetiot)
 
 ### Removed
 

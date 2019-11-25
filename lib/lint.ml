@@ -105,7 +105,7 @@ let lint_opam_github_fields pkg = lint_opam_doc pkg + lint_opam_home_and_dev pkg
 let opam_lint_cmd ~opam_file_version ~opam_tool_version =
   let lint_older_format =
     match (opam_file_version, opam_tool_version) with
-    | Some "1.2", `v2 -> true
+    | Some "1.2", Opam.Version.V2 -> true
     | _ -> false
   in
   Cmd.(Opam.cmd % "lint" %% on lint_older_format (v "--warn=-21-32-48"))
@@ -154,10 +154,10 @@ let extra_opam_lint ~opam_file_version ~opam_file pkg =
   descr_err + github_field_errs
 
 let lint_opam ~dry_run pkg =
-  let opam_tool_version = Lazy.force Opam.version in
+  Lazy.force Opam.Version.cli >>= fun opam_tool_version ->
   Pkg.opam_field_hd pkg "opam-version" >>= fun opam_file_version ->
   match (opam_file_version, opam_tool_version) with
-  | Some "2.0", `v1_2_2 ->
+  | Some "2.0", Opam.Version.V1_2_2 ->
       App_log.status (fun l ->
           l
             "Skipping opam lint as `opam-version` field is \"2.0\" while `opam \
