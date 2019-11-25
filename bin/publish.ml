@@ -43,26 +43,33 @@ let publish_alt ~dry_run pkg kind =
   Pkg.publish_msg pkg >>= fun msg ->
   Delegate.publish_alt ~dry_run pkg ~kind ~msg ~archive
 
-let publish () build_dir name pkg_names version tag keep_v opam delegate
+let publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
+    ?publish_msg ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
+    ~publish_artefacts ~yes () =
+  let publish_artefacts =
+    match publish_artefacts with [] -> None | v -> Some v
+  in
+  Config.keep_v keep_v >>= fun keep_v ->
+  let pkg =
+    Pkg.v ~dry_run ?name ?version ?tag ~keep_v ?build_dir ?opam ?change_log
+      ?distrib_uri ?distrib_file ?publish_msg ?publish_artefacts ?delegate ()
+  in
+  let publish_artefact acc artefact =
+    acc >>= fun () ->
+    match artefact with
+    | `Doc -> publish_doc ~dry_run ~yes pkg_names pkg
+    | `Distrib -> publish_distrib ~dry_run ~yes pkg
+    | `Alt kind -> publish_alt ~dry_run pkg kind
+  in
+  Pkg.publish_artefacts pkg >>= fun todo ->
+  List.fold_left publish_artefact (Ok ()) todo >>= fun () -> Ok 0
+
+let publish_cli () build_dir name pkg_names version tag keep_v opam delegate
     change_log distrib_uri distrib_file publish_msg dry_run publish_artefacts
     yes =
-  (let publish_artefacts =
-     match publish_artefacts with [] -> None | v -> Some v
-   in
-   Config.keep_v keep_v >>= fun keep_v ->
-   let pkg =
-     Pkg.v ~dry_run ?name ?version ?tag ~keep_v ?build_dir ?opam ?change_log
-       ?distrib_uri ?distrib_file ?publish_msg ?publish_artefacts ?delegate ()
-   in
-   let publish_artefact acc artefact =
-     acc >>= fun () ->
-     match artefact with
-     | `Doc -> publish_doc ~dry_run ~yes pkg_names pkg
-     | `Distrib -> publish_distrib ~dry_run ~yes pkg
-     | `Alt kind -> publish_alt ~dry_run pkg kind
-   in
-   Pkg.publish_artefacts pkg >>= fun todo ->
-   List.fold_left publish_artefact (Ok ()) todo >>= fun () -> Ok 0)
+  publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
+    ?publish_msg ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
+    ~publish_artefacts ~yes ()
   |> Cli.handle_error
 
 (* Command line interface *)
@@ -145,10 +152,10 @@ let man =
 
 let cmd =
   ( Term.(
-      pure publish $ Cli.setup $ Cli.build_dir $ Cli.dist_name $ Cli.pkg_names
-      $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ Cli.dist_opam $ delegate
-      $ Cli.change_log $ Cli.dist_uri $ Cli.dist_file $ Cli.publish_msg
-      $ Cli.dry_run $ artefacts $ Cli.yes),
+      pure publish_cli $ Cli.setup $ Cli.build_dir $ Cli.dist_name
+      $ Cli.pkg_names $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v
+      $ Cli.dist_opam $ delegate $ Cli.change_log $ Cli.dist_uri $ Cli.dist_file
+      $ Cli.publish_msg $ Cli.dry_run $ artefacts $ Cli.yes),
     Term.info "publish" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )
 
 (*---------------------------------------------------------------------------
