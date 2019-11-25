@@ -59,9 +59,7 @@ let release =
         \        extract the latest version tag from the package's change log\n\
         \        and tag the VCS HEAD commit with it:";
       `Pre "dune-release tag";
-      `P
-        "This will only work if the change log follows a certain format,\n\
-        \        see dune-release-log(1) for details.";
+      `P "This will only work if the change log follows a certain format.";
       `P
         "If you do not want to rely on dune-release's broken extraction \
          algorithms\n\
