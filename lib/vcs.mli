@@ -37,6 +37,10 @@ val cmd : t -> Bos.Cmd.t
 
     {b Warning} Prefer the functions below to remain VCS independent. *)
 
+val cmd_error : Bos.Cmd.t -> Bos.OS.Cmd.status -> ('a, R.msg) result
+(** [cmd_error cmd status] returns an error message describing the failing
+    command [cmd] and the exit status [status]. *)
+
 val find : ?dir:Fpath.t -> unit -> (t option, R.msg) result
 (** [find ~dir ()] looks for a VCS repository in working directory [dir] (not
     the repository directory like [.git], default is guessed automatically). *)
