@@ -19,34 +19,43 @@ val v :
   unit ->
   t
 (** [distrib ~massage ~exclude_paths ()] influences the distribution creation
-      process performed by the [dune-release] tool.
-      See the {{!distdetails}full details about distribution creation}.
+    process performed by the [dune-release] tool. See the {{!distdetails} full
+    details about distribution creation}.
 
-      In the following the {e distribution build directory} is a
-      private clone of the package's source repository's [HEAD] when
-      [dune-release distrib] is invoked.
-      {ul
-      {- [massage] is invoked in the distribution build directory,
-         before archiving. It can be used to
-         generate distribution time build artefacts. Defaults to {!massage}.}
-      {- [exclude_paths ()] is invoked in the distribution build
-         directory, after massaging, to determine the paths that are
-         excluded from being added to the distribution archive. Defaults to
-         {!exclude_paths}.}} *)
+    In the following the {e distribution build directory} is a private clone of
+    the package's source repository's [HEAD] when [dune-release distrib] is
+    invoked.
+
+    - [massage] is invoked in the distribution build directory, before
+      archiving. It can be used to generate distribution time build artefacts.
+      Defaults to {!massage}.
+    - [exclude_paths ()] is invoked in the distribution build directory, after
+      massaging, to determine the paths that are excluded from being added to
+      the distribution archive. Defaults to {!exclude_paths}. *)
 
 val default_massage : unit -> (unit, R.msg) result
-(** [default_massage] is the default distribution massaging
-    function. It is invoked in the distribution build directory and
-    does nothing. *)
+(** [default_massage] is the default distribution massaging function. It is
+    invoked in the distribution build directory and does nothing. *)
 
 val default_exclude_paths : unit -> (Fpath.t list, R.msg) result
-(** [default_exclude_paths ()] is the default list of paths to exclude
-    from the distribution archive. It is invoked in the distribution build
-    directory and returns the following static set of files.
+(** [default_exclude_paths ()] is the default list of paths to exclude from the
+    distribution archive. It is invoked in the distribution build directory and
+    returns the following static set of files.
 
     {[
-      fun () -> Ok [".git"; ".gitignore"; ".gitattributes"; ".hg"; ".hgignore";
-                    "build"; "Makefile"; "_build"]]} *)
+      fun () ->
+        Ok
+          [
+            ".git";
+            ".gitignore";
+            ".gitattributes";
+            ".hg";
+            ".hgignore";
+            "build";
+            "Makefile";
+            "_build";
+          ]
+    ]} *)
 
 val massage : t -> unit -> (unit, R.msg) result
 

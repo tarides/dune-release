@@ -21,8 +21,7 @@ val pkg_version : string option Term.t
 (** A [--pkg-version] option to specify the packages version. *)
 
 val keep_v : bool Term.t
-(** A [--keep-v] option to not drop the 'v' at the beginning of
-   version strings. *)
+(** A [--keep-v] option to not drop the 'v' at the beginning of version strings. *)
 
 val dist_name : string option Term.t
 (** A [--name] option to specify the distribution name. *)
@@ -63,17 +62,16 @@ val yes : bool Term.t
 (** {1 Terms} *)
 
 val setup : unit Term.t
-(** [setup env] defines a basic setup common to all commands. The
-    setup does, by side effect, set {!Logs} log verbosity, adjusts
-    colored output and sets the current working directory. *)
+(** [setup env] defines a basic setup common to all commands. The setup does, by
+    side effect, set {!Logs} log verbosity, adjusts colored output and sets the
+    current working directory. *)
 
 (** {1 Verbosity propagation} *)
 
 val propagate_verbosity_to_pkg_file : unit -> Bos.Cmd.t
-(** [propagate_verbosity_to_pkg_file ()] is
-    a command line fragment that has the option to propagate
-    the current log verbosity to an invocation of the package
-    description. *)
+(** [propagate_verbosity_to_pkg_file ()] is a command line fragment that has the
+    option to propagate the current log verbosity to an invocation of the
+    package description. *)
 
 (** {1 Warnings and errors} *)
 

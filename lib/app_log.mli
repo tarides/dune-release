@@ -1,7 +1,8 @@
 (** App level logs with distinct headers based on the nature of the message *)
 
 val status : ?src:Logs.src -> 'a Logs.log
-(** For informative messages about what's currently happening such as ["doing this"] *)
+(** For informative messages about what's currently happening such as
+    ["doing this"] *)
 
 val question : ?src:Logs.src -> 'a Logs.log
 (** For prompts *)

@@ -8,5 +8,5 @@ val all : t list
 
 val lint_pkg :
   dry_run:bool -> dir:Fpath.t -> Pkg.t -> t list -> (int, R.msg) result
-(** [lint_pkg ~dry_run ~dir pkg lints] performs the lint checks in [lints] on [pkg]
-    located in [dir]. *)
+(** [lint_pkg ~dry_run ~dir pkg lints] performs the lint checks in [lints] on
+    [pkg] located in [dir]. *)
