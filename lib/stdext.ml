@@ -30,3 +30,18 @@ module Path = struct
           String.equal name_wo_ext (String.Ascii.lowercase normalized))
       files
 end
+
+module Unix = struct
+  let maybe_echo_input echo_input f x =
+    if echo_input then f x
+    else
+      let open Unix in
+      let term_io = tcgetattr stdin in
+      tcsetattr stdin TCSANOW { term_io with c_echo = false };
+      let input = f x in
+      tcsetattr stdin TCSANOW term_io;
+      input
+
+  let read_line ?(echo_input = true) () =
+    maybe_echo_input echo_input read_line ()
+end

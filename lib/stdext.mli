@@ -30,3 +30,11 @@ module Path : sig
       whose name without the extension is equal to [name_wo_ext]. Backup files
       are ignored. *)
 end
+
+(** Interface to the Unix system. *)
+module Unix : sig
+  val read_line : ?echo_input:bool -> unit -> string
+  (** [read_line ?echo_input ()] reads a line (terminated before a CR) on the
+      standard input. If [echo_input] is [true] (by default) input characters
+      are echoed on the standard output. *)
+end
