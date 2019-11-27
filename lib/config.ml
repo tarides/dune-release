@@ -164,7 +164,7 @@ let () = at_exit cleanup
 
 let get_token () =
   let rec aux () =
-    match read_line () with
+    match Stdext.Unix.read_line ~echo_input:false () with
     | "" -> aux ()
     | s -> s
     | exception End_of_file ->
