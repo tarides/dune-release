@@ -44,8 +44,8 @@ val name : t -> (string, R.msg) result
 (** [name p] is [p]'s name. *)
 
 val with_name : t -> string -> t
-(** [with_name t n] is [r] such that like [name r] is [n] and [f r] is
-    [f t] otherwise. *)
+(** [with_name t n] is [r] such that like [name r] is [n] and [f r] is [f t]
+    otherwise. *)
 
 val version : t -> (string, R.msg) result
 (** [version p] is [p]'s version string.*)
@@ -92,9 +92,8 @@ val licenses : t -> (Fpath.t list, R.msg) result
 (** [licenses p] are [p]'s license files. *)
 
 val distrib_uri : ?raw:bool -> t -> (string, R.msg) result
-(** [distrib_uri p] is [p]'s distribution URI. If [raw] is [true]
-    defaults to [false], [p]'s raw URI distribution pattern is
-    returned. *)
+(** [distrib_uri p] is [p]'s distribution URI. If [raw] is [true] defaults to
+    [false], [p]'s raw URI distribution pattern is returned. *)
 
 val distrib_file : dry_run:bool -> t -> (Fpath.t, R.msg) result
 (** [distrib_file p] is [p]'s distribution archive. *)
@@ -106,20 +105,19 @@ val publish_msg : t -> (string, R.msg) result
 
 val distrib_archive :
   dry_run:bool -> keep_dir:bool -> t -> (Fpath.t, R.msg) result
-(** [distrib_archive ~keep_dir p] creates a distribution archive for
-    [p] and returns its path. If [keep_dir] is [true] the repository
-    checkout used to create the distribution archive is kept in the
-    build directory. *)
+(** [distrib_archive ~keep_dir p] creates a distribution archive for [p] and
+    returns its path. If [keep_dir] is [true] the repository checkout used to
+    create the distribution archive is kept in the build directory. *)
 
 val distrib_archive_path : t -> (Fpath.t, Rresult.R.msg) result
 
 val archive_url_path : t -> (Fpath.t, R.msg) result
-(** [archive_url_path] is the path to the file where the archive download URL is saved *)
+(** [archive_url_path] is the path to the file where the archive download URL is
+    saved *)
 
 val distrib_filename : ?opam:bool -> t -> (Fpath.t, R.msg) result
-(** [distrib_filename ~opam p] is a distribution filename for [p].  If
-    [opam] is [true] (defaults to [false]), the name follows opam's
-    naming conventions. *)
+(** [distrib_filename ~opam p] is a distribution filename for [p]. If [opam] is
+    [true] (defaults to [false]), the name follows opam's naming conventions. *)
 
 val publish_artefacts :
   t -> ([ `Distrib | `Doc | `Alt of string ] list, R.msg) result

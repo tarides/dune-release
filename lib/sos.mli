@@ -16,11 +16,11 @@
 
 (** Safe OS operations.
 
-   All the commands in that module can have side-effects. They also
-   all take a [--dry-run] paramater which cause the side-effect to be
-   discarded and to display a message instead. Some of these commands
-   also have a `[--force]` option: this causes the message to be
-   printed AND the side-effects to be caused.  *)
+    All the commands in that module can have side-effects. They also all take a
+    [--dry-run] paramater which cause the side-effect to be discarded and to
+    display a message instead. Some of these commands also have a `[--force]`
+    option: this causes the message to be printed AND the side-effects to be
+    caused. *)
 
 type error = Bos_setup.R.msg
 
@@ -94,10 +94,12 @@ val cp :
   src:Fpath.t ->
   dst:Fpath.t ->
   (unit, error) result
-(** [cp ~dry_run ~rec ~force ~src ~dst] copies [src] to [dst]. If [rec] is true, copies directories
-    recursively. If [force] is true, overwrite existing files. The usual [force] arguments from
-    other functions in this module is renamed [force_side_effects] here. *)
+(** [cp ~dry_run ~rec ~force ~src ~dst] copies [src] to [dst]. If [rec] is true,
+    copies directories recursively. If [force] is true, overwrite existing
+    files. The usual [force] arguments from other functions in this module is
+    renamed [force_side_effects] here. *)
 
 val relativize : src:Fpath.t -> dst:Fpath.t -> (Fpath.t, error) result
-(** [relativize ~src ~dst] return a relative path from [src] to [dst]. If such a path can't be
-    expressed, i.e. [srs] and [dst] don't have a common root, returns an error. *)
+(** [relativize ~src ~dst] return a relative path from [src] to [dst]. If such a
+    path can't be expressed, i.e. [srs] and [dst] don't have a common root,
+    returns an error. *)

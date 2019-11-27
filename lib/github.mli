@@ -10,18 +10,18 @@ open Bos_setup
 
 module Parse : sig
   val user_from_remote : string -> string option
-  (** [user_from_remote remote_uri] is the username in the github URI [remote_uri], ie:
+  (** [user_from_remote remote_uri] is the username in the github URI
+      [remote_uri], ie:
 
       - [user_from_remote_uri "git@github.com:username/repo.git"] returns
         [Some "username"]
       - [user_from_remote_uri "https://github.com/username/repo.git"] returns
         [Some "username"].
-      - Returns [None] if [remote_uri] isn't in the expected format.
-  *)
+      - Returns [None] if [remote_uri] isn't in the expected format. *)
 
   val archive_upload_url : string -> (string, R.msg) Result.result
-  (** [archive_upload_url response] extracts the browser_download_url field from a github
-      release asset upload response. *)
+  (** [archive_upload_url response] extracts the browser_download_url field from
+      a github release asset upload response. *)
 end
 
 (** {1 Publish} *)
@@ -33,8 +33,8 @@ val publish_distrib :
   yes:bool ->
   Pkg.t ->
   (string, R.msg) Result.result
-(** Push the tag, create a Github release, upload the distribution archive and return the
-    release archive download URL *)
+(** Push the tag, create a Github release, upload the distribution archive and
+    return the release archive download URL *)
 
 val publish_doc :
   dry_run:bool ->

@@ -16,17 +16,15 @@ val tar :
   root:Fpath.t ->
   mtime:int ->
   (string, R.msg) result
-(** [tar dir ~exclude_paths ~root ~mtime] is a (us)tar archive that
-    contains the file hierarchy [dir] except the relative hierarchies
-    present in [exclude_paths]. In the archive, members of [dir] are
-    rerooted at [root] and sorted according to {!Fpath.compare}. They
-    have their modification time set to [mtime] and their file
-    permissions are [0o775] for directories and files executable by the
-    user and [0o664] for other files. No other file metadata is
-    preserved.
+(** [tar dir ~exclude_paths ~root ~mtime] is a (us)tar archive that contains the
+    file hierarchy [dir] except the relative hierarchies present in
+    [exclude_paths]. In the archive, members of [dir] are rerooted at [root] and
+    sorted according to {!Fpath.compare}. They have their modification time set
+    to [mtime] and their file permissions are [0o775] for directories and files
+    executable by the user and [0o664] for other files. No other file metadata
+    is preserved.
 
-    {b Note.} This is a pure OCaml implementation, no [tar] tool is
-    needed. *)
+    {b Note.} This is a pure OCaml implementation, no [tar] tool is needed. *)
 
 (** {1 Bzip2 compression and unarchiving} *)
 
@@ -41,10 +39,9 @@ val ensure_tar : unit -> (unit, R.msg) result
 (** [ensure_tar ()] makes sure the [tar] utility is available. *)
 
 val untbz : dry_run:bool -> ?clean:bool -> Fpath.t -> (Fpath.t, R.msg) result
-(** [untbz ~clean ar] untars the tar bzip2 archive [ar] in the same
-    directory as [ar] and returns a base directory for [ar]. If [clean]
-    is [true] (defaults to [false]) first delete the base directory if
-    it exists. *)
+(** [untbz ~clean ar] untars the tar bzip2 archive [ar] in the same directory as
+    [ar] and returns a base directory for [ar]. If [clean] is [true] (defaults
+    to [false]) first delete the base directory if it exists. *)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
