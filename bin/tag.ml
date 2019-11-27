@@ -54,7 +54,7 @@ open Cmdliner
 let version =
   let doc =
     "The version tag to use. If absent, automatically extracted from the \
-     package's change log; see dune-release-log(1) for details."
+     package's change log."
   in
   Arg.(value & pos 0 (some string) None & info [] ~doc ~docv:"VERSION")
 
@@ -96,8 +96,7 @@ let man =
     `P
       "The $(tname) command tags the package's VCS HEAD commit with a version. \
        If the version is not specified on the command line it is automatically \
-       extracted from the package's change log; use $(b,dune-release log -t) \
-       to check the extracted value.";
+       extracted from the package's change log.";
   ]
 
 let cmd =
