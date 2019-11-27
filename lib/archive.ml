@@ -5,7 +5,7 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
-open Stdext
+module Sbytes = Stdext.Sbytes
 
 (* Ustar archives *)
 

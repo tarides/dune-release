@@ -17,3 +17,16 @@ module Sbytes : sig
       a valid range of [src], or if [dstoff] and [len] do not designate a valid
       range of [dst]. *)
 end
+
+module Path : sig
+  val is_backup_file : string -> bool
+  (** [is_backup_file s] returns [true] iff the filename [s]:
+
+      - ends with ['~']
+      - or begins with ['#'] and ends with ['#']. *)
+
+  val find_files : name_wo_ext:string -> Fpath.t list -> Fpath.t list
+  (** [find_files ~name_wo_ext files] returns the list of files among [files]
+      whose name without the extension is equal to [name_wo_ext]. Backup files
+      are ignored. *)
+end
