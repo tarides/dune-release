@@ -12,13 +12,13 @@ let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
   Vcs.get () >>= fun repo ->
   match delete with
   | true ->
-      Prompt.confirm_or_abort ~yes ~question:(fun l ->
+      Prompt.confirm_or_abort () ~yes ~question:(fun l ->
           l "Delete tag %a?" Text.Pp.version tag)
       >>= fun () ->
       Vcs.delete_tag ~dry_run repo tag >>| fun () ->
       App_log.success (fun m -> m "Deleted tag %a" Text.Pp.version tag)
   | false ->
-      Prompt.confirm_or_abort ~yes ~question:(fun l ->
+      Prompt.confirm_or_abort () ~yes ~question:(fun l ->
           l "Create git tag %a for %a?" Text.Pp.version tag Text.Pp.commit
             commit_ish)
       >>= fun () ->

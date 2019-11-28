@@ -108,7 +108,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
     | true ->
         let push_spec = strf "%s:%s" branch branch in
         Ok (git_for_repo repo) >>= fun git ->
-        Prompt.confirm_or_abort ~yes ~question:(fun l ->
+        Prompt.confirm_or_abort () ~yes ~question:(fun l ->
             l "Push new documentation to %a?" Text.Pp.url (remote ^ "#gh-pages"))
         >>= fun () ->
         App_log.status (fun l ->
@@ -333,15 +333,16 @@ let publish_distrib ~dry_run ~msg ~archive ~yes p =
   Pkg.tag p >>= fun tag ->
   check_tag ~dry_run vcs tag >>= fun () ->
   dev_repo p >>= fun upstr ->
-  Prompt.confirm_or_abort ~yes ~question:(fun l ->
+  Prompt.confirm_or_abort () ~yes
+    ~question:(fun l ->
       l "Push tag %a to %a?" Text.Pp.version tag Text.Pp.url upstr)
-  >>= fun () ->
-  App_log.status (fun l ->
-      l "Pushing tag %a to %a" Text.Pp.version tag Text.Pp.url upstr);
-  Sos.run_quiet ~dry_run Cmd.(git % "push" % "--force" % upstr % tag)
+    ~skippable:(fun () ->
+      App_log.status (fun l ->
+          l "Pushing tag %a to %a" Text.Pp.version tag Text.Pp.url upstr);
+      Sos.run_quiet ~dry_run Cmd.(git % "push" % "--force" % upstr % tag))
   >>= fun () ->
   Config.token ~dry_run () >>= fun token ->
-  Prompt.confirm_or_abort ~yes ~question:(fun l ->
+  Prompt.confirm_or_abort () ~yes ~question:(fun l ->
       l "Create release %a on %a?" Text.Pp.version tag Text.Pp.url upstr)
   >>= fun () ->
   App_log.status (fun l ->
@@ -349,7 +350,7 @@ let publish_distrib ~dry_run ~msg ~archive ~yes p =
         Text.Pp.url upstr);
   curl_create_release ~token ~dry_run curl tag msg user repo >>= fun id ->
   App_log.success (fun l -> l "Succesfully created release with id %d" id);
-  Prompt.confirm_or_abort ~yes ~question:(fun l ->
+  Prompt.confirm_or_abort () ~yes ~question:(fun l ->
       l "Upload %a as release asset?" Text.Pp.path archive)
   >>= fun () ->
   App_log.status (fun l ->

@@ -132,7 +132,7 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
     strf "%s\n\n%a%a%a##### %s" syn (pp_link "Project page") homepage
       (pp_link "Documentation") doc pp_space () changes
   in
-  Prompt.confirm_or_abort ~yes ~question:(fun l ->
+  Prompt.confirm_or_abort () ~yes ~question:(fun l ->
       l "Open PR to %a?" pp_opam_repo opam_repo)
   >>= fun () ->
   App_log.status (fun l ->
