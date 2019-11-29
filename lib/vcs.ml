@@ -64,10 +64,13 @@ let find_git () =
       | dir, (_, `Exited 0) -> Ok (Some (v `Git git ~dir:Fpath.(v dir)))
       | _ -> Ok None )
 
-let err_git_exit cmd c = R.error_msgf "%a exited with code %d" Cmd.dump cmd c
-
-let err_git_signal cmd c =
-  R.error_msgf "%a exited with signal %d" Cmd.dump cmd c
+let cmd_error cmd = function
+  | `Exited c ->
+      R.error_msgf "The following command exited with code %d:@\n%a" c Cmd.pp
+        cmd
+  | `Signaled c ->
+      R.error_msgf "The following command exited with signal %d:@\n%a" c Cmd.pp
+        cmd
 
 let run_git ~dry_run ?force ~default r args out =
   let git = Cmd.(cmd r %% args) in
@@ -75,16 +78,14 @@ let run_git ~dry_run ?force ~default r args out =
     out
   >>= function
   | v, (_, `Exited 0) -> Ok v
-  | _, (_, `Exited c) -> err_git_exit git c
-  | _, (_, `Signaled c) -> err_git_signal git c
+  | _, (_, st) -> cmd_error git st
 
 let git_is_dirty r =
   let status = Cmd.(cmd r %% git_work_tree r % "status" % "--porcelain") in
   OS.Cmd.(run_out ~err:err_null status |> out_string) >>= function
   | "", (_, `Exited 0) -> Ok false
   | _, (_, `Exited 0) -> Ok true
-  | _, (_, `Exited c) -> err_git_exit status c
-  | _, (_, `Signaled c) -> err_git_signal status c
+  | _, (_, st) -> cmd_error status st
 
 let git_file_is_dirty r file =
   let diff =
@@ -93,8 +94,7 @@ let git_file_is_dirty r file =
   OS.Cmd.(run_status ~err:err_null diff) >>= function
   | `Exited 0 -> Ok false
   | `Exited 1 -> Ok true
-  | `Exited c -> err_git_exit diff c
-  | `Signaled c -> err_git_signal diff c
+  | st -> cmd_error diff st
 
 let dirtify_if ~dirty r id =
   match dirty with
@@ -223,16 +223,11 @@ let find_hg () =
       | dir, (_, `Exited 0) -> Ok (Some (v `Hg hg ~dir:Fpath.(v dir)))
       | _ -> Ok None )
 
-let err_hg_exit cmd c = R.error_msgf "%a exited with code %d" Cmd.dump cmd c
-
-let err_hg_signal cmd c = R.error_msgf "%a exited with signal %d" Cmd.dump cmd c
-
 let run_hg r args out =
   let hg = Cmd.(cmd r %% args) in
   OS.Cmd.(run_out hg |> out) >>= function
   | v, (_, `Exited 0) -> Ok v
-  | _, (_, `Exited c) -> err_hg_exit hg c
-  | _, (_, `Signaled c) -> err_hg_signal hg c
+  | _, (_, st) -> cmd_error hg st
 
 let hg_id r ~rev =
   run_hg r Cmd.(v "id" % "-i" % "--rev" % rev) OS.Cmd.out_string >>= fun id ->

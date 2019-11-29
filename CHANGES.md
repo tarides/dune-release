@@ -16,6 +16,7 @@
 - Ignore backup files when looking for README, CHANGES and LICENSE files
   (#194, @gpetiot)
 - Do not echo input characters when reading token (#199, @gpetiot)
+- Improve the output of VCS command errors (#193, @gpetiot)
 
 ### Removed
 
