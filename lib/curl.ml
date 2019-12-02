@@ -1,5 +1,7 @@
 open Bos_setup
 
+type t = { url : string; args : string list }
+
 let escape_for_json s =
   let len = String.length s in
   let max = len - 1 in
@@ -42,29 +44,36 @@ let create_release ~version ~msg ~user ~repo =
     strf "{ \"tag_name\" : \"%s\", \"body\" : \"%s\" }"
       (escape_for_json version) (escape_for_json msg)
   in
-  let uri = strf "https://api.github.com/repos/%s/%s/releases" user repo in
-  [ "-L"; "-s"; "-S"; "-K"; "-"; "-D"; "-"; "--data"; data; uri ]
+  let url = strf "https://api.github.com/repos/%s/%s/releases" user repo in
+  let args = [ "-L"; "-s"; "-S"; "-K"; "-"; "-D"; "-"; "--data"; data ] in
+  { url; args }
 
 let upload_archive ~archive ~user ~repo ~release_id =
-  [
-    "-L";
-    "-s";
-    "-S";
-    "-K";
-    "-";
-    "-H";
-    "Content-Type:application/x-tar";
-    "--data-binary";
-    strf "@@%s" (Fpath.to_string archive);
+  let url =
     strf "https://uploads.github.com/repos/%s/%s/releases/%d/assets?name=%s"
-      user repo release_id (Fpath.filename archive);
-  ]
+      user repo release_id (Fpath.filename archive)
+  in
+  let args =
+    [
+      "-L";
+      "-s";
+      "-S";
+      "-K";
+      "-";
+      "-H";
+      "Content-Type:application/x-tar";
+      "--data-binary";
+      strf "@@%s" (Fpath.to_string archive);
+    ]
+  in
+  { url; args }
 
 let open_pr ~title ~user ~branch ~body ~opam_repo =
   let base, repo = opam_repo in
-  let uri = strf "https://api.github.com/repos/%s/%s/pulls" base repo in
+  let url = strf "https://api.github.com/repos/%s/%s/pulls" base repo in
   let data =
     strf {|{"title": %S,"base": "master", "body": %S, "head": "%s:%s"}|} title
       body user branch
   in
-  [ "-s"; "-S"; "-K"; "-"; "-D"; "-"; "--data"; data; uri ]
+  let args = [ "-s"; "-S"; "-K"; "-"; "-D"; "-"; "--data"; data ] in
+  { url; args }

@@ -175,42 +175,49 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
 let github_auth ~dry_run ~user token =
   Sos.read_file ~dry_run token >>= fun token -> Ok (strf "%s:%s" user token)
 
-let run_with_auth ~dry_run auth curl k =
-  let auth = strf "-u %s" auth in
-  Sos.run_io ~dry_run curl (OS.Cmd.in_string auth) k
+let run_with_auth ?(default_body = "") ~dry_run ~auth Curl.{ url; args } =
+  let args = "-u" :: auth :: args in
+  if dry_run then
+    let _ =
+      Sos.show "exec:@[@ curl %a@]" Format.(pp_print_list pp_print_string) args
+    in
+    Ok Curly.Response.{ code = 0; headers = []; body = default_body }
+  else
+    match Curly.(run ~args (Request.make ~url ~meth:`POST ())) with
+    | Ok x -> Ok x
+    | Error e -> R.error_msgf "curl execution failed: %a" Curly.Error.pp e
 
-let curl_create_release ~token ~dry_run curl version msg user repo =
+let response_body r = r.Curly.Response.body
+
+let curl_create_release ~token ~dry_run version msg user repo =
   let parse_release_id resp =
-    (* FIXME this is retired. *)
-    let headers = String.cuts ~sep:"\r\n" resp in
-    try
-      let not_slash c = not (Char.equal '/' c) in
-      let loc = List.find (String.is_prefix ~affix:"Location:") headers in
-      let id = String.take ~rev:true ~sat:not_slash loc in
-      match String.to_int id with
-      | Some id -> Ok id
-      | None ->
-          R.error_msgf "Could not parse id from location header %S: %S" loc id
-    with Not_found ->
-      R.error_msgf "Could not find release id in response:\n%s."
-        (String.concat ~sep:"\n" headers)
+    let headers = resp.Curly.Response.headers in
+    match List.assoc_opt "Location" headers with
+    | Some loc -> (
+        let not_slash c = not (Char.equal '/' c) in
+        let id = String.take ~rev:true ~sat:not_slash loc in
+        match String.to_int id with
+        | Some id -> Ok id
+        | None ->
+            R.error_msgf "Could not parse id from location header %S: %S" loc id
+        )
+    | None ->
+        let colon fs _ = Fmt.char fs ':' in
+        R.error_msgf "Could not find release id in response:\n%a"
+          Fmt.(list (pair ~sep:colon string string))
+          headers
   in
   github_auth ~dry_run ~user token >>= fun auth ->
-  let args = Curl.create_release ~version ~msg ~user ~repo in
-  let cmd = List.fold_left Cmd.( % ) curl args in
-  run_with_auth ~dry_run ~default:"Location: /0" auth cmd
-    (OS.Cmd.to_string ~trim:false)
-  >>= parse_release_id
+  let curl_t = Curl.create_release ~version ~msg ~user ~repo in
+  run_with_auth ~dry_run ~auth curl_t >>= parse_release_id
 
-let curl_upload_archive ~token ~dry_run curl archive user repo release_id =
-  let args = Curl.upload_archive ~archive ~user ~repo ~release_id in
+let curl_upload_archive ~token ~dry_run archive user repo release_id =
+  let curl_t = Curl.upload_archive ~archive ~user ~repo ~release_id in
   github_auth ~dry_run ~user token >>= fun auth ->
-  let cmd = List.fold_left Cmd.( % ) curl args in
-  run_with_auth ~dry_run ~default:"No response" auth cmd
-    (OS.Cmd.to_string ~trim:false)
+  run_with_auth ~dry_run ~auth curl_t
+  >>| response_body >>= Parse.archive_upload_url
 
-let curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body
-    ~opam_repo curl =
+let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo body =
   let parse_url resp =
     (* FIXME this is nuts. *)
     let url =
@@ -231,17 +238,11 @@ let curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body
       if Re.execp alread_exists resp then Ok `Already_exists
       else R.error_msgf "Could not find html_url id in response:\n%s." resp
   in
-  let args = Curl.open_pr ~title ~user ~branch ~body ~opam_repo in
-  let cmd = List.fold_left Cmd.( % ) curl args in
+  let curl_t = Curl.open_pr ~title ~user ~branch ~body ~opam_repo in
   github_auth ~dry_run ~user:distrib_user token >>= fun auth ->
-  let default = {|  "html_url": "${pr_url}",|} in
-  run_with_auth ~dry_run ~default auth cmd (OS.Cmd.to_string ~trim:false)
-  >>= parse_url
-
-let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo body =
-  OS.Cmd.must_exist Cmd.(v "curl") >>= fun curl ->
-  curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body
-    ~opam_repo curl
+  let default_body = {|  "html_url": "${pr_url}",|} in
+  run_with_auth ~dry_run ~default_body ~auth curl_t
+  >>| response_body >>= parse_url
 
 let dev_repo p =
   Pkg.dev_repo p >>= function
@@ -266,14 +267,12 @@ let assert_tag_exists ~dry_run tag =
 
 let publish_distrib ~dry_run ~msg ~archive ~yes p =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
-  let curl = Cmd.(v "curl") in
   ( match Pkg.distrib_user_and_repo p with
   | Error _ as e -> if dry_run then Ok (D.user, D.repo) else e
   | r -> r )
   >>= fun (user, repo) ->
   Pkg.tag p >>= fun tag ->
   assert_tag_exists ~dry_run tag >>= fun () ->
-  OS.Cmd.must_exist curl >>= fun curl ->
   Vcs.get () >>= fun vcs ->
   Ok (git_for_repo vcs) >>= fun git ->
   Pkg.tag p >>= fun tag ->
@@ -293,7 +292,7 @@ let publish_distrib ~dry_run ~msg ~archive ~yes p =
   App_log.status (fun l ->
       l "Creating release %a on %a via github's API" Text.Pp.version tag
         Text.Pp.url upstr);
-  curl_create_release ~token ~dry_run curl tag msg user repo >>= fun id ->
+  curl_create_release ~token ~dry_run tag msg user repo >>= fun id ->
   App_log.success (fun l -> l "Succesfully created release with id %d" id);
   Prompt.confirm_or_abort ~yes ~question:(fun l ->
       l "Upload %a as release asset?" Text.Pp.path archive)
@@ -301,8 +300,7 @@ let publish_distrib ~dry_run ~msg ~archive ~yes p =
   App_log.status (fun l ->
       l "Uploading %a as a release asset for %a via github's API" Text.Pp.path
         archive Text.Pp.version tag);
-  curl_upload_archive ~token ~dry_run curl archive user repo id
-  >>= Parse.archive_upload_url
+  curl_upload_archive ~token ~dry_run archive user repo id
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
