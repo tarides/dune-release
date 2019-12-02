@@ -74,17 +74,22 @@ let log_wrote_archive ar =
   App_log.success (fun m -> m "Wrote archive %a" Text.Pp.path ar);
   Ok ()
 
-let distrib () dry_run build_dir name pkg_names version tag keep_v keep_dir
+let distrib ?build_dir ~dry_run ~name ~pkg_names ~version ~tag ~keep_v ~keep_dir
+    ~skip_lint ~skip_build ~skip_tests () =
+  App_log.status (fun l -> l "Building source archive");
+  Config.keep_v keep_v >>= fun keep_v ->
+  let pkg = Pkg.v ~dry_run ?name ?version ~keep_v ?build_dir ?tag () in
+  Pkg.distrib_archive ~dry_run ~keep_dir pkg >>= fun ar ->
+  log_wrote_archive ar >>= fun () ->
+  check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar
+  >>= fun errs ->
+  log_footprint pkg ar >>= fun () ->
+  (if dry_run then Ok () else warn_if_vcs_dirty ()) >>= fun () -> Ok errs
+
+let distrib_cli () dry_run build_dir name pkg_names version tag keep_v keep_dir
     skip_lint skip_build skip_tests =
-  ( App_log.status (fun l -> l "Building source archive");
-    Config.keep_v keep_v >>= fun keep_v ->
-    let pkg = Pkg.v ~dry_run ?name ?version ~keep_v ?build_dir ?tag () in
-    Pkg.distrib_archive ~dry_run ~keep_dir pkg >>= fun ar ->
-    log_wrote_archive ar >>= fun () ->
-    check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar
-    >>= fun errs ->
-    log_footprint pkg ar >>= fun () ->
-    (if dry_run then Ok () else warn_if_vcs_dirty ()) >>= fun () -> Ok errs )
+  distrib ?build_dir ~dry_run ~name ~pkg_names ~version ~tag ~keep_v ~keep_dir
+    ~skip_lint ~skip_build ~skip_tests ()
   |> Cli.handle_error
 
 (* Command line interface *)
@@ -187,7 +192,7 @@ let man =
 
 let cmd =
   ( Term.(
-      pure distrib $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.dist_name
+      pure distrib_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.dist_name
       $ Cli.pkg_names $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v
       $ keep_build_dir $ skip_lint $ skip_build $ skip_tests),
     Term.info "distrib" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )

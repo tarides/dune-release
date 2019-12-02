@@ -226,66 +226,76 @@ let field pkgs field =
 
 (* Command *)
 
-let opam () dry_run build_dir local_repo remote_repo opam_repo user keep_v opam
-    distrib_uri distrib_file tag name pkg_names version pkg_descr readme
+let get_pkgs ?build_dir ?opam ?distrib_uri ?distrib_file ?readme ?change_log
+    ?publish_msg ?pkg_descr ~dry_run ~keep_v ~tag ~name ~pkg_names ~version () =
+  Config.keep_v keep_v >>= fun keep_v ->
+  let distrib_file =
+    let pkg =
+      Pkg.v ?name ?opam ?tag ?version ?distrib_file ?distrib_uri ~dry_run:false
+        ~keep_v ()
+    in
+    Pkg.distrib_archive_path pkg
+  in
+  Pkg.infer_pkg_names Fpath.(v ".") pkg_names >>= fun pkg_names ->
+  let pkg_names = List.map (fun n -> Some n) pkg_names in
+  distrib_file >>| fun distrib_file ->
+  List.map
+    (fun name ->
+      Pkg.v ~dry_run ?build_dir ?name ?version ?opam ?tag ?opam_descr:pkg_descr
+        ~keep_v ?distrib_uri ~distrib_file ?readme ?change_log ?publish_msg ())
+    pkg_names
+
+let descr ~pkgs = descr pkgs
+
+let pkg ~dry_run ~pkgs =
+  List.fold_left
+    (fun acc p ->
+      match (acc, pkg ~dry_run p) with
+      | Ok i, Ok () -> Ok i
+      | (Error _ as e), _ | _, (Error _ as e) -> e)
+    (Ok 0) pkgs
+
+let submit ?local_repo ?remote_repo ?opam_repo ?user ~dry_run ~pkgs ~pkg_names
+    ~no_auto_open ~yes () =
+  let opam_repo =
+    match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
+  in
+  Config.v ~user ~local_repo ~remote_repo pkgs >>= fun config ->
+  ( match local_repo with
+  | Some r -> Ok Fpath.(v r)
+  | None -> (
+      match config.local with
+      | Some r -> Ok r
+      | None -> R.error_msg "Unknown local repository." ) )
+  >>= fun local_repo ->
+  ( match remote_repo with
+  | Some r -> Ok r
+  | None -> (
+      match config.remote with
+      | Some r -> Ok r
+      | None -> R.error_msg "Unknown remote repository." ) )
+  >>= fun remote_repo ->
+  Config.auto_open (not no_auto_open) >>= fun auto_open ->
+  App_log.status (fun m ->
+      m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
+  submit ~dry_run ~yes ~opam_repo ~user:config.user local_repo remote_repo pkgs
+    auto_open
+
+let field ~pkgs ~field_name = field pkgs field_name
+
+let opam_cli () dry_run build_dir local_repo remote_repo opam_repo user keep_v
+    opam distrib_uri distrib_file tag name pkg_names version pkg_descr readme
     change_log publish_msg action field_name no_auto_open yes =
-  Config.keep_v keep_v
-  >>= (fun keep_v ->
-        Config.auto_open (not no_auto_open) >>= fun auto_open ->
-        let distrib_file =
-          let pkg =
-            Pkg.v ?name ?opam ?tag ?version ?distrib_file ?distrib_uri
-              ~dry_run:false ~keep_v ()
-          in
-          Pkg.distrib_archive_path pkg
-        in
-        Pkg.infer_pkg_names Fpath.(v ".") pkg_names >>= fun pkg_names ->
-        let pkgs =
-          let pkg_names = List.map (fun n -> Some n) pkg_names in
-          distrib_file >>| fun distrib_file ->
-          List.map
-            (fun name ->
-              Pkg.v ~dry_run ?build_dir ?name ?version ?opam ?tag
-                ?opam_descr:pkg_descr ~keep_v ?distrib_uri ~distrib_file ?readme
-                ?change_log ?publish_msg ())
-            pkg_names
-        in
-        let opam_repo =
-          match opam_repo with
-          | None -> ("ocaml", "opam-repository")
-          | Some r -> r
-        in
-        pkgs >>= fun pkgs ->
+  get_pkgs ?build_dir ?opam ?distrib_uri ?distrib_file ?pkg_descr ?readme
+    ?change_log ?publish_msg ~dry_run ~keep_v ~tag ~name ~pkg_names ~version ()
+  >>= (fun pkgs ->
         match action with
-        | `Descr -> descr pkgs
-        | `Pkg ->
-            List.fold_left
-              (fun acc p ->
-                match (acc, pkg ~dry_run p) with
-                | Ok i, Ok () -> Ok i
-                | (Error _ as e), _ | _, (Error _ as e) -> e)
-              (Ok 0) pkgs
+        | `Descr -> descr ~pkgs
+        | `Pkg -> pkg ~dry_run ~pkgs
         | `Submit ->
-            Config.v ~user ~local_repo ~remote_repo pkgs >>= fun config ->
-            ( match local_repo with
-            | Some r -> Ok Fpath.(v r)
-            | None -> (
-                match config.local with
-                | Some r -> Ok r
-                | None -> R.error_msg "Unknown local repository." ) )
-            >>= fun local_repo ->
-            ( match remote_repo with
-            | Some r -> Ok r
-            | None -> (
-                match config.remote with
-                | Some r -> Ok r
-                | None -> R.error_msg "Unknown remote repository." ) )
-            >>= fun remote_repo ->
-            App_log.status (fun m ->
-                m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
-            submit ~dry_run ~yes ~opam_repo ~user:config.user local_repo
-              remote_repo pkgs auto_open
-        | `Field -> field pkgs field_name)
+            submit ?local_repo ?remote_repo ?opam_repo ?user ~dry_run ~pkgs
+              ~pkg_names ~no_auto_open ~yes ()
+        | `Field -> field ~pkgs ~field_name)
   |> Cli.handle_error
 
 (* Command line interface *)
@@ -303,7 +313,7 @@ let action =
   let action = Arg.enum action in
   Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
 
-let field =
+let field_arg =
   let doc = "the field to output ($(b,field) action)" in
   Arg.(value & pos 1 (some string) None & info [] ~doc ~docv:"FIELD")
 
@@ -401,11 +411,11 @@ let cmd =
   let info = Term.info "opam" ~doc ~sdocs ~envs ~man ~man_xrefs in
   let t =
     Term.(
-      pure opam $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ local_repo
+      pure opam_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ local_repo
       $ remote_repo $ opam_repo $ user $ Cli.keep_v $ Cli.dist_opam
       $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $ Cli.dist_name
       $ Cli.pkg_names $ Cli.pkg_version $ pkg_descr $ Cli.readme
-      $ Cli.change_log $ Cli.publish_msg $ action $ field $ no_auto_open
+      $ Cli.change_log $ Cli.publish_msg $ action $ field_arg $ no_auto_open
       $ Cli.yes)
   in
   (t, info)

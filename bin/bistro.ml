@@ -4,30 +4,22 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-open Bos_setup
-
-let add args name v =
-  match v with None -> args | Some x -> Cmd.(args % name % x)
-
-let add_l args name v =
-  match v with [] -> args | x -> Cmd.(args % name % String.concat ~sep:"," x)
+open Bos_setup.R.Infix
 
 let bistro () dry_run name pkg_names version tag keep_v =
   Cli.handle_error
     ( Dune_release.Config.keep_v keep_v >>= fun keep_v ->
-      let args = Cmd.(v "--verbosity" % Logs.(level_to_string (level ()))) in
-      let args = if dry_run then Cmd.(args % "--dry-run") else args in
-      let args = add args "--name" name in
-      let args = add args "--pkg-version" version in
-      let args = if keep_v then Cmd.(args % "--keep-v") else args in
-      let args = add args "--tag" tag in
-      let args = add_l args "--pkg-names" pkg_names in
-      let dune_release = Cmd.(v "dune-release") in
-      OS.Cmd.run Cmd.(dune_release % "distrib" %% args) >>= fun () ->
-      OS.Cmd.run Cmd.(dune_release % "publish" %% args) >>= fun () ->
-      OS.Cmd.run Cmd.(dune_release % "opam" %% args % "pkg") >>= fun () ->
-      OS.Cmd.run Cmd.(dune_release % "opam" %% args % "submit") >>= fun () ->
-      Ok 0 )
+      Distrib.distrib ~dry_run ~name ~pkg_names ~version ~tag ~keep_v
+        ~keep_dir:false ~skip_lint:false ~skip_build:false ~skip_tests:false ()
+      >>= fun _distrib_ret ->
+      Publish.publish ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
+        ~publish_artefacts:[] ~yes:false ()
+      >>= fun _publish_ret ->
+      Opam.get_pkgs ~dry_run ~keep_v ~tag ~name ~pkg_names ~version ()
+      >>= fun pkgs ->
+      Opam.pkg ~dry_run ~pkgs >>= fun _opam_pkg_ret ->
+      Opam.submit ~dry_run ~pkgs ~pkg_names ~no_auto_open:false ~yes:false ()
+      >>= fun _opam_submit_ret -> Ok 0 )
 
 (* Command line interface *)
 

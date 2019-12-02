@@ -4,6 +4,65 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
+(** Entrypoints for the [distro] command. *)
+
+val get_pkgs :
+  ?build_dir:Fpath.t ->
+  ?opam:Fpath.t ->
+  ?distrib_uri:string ->
+  ?distrib_file:Fpath.t ->
+  ?readme:Fpath.t ->
+  ?change_log:Fpath.t ->
+  ?publish_msg:string ->
+  ?pkg_descr:Fpath.t ->
+  dry_run:bool ->
+  keep_v:bool ->
+  tag:string option ->
+  name:string option ->
+  pkg_names:string list ->
+  version:string option ->
+  unit ->
+  (Dune_release.Pkg.t list, Bos_setup.R.msg) result
+(** [get_pkgs ~build_dir ~opam ~distrib_uri ~distrib_file ~readme ~change_log
+    ~publish_msg ~pkg_descr ~dry_run ~keep_v ~tag ~name ~pkg_names ~version ()]
+    returns the list of packages built from the [distrib_file] or the associated
+    error messages. *)
+
+val descr : pkgs:Dune_release.Pkg.t list -> (int, Bos_setup.R.msg) result
+(** [descr ~pkgs] prints the opam description of packages [pkgs]. Returns the
+    exit code (0 for success, 1 for failure) or error messages. *)
+
+val pkg :
+  dry_run:bool -> pkgs:Dune_release.Pkg.t list -> (int, Bos_setup.R.msg) result
+(** [pkg ~dry_run ~pkgs] creates the opam package descriptions for packages
+    [pkgs] and upgrades them to opam 2.0 if necessary. Returns the exit code (0
+    for success, 1 for failure) or error messages. *)
+
+val submit :
+  ?local_repo:string ->
+  ?remote_repo:string ->
+  ?opam_repo:string * string ->
+  ?user:string ->
+  dry_run:bool ->
+  pkgs:Dune_release.Pkg.t list ->
+  pkg_names:string list ->
+  no_auto_open:bool ->
+  yes:bool ->
+  unit ->
+  (int, Bos_setup.R.msg) result
+(** [submit ?local_repo ?remote_repo ?opam_repo ?user ~dry_run ~pkgs ~pkg_names
+    ~no_auto_open ~yes ()] opens a pull request on the opam repository for the
+    packages [pkgs]. Returns the exit code (0 for success, 1 for failure) or
+    error messages. *)
+
+val field :
+  pkgs:Dune_release.Pkg.t list ->
+  field_name:string option ->
+  (int, Bos_setup.R.msg) result
+(** [field ~pkgs ~field_name] prints the value of the field [field_name] in the
+    opam file of packages [pkgs]. Returns the exit code (0 for success, 1 for
+    failure) or error messages. *)
+
 (** The [opam] command. *)
 
 val cmd : int Cmdliner.Term.t * Cmdliner.Term.info
