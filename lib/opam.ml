@@ -313,23 +313,43 @@ module Url = struct
         else OS.File.must_exist distrib_file >>= fun _ -> assert false
 end
 
-let opam_version () =
-  let v =
-    OS.Cmd.run_out Cmd.(cmd % "--version") |> OS.Cmd.out_string ~trim:true
-  in
-  let of_str = function
-    | "1.2.2" -> `v1_2_2
-    | s -> (
-        match String.cut ~sep:"2." s with
-        | Some ("", _) -> `v2
-        | _ -> Fmt.failwith "opam: invalid version %s" s )
-  in
-  match v with
-  | Ok (v, (_, `Exited 0)) -> of_str v
-  | Ok (_, (_, s)) -> Fmt.failwith "opam: %a" OS.Cmd.pp_status s
-  | Error (`Msg e) -> Fmt.failwith "opam: %s" e
+module Version = struct
+  type t = V1_2_2 | V2
 
-let version = lazy (opam_version ())
+  let pp fs = function
+    | V1_2_2 -> Format.fprintf fs "v1.2.2"
+    | V2 -> Format.fprintf fs "v2"
+
+  let equal v1 v2 =
+    match (v1, v2) with V1_2_2, V1_2_2 | V2, V2 -> true | _ -> false
+
+  let of_string v =
+    if Bos_setup.String.is_prefix v ~affix:"1." then
+      if String.equal v "1.2.2" then Ok V1_2_2
+      else R.error_msgf "unsupported opam version: %S" v
+    else
+      match String.cut ~sep:"2." v with
+      | Some ("", _) -> Ok V2
+      | _ -> R.error_msgf "unsupported opam version: %S" v
+
+  let cli () =
+    match
+      OS.Cmd.run_out Cmd.(cmd % "--version") |> OS.Cmd.out_string ~trim:true
+    with
+    | Ok (s, (_, `Exited 0)) ->
+        of_string s >>= fun v ->
+        if equal v V1_2_2 then
+          Logs.warn (fun l ->
+              l
+                "opam %s is deprecated, and its support will be dropped in \
+                 dune-release 2.0.0, please switch to opam 2.0"
+                s);
+        Ok v
+    | Ok (_, (_, s)) -> R.error_msgf "opam: %a" OS.Cmd.pp_status s
+    | Error (`Msg e) -> R.error_msgf "opam: %s" e
+
+  let cli = lazy (cli ())
+end
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
