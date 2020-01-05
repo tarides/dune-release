@@ -139,14 +139,14 @@ let delegate p =
 let build_dir p =
   match p.build_dir with Some b -> Ok b | None -> Ok (Fpath.v "_build")
 
-let find_files path ~name_wo_ext =
+let find_files path ~names_wo_ext =
   OS.Dir.contents path >>| fun files ->
-  Stdext.Path.find_files files ~name_wo_ext
+  Stdext.Path.find_files files ~names_wo_ext
 
 let readmes p =
   match p.readmes with
   | Some f -> Ok f
-  | None -> find_files (Fpath.v ".") ~name_wo_ext:"readme"
+  | None -> find_files (Fpath.v ".") ~names_wo_ext:[ "readme" ]
 
 let readme p =
   readmes p >>= function
@@ -193,7 +193,7 @@ let opam_descr p =
 let change_logs p =
   match p.change_logs with
   | Some f -> Ok f
-  | None -> find_files (Fpath.v ".") ~name_wo_ext:"changes"
+  | None -> find_files (Fpath.v ".") ~names_wo_ext:[ "changes"; "changelog" ]
 
 let change_log p =
   change_logs p >>= function
@@ -203,7 +203,7 @@ let change_log p =
 let licenses p =
   match p.licenses with
   | Some f -> Ok f
-  | None -> find_files (Fpath.v ".") ~name_wo_ext:"license"
+  | None -> find_files (Fpath.v ".") ~names_wo_ext:[ "license"; "copying" ]
 
 let dev_repo p =
   opam_field_hd p "dev-repo" >>= function
