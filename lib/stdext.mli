@@ -25,10 +25,10 @@ module Path : sig
       - ends with ['~']
       - or begins with ['#'] and ends with ['#']. *)
 
-  val find_files : name_wo_ext:string -> Fpath.t list -> Fpath.t list
-  (** [find_files ~name_wo_ext files] returns the list of files among [files]
-      whose name without the extension is equal to [name_wo_ext]. Backup files
-      are ignored. *)
+  val find_files : names_wo_ext:string list -> Fpath.t list -> Fpath.t list
+  (** [find_files ~names_wo_ext files] returns the list of files among [files]
+      whose name without extension is equal to an element of [names_wo_ext].
+      Backup files are ignored. *)
 end
 
 (** Interface to the Unix system. *)

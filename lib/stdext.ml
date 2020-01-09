@@ -20,14 +20,16 @@ module Path = struct
     let last = str.[len - 1] in
     Char.equal last '~' || (Char.equal first '#' && Char.equal last '#')
 
-  let find_files ~name_wo_ext files =
+  let find_files ~names_wo_ext files =
     let open Fpath in
     List.filter
       (fun file ->
         if is_backup_file (filename file) then false
         else
           let normalized = to_string (normalize (rem_ext file)) in
-          String.equal name_wo_ext (String.Ascii.lowercase normalized))
+          List.exists
+            (String.equal (String.Ascii.lowercase normalized))
+            names_wo_ext)
       files
 end
 
