@@ -1,8 +1,8 @@
-let ask f =
-  App_log.question (fun l ->
-      f (fun ?header ?tags fmt -> l ?header ?tags (fmt ^^ " [Y/n]")))
-
 let confirm ~question ~yes =
+  let ask f =
+    App_log.question (fun l ->
+        f (fun ?header ?tags fmt -> l ?header ?tags (fmt ^^ " [Y/n]")))
+  in
   let rec loop () =
     ask question;
     match String.lowercase_ascii (read_line ()) with
@@ -22,6 +22,10 @@ let confirm_or_abort ~question ~yes =
   else Error (`Msg "Aborting on user demand")
 
 let confirm_or_abort_or_skip ~f ~question ~yes =
+  let ask f =
+    App_log.question (fun l ->
+        f (fun ?header ?tags fmt -> l ?header ?tags (fmt ^^ " [Y/n/s]")))
+  in
   let rec loop () =
     ask question;
     match String.lowercase_ascii (read_line ()) with
