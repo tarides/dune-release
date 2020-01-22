@@ -8,16 +8,17 @@ val confirm : question:('a, unit) Logs.msgf -> yes:bool -> bool
     string) "coffee")] *)
 
 val confirm_or_abort :
-  ?skippable:(unit -> (unit, Rresult.R.msg) result) ->
+  question:('a, unit) Logs.msgf -> yes:bool -> (unit, Rresult.R.msg) result
+(** Same as [confirm] but returns [Ok ()] for yes and
+    [Error (`Msg "Aborting on user demand")] for no *)
+
+val confirm_or_abort_or_skip :
+  f:(unit -> (unit, Rresult.R.msg) result) ->
   question:('a, unit) Logs.msgf ->
   yes:bool ->
-  unit ->
   (unit, Rresult.R.msg) result
-(** Same as [confirm] but the confirmed part can be skippable:
+(** Same as [confirm] but the function [f] part is skippable:
 
-    - If the user chooses [yes], the [skippable] function is executed and
-      returned, if the treatment is not skippable ([skippable] is not set),
-      returns [Ok ()];
-    - If the user chooses [skip], returns [Ok ()] and does not execute the
-      [skippable] function;
+    - If the user chooses [yes], [f] is executed and returned;
+    - If the user chooses [skip], returns [Ok ()] and does not execute [f];
     - If the user chooses [no], returns an error message. *)
