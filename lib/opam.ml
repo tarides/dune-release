@@ -220,7 +220,7 @@ module File = struct
         if dry_run then Ok String.Map.empty
         else
           (* Apparently in at least opam-lib 1.2.2, the error will be
-           logged on stdout. *)
+             logged on stdout. *)
           R.error_msgf "%a: could not parse opam file" Fpath.pp file
 
   let deps ?(opts = true) fields =
