@@ -15,7 +15,7 @@ module Tar = struct
   (* Header.
 
      See http://pubs.opengroup.org/onlinepubs/9699919799/utilities/\
-         pax.html#tag_20_92_13_06  *)
+         pax.html#tag_20_92_13_06 *)
 
   let to_unix_path_string =
     if Fpath.dir_sep = "/" then Fpath.to_string
