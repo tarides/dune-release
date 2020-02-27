@@ -43,10 +43,15 @@ let create_release ~version ~msg ~user ~repo =
       (escape_for_json version) (escape_for_json msg)
   in
   let uri = strf "https://api.github.com/repos/%s/%s/releases" user repo in
-  [ "-D"; "-"; "--data"; data; uri ]
+  [ "-L"; "-s"; "-S"; "-K"; "-"; "-D"; "-"; "--data"; data; uri ]
 
 let upload_archive ~archive ~user ~repo ~release_id =
   [
+    "-L";
+    "-s";
+    "-S";
+    "-K";
+    "-";
     "-H";
     "Content-Type:application/x-tar";
     "--data-binary";
@@ -62,4 +67,4 @@ let open_pr ~title ~user ~branch ~body ~opam_repo =
     strf {|{"title": %S,"base": "master", "body": %S, "head": "%s:%s"}|} title
       body user branch
   in
-  [ "-D"; "-"; "--data"; data; uri ]
+  [ "-s"; "-S"; "-K"; "-"; "-D"; "-"; "--data"; data; uri ]

@@ -11,6 +11,11 @@ let test_create_release =
       ~user:"you" ~repo:"some-repo"
       ~expected:
         [
+          "-L";
+          "-s";
+          "-S";
+          "-K";
+          "-";
           "-D";
           "-";
           "--data";
@@ -35,6 +40,11 @@ let test_upload_archive =
       ~repo:"some-repo" ~release_id:27
       ~expected:
         [
+          "-L";
+          "-s";
+          "-S";
+          "-K";
+          "-";
           "-H";
           "Content-Type:application/x-tar";
           "--data-binary";
@@ -60,6 +70,10 @@ let test_open_pr =
       ~opam_repo:("base", "repo")
       ~expected:
         [
+          "-s";
+          "-S";
+          "-K";
+          "-";
           "-D";
           "-";
           "--data";

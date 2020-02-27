@@ -239,7 +239,7 @@ let curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body
   >>= parse_url
 
 let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo body =
-  OS.Cmd.must_exist Cmd.(v "curl" % "-s" % "-S" % "-K" % "-") >>= fun curl ->
+  OS.Cmd.must_exist Cmd.(v "curl") >>= fun curl ->
   curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body
     ~opam_repo curl
 
@@ -266,7 +266,7 @@ let assert_tag_exists ~dry_run tag =
 
 let publish_distrib ~dry_run ~msg ~archive ~yes p =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
-  let curl = Cmd.(v "curl" % "-L" % "-s" % "-S" % "-K" % "-") in
+  let curl = Cmd.(v "curl") in
   ( match Pkg.distrib_user_and_repo p with
   | Error _ as e -> if dry_run then Ok (D.user, D.repo) else e
   | r -> r )
