@@ -43,4 +43,29 @@ let test_upload_archive =
         ];
   ]
 
-let suite = ("Curl", test_create_release @ test_upload_archive)
+let test_open_pr =
+  let make_test ~test_name ~title ~user ~branch ~body ~opam_repo ~expected =
+    let test_fun () =
+      let actual =
+        Dune_release.Curl.open_pr ~title ~user ~branch ~body ~opam_repo
+      in
+      Alcotest.(check (list string)) test_name expected actual
+    in
+    (test_name, `Quick, test_fun)
+  in
+  [
+    make_test ~test_name:"simple" ~title:"This is a PR" ~user:"you"
+      ~branch:"my-best-pr"
+      ~body:"This PR fixes everything.\nThis is the best PR.\n"
+      ~opam_repo:("base", "repo")
+      ~expected:
+        [
+          "-D";
+          "-";
+          "--data";
+          {|{"title": "This is a PR","base": "master", "body": "This PR fixes everything.\nThis is the best PR.\n", "head": "you:my-best-pr"}|};
+          "https://api.github.com/repos/base/repo/pulls";
+        ];
+  ]
+
+let suite = ("Curl", test_create_release @ test_upload_archive @ test_open_pr)
