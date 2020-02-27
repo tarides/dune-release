@@ -203,16 +203,9 @@ let curl_create_release ~token ~dry_run curl version msg user repo =
   >>= parse_release_id
 
 let curl_upload_archive ~token ~dry_run curl archive user repo release_id =
-  let uri =
-    (* FIXME upload URI prefix should be taken from release creation
-         response *)
-    strf "https://uploads.github.com/repos/%s/%s/releases/%d/assets?name=%s"
-      user repo release_id (Fpath.filename archive)
-  in
+  let args = Curl.upload_archive ~archive ~user ~repo ~release_id in
   github_auth ~dry_run ~user token >>= fun auth ->
-  let data = Cmd.(v "--data-binary" % strf "@@%s" (Fpath.to_string archive)) in
-  let ctype = Cmd.(v "-H" % "Content-Type:application/x-tar") in
-  let cmd = Cmd.(curl %% ctype %% data % uri) in
+  let cmd = List.fold_left Cmd.( % ) curl args in
   run_with_auth ~dry_run ~default:"No response" auth cmd
     (OS.Cmd.to_string ~trim:false)
 

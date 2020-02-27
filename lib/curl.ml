@@ -44,3 +44,13 @@ let create_release ~version ~msg ~user ~repo =
   in
   let uri = strf "https://api.github.com/repos/%s/%s/releases" user repo in
   [ "-D"; "-"; "--data"; data; uri ]
+
+let upload_archive ~archive ~user ~repo ~release_id =
+  [
+    "-H";
+    "Content-Type:application/x-tar";
+    "--data-binary";
+    strf "@@%s" (Fpath.to_string archive);
+    strf "https://uploads.github.com/repos/%s/%s/releases/%d/assets?name=%s"
+      user repo release_id (Fpath.filename archive);
+  ]

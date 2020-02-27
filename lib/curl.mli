@@ -1,2 +1,5 @@
 val create_release :
   version:string -> msg:string -> user:string -> repo:string -> string list
+
+val upload_archive :
+  archive:Fpath.t -> user:string -> repo:string -> release_id:int -> string list
