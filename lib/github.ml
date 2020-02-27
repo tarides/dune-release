@@ -175,47 +175,6 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
 let github_auth ~dry_run ~user token =
   Sos.read_file ~dry_run token >>= fun token -> Ok (strf "%s:%s" user token)
 
-let create_release_json version msg =
-  let escape_for_json s =
-    let len = String.length s in
-    let max = len - 1 in
-    let rec escaped_len i l =
-      if i > max then l
-      else
-        match s.[i] with
-        | '\\' | '\"' | '\n' | '\r' | '\t' -> escaped_len (i + 1) (l + 2)
-        | _ -> escaped_len (i + 1) (l + 1)
-    in
-    let escaped_len = escaped_len 0 0 in
-    if escaped_len = len then s
-    else
-      let b = Bytes.create escaped_len in
-      let rec loop i k =
-        if i > max then Bytes.unsafe_to_string b
-        else
-          match s.[i] with
-          | ('\\' | '\"' | '\n' | '\r' | '\t') as c ->
-              Bytes.set b k '\\';
-              let c =
-                match c with
-                | '\\' -> '\\'
-                | '\"' -> '\"'
-                | '\n' -> 'n'
-                | '\r' -> 'r'
-                | '\t' -> 't'
-                | _ -> assert false
-              in
-              Bytes.set b (k + 1) c;
-              loop (i + 1) (k + 2)
-          | c ->
-              Bytes.set b k c;
-              loop (i + 1) (k + 1)
-      in
-      loop 0 0
-  in
-  strf "{ \"tag_name\" : \"%s\", \"body\" : \"%s\" }" (escape_for_json version)
-    (escape_for_json msg)
-
 let run_with_auth ~dry_run auth curl k =
   let auth = strf "-u %s" auth in
   Sos.run_io ~dry_run curl (OS.Cmd.in_string auth) k
@@ -236,10 +195,9 @@ let curl_create_release ~token ~dry_run curl version msg user repo =
       R.error_msgf "Could not find release id in response:\n%s."
         (String.concat ~sep:"\n" headers)
   in
-  let data = create_release_json version msg in
-  let uri = strf "https://api.github.com/repos/%s/%s/releases" user repo in
   github_auth ~dry_run ~user token >>= fun auth ->
-  let cmd = Cmd.(curl % "-D" % "-" % "--data" % data % uri) in
+  let args = Curl.create_release ~version ~msg ~user ~repo in
+  let cmd = List.fold_left Cmd.( % ) curl args in
   run_with_auth ~dry_run ~default:"Location: /0" auth cmd
     (OS.Cmd.to_string ~trim:false)
   >>= parse_release_id
