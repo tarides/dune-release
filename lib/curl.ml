@@ -54,3 +54,12 @@ let upload_archive ~archive ~user ~repo ~release_id =
     strf "https://uploads.github.com/repos/%s/%s/releases/%d/assets?name=%s"
       user repo release_id (Fpath.filename archive);
   ]
+
+let open_pr ~title ~user ~branch ~body ~opam_repo =
+  let base, repo = opam_repo in
+  let uri = strf "https://api.github.com/repos/%s/%s/pulls" base repo in
+  let data =
+    strf {|{"title": %S,"base": "master", "body": %S, "head": "%s:%s"}|} title
+      body user branch
+  in
+  [ "-D"; "-"; "--data"; data; uri ]

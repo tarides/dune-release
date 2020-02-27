@@ -231,13 +231,8 @@ let curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body
       if Re.execp alread_exists resp then Ok `Already_exists
       else R.error_msgf "Could not find html_url id in response:\n%s." resp
   in
-  let base, repo = opam_repo in
-  let uri = strf "https://api.github.com/repos/%s/%s/pulls" base repo in
-  let data =
-    strf {|{"title": %S,"base": "master", "body": %S, "head": "%s:%s"}|} title
-      body user branch
-  in
-  let cmd = Cmd.(curl % "-D" % "-" % "--data" % data % uri) in
+  let args = Curl.open_pr ~title ~user ~branch ~body ~opam_repo in
+  let cmd = List.fold_left Cmd.( % ) curl args in
   github_auth ~dry_run ~user:distrib_user token >>= fun auth ->
   let default = {|  "html_url": "${pr_url}",|} in
   run_with_auth ~dry_run ~default auth cmd (OS.Cmd.to_string ~trim:false)
