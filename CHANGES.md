@@ -31,6 +31,7 @@
   (#266, @NathanReb)
 - Improve trimming of the changelog to preserve the indentation of the list of changes. (#268, @gpetiot)
 - Trim the data of the `url` file before filling the `url.src` field. This fixes an issue that caused the `url.src` field to be a multi-line string instead of single line. (#270, @gpetiot)
+- Better error messages about non-github URIs (#215, @gpetiot)
 
 ### Security
 

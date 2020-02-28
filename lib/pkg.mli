@@ -114,9 +114,13 @@ val doc_uri : t -> (string, Bos_setup.R.msg) result
 
 val doc_dir : Fpath.t
 
-val doc_user_repo_and_path : t -> (string * string * Fpath.t, R.msg) result
+(** {1 Github specific Uris} *)
 
-val distrib_user_and_repo : string -> (string * string, R.msg) result
+module Github : sig
+  val distrib_uri : string -> (Github_uri.Distrib.t, R.msg) result
+
+  val doc_uri : t -> (Github_uri.Doc.t, R.msg) result
+end
 
 type f =
   dry_run:bool ->

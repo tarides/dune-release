@@ -128,18 +128,6 @@ let change_log_file_last_entry file =
   | None -> R.error_msgf "%a: Could not parse change log." Fpath.pp file
   | Some (version, (header, changes)) -> Ok (version, (header, changes))
 
-(* Toy URI parsing *)
-
-let split_uri ?(rel = false) uri =
-  match String.(cut ~sep:"//" (trim uri)) with
-  | None -> None
-  | Some (scheme, rest) -> (
-      match String.cut ~sep:"/" rest with
-      | None -> Some (scheme, rest, "")
-      | Some (host, path) ->
-          let path = if rel then path else "/" ^ path in
-          Some (scheme, host, path) )
-
 (* Pretty-printers. *)
 
 module Pp = struct

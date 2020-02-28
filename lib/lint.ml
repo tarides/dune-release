@@ -93,7 +93,7 @@ let lint_opam_doc pkg =
       report_status `Ok (fun l ->
           l "Skipping doc field linting, no doc field found")
   | Ok _ ->
-      let pass = R.is_ok (Pkg.doc_user_repo_and_path pkg) in
+      let pass = R.is_ok (Pkg.Github.doc_uri pkg) in
       let status = if pass then `Ok else `Fail in
       let verdict = if pass then "can" else "cannot" in
       report_status status (fun l ->
@@ -102,11 +102,24 @@ let lint_opam_doc pkg =
   0
 
 let lint_opam_home_and_dev pkg =
-  lint_res
-    ~msgf:(fun l ->
-      l "opam fields %a and %a can be parsed by dune-release" pp_field
-        "homepage" pp_field "dev-repo")
-    (Pkg.infer_distrib_uri pkg >>= Pkg.distrib_user_and_repo)
+  ( match Pkg.infer_distrib_uri pkg with
+  | Error _ ->
+      report_status `Fail (fun l ->
+          l
+            "Fields homepage and dev-repo are not valid github URIs, \
+             dune-release will not be able to automatically publish the \
+             package.")
+  | Ok "" ->
+      report_status `Fail (fun l ->
+          l "Skipping homepage and dev-repo fields linting, no field found")
+  | Ok uri ->
+      let pass = R.is_ok (Pkg.Github.distrib_uri uri) in
+      let status = if pass then `Ok else `Fail in
+      let verdict = if pass then "can" else "cannot" in
+      report_status status (fun l ->
+          l "opam fields %a and %a %s be parsed by dune-release" pp_field
+            "homepage" pp_field "dev-repo" verdict) );
+  0
 
 let lint_opam_github_fields pkg = lint_opam_doc pkg + lint_opam_home_and_dev pkg
 

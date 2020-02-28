@@ -2,7 +2,7 @@ let () =
   Alcotest.run "dune-release"
     [
       Test_curl.suite;
-      Test_github.suite;
+      Test_github_uri.suite;
       Test_github_v3_api.suite;
       Test_opam.suite;
       Test_opam_file.suite;

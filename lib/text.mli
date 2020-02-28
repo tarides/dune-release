@@ -54,12 +54,6 @@ val change_log_file_last_entry :
 (** [change_log_file_last_entry file] tries to parse the last change log entry
     of the file [file] using {!flavour_of_fpath} and {!change_log_last_entry}. *)
 
-(** {1 Toy URI parsing} *)
-
-val split_uri : ?rel:bool -> string -> (string * string * string) option
-(** [split_uri uri] splits [uri] into a triple [(scheme, host, path)]. If [rel]
-    is [true] (defaults to [false]), a leading ["/"] in [path] is removed. *)
-
 (** Pretty printers. *)
 module Pp : sig
   (** {1 Pretty printers} *)

@@ -194,15 +194,15 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
   ( match distrib_uri with
   | Some uri -> Ok uri
   | None -> Pkg.infer_distrib_uri pkg )
-  >>= Pkg.distrib_user_and_repo
-  >>= fun (distrib_user, repo) ->
+  >>= Pkg.Github.distrib_uri
+  >>= fun { user = distrib_user; repo; _ } ->
   let user =
     match user with
     | Some user -> user (* from the .yaml configuration file *)
     | None -> (
-        match Github.Parse.user_from_remote remote_repo with
-        | Some user -> user (* trying to infer it from the remote repo URI *)
-        | None -> distrib_user )
+        match Github_uri.Repo.of_string remote_repo with
+        | Ok { user; _ } -> user (* infer it from the remote repo URI *)
+        | Error _ -> distrib_user )
   in
   let changes = rewrite_github_refs distrib_user repo changes in
   let msg = strf "%s\n\n%s\n" title changes in

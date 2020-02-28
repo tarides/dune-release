@@ -17,3 +17,11 @@ let curl =
     Format.fprintf fs "args = %a@\n" (Fmt.list ~sep:Fmt.sp Fmt.string) args
   in
   testable pp ( = )
+
+let homepage_uri = testable Dune_release.Github_uri.Homepage.pp ( = )
+
+let repo_uri = testable Dune_release.Github_uri.Repo.pp ( = )
+
+let doc_uri = testable Dune_release.Github_uri.Doc.pp ( = )
+
+let distrib_uri = testable Dune_release.Github_uri.Distrib.pp ( = )

@@ -117,7 +117,7 @@ We publish the documentation, calling publish doc explicitely should fail
     [-] Selected packages: whatever whatever-lib
     [-] Generating documentation from _build/whatever-0.1.0.tbz
     [-] Publishing to github
-    dune-release: [ERROR] Could not derive publication directory $PATH from opam doc field value ""; expected the pattern $SCHEME://$USER.github.io/$REPO/$PATH
+    dune-release: [ERROR] The doc field "" in whatever.opam was expected to point to a github.io URL
     [3]
 
 We do the whole process, calling publish doc implicitely should succeed

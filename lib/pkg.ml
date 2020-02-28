@@ -8,25 +8,18 @@ open Bos_setup
 
 (* Misc *)
 
-let uri_domain uri =
-  match Text.split_uri uri with
-  | None -> []
-  | Some (_, host, _) -> List.rev (String.cuts ~sep:"." host)
-
 let uri_sld uri =
-  match uri_domain uri with _ :: sld :: _ -> Some sld | _ -> None
-
-let uri_append u s =
-  match String.head ~rev:true u with
-  | None -> s
-  | Some '/' -> strf "%s%s" u s
-  | Some _ -> strf "%s/%s" u s
-
-let chop_ext u =
-  match String.cut ~rev:true ~sep:"." u with None -> u | Some (u, _) -> u
-
-let chop_git_prefix u =
-  match String.cut ~sep:"git+" u with Some ("", uri) -> uri | _ -> u
+  match String.(cut ~sep:"//" (trim uri)) with
+  | None -> None
+  | Some (_, rest) -> (
+      let host =
+        match String.cut ~sep:"/" rest with
+        | None -> rest
+        | Some (host, _) -> host
+      in
+      match List.rev (String.cuts ~sep:"." host) with
+      | _ :: sld :: _ -> Some sld
+      | _ -> None )
 
 (* Package *)
 
@@ -60,16 +53,10 @@ let opam_homepage p = opam_field_hd p "homepage"
 let opam_doc p = opam_field_hd p "doc"
 
 let opam_homepage_sld p =
-  opam_homepage p >>| function
-  | None -> None
-  | Some uri -> (
-      match uri_sld uri with None -> None | Some sld -> Some (uri, sld) )
+  opam_homepage p >>| function None -> None | Some uri -> uri_sld uri
 
 let opam_doc_sld p =
-  opam_doc p >>| function
-  | None -> None
-  | Some uri -> (
-      match uri_sld uri with None -> None | Some sld -> Some (uri, sld) )
+  opam_doc p >>| function None -> None | Some uri -> uri_sld uri
 
 let name p = Ok p.name
 
@@ -120,10 +107,10 @@ let delegate p =
             let cmd sld = strf "%s-dune-release-delegate" sld in
             (* first look at `doc:` then `homepage:` *)
             opam_doc_sld p >>= function
-            | Some (_, sld) -> Ok (cmd sld)
+            | Some sld -> Ok (cmd sld)
             | None -> (
                 opam_homepage_sld p >>= function
-                | Some (_, sld) -> Ok (cmd sld)
+                | Some sld -> Ok (cmd sld)
                 | None -> not_found None ) )
       in
       guess_delegate () >>= fun cmd ->
@@ -206,11 +193,9 @@ let licenses p =
 let dev_repo p =
   opam_field_hd p "dev-repo" >>= function
   | None -> Ok None
-  | Some r -> (
-      let uri = chop_git_prefix r in
-      match String.cut ~sep:"https://github.com/" uri with
-      | Some ("", path) -> Ok (Some ("git@github.com:" ^ path))
-      | _ -> Ok (Some uri) )
+  | Some r ->
+      Github_uri.Repo.of_string r >>| fun uri ->
+      Some (Github_uri.Repo.to_string { uri with scheme = GIT })
 
 let err_not_found () =
   R.error_msg "no distribution URI found, see dune-release's API documentation."
@@ -218,18 +203,12 @@ let err_not_found () =
 let dev_repo_is_on_github p =
   opam_field_hd p "dev-repo" >>| function
   | None -> false
-  | Some r -> (
-      match String.cut ~sep:"git@github.com:" r with
-      | Some ("", _) -> true
-      | _ -> (
-          match String.cut ~sep:"git+ssh://git@github.com/" r with
-          | Some ("", _) -> true
-          | _ -> false ) )
+  | Some r -> R.is_ok @@ Github_uri.Repo.of_string r
 
 let homepage_is_on_github p =
-  opam_homepage_sld p >>| function
+  opam_homepage p >>| function
   | None -> false
-  | Some (_, sld) -> sld = "github"
+  | Some s -> R.is_ok @@ Github_uri.Homepage.of_string s
 
 let path_of_distrib p =
   let basename =
@@ -245,36 +224,30 @@ let distrib_uri_of_dev_repo p =
   opam_field_hd p "dev-repo" >>= function
   | None -> Ok None
   | Some dev_repo ->
-      let dev_repo =
-        match String.cut ~sep:"git@github.com:" dev_repo with
-        | Some ("", path) -> "https://github.com/" ^ chop_ext path
-        | _ -> (
-            match String.cut ~sep:"git+ssh://git@github.com/" dev_repo with
-            | Some ("", path) -> "https://github.com/" ^ chop_ext path
-            | _ -> chop_git_prefix (chop_ext dev_repo) )
-      in
-      path_of_distrib p >>| fun path -> Some (uri_append dev_repo path)
+      path_of_distrib p >>= Fpath.of_string >>= fun path ->
+      Github_uri.Repo.of_string dev_repo >>| fun { user; repo; _ } ->
+      let scheme = Github_uri.WWW_scheme.HTTPS in
+      Some (Github_uri.Distrib.make ~user ~repo ~scheme ~path)
 
 let distrib_uri_of_homepage p =
-  opam_homepage_sld p >>= function
+  opam_homepage p >>= function
   | None -> Ok None
-  | Some (uri, _) ->
-      path_of_distrib p >>| fun path -> Some (uri_append uri path)
+  | Some s -> (
+      path_of_distrib p >>= Fpath.of_string >>= fun path' ->
+      Github_uri.Homepage.of_string s >>| fun { user; repo; scheme; path } ->
+      match path with
+      | Some path ->
+          let path = Fpath.append path path' in
+          Some (Github_uri.Distrib.make ~user ~repo ~scheme ~path)
+      | None -> Some (Github_uri.Distrib.make ~user ~repo ~scheme ~path:path') )
 
 let infer_distrib_uri p =
   (distrib_uri_of_homepage p >>= function
-   | Some u -> Ok u
+   | Some u -> Ok (Github_uri.Distrib.to_string u)
    | None -> (
        distrib_uri_of_dev_repo p >>= function
-       | Some u -> Ok u
+       | Some u -> Ok (Github_uri.Distrib.to_string u)
        | None -> err_not_found () ))
-  >>= fun uri ->
-  ( match uri_domain uri with
-  | [ "io"; "github"; user ] -> (
-      match Text.split_uri ~rel:true uri with
-      | None -> R.error_msgf "invalid uri: %s" uri
-      | Some (_, _, path) -> Ok ("https://github.com/" ^ user ^ "/" ^ path) )
-  | _ -> Ok uri )
   >>= fun uri ->
   name p >>= fun name ->
   tag p >>= fun tag ->
@@ -304,60 +277,30 @@ let distrib_file ~dry_run p =
       |> R.reword_error_msg (fun _ ->
              R.msgf "Did you forget to call 'dune-release distrib' ?")
 
-let distrib_user_and_repo uri =
-  let uri_error uri =
-    R.msgf
-      "Could not derive user and repo from opam dev-repo field value %a; \
-       expected the pattern $SCHEME://$HOST/$USER/$REPO[.$EXT][/$DIR]"
-      String.dump uri
-  in
-  match Text.split_uri ~rel:true uri with
-  | None -> Error (uri_error uri)
-  | Some (_, _, path) -> (
-      if path = "" then Error (uri_error uri)
-      else
-        match String.cut ~sep:"/" path with
-        | None -> Error (uri_error uri)
-        | Some (user, path) ->
-            let repo =
-              match String.cut ~sep:"/" path with
-              | None -> path
-              | Some (repo, _) -> repo
-            in
-            Fpath.of_string repo
-            >>= (fun repo -> Ok (user, Fpath.(to_string @@ rem_ext repo)))
-            |> R.reword_error_msg (fun _ -> uri_error uri) )
-
 let doc_uri p =
   opam_field_hd p "doc" >>| function None -> "" | Some uri -> uri
 
 let doc_dir = Fpath.(v "_build" / "default" / "_doc" / "_html")
 
-let doc_user_repo_and_path p =
-  doc_uri p >>= fun uri ->
-  (* Parses the $PATH of $SCHEME://$HOST/$REPO/$PATH *)
-  let uri_error uri =
-    R.msgf
-      "Could not derive publication directory $PATH from opam doc field value \
-       %a; expected the pattern $SCHEME://$USER.github.io/$REPO/$PATH"
-      String.dump uri
-  in
-  match Text.split_uri ~rel:true uri with
-  | None -> Error (uri_error uri)
-  | Some (_, host, path) -> (
-      if path = "" then Error (uri_error uri)
-      else
-        ( match String.cut ~sep:"." host with
-        | Some (user, g) when String.equal g "github.io" -> Ok user
-        | _ -> Error (uri_error uri) )
-        >>= fun user ->
-        match String.cut ~sep:"/" path with
-        | None -> Ok (user, path, Fpath.v ".")
-        | Some (repo, "") -> Ok (user, repo, Fpath.v ".")
-        | Some (repo, path) ->
-            Fpath.of_string path
-            >>| (fun p -> (user, repo, Fpath.rem_empty_seg p))
-            |> R.reword_error_msg (fun _ -> uri_error uri) )
+module Github = struct
+  let distrib_uri uri =
+    match Github_uri.Distrib.of_string uri with
+    | Ok uri -> Ok uri
+    | Error _ ->
+        R.error_msgf
+          "The homepage or dev-repo URI %S was expected to point to a github \
+           repository"
+          uri
+
+  let doc_uri p =
+    doc_uri p >>= fun uri ->
+    match Github_uri.Doc.of_string uri with
+    | Ok uri -> Ok uri
+    | Error _ ->
+        R.error_msgf
+          "The doc field %S in %s.opam was expected to point to a github.io URL"
+          uri p.name
+end
 
 let publish_msg p =
   match p.publish_msg with

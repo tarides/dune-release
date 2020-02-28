@@ -70,7 +70,7 @@ We do the whole dune-release process
     -: exec: opam lint -s whatever.opam
     [ OK ] lint opam file whatever.opam.
     [ OK ] opam field description is present
-    [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
+    [FAIL] Fields homepage and dev-repo are not valid github URIs, dune-release will not be able to automatically publish the package.
     [FAIL] opam field doc cannot be parsed by dune-release
     [ OK ] lint _build/whatever-0.1.0 success
     

@@ -24,20 +24,6 @@ module D = struct
   let release_id = 1
 end
 
-module Parse = struct
-  let user_from_regexp_opt uri regexp =
-    try Some Re.(Group.get (exec (Emacs.compile_pat regexp) uri) 1)
-    with Not_found -> None
-
-  let user_from_remote uri =
-    match uri with
-    | _ when Bos_setup.String.is_prefix uri ~affix:"git@" ->
-        user_from_regexp_opt uri "git@github\\.com:\\(.+\\)/.+\\(\\.git\\)?"
-    | _ when Bos_setup.String.is_prefix uri ~affix:"https://" ->
-        user_from_regexp_opt uri "https://github\\.com/\\(.+\\)/.+\\(\\.git\\)?"
-    | _ -> None
-end
-
 (* Publish documentation *)
 
 let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
@@ -112,11 +98,18 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
         Ok ()
 
 let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
-  (if dry_run then Ok D.(user, repo, dir) else Pkg.doc_user_repo_and_path p)
+  ( if dry_run then Ok D.(user, repo, dir)
+  else
+    Pkg.Github.doc_uri p >>= fun { user; repo; path; _ } ->
+    let dir = Stdext.Option.value path ~default:(Fpath.v ".") in
+    Ok (user, repo, dir) )
   >>= fun (user, repo, dir) ->
   Pkg.name p >>= fun name ->
   Pkg.version p >>= fun version ->
-  let remote = strf "git@@github.com:%s/%s.git" user repo in
+  let remote =
+    let scheme = Github_uri.Repo_scheme.GIT and git_ext = true in
+    Github_uri.Repo.(to_string @@ make ~user ~repo ~scheme ~git_ext)
+  in
   Vcs.get () >>= fun vcs ->
   let force = user <> D.user in
   let create_empty_gh_pages () =
@@ -238,9 +231,9 @@ let assert_tag_exists ~dry_run tag =
 let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   (match distrib_uri with Some uri -> Ok uri | None -> Pkg.infer_distrib_uri p)
   >>= fun uri ->
-  ( match Pkg.distrib_user_and_repo uri with
+  ( match Pkg.Github.distrib_uri uri with
   | Error _ as e -> if dry_run then Ok (D.user, D.repo) else e
-  | r -> r )
+  | Ok { user; repo; _ } -> Ok (user, repo) )
   >>= fun (user, repo) ->
   Pkg.tag p >>= fun tag ->
   assert_tag_exists ~dry_run tag >>= fun () ->
