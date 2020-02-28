@@ -71,11 +71,10 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
       OS.Dir.contents dir >>= fun files ->
       List.fold_left delete (Ok ()) (List.filter not_git files)
   in
-  let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   let replace_dir_and_push docdir dir =
     let msg = strf "Update %s doc to %s." name version in
     Vcs.get () >>= fun repo ->
-    Ok (git_for_repo repo) >>= fun git ->
+    let git = Vcs.cmd repo in
     Sos.run_quiet ~dry_run ~force:(dir <> D.dir) Cmd.(git % "checkout" % branch)
     >>= fun () ->
     delete dir >>= fun () ->
@@ -107,7 +106,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
         Ok ()
     | true ->
         let push_spec = strf "%s:%s" branch branch in
-        Ok (git_for_repo repo) >>= fun git ->
+        let git = Vcs.cmd repo in
         Prompt.confirm_or_abort ~yes ~question:(fun l ->
             l "Push new documentation to %a?" Text.Pp.url (remote ^ "#gh-pages"))
         >>= fun () ->
@@ -126,14 +125,13 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
   Pkg.name p >>= fun name ->
   Pkg.version p >>= fun version ->
   let remote = strf "git@@github.com:%s/%s.git" user repo in
-  let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   let force = user <> D.user in
   let create_empty_gh_pages git =
     let msg = "Initial commit by dune-release." in
     let create () =
       Sos.run_quiet ~dry_run Cmd.(v "git" % "init") >>= fun () ->
       Vcs.get () >>= fun repo ->
-      Ok (git_for_repo repo) >>= fun git ->
+      let git = Vcs.cmd repo in
       Sos.run_quiet ~dry_run Cmd.(git % "checkout" % "--orphan" % "gh-pages")
       >>= fun () ->
       Sos.write_file ~dry_run (Fpath.v "README") ""
@@ -152,7 +150,7 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
     |> R.join
   in
   Vcs.get () >>= fun vcs ->
-  Ok (git_for_repo vcs) >>= fun git ->
+  let git = Vcs.cmd vcs in
   let git_fetch = Cmd.(git % "fetch" % remote % "gh-pages") in
   ( match Sos.run_quiet ~dry_run ~force git_fetch with
   | Ok () -> Ok ()
@@ -319,7 +317,6 @@ let assert_tag_exists ~dry_run tag =
   else R.error_msgf "%s is not a valid tag" tag
 
 let publish_distrib ~dry_run ~msg ~archive ~yes p =
-  let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   let curl = Cmd.(v "curl" % "-L" % "-s" % "-S" % "-K" % "-") in
   ( match Pkg.distrib_user_and_repo p with
   | Error _ as e -> if dry_run then Ok (D.user, D.repo) else e
@@ -329,7 +326,7 @@ let publish_distrib ~dry_run ~msg ~archive ~yes p =
   assert_tag_exists ~dry_run tag >>= fun () ->
   OS.Cmd.must_exist curl >>= fun curl ->
   Vcs.get () >>= fun vcs ->
-  Ok (git_for_repo vcs) >>= fun git ->
+  let git = Vcs.cmd vcs in
   Pkg.tag p >>= fun tag ->
   check_tag ~dry_run vcs tag >>= fun () ->
   dev_repo p >>= fun upstr ->

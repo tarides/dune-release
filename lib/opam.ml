@@ -62,9 +62,8 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
   ( if exists then Ok ()
   else R.error_msgf "%a is not a valid Git repository." Fpath.pp local_repo )
   >>= fun () ->
-  let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   Vcs.get () >>= fun repo ->
-  let git = git_for_repo repo in
+  let git = Vcs.cmd repo in
   let upstream =
     let user, repo = opam_repo in
     Printf.sprintf "https://github.com/%s/%s.git" user repo
