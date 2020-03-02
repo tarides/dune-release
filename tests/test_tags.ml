@@ -8,7 +8,7 @@ let run f =
   | Error (`Msg e) -> Alcotest.failf "Got an error: %s" e
   | Ok x -> x
 
-let check f ?version ?tag ?keep_v ?opam ~cat ~name x =
+let check f ?version ?tag ?keep_v ?opam ~cat ~name expected =
   let test () =
     run
       ( ( match opam with
@@ -20,8 +20,9 @@ let check f ?version ?tag ?keep_v ?opam ~cat ~name x =
             Bos.OS.File.write_lines file lines >>| fun () -> Some file )
       >>= fun opam ->
         let p = Pkg.v ~dry_run:false ~name ?tag ?version ?keep_v ?opam () in
-        let n = Fmt.strf "check %S" x in
-        f p >>| fun f -> Alcotest.(check fpath) n f Fpath.(v x) )
+        let n = Fmt.strf "check %S" expected in
+        f p >>| fun actual -> Alcotest.(check fpath) n Fpath.(v expected) actual
+      )
   in
   (cat, `Quick, test)
 
