@@ -59,26 +59,17 @@ let distrib_uri =
   let check = check ~cat ~name:"yo" (fun x -> Pkg.distrib_uri x >>| Fpath.v) in
   let dev_repo = [ ("dev-repo", "git@github.com:foo/bar.git") ] in
   let homepage = [ ("homepage", "https://github.com/foo/bar") ] in
+  let url = "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz" in
   [
-    check ~opam:dev_repo ~tag:"v0"
-      "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
-    check ~opam:homepage ~tag:"v0"
-      "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
-    check ~opam:dev_repo ~version:"v0"
-      "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
-    check ~opam:homepage ~version:"v0"
-      "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
-    check ~opam:dev_repo ~tag:"v0" ~keep_v:false
-      "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
-    check ~opam:homepage ~tag:"v0" ~keep_v:true
-      "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
-    check ~opam:dev_repo ~tag:"v0" ~version:"x"
-      "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
-    check ~opam:homepage ~tag:"v0" ~version:"x"
-      "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
-    check
-      ~opam:[ ("homepage", "https://foo.github.io/bar") ]
-      ~tag:"v0" "https://github.com/foo/bar/releases/download/v0/yo-v0.tbz";
+    check ~opam:dev_repo ~tag:"v0" url;
+    check ~opam:homepage ~tag:"v0" url;
+    check ~opam:dev_repo ~version:"v0" url;
+    check ~opam:homepage ~version:"v0" url;
+    check ~opam:dev_repo ~tag:"v0" ~keep_v:false url;
+    check ~opam:homepage ~tag:"v0" ~keep_v:true url;
+    check ~opam:dev_repo ~tag:"v0" ~version:"x" url;
+    check ~opam:homepage ~tag:"v0" ~version:"x" url;
+    check ~opam:[ ("homepage", "https://foo.github.io/bar") ] ~tag:"v0" url;
   ]
 
 let suite = ("tags", distrib_file @ distrib_filename @ distrib_uri)
