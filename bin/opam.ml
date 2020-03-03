@@ -31,6 +31,7 @@ let format_upgrade ~dry_run ~url ~opam_f pkg opam dest_opam_file =
       let opam_t =
         opam_t |> OpamFile.OPAM.with_url url
         |> OpamFile.OPAM.with_version_opt None
+        |> OpamFile.OPAM.with_name_opt None
       in
       if not dry_run then
         OpamFile.OPAM.write_with_preserved_format ~format_from:(file opam_f)
@@ -49,6 +50,7 @@ let format_upgrade ~dry_run ~url ~opam_f pkg opam dest_opam_file =
         |> OpamFile.OPAM.with_url url
         |> OpamFile.OPAM.with_descr descr
         |> OpamFile.OPAM.with_version_opt None
+        |> OpamFile.OPAM.with_name_opt None
         |> OpamFile.OPAM.write_to_string
       in
       Sos.write_file ~dry_run dest_opam_file opam
