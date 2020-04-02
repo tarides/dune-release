@@ -107,6 +107,19 @@ val tag :
 val delete_tag : dry_run:bool -> t -> string -> (unit, R.msg) result
 (** [delete_tag r t] deletes tag [t] in repo [r]. *)
 
+val ls_remote :
+  dry_run:bool ->
+  t ->
+  ?kind:[ `Branch | `Tag | `All ] ->
+  ?filter:string ->
+  string ->
+  ((string * string) list, R.msg) result
+(** [ls_remote ~dry_run t ?filter upstream] queries the remote server [upstream]
+    and returns the result as a list of pairs [commit_hash, ref_name]. [filter]
+    filters results by matching on ref names, the default is no filtering.
+    [kind] filters results on their kind (branch or tag), the default is [`All].
+    Only implemented for Git. *)
+
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
 

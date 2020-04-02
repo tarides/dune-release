@@ -14,6 +14,9 @@
 - Do not remove versioned files from the tarball anymore. We used to exclude
   `.gitignore`, `.gitattributes` and other such files from the archive.
   (#299, @NathanReb)
+- Don't try to push the tag if it is already present and point to the same ref on the remote.
+  `dune-release` must guess which URI to pass to `git push` and may guess it wrong.
+  This change allows users to push the tag manually to avoid using that code. (#219, @Julow)
 
 ### Deprecated
 

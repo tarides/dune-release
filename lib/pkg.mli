@@ -140,6 +140,7 @@ val extract_tag : t -> (string, Sos.error) result
 (** {1 Dev repo} *)
 
 val dev_repo : t -> (string option, Sos.error) result
+(** dev-repo field with the ["git+"] prefix removed. *)
 
 (**/**)
 

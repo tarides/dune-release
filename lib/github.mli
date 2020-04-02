@@ -18,6 +18,9 @@ module Parse : sig
       - [user_from_remote_uri "https://github.com/username/repo.git"] returns
         [Some "username"].
       - Returns [None] if [remote_uri] isn't in the expected format. *)
+
+  val ssh_uri_from_http : string -> string
+  (** [ssh_uri_from_http] Guess an SSH URI from a Github HTTP url. *)
 end
 
 (** {1 Publish} *)

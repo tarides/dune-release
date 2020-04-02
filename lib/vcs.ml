@@ -52,6 +52,8 @@ module Default = struct
   let string = Sos.out ""
 
   let unit = Sos.out ()
+
+  let list = Sos.out []
 end
 
 let run_git ~dry_run ?force ~default r args out =
@@ -145,6 +147,27 @@ let git_tag ~dry_run r ~force ~sign ~msg ~commit_ish tag =
 
 let git_delete_tag ~dry_run r tag =
   run_git_quiet ~dry_run r Cmd.(v "tag" % "-d" % tag)
+
+let git_ls_remote ~dry_run r ~kind ~filter upstream =
+  let rec parse_ls_remote acc = function
+    | [] -> Ok (List.rev acc)
+    | line :: tl -> (
+        match String.fields ~empty:false line with
+        | [ rev; ref ] -> parse_ls_remote ((rev, ref) :: acc) tl
+        | _ -> R.error_msgf "Could not parse output of git ls-remote" )
+  in
+  let kind_arg =
+    match kind with
+    | `All -> Cmd.empty
+    | `Branch -> Cmd.v "--heads"
+    | `Tag -> Cmd.v "--tags"
+  and filter_arg =
+    match filter with Some filter -> Cmd.v filter | None -> Cmd.empty
+  in
+  run_git ~dry_run r
+    Cmd.(v "ls-remote" % "--quiet" %% kind_arg % upstream %% filter_arg)
+    ~default:Default.list OS.Cmd.out_lines
+  >>= parse_ls_remote []
 
 (* Hg support *)
 
@@ -314,6 +337,11 @@ let delete_tag ~dry_run r tag =
   match r with
   | (`Git, _, _) as r -> git_delete_tag ~dry_run r tag
   | (`Hg, _, _) as r -> hg_delete_tag r tag
+
+let ls_remote ~dry_run r ?(kind = `All) ?filter upstream =
+  match r with
+  | (`Git, _, _) as r -> git_ls_remote ~dry_run r ~kind ~filter upstream
+  | `Hg, _, _ -> R.error_msgf "ls_remote is only implemented for Git"
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
