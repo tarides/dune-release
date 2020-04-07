@@ -125,6 +125,10 @@ val publish_artefacts :
 
 (** {1 Uri} *)
 
+val doc_uri : t -> (string, Bos_setup.R.msg) result
+
+val doc_dir : Fpath.t
+
 val doc_user_repo_and_path : t -> (string * string * Fpath.t, R.msg) result
 
 val distrib_user_and_repo : t -> (string * string, R.msg) result
