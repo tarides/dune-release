@@ -1,4 +1,4 @@
 (executable
  (name main)
  (public_name dune-release)
- (libraries dune-release opam-state re logs.fmt fmt.tty logs.cli fmt.cli))
+ (libraries dune-release re logs.fmt fmt.tty logs.cli fmt.cli))

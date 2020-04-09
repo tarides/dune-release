@@ -562,6 +562,18 @@ let distrib_archive ~dry_run ~keep_dir p =
   (if keep_dir then Ok () else Sos.delete_dir ~dry_run dist_build_dir)
   >>= fun () -> Ok archive
 
+let upgrade_opam_file ~url ~opam_t = function
+  | `V2 ->
+      opam_t |> OpamFile.OPAM.with_url url
+      |> OpamFile.OPAM.with_version_opt None
+      |> OpamFile.OPAM.with_name_opt None
+  | `V1 descr ->
+      opam_t |> OpamFormatUpgrade.opam_file_from_1_2_to_2_0
+      |> OpamFile.OPAM.with_url url
+      |> OpamFile.OPAM.with_descr descr
+      |> OpamFile.OPAM.with_version_opt None
+      |> OpamFile.OPAM.with_name_opt None
+
 (* Test & build *)
 
 type f =
