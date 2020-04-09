@@ -8,7 +8,14 @@ open Cmdliner
 
 let cmds =
   [
-    Tag.cmd; Distrib.cmd; Publish.cmd; Opam.cmd; Help.cmd; Bistro.cmd; Lint.cmd;
+    Tag.cmd;
+    Distrib.cmd;
+    Publish.cmd;
+    Opam.cmd;
+    Help.cmd;
+    Bistro.cmd;
+    Lint.cmd;
+    Delegate_info.cmd;
   ]
 
 (* Command line interface *)

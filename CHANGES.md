@@ -2,6 +2,9 @@
 
 ### Added
 
+- Add command `delegate-info` to print information needed by external 
+  release scripts (#221, @pitag-ha)
+
 ### Changed
 
 ### Deprecated

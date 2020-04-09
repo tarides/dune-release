@@ -341,6 +341,8 @@ let distrib_user_and_repo p =
 let doc_uri p =
   opam_field_hd p "doc" >>| function None -> "" | Some uri -> uri
 
+let doc_dir = Fpath.(v "_build" / "default" / "_doc" / "_html")
+
 let doc_user_repo_and_path p =
   doc_uri p >>= fun uri ->
   (* Parses the $PATH of $SCHEME://$HOST/$REPO/$PATH *)

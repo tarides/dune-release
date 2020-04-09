@@ -10,7 +10,7 @@ open Dune_release
 let gen_doc ~dry_run ~force dir pkg_names =
   let names = String.concat ~sep:"," pkg_names in
   let build_doc = Cmd.(v "dune" % "build" % "-p" % names % "@doc") in
-  let doc_dir = Fpath.(v "_build" / "default" / "_doc" / "_html") in
+  let doc_dir = Pkg.doc_dir in
   let do_doc () = Sos.run ~dry_run ~force build_doc in
   R.join @@ Sos.with_dir ~dry_run dir do_doc () >>= fun () ->
   Ok Fpath.(dir // doc_dir)
