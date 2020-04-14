@@ -175,47 +175,6 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
 let github_auth ~dry_run ~user token =
   Sos.read_file ~dry_run token >>= fun token -> Ok (strf "%s:%s" user token)
 
-let create_release_json version msg =
-  let escape_for_json s =
-    let len = String.length s in
-    let max = len - 1 in
-    let rec escaped_len i l =
-      if i > max then l
-      else
-        match s.[i] with
-        | '\\' | '\"' | '\n' | '\r' | '\t' -> escaped_len (i + 1) (l + 2)
-        | _ -> escaped_len (i + 1) (l + 1)
-    in
-    let escaped_len = escaped_len 0 0 in
-    if escaped_len = len then s
-    else
-      let b = Bytes.create escaped_len in
-      let rec loop i k =
-        if i > max then Bytes.unsafe_to_string b
-        else
-          match s.[i] with
-          | ('\\' | '\"' | '\n' | '\r' | '\t') as c ->
-              Bytes.set b k '\\';
-              let c =
-                match c with
-                | '\\' -> '\\'
-                | '\"' -> '\"'
-                | '\n' -> 'n'
-                | '\r' -> 'r'
-                | '\t' -> 't'
-                | _ -> assert false
-              in
-              Bytes.set b (k + 1) c;
-              loop (i + 1) (k + 2)
-          | c ->
-              Bytes.set b k c;
-              loop (i + 1) (k + 1)
-      in
-      loop 0 0
-  in
-  strf "{ \"tag_name\" : \"%s\", \"body\" : \"%s\" }" (escape_for_json version)
-    (escape_for_json msg)
-
 let run_with_auth ~dry_run auth curl k =
   let auth = strf "-u %s" auth in
   Sos.run_io ~dry_run curl (OS.Cmd.in_string auth) k
@@ -236,25 +195,17 @@ let curl_create_release ~token ~dry_run curl version msg user repo =
       R.error_msgf "Could not find release id in response:\n%s."
         (String.concat ~sep:"\n" headers)
   in
-  let data = create_release_json version msg in
-  let uri = strf "https://api.github.com/repos/%s/%s/releases" user repo in
   github_auth ~dry_run ~user token >>= fun auth ->
-  let cmd = Cmd.(curl % "-D" % "-" % "--data" % data % uri) in
+  let args = Curl.create_release ~version ~msg ~user ~repo in
+  let cmd = List.fold_left Cmd.( % ) curl args in
   run_with_auth ~dry_run ~default:"Location: /0" auth cmd
     (OS.Cmd.to_string ~trim:false)
   >>= parse_release_id
 
 let curl_upload_archive ~token ~dry_run curl archive user repo release_id =
-  let uri =
-    (* FIXME upload URI prefix should be taken from release creation
-         response *)
-    strf "https://uploads.github.com/repos/%s/%s/releases/%d/assets?name=%s"
-      user repo release_id (Fpath.filename archive)
-  in
+  let args = Curl.upload_archive ~archive ~user ~repo ~release_id in
   github_auth ~dry_run ~user token >>= fun auth ->
-  let data = Cmd.(v "--data-binary" % strf "@@%s" (Fpath.to_string archive)) in
-  let ctype = Cmd.(v "-H" % "Content-Type:application/x-tar") in
-  let cmd = Cmd.(curl %% ctype %% data % uri) in
+  let cmd = List.fold_left Cmd.( % ) curl args in
   run_with_auth ~dry_run ~default:"No response" auth cmd
     (OS.Cmd.to_string ~trim:false)
 
@@ -280,20 +231,15 @@ let curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body
       if Re.execp alread_exists resp then Ok `Already_exists
       else R.error_msgf "Could not find html_url id in response:\n%s." resp
   in
-  let base, repo = opam_repo in
-  let uri = strf "https://api.github.com/repos/%s/%s/pulls" base repo in
-  let data =
-    strf {|{"title": %S,"base": "master", "body": %S, "head": "%s:%s"}|} title
-      body user branch
-  in
-  let cmd = Cmd.(curl % "-D" % "-" % "--data" % data % uri) in
+  let args = Curl.open_pr ~title ~user ~branch ~body ~opam_repo in
+  let cmd = List.fold_left Cmd.( % ) curl args in
   github_auth ~dry_run ~user:distrib_user token >>= fun auth ->
   let default = {|  "html_url": "${pr_url}",|} in
   run_with_auth ~dry_run ~default auth cmd (OS.Cmd.to_string ~trim:false)
   >>= parse_url
 
 let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo body =
-  OS.Cmd.must_exist Cmd.(v "curl" % "-s" % "-S" % "-K" % "-") >>= fun curl ->
+  OS.Cmd.must_exist Cmd.(v "curl") >>= fun curl ->
   curl_open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~body
     ~opam_repo curl
 
@@ -320,7 +266,7 @@ let assert_tag_exists ~dry_run tag =
 
 let publish_distrib ~dry_run ~msg ~archive ~yes p =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
-  let curl = Cmd.(v "curl" % "-L" % "-s" % "-S" % "-K" % "-") in
+  let curl = Cmd.(v "curl") in
   ( match Pkg.distrib_user_and_repo p with
   | Error _ as e -> if dry_run then Ok (D.user, D.repo) else e
   | r -> r )
