@@ -47,3 +47,17 @@ module Unix = struct
   let read_line ?(echo_input = true) () =
     maybe_echo_input echo_input read_line ()
 end
+
+module Option = struct
+  let map ~f = function None -> None | Some x -> Some (f x)
+end
+
+module List = struct
+  let filter_map ~f l =
+    let rec fmap acc = function
+      | [] -> List.rev acc
+      | hd :: tl -> (
+          match f hd with None -> fmap acc tl | Some x -> fmap (x :: acc) tl )
+    in
+    fmap [] l
+end

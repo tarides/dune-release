@@ -16,6 +16,7 @@ let cmds =
     Bistro.cmd;
     Lint.cmd;
     Delegate_info.cmd;
+    Config.cmd;
   ]
 
 (* Command line interface *)

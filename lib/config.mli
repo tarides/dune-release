@@ -36,3 +36,11 @@ val token : dry_run:bool -> unit -> (Fpath.t, Bos_setup.R.msg) result
 val keep_v : bool -> (bool, Bos_setup.R.msg) result
 
 val auto_open : bool -> (bool, Bos_setup.R.msg) result
+
+val load : unit -> (t, Bos_setup.R.msg) result
+
+val save : t -> (unit, Bos_setup.R.msg) result
+
+val pretty_fields : t -> (string * string option) list
+(** [pretty_fields t] returns the list of pretty-printed key-value pairs for the
+    config [t]. *)
