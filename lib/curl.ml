@@ -77,3 +77,5 @@ let open_pr ~title ~user ~branch ~body ~opam_repo =
   in
   let args = [ "-s"; "-S"; "-K"; "-"; "-D"; "-"; "--data"; data ] in
   { url; args }
+
+let with_auth ~auth { url; args } = { url; args = "-u" :: auth :: args }

@@ -92,4 +92,29 @@ let test_open_pr =
         };
   ]
 
-let suite = ("Curl", test_create_release @ test_upload_archive @ test_open_pr)
+let test_with_auth =
+  let auth = "foooooooooooo" in
+  let make_test ~test_name ~curl_t ~expected =
+    let test_fun () =
+      let actual = Dune_release.Curl.with_auth ~auth curl_t in
+      Alcotest.check Alcotest_ext.curl test_name expected actual
+    in
+    (test_name, `Quick, test_fun)
+  in
+  [
+    make_test ~test_name:"basic"
+      ~curl_t:
+        {
+          url = "https://api.github.com/repos/base/repo/pulls";
+          args = [ "-s"; "-S"; "-K"; "-"; "-D"; "-" ];
+        }
+      ~expected:
+        {
+          url = "https://api.github.com/repos/base/repo/pulls";
+          args = [ "-u"; auth; "-s"; "-S"; "-K"; "-"; "-D"; "-" ];
+        };
+  ]
+
+let suite =
+  ( "Curl",
+    test_create_release @ test_upload_archive @ test_open_pr @ test_with_auth )

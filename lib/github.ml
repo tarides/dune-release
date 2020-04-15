@@ -175,8 +175,8 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
 let github_auth ~dry_run ~user token =
   Sos.read_file ~dry_run token >>= fun token -> Ok (strf "%s:%s" user token)
 
-let run_with_auth ?(default_body = "") ~dry_run ~auth Curl.{ url; args } =
-  let args = "-u" :: auth :: args in
+let run_with_auth ?(default_body = "") ~dry_run ~auth curl_t =
+  let Curl.{ url; args } = Curl.with_auth ~auth curl_t in
   if dry_run then
     let _ =
       Sos.show "exec:@[@ curl %a@]" Format.(pp_print_list pp_print_string) args

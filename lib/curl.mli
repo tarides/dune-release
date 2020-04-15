@@ -13,3 +13,5 @@ val open_pr :
   body:string ->
   opam_repo:string * string ->
   t
+
+val with_auth : auth:string -> t -> t
