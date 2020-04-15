@@ -183,6 +183,7 @@ let run_with_auth ?(default_body = "") ~dry_run ~auth curl_t =
     in
     Ok Curly.Response.{ code = 0; headers = []; body = default_body }
   else
+    OS.Cmd.must_exist (Cmd.v "curl") >>= fun _ ->
     match Curly.(run ~args (Request.make ~url ~meth:`POST ())) with
     | Ok x -> Ok x
     | Error e -> R.error_msgf "curl execution failed: %a" Curly.Error.pp e
