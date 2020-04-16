@@ -27,11 +27,6 @@ We need to set up a git project for dune-release to work properly
 
 Dune-release delegate-info tarball should print the path to the tarball:
 
-    $ dune-release distrib 2>&1 > /dev/null
-    dune-release: [ERROR] whatever.opam: could not parse opam file
-    dune-release: [WARNING] The repo is dirty. The distribution archive may be
-                            inconsistent.
-    [1]
     $ dune-release delegate-info tarball
     _build/whatever-0.1.0.tbz
 

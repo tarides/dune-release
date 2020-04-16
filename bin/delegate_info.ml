@@ -7,7 +7,7 @@ let run var =
   let result =
     match var with
     | "tarball" ->
-        Pkg.distrib_file ~dry_run:false pkg >>| fun distrib_file ->
+        Pkg.distrib_archive_path pkg >>| fun distrib_file ->
         Format.printf "%a\n" Fpath.pp distrib_file
     | "docdir" -> Ok (Format.printf "%a\n" Fpath.pp Pkg.doc_dir)
     | "publication-message" ->
