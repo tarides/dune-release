@@ -28,6 +28,7 @@ depends: [
   "logs"
   "odoc"
   "alcotest" {with-test}
+  "mdx" {with-test & >= "1.6.0"}
 ]
 
 synopsis: "Release dune packages in opam"
