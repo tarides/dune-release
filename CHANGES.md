@@ -2,8 +2,9 @@
 
 ### Added
 
-- Add command `delegate-info` to print information needed by external 
+- Add command `delegate-info` to print information needed by external
   release scripts (#221, @pitag-ha)
+- Use Curly instead of Cmd to interact with github (#202, @gpetiot)
 
 ### Changed
 

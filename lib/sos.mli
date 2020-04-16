@@ -24,6 +24,12 @@
 
 type error = Bos_setup.R.msg
 
+val show :
+  ?sandbox:bool ->
+  ?action:[ `Done | `Skip ] ->
+  ('a, Format.formatter, unit, (unit, 'b) result) format4 ->
+  'a
+
 val run :
   dry_run:bool ->
   ?force:bool ->
