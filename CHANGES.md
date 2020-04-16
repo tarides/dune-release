@@ -2,13 +2,11 @@
 
 ### Added
 
-<<<<<<< HEAD
-- Add command `delegate-info` to print information needed by external 
-  release scripts (#221, @pitag-ha)
-=======
 - Add a `dune-release config` subcommand to display and edit the global
   configuration (#220, @NathanReb).
->>>>>>> c484560... Add a config subcommand to display and edit global configuration
+- Add command `delegate-info` to print information needed by external
+  release scripts (#221, @pitag-ha)
+- Use Curly instead of Cmd to interact with github (#202, @gpetiot)
 
 ### Changed
 

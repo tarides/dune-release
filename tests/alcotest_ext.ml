@@ -9,3 +9,10 @@ let result_msg testable = result testable error_msg
 
 let opam_version =
   testable Dune_release.Opam.Version.pp Dune_release.Opam.Version.equal
+
+let curl =
+  let pp fs Dune_release.Curl.{ url; args } =
+    Fmt.string fs url;
+    Fmt.list Fmt.string fs args
+  in
+  testable pp ( = )
