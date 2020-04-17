@@ -38,3 +38,11 @@ module Unix : sig
       standard input. If [echo_input] is [true] (by default) input characters
       are echoed on the standard output. *)
 end
+
+module Option : sig
+  val map : f:('a -> 'b) -> 'a option -> 'b option
+end
+
+module List : sig
+  val filter_map : f:('a -> 'b option) -> 'a list -> 'b list
+end

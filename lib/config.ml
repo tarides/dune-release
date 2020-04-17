@@ -24,6 +24,9 @@ type t = {
   auto_open : bool option;
 }
 
+let empty =
+  { user = None; remote = None; local = None; keep_v = None; auto_open = None }
+
 let of_yaml_exn str =
   (* ouch *)
   let lines = String.cuts ~empty:false ~sep:"\n" str in
@@ -214,6 +217,31 @@ let token ~dry_run () =
         let token = get_valid_token () in
         OS.Dir.create Fpath.(parent file) >>= fun _ ->
         OS.File.write ~mode:0o600 file token >>= fun () -> Ok file
+
+let load () =
+  file () >>= fun file ->
+  OS.File.exists file >>= fun exists ->
+  if exists then OS.File.read file >>= of_yaml >>| fun x -> x else Ok empty
+
+let pretty_fields { user; remote; local; keep_v; auto_open } =
+  [
+    ("user", user);
+    ("remote", remote);
+    ("local", Stdext.Option.map ~f:Fpath.to_string local);
+    ("keep-v", Stdext.Option.map ~f:string_of_bool keep_v);
+    ("auto-open", Stdext.Option.map ~f:string_of_bool auto_open);
+  ]
+
+let save t =
+  file () >>= fun file ->
+  let fields = pretty_fields t in
+  let content =
+    let open Stdext in
+    List.filter_map fields ~f:(function
+      | _, None -> None
+      | f, Some v -> Some (Printf.sprintf "%s: %s" f v))
+  in
+  OS.File.write_lines file content
 
 let file = lazy (find ())
 
