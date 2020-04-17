@@ -29,7 +29,7 @@ let write_opam_file ~dry_run ~url ~opam_f pkg dest_opam_file =
   match OpamVersion.to_string (OpamFile.OPAM.opam_version opam_t) with
   | "2.0" ->
       let file x = OpamFile.make (OpamFilename.of_string (Fpath.to_string x)) in
-      let opam_t = Pkg.upgrade_opam_file ~url ~opam_t `V2 in
+      let opam_t = Opam_file.upgrade ~url opam_t ~version:`V2 in
       if not dry_run then
         OpamFile.OPAM.write_with_preserved_format ~format_from:(file opam_f)
           (file dest_opam_file) opam_t;
@@ -43,7 +43,7 @@ let write_opam_file ~dry_run ~url ~opam_f pkg dest_opam_file =
         OpamFile.Descr.read_from_string (Opam.Descr.to_string descr)
       in
       let opam =
-        Pkg.upgrade_opam_file ~url ~opam_t (`V1 descr)
+        Opam_file.upgrade ~url opam_t ~version:(`V1 descr)
         |> OpamFile.OPAM.write_to_string
       in
       Sos.write_file ~dry_run dest_opam_file opam

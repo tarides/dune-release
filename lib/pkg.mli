@@ -123,16 +123,6 @@ val publish_artefacts :
   t -> ([ `Distrib | `Doc | `Alt of string ] list, R.msg) result
 (** [publish_artefacts p] are [p]'s publication artefacts. *)
 
-val upgrade_opam_file :
-  url:OpamFile.URL.t ->
-  opam_t:OpamFile.OPAM.t ->
-  [ `V1 of OpamFile.Descr.t | `V2 ] ->
-  OpamFile.OPAM.t
-(** [upgrade_opam_file ~url ~opam_t version] produces the content of the opam
-    file for the opam package, from the old [opam_t] content, migrating to the
-    most supported format if needed (depending on [version]), setting the 'url'
-    field with [url] and stripping the 'version' and 'name' fields. *)
-
 (** {1 Uri} *)
 
 val doc_uri : t -> (string, Bos_setup.R.msg) result
