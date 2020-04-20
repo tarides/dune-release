@@ -26,6 +26,7 @@
 - Do not echo input characters when reading token (#199, @gpetiot)
 - Improve the output of VCS command errors (#193, @gpetiot)
 - Better error handling when checking opam version (#195, @gpetiot)
+- Do not write 'version' and 'name' fields in opam file (#200, @gpetiot)
 
 ### Removed
 
