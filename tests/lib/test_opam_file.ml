@@ -4,7 +4,11 @@ let test_upgrade =
     let url = OpamFile.URL.create (OpamUrl.of_string url) in
     let test_fun () =
       let opam_t = OpamFile.OPAM.read_from_string opam in
-      let actual = Dune_release.Opam_file.upgrade ~url opam_t ~version:v in
+      let filename = "opam" in
+      let id = "6814f8b26946358c72b926706f210025f36619b0" in
+      let actual =
+        Dune_release.Opam_file.upgrade ~filename ~url ~id opam_t ~version:v
+      in
       let actual = OpamFile.OPAM.write_to_string actual in
       Alcotest.(check string) test_name expected actual
     in
@@ -27,7 +31,8 @@ description: "This package is nice"
 |}
   in
   let expected_v1 =
-    {|opam-version: "2.0"
+    {|x-commit-hash: "6814f8b26946358c72b926706f210025f36619b0"
+opam-version: "2.0"
 synopsis: "This package is great"
 maintainer: "Foo"
 authors: ["Foo" "Bar"]
@@ -40,7 +45,8 @@ url {
 }|}
   in
   let expected_v2 =
-    {|opam-version: "2.0"
+    {|x-commit-hash: "6814f8b26946358c72b926706f210025f36619b0"
+opam-version: "2.0"
 synopsis: ""
 description: "This package is nice"
 maintainer: "Foo"

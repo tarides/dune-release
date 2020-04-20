@@ -23,13 +23,14 @@ module D = struct
   let distrib_uri = "${distrib_uri}"
 end
 
-let write_opam_file ~dry_run ~url ~opam_f pkg dest_opam_file =
+let write_opam_file ~dry_run ~id ~url ~opam_f pkg dest_opam_file =
   OS.File.read opam_f >>= fun opam ->
+  let filename = Fpath.filename dest_opam_file in
   let opam_t = OpamFile.OPAM.read_from_string opam in
   match OpamVersion.to_string (OpamFile.OPAM.opam_version opam_t) with
   | "2.0" ->
       let file x = OpamFile.make (OpamFilename.of_string (Fpath.to_string x)) in
-      let opam_t = Opam_file.upgrade ~url opam_t ~version:`V2 in
+      let opam_t = Opam_file.upgrade ~filename ~url ~id opam_t ~version:`V2 in
       if not dry_run then
         OpamFile.OPAM.write_with_preserved_format ~format_from:(file opam_f)
           (file dest_opam_file) opam_t;
@@ -43,7 +44,7 @@ let write_opam_file ~dry_run ~url ~opam_f pkg dest_opam_file =
         OpamFile.Descr.read_from_string (Opam.Descr.to_string descr)
       in
       let opam =
-        Opam_file.upgrade ~url opam_t ~version:(`V1 descr)
+        Opam_file.upgrade ~filename ~url ~id opam_t ~version:(`V1 descr)
         |> OpamFile.OPAM.write_to_string
       in
       Sos.write_file ~dry_run dest_opam_file opam
@@ -82,7 +83,9 @@ let pkg ~dry_run pkg =
   (if exists then Sos.delete_dir ~dry_run dir else Ok ()) >>= fun () ->
   OS.Dir.create dir >>= fun _ ->
   let dest_opam_file = Fpath.(dir / "opam") in
-  write_opam_file ~dry_run ~url ~opam_f pkg dest_opam_file >>= fun () ->
+  Vcs.get () >>= fun repo ->
+  Vcs.commit_id repo ~dirty:false ~commit_ish:"HEAD" >>= fun id ->
+  write_opam_file ~dry_run ~id ~url ~opam_f pkg dest_opam_file >>= fun () ->
   App_log.success (fun m ->
       m "Wrote opam package description %a" Text.Pp.path dest_opam_file);
   if not dry_run then warn_if_vcs_dirty () else Ok ()

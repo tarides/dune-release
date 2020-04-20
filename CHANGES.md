@@ -7,6 +7,7 @@
 - Add command `delegate-info` to print information needed by external
   release scripts (#221, @pitag-ha)
 - Use Curly instead of Cmd to interact with github (#202, @gpetiot)
+- Add `x-commit-hash` field to the opam file when releasing (#224, @gpetiot)
 
 ### Changed
 
