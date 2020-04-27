@@ -1,4 +1,4 @@
-(lang dune 1.2)
+(lang dune 2.4)
 (name dune-release)
 
-(using fmt 1.2)
+(using mdx 0.1)
