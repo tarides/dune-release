@@ -10,6 +10,9 @@
 
 ### Changed
 
+- Command `tag`: improve error and log messages by comparing the provided 
+  commit with the commit correspondent to the provided tag (#226, @pitag-ha)
+
 ### Deprecated
 
 - Deprecate opam 1.x (#195, @gpetiot)

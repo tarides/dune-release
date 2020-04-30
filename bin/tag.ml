@@ -8,20 +8,52 @@ open Bos_setup
 open Dune_release
 
 let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
-  let msg = match msg with None -> strf "Distribution %s" tag | Some m -> m in
   Vcs.get () >>= fun repo ->
-  match delete with
-  | true ->
-      Prompt.confirm_or_abort ~yes ~question:(fun l ->
-          l "Delete tag %a?" Text.Pp.version tag)
-      >>= fun () ->
+  Vcs.commit_id ~dirty:false ~commit_ish repo
+  |> R.reword_error (fun (`Msg msg) ->
+         R.msgf "Invalid commit-ish %s: %s" commit_ish msg)
+  >>= fun commit ->
+  let tag_commit_opt = Vcs.tag_points_to ~tag repo in
+  match (tag_commit_opt, delete) with
+  | Some tag_commit, true ->
+      let question =
+        if tag_commit = commit then
+          Prompt.confirm_or_abort ~yes ~question:(fun l ->
+              l "Delete tag %a?" Text.Pp.version tag)
+        else
+          Prompt.confirm_or_abort_neg ~yes ~question:(fun l ->
+              l
+                "%a Tag %a does not point to the commit you've provided \
+                 (default: HEAD). Do you want to delete it anyways?"
+                Fmt.(styled `Red string)
+                "Warning:" Text.Pp.version tag)
+      in
+      question >>= fun () ->
       Vcs.delete_tag ~dry_run repo tag >>| fun () ->
       App_log.success (fun m -> m "Deleted tag %a" Text.Pp.version tag)
-  | false ->
+  | None, true ->
+      Ok
+        (App_log.status (fun apply_log_l ->
+             apply_log_l "Nothing to be deleted: there is no tag %a."
+               Text.Pp.version tag))
+  | Some tag_commit, false ->
+      if tag_commit = commit then
+        Ok
+          (App_log.status (fun apply_log_l ->
+               apply_log_l "Nothing to be done: tag already exists."))
+      else
+        R.error_msgf
+          "A tag with name %a already exists, but points to a different \
+           commit. You can delete that tag using the `-d` flag."
+          Text.Pp.version tag
+  | None, false ->
       Prompt.confirm_or_abort ~yes ~question:(fun l ->
           l "Create git tag %a for %a?" Text.Pp.version tag Text.Pp.commit
             commit_ish)
       >>= fun () ->
+      let msg =
+        match msg with None -> strf "Distribution %s" tag | Some m -> m
+      in
       Vcs.tag repo ~dry_run ~force ~sign ~msg ~commit_ish tag >>| fun () ->
       App_log.success (fun m ->
           m "Tagged %a with version %a" Text.Pp.commit commit_ish
