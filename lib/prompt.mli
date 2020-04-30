@@ -11,3 +11,7 @@ val confirm_or_abort :
   question:('a, unit) Logs.msgf -> yes:bool -> (unit, Rresult.R.msg) result
 (** Same as [confirm] but returns [Ok ()] for yes and
     [Error (`Msg "Aborting on user demand")] for no *)
+
+val confirm_or_abort_neg :
+  question:('a, unit) Logs.msgf -> yes:bool -> (unit, Rresult.R.msg) result
+(** Like [confirm_or_abort], but defaults to no when hitting enter *)
