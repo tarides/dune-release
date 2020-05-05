@@ -44,17 +44,6 @@ val publish_doc :
   Pkg.t ->
   (unit, R.msg) Result.result
 
-val publish_in_git_branch :
-  dry_run:bool ->
-  remote:string ->
-  branch:string ->
-  name:string ->
-  version:string ->
-  docdir:Fpath.t ->
-  dir:Fpath.t ->
-  yes:bool ->
-  (unit, R.msg) result
-
 val open_pr :
   token:Fpath.t ->
   dry_run:bool ->

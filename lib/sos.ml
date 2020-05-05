@@ -39,7 +39,7 @@ let last_dir = ref root
 
 let pp_cmd ppf cmd =
   let x = Fmt.to_to_string Cmd.pp cmd in
-  let x = String.mapi (fun _ -> function '\n' -> ' ' | c -> c) x in
+  let x = String.map (function '\n' -> ' ' | c -> c) x in
   Fmt.string ppf x
 
 let show ?sandbox ?(action = `Skip) fmt =

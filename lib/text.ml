@@ -130,41 +130,6 @@ let split_uri ?(rel = false) uri =
           let path = if rel then path else "/" ^ path in
           Some (scheme, host, path) )
 
-(* Edit and page text *)
-
-let find_pager ~don't =
-  if don't then Ok None
-  else
-    match OS.Env.var "TERM" with
-    | Some "dumb" | None -> Ok None
-    | _ ->
-        let add_env v cmds =
-          match OS.Env.(value v (some cmd) ~absent:None) with
-          | None -> cmds
-          | Some cmd -> cmd :: cmds
-        in
-        let cmds = [ Cmd.v "less"; Cmd.v "more" ] in
-        let cmds = add_env "PAGER" cmds in
-        let rec loop = function
-          | [] -> Ok None
-          | cmd :: cmds -> (
-              OS.Cmd.exists cmd >>= function
-              | true -> Ok (Some cmd)
-              | false -> loop cmds )
-        in
-        loop cmds
-
-let edit_file f =
-  let editor = OS.Env.(value "EDITOR" cmd ~absent:(Cmd.v "nano")) in
-  OS.Cmd.exists editor >>= function
-  | false ->
-      R.error_msgf
-        "Editor %a not in search path. Set the EDITOR environment variable."
-        Cmd.pp editor
-  | true -> (
-      OS.Cmd.(run_status Cmd.(editor % p f)) >>= function
-      | `Exited n | `Signaled n -> Ok n )
-
 (* Pretty-printers. *)
 
 module Pp = struct

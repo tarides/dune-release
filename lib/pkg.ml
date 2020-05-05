@@ -518,7 +518,7 @@ let distrib_version_opam_files ~dry_run ~version =
   infer_pkg_names Fpath.(v ".") [] >>= fun names ->
   List.fold_left
     (fun acc name ->
-      acc >>= fun _acc ->
+      acc >>= fun () ->
       let file = Fpath.(v name + "opam") in
       OS.File.read_lines file >>= fun content ->
       let content = prepare_opam_for_distrib ~version ~content in
@@ -583,9 +583,6 @@ let test ~dry_run ~dir ~args ~out p =
 
 let build ~dry_run ~dir ~args ~out p =
   run ~dry_run ~dir ~args ~out ~default:(Sos.out "") p "build"
-
-let clean ~dry_run ~dir ~args ~out p =
-  run ~dry_run ~dir ~args ~out ~default:(Sos.out "") p "clean"
 
 (* tags *)
 

@@ -148,8 +148,6 @@ let bzip2 ~dry_run ?force ~dst s =
 
 let tar_cmd = OS.Env.(value "DUNE_RELEASE_TAR" cmd ~absent:(Cmd.v "tar"))
 
-let ensure_tar () = OS.Cmd.must_exist tar_cmd >>| fun _ -> ()
-
 let untbz ~dry_run ?(clean = false) ar =
   let clean_dir dir =
     OS.Dir.exists dir >>= function

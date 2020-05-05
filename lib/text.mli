@@ -42,13 +42,6 @@ val header_title : ?flavour:flavour -> string -> string
 
 (** {1 Toy change log parsing} *)
 
-val change_log_last_entry :
-  ?flavour:flavour -> string -> (string * (string * string)) option
-(** [change_log_last_version ~flavour text] tries to parse the last change log
-    entry of [text] (i.e. the {!head} of [text]) into
-    [Some (version, (header, text))], where [(header,text)] is the result of
-    {!head} and [version] a version number extracted from [header]. *)
-
 val change_log_file_last_entry :
   Fpath.t -> (string * (string * string), R.msg) result
 (** [change_log_file_last_entry file] tries to parse the last change log entry
@@ -60,18 +53,6 @@ val change_log_file_last_entry :
 val split_uri : ?rel:bool -> string -> (string * string * string) option
 (** [split_uri uri] splits [uri] into a triple [(scheme, host, path)]. If [rel]
     is [true] (defaults to [false]), a leading ["/"] in [path] is removed. *)
-
-(** {1 Edit and page text} *)
-
-val edit_file : Fpath.t -> (int, R.msg) result
-(** [edit_file f] invokes the tool mentioned in the [EDITOR] environment
-    variable with [f] and returns the exit code of the program. *)
-
-val find_pager : don't:bool -> (Cmd.t option, R.msg) result
-(** [find ~no_pager] is an optional pager command. If [don't] is [true] returns
-    [None]. Otherwise first consults the [PAGER] environment variable, then
-    tries [less] or [more] in that order. If the [TERM] environment variable is
-    ["dumb"] or undefined unconditionaly returns [None]. *)
 
 (** Pretty printers. *)
 module Pp : sig

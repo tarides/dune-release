@@ -8,8 +8,6 @@ open Rresult
 
 (* Defaults *)
 
-let default_massage () = Ok ()
-
 let default_exclude_paths () =
   let l =
     List.map Fpath.v

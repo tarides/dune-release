@@ -6,25 +6,11 @@
 
 open Bos_setup
 
-let parse_changes lines =
-  try
-    let parse_line l =
-      match String.cut ~sep:" " l with
-      | None -> failwith (Fmt.strf "%S: can't parse log line" l)
-      | Some cut -> cut
-    in
-    Ok List.(rev @@ rev_map parse_line lines)
-  with Failure msg -> Error (`Msg msg)
-
 (* Version control system repositories *)
 
 type commit_ish = string
 
 type kind = [ `Git | `Hg ]
-
-let pp_kind ppf = function
-  | `Git -> Format.pp_print_string ppf "git"
-  | `Hg -> Format.pp_print_string ppf "hg"
 
 let dirtify id = id ^ "-dirty"
 
@@ -44,8 +30,6 @@ let vcs_cmd kind cmd dir =
   | `Hg -> Cmd.(cmd % "--repository" % dir)
 
 let v k cmd ~dir = (k, cmd, dir)
-
-let kind (k, _, _) = k
 
 let dir (_, _, dir) = dir
 
@@ -87,15 +71,6 @@ let git_is_dirty r =
   | _, (_, `Exited 0) -> Ok true
   | _, (_, st) -> cmd_error status st
 
-let git_file_is_dirty r file =
-  let diff =
-    Cmd.(cmd r %% git_work_tree r % "diff-index" % "--quiet" % "HEAD" % p file)
-  in
-  OS.Cmd.(run_status ~err:err_null diff) >>= function
-  | `Exited 0 -> Ok false
-  | `Exited 1 -> Ok true
-  | st -> cmd_error diff st
-
 let dirtify_if ~dirty r id =
   match dirty with
   | false -> Ok id
@@ -105,16 +80,8 @@ let dirtify_if ~dirty r id =
 module D = struct
   let string = Sos.out ""
 
-  let list = Sos.out []
-
   let unit = Sos.out ()
 end
-
-let git_head ~dirty r =
-  run_git ~dry_run:false r
-    Cmd.(v "rev-parse" % "HEAD")
-    ~default:D.string OS.Cmd.out_string
-  >>= fun id -> dirtify_if ~dirty r id
 
 let git_commit_id ~dirty r commit_ish =
   let dirty = dirty && commit_ish = "HEAD" in
@@ -141,11 +108,6 @@ let git_describe ~dirty r commit_ish =
   in
   run_git ~dry_run:false r git_describe ~default:D.string OS.Cmd.out_string
 
-let git_tags r =
-  run_git ~dry_run:false r
-    Cmd.(v "tag" % "--list")
-    ~default:D.list OS.Cmd.out_lines
-
 let git_tag_exists ~dry_run r tag =
   match
     run_git ~dry_run r
@@ -163,26 +125,13 @@ let git_branch_exists ~dry_run r br =
   | Ok () -> true
   | _ -> false
 
-let git_changes ~after ~until r =
-  let range = if after = "" then until else Fmt.strf "%s..%s" after until in
-  let changes = Cmd.(v "log" % "--oneline" % "--no-decorate" % range) in
-  run_git ~dry_run:false r changes ~default:D.list OS.Cmd.out_lines
-  >>= fun commits -> parse_changes commits
-
-let git_tracked_files ~tree_ish r =
-  let tracked =
-    Cmd.(git_work_tree r % "ls-tree" % "--name-only" % "-r" % tree_ish)
-  in
-  run_git ~dry_run:false r ~default:D.list tracked OS.Cmd.out_lines
-  >>| List.map Fpath.v
-
 let git_clone ~dry_run ?force ?branch ~dir:d r =
   let branch =
     match branch with None -> Cmd.empty | Some b -> Cmd.(v "-b" % b)
   in
   let clone = Cmd.(v "clone" % "--local" %% branch % p (dir r) % p d) in
-  run_git ~dry_run ?force r clone ~default:D.unit OS.Cmd.out_stdout >>= fun _ ->
-  Ok ()
+  run_git ~dry_run ?force r clone ~default:D.unit OS.Cmd.out_stdout
+  >>= fun () -> Ok ()
 
 let git_checkout ~dry_run r ~branch ~commit_ish =
   let branch =
@@ -192,13 +141,6 @@ let git_checkout ~dry_run r ~branch ~commit_ish =
     Cmd.(git_work_tree r % "checkout" % "--quiet" %% branch % commit_ish)
     ~default:D.string OS.Cmd.out_string
   >>= fun _ -> Ok ()
-
-let git_commit_files ~dry_run r ~msg files =
-  let msg = match msg with None -> Cmd.empty | Some m -> Cmd.(v "-m" % m) in
-  let files = Cmd.(of_list @@ List.map p files) in
-  run_git ~dry_run r
-    Cmd.(v "commit" %% msg %% files)
-    ~default:D.unit OS.Cmd.out_stdout
 
 let git_tag ~dry_run r ~force ~sign ~msg ~commit_ish tag =
   let msg = match msg with None -> Cmd.empty | Some m -> Cmd.(v "-m" % m) in
@@ -238,15 +180,6 @@ let hg_id r ~rev =
 
 let hg_is_dirty r = hg_id r ~rev:"tip" >>= function _, is_dirty -> Ok is_dirty
 
-let hg_file_is_dirty r file =
-  run_hg r Cmd.(v "status" % p file) OS.Cmd.out_string >>= function
-  | "" -> Ok false
-  | _ -> Ok true
-
-let hg_head ~dirty r =
-  hg_id r ~rev:"tip" >>= function
-  | id, is_dirty -> Ok (if is_dirty && dirty then dirtify id else id)
-
 let hg_commit_id ~dirty r ~rev =
   hg_id r ~rev >>= fun (id, is_dirty) ->
   Ok (if is_dirty && dirty then dirtify id else id)
@@ -280,25 +213,7 @@ let hg_describe ~dirty r ~rev =
       hg_id ~rev:"tip" r >>= fun (_, is_dirty) ->
       Ok (if is_dirty then dirtify descr else descr)
 
-let hg_tags r = run_hg r Cmd.(v "tags" % "--quiet" (* sic *)) OS.Cmd.out_lines
-
-let hg_changes r ~after ~until =
-  let rev = Fmt.strf "%s::%s" after until in
-  let changes =
-    Cmd.(
-      v "log" % "--template" % "{node|short} {desc|firstline}\\n" % "--rev"
-      % rev)
-  in
-  run_hg r changes OS.Cmd.out_lines >>= fun commits ->
-  parse_changes commits >>= function
-  | [] -> Ok []
-  | _ :: rest -> Ok (List.rev rest)
-
 (* hg order is reverse from git *)
-
-let hg_tracked_files r ~rev =
-  run_hg r Cmd.(v "manifest" % "--rev" % rev) OS.Cmd.out_lines
-  >>| List.map Fpath.v
 
 let hg_clone r ~dir:d =
   let clone = Cmd.(v "clone" % p (dir r) % p d) in
@@ -310,11 +225,6 @@ let hg_checkout r ~branch ~rev =
   | None -> Ok ()
   | Some branch ->
       run_hg r Cmd.(v "branch" % branch) OS.Cmd.out_string >>= fun _ -> Ok ()
-
-let hg_commit_files r ~msg files =
-  let msg = match msg with None -> Cmd.empty | Some m -> Cmd.(v "-m" % m) in
-  let files = Cmd.(of_list @@ List.map p files) in
-  run_hg r Cmd.(v "commit" %% msg %% files) OS.Cmd.out_stdout
 
 let hg_tag r ~force ~sign ~msg ~rev tag =
   if sign then R.error_msgf "Tag signing is not supported by hg"
@@ -357,27 +267,11 @@ let get ?dir () =
       dir >>= function
       | dir -> R.error_msgf "%a: No VCS repository found" Fpath.pp dir )
 
-let pp ppf r = Format.fprintf ppf "(%a, %a)" pp_kind (kind r) Fpath.pp (dir r)
-
 (* Repository state *)
 
 let is_dirty = function
   | (`Git, _, _) as r -> git_is_dirty r
   | (`Hg, _, _) as r -> hg_is_dirty r
-
-let not_dirty r =
-  is_dirty r >>= function
-  | false -> Ok ()
-  | true -> R.error_msgf "The VCS repo is dirty, commit or stash your changes."
-
-let file_is_dirty r file =
-  match r with
-  | (`Git, _, _) as r -> git_file_is_dirty r file
-  | (`Hg, _, _) as r -> hg_file_is_dirty r file
-
-let head ?(dirty = true) = function
-  | (`Git, _, _) as r -> git_head ~dirty r
-  | (`Hg, _, _) as r -> hg_head ~dirty r
 
 let commit_id ?(dirty = true) ?(commit_ish = "HEAD") = function
   | (`Git, _, _) as r -> git_commit_id ~dirty r commit_ish
@@ -390,10 +284,6 @@ let commit_ptime_s ~dry_run ?(commit_ish = "HEAD") = function
 let describe ?(dirty = true) ?(commit_ish = "HEAD") = function
   | (`Git, _, _) as r -> git_describe ~dirty r commit_ish
   | (`Hg, _, _) as r -> hg_describe ~dirty r ~rev:(hg_rev commit_ish)
-
-let tags = function
-  | (`Git, _, _) as r -> git_tags r
-  | (`Hg, _, _) as r -> hg_tags r
 
 let tag_exists ~dry_run r tag =
   match r with
@@ -408,15 +298,6 @@ let branch_exists ~dry_run r tag =
   | (`Git, _, _) as r -> git_branch_exists r ~dry_run tag
   | `Hg, _, _ -> failwith "TODO"
 
-let changes ?(until = "HEAD") r ~after =
-  match r with
-  | (`Git, _, _) as r -> git_changes r ~after ~until
-  | (`Hg, _, _) as r -> hg_changes r ~after:(hg_rev after) ~until:(hg_rev until)
-
-let tracked_files ?(tree_ish = "HEAD") = function
-  | (`Git, _, _) as r -> git_tracked_files r ~tree_ish
-  | (`Hg, _, _) as r -> hg_tracked_files r ~rev:(hg_rev tree_ish)
-
 (* Operations *)
 
 let clone ~dry_run ?force ?branch ~dir r =
@@ -428,11 +309,6 @@ let checkout ~dry_run ?branch r ~commit_ish =
   match r with
   | (`Git, _, _) as r -> git_checkout ~dry_run r ~branch ~commit_ish
   | (`Hg, _, _) as r -> hg_checkout r ~branch ~rev:(hg_rev commit_ish)
-
-let commit_files ~dry_run ?msg r files =
-  match r with
-  | (`Git, _, _) as r -> git_commit_files ~dry_run r ~msg files
-  | (`Hg, _, _) as r -> hg_commit_files r ~msg files
 
 let tag ~dry_run ?(force = false) ?(sign = false) ?msg ?(commit_ish = "HEAD") r
     tag =
