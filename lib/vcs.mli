@@ -25,10 +25,6 @@ val cmd : t -> Bos.Cmd.t
 
     {b Warning} Prefer the functions below to remain VCS independent. *)
 
-val cmd_error : Bos.Cmd.t -> Bos.OS.Cmd.status -> ('a, R.msg) result
-(** [cmd_error cmd status] returns an error message describing the failing
-    command [cmd] and the exit status [status]. *)
-
 val get : ?dir:Fpath.t -> unit -> (t, R.msg) result
 (** [get] is like {!find} but returns an error if no VCS was found. *)
 

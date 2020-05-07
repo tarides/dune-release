@@ -30,6 +30,12 @@ val show :
   ('a, Format.formatter, unit, (unit, 'b) result) format4 ->
   'a
 
+val cmd_error :
+  Bos.Cmd.t -> string option -> Bos.OS.Cmd.status -> ('a, Rresult.R.msg) result
+(** [cmd_error cmd ~stderr status] returns an error message describing the
+    failing command [cmd], the exit status [status] and, if existent, also the
+    error message [err_msg]. *)
+
 val run :
   dry_run:bool ->
   ?force:bool ->
@@ -64,6 +70,23 @@ val run_out :
   Bos.Cmd.t ->
   (Bos.OS.Cmd.run_out -> ('a, 'b) result) ->
   ('a, 'b) result
+
+type 'a response = {
+  output : 'a;
+  err_msg : string;
+  status : Bos.OS.Cmd.status;
+  run_info : Bos.OS.Cmd.run_info;
+}
+
+val run_out_err :
+  dry_run:bool ->
+  ?force:bool ->
+  ?sandbox:bool ->
+  default:'a * Bos.OS.Cmd.run_status ->
+  Bos.Cmd.t ->
+  (Bos.OS.Cmd.run_out ->
+  ('a * Bos.OS.Cmd.run_status, ([> Rresult.R.msg ] as 'b)) result) ->
+  ('a response, 'b) result
 
 val run_status :
   dry_run:bool ->
