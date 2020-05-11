@@ -93,6 +93,8 @@ val tags : t -> (string list, R.msg) result
 
 val tag_exists : dry_run:bool -> t -> string -> bool
 
+val tag_points_to : t -> tag:string -> string option
+
 val branch_exists : dry_run:bool -> t -> string -> bool
 
 val changes :

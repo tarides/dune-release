@@ -400,6 +400,9 @@ let tag_exists ~dry_run r tag =
   | (`Git, _, _) as r -> git_tag_exists r ~dry_run tag
   | `Hg, _, _ -> failwith "TODO"
 
+let tag_points_to r ~tag =
+  commit_id ~dirty:false ~commit_ish:tag r |> R.to_option
+
 let branch_exists ~dry_run r tag =
   match r with
   | (`Git, _, _) as r -> git_branch_exists r ~dry_run tag
