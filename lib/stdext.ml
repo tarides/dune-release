@@ -52,6 +52,13 @@ module Option = struct
   let map ~f = function None -> None | Some x -> Some (f x)
 end
 
+module Result = struct
+  module List = struct
+    let iter ~f l =
+      List.fold_left (fun acc x -> acc >>= fun () -> f x) (Ok ()) l
+  end
+end
+
 module List = struct
   let filter_map ~f l =
     let rec fmap acc = function

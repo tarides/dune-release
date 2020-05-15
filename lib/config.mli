@@ -29,8 +29,6 @@ val v :
   Pkg.t list ->
   (t, Bos_setup.R.msg) result
 
-val find : unit -> (t option, Bos_setup.R.msg) result
-
 val token : dry_run:bool -> unit -> (Fpath.t, Bos_setup.R.msg) result
 
 val keep_v : bool -> (bool, Bos_setup.R.msg) result

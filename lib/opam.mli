@@ -28,33 +28,16 @@ val prepare :
     branch in the local opam repository [local_repo], using the commit message
     [msg] (if any). Return the new branch. *)
 
-(** {1:pkgs Packages} *)
-
-val ocaml_base_packages : String.set
-(** [ocaml_base_packages] are the base opam packages distributed with OCaml:
-    ["base-bigarray"], ["base-bytes"], ["base-threads"], ["base-unix"]. *)
-
 (** {1:file Files} *)
 
 (** opam files *)
 module File : sig
   (** {1:file opam file} *)
 
-  val field_names : String.set
-  (** [field_names] is the maximal domain of the map returned by {!fields},
-      excluding extension fields (not yet supported by [opam-lib] 1.2.2). *)
-
   val fields : dry_run:bool -> Fpath.t -> (string list String.map, R.msg) result
   (** [fields f] returns a simplified model of the fields of the opam file [f].
       The domain of the result is included in {!field_names}. Note that the
       [depends:] and [depopts:] fields are returned without version constraints. *)
-
-  (** {1:deps Dependencies} *)
-
-  val deps : ?opts:bool -> string list String.map -> String.set
-  (** [deps ~opts fields] returns the packages mentioned in the [depends:]
-      fields, if [opts] is [true] (default) those from [depopts:] are added
-      aswell. *)
 end
 
 (** [descr] files. *)
@@ -70,10 +53,6 @@ module Descr : sig
   val to_string : t -> string
   (** [to_string d] is [d] as a string. *)
 
-  val of_readme : ?flavour:Text.flavour -> string -> (t, R.msg) result
-  (** [of_readme r] extracts an opam description file from a readme [r] with a
-      certain structure. *)
-
   val of_readme_file : Fpath.t -> (t, R.msg) result
   (** [of_readme_file f] extracts an opam description file from a readme file
       [f] using {!Text.flavour_of_fpath} and {!of_readme}. *)
@@ -82,10 +61,6 @@ end
 (** [url] files. *)
 module Url : sig
   (** {1:url Url file} *)
-
-  val v : uri:string -> file:string -> OpamFile.URL.t
-  (** [v ~uri ~file] is an URL file for URI [uri] with checksums computes on
-      [file]. *)
 
   val with_distrib_file :
     dry_run:bool -> uri:string -> Fpath.t -> (OpamFile.URL.t, R.msg) result

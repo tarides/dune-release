@@ -33,30 +33,6 @@ val v :
       massaging, to determine the paths that are excluded from being added to
       the distribution archive. Defaults to {!exclude_paths}. *)
 
-val default_massage : unit -> (unit, R.msg) result
-(** [default_massage] is the default distribution massaging function. It is
-    invoked in the distribution build directory and does nothing. *)
-
-val default_exclude_paths : unit -> (Fpath.t list, R.msg) result
-(** [default_exclude_paths ()] is the default list of paths to exclude from the
-    distribution archive. It is invoked in the distribution build directory and
-    returns the following static set of files.
-
-    {[
-      fun () ->
-        Ok
-          [
-            ".git";
-            ".gitignore";
-            ".gitattributes";
-            ".hg";
-            ".hgignore";
-            "build";
-            "Makefile";
-            "_build";
-          ]
-    ]} *)
-
 val massage : t -> unit -> (unit, R.msg) result
 
 val exclude_paths : t -> unit -> (Fpath.t list, R.msg) result

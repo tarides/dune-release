@@ -46,3 +46,12 @@ end
 module List : sig
   val filter_map : f:('a -> 'b option) -> 'a list -> 'b list
 end
+
+module Result : sig
+  module List : sig
+    val iter :
+      f:('a -> (unit, 'e) Result.result) -> 'a list -> (unit, 'e) Result.result
+    (** [iter ~f l] applies [f] on each element of list [l] until an error
+        occurs. *)
+  end
+end

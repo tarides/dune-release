@@ -145,12 +145,6 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
     ()
   |> R.join
 
-(* Packages *)
-
-let ocaml_base_packages =
-  String.Set.of_list
-    [ "base-bigarray"; "base-bytes"; "base-threads"; "base-unix" ]
-
 (* Files *)
 
 module File = struct
@@ -196,10 +190,6 @@ module File = struct
       opt_field "synopsis" OpamFile.OPAM.synopsis (list id);
     ]
 
-  let field_names =
-    let add acc (name, _) = String.Set.add name acc in
-    List.fold_left add String.Set.empty fields
-
   let fields ~dry_run file =
     if not (Sys.file_exists (Fpath.to_string file)) then
       R.error_msgf "Internal error: file %a not found" Fpath.pp file
@@ -222,21 +212,6 @@ module File = struct
           (* Apparently in at least opam-lib 1.2.2, the error will be
              logged on stdout. *)
           R.error_msgf "%a: could not parse opam file" Fpath.pp file
-
-  let deps ?(opts = true) fields =
-    let deps =
-      match String.Map.find "depends" fields with
-      | None -> []
-      | Some deps -> deps
-    in
-    let dep_opts =
-      if not opts then []
-      else
-        match String.Map.find "depopts" fields with
-        | None -> []
-        | Some deps -> deps
-    in
-    String.Set.of_list (List.rev_append dep_opts deps)
 end
 
 module Descr = struct

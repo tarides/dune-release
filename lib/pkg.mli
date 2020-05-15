@@ -34,9 +34,6 @@ val v :
   unit ->
   t
 
-val infer_name : Fpath.t -> (string, R.msg) result
-(** Infer the name of the projet. *)
-
 val infer_pkg_names : Fpath.t -> string list -> (string list, R.msg) result
 (** Infer the package list. *)
 
@@ -73,14 +70,8 @@ val opam_field : t -> string -> (string list option, R.msg) result
 
 val opam_field_hd : t -> string -> (string option, Sos.error) result
 
-val opam_fields : t -> (string list String.map, R.msg) result
-(** [opam_fields p] are [p]'s opam file fields. *)
-
 val readmes : t -> (Fpath.t list, R.msg) result
 (** [readmes p] are [p]'s readme files. *)
-
-val readme : t -> (Fpath.t, R.msg) result
-(** [readme p] is the first element of [readmes p]. *)
 
 val change_logs : t -> (Fpath.t list, R.msg) result
 (** [change_logs p] are [p]'s change logs. *)
@@ -148,10 +139,6 @@ val test : f
 (** {1 Build} *)
 
 val build : f
-
-(** {1 Clean} *)
-
-val clean : f
 
 (** {1 Tag} *)
 
