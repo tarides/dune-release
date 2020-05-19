@@ -108,8 +108,12 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
     | true ->
         let push_spec = strf "%s:%s" branch branch in
         Ok (git_for_repo repo) >>= fun git ->
-        Prompt.confirm_or_abort ~yes ~question:(fun l ->
-            l "Push new documentation to %a?" Text.Pp.url (remote ^ "#gh-pages"))
+        Prompt.(
+          confirm_or_abort ~yes
+            ~question:(fun l ->
+              l "Push new documentation to %a?" Text.Pp.url
+                (remote ^ "#gh-pages"))
+            ~default_answer:Yes)
         >>= fun () ->
         App_log.status (fun l ->
             l "Pushing new documentation to %a" Text.Pp.url
@@ -279,24 +283,32 @@ let publish_distrib ~dry_run ~msg ~archive ~yes p =
   Pkg.tag p >>= fun tag ->
   check_tag ~dry_run vcs tag >>= fun () ->
   dev_repo p >>= fun upstr ->
-  Prompt.confirm_or_abort ~yes ~question:(fun l ->
-      l "Push tag %a to %a?" Text.Pp.version tag Text.Pp.url upstr)
+  Prompt.(
+    confirm_or_abort ~yes
+      ~question:(fun l ->
+        l "Push tag %a to %a?" Text.Pp.version tag Text.Pp.url upstr)
+      ~default_answer:Yes)
   >>= fun () ->
   App_log.status (fun l ->
       l "Pushing tag %a to %a" Text.Pp.version tag Text.Pp.url upstr);
   Sos.run_quiet ~dry_run Cmd.(git % "push" % "--force" % upstr % tag)
   >>= fun () ->
   Config.token ~dry_run () >>= fun token ->
-  Prompt.confirm_or_abort ~yes ~question:(fun l ->
-      l "Create release %a on %a?" Text.Pp.version tag Text.Pp.url upstr)
+  Prompt.(
+    confirm_or_abort ~yes
+      ~question:(fun l ->
+        l "Create release %a on %a?" Text.Pp.version tag Text.Pp.url upstr)
+      ~default_answer:Yes)
   >>= fun () ->
   App_log.status (fun l ->
       l "Creating release %a on %a via github's API" Text.Pp.version tag
         Text.Pp.url upstr);
   curl_create_release ~token ~dry_run tag msg user repo >>= fun id ->
   App_log.success (fun l -> l "Succesfully created release with id %d" id);
-  Prompt.confirm_or_abort ~yes ~question:(fun l ->
-      l "Upload %a as release asset?" Text.Pp.path archive)
+  Prompt.(
+    confirm_or_abort ~yes
+      ~question:(fun l -> l "Upload %a as release asset?" Text.Pp.path archive)
+      ~default_answer:Yes)
   >>= fun () ->
   App_log.status (fun l ->
       l "Uploading %a as a release asset for %a via github's API" Text.Pp.path

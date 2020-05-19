@@ -18,15 +18,20 @@ let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
   | Some tag_commit, true ->
       let question =
         if tag_commit = commit then
-          Prompt.confirm_or_abort ~yes ~question:(fun l ->
-              l "Delete tag %a?" Text.Pp.version tag)
+          Prompt.(
+            confirm_or_abort ~yes
+              ~question:(fun l -> l "Delete tag %a?" Text.Pp.version tag)
+              ~default_answer:Yes)
         else
-          Prompt.confirm_or_abort_neg ~yes ~question:(fun l ->
-              l
-                "%a Tag %a does not point to the commit you've provided \
-                 (default: HEAD). Do you want to delete it anyways?"
-                Fmt.(styled `Red string)
-                "Warning:" Text.Pp.version tag)
+          Prompt.(
+            confirm_or_abort ~yes
+              ~question:(fun l ->
+                l
+                  "%a Tag %a does not point to the commit you've provided \
+                   (default: HEAD). Do you want to delete it anyways?"
+                  Fmt.(styled `Red string)
+                  "Warning:" Text.Pp.version tag)
+              ~default_answer:No)
       in
       question >>= fun () ->
       Vcs.delete_tag ~dry_run repo tag >>| fun () ->
@@ -47,9 +52,12 @@ let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
            commit. You can delete that tag using the `-d` flag."
           Text.Pp.version tag
   | None, false ->
-      Prompt.confirm_or_abort ~yes ~question:(fun l ->
-          l "Create git tag %a for %a?" Text.Pp.version tag Text.Pp.commit
-            commit_ish)
+      Prompt.(
+        confirm_or_abort ~yes
+          ~question:(fun l ->
+            l "Create git tag %a for %a?" Text.Pp.version tag Text.Pp.commit
+              commit_ish)
+          ~default_answer:Yes)
       >>= fun () ->
       let msg =
         match msg with None -> strf "Distribution %s" tag | Some m -> m

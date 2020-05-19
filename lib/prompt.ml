@@ -1,4 +1,4 @@
-type default = Yes | No
+type answer = Yes | No
 
 let ask f ~default_answer =
   let options : ('a, Format.formatter, unit, unit) format4 =
@@ -21,14 +21,9 @@ let rec loop ~question ~default_answer =
              for the default");
       loop ~question ~default_answer
 
-let confirm ~question ~yes =
-  if yes then true else loop ~question ~default_answer:Yes
+let confirm ~question ~yes ~default_answer =
+  if yes then true else loop ~question ~default_answer
 
-let confirm_or_abort ~question ~yes =
-  if confirm ~question ~yes then Ok ()
-  else Error (`Msg "Aborting on user demand")
-
-let confirm_or_abort_neg ~question ~yes =
-  if yes then Ok ()
-  else if loop ~question ~default_answer:No then Ok ()
+let confirm_or_abort ~question ~yes ~default_answer =
+  if confirm ~question ~yes ~default_answer then Ok ()
   else Error (`Msg "Aborting on user demand")
