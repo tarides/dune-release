@@ -61,6 +61,20 @@ let show ?sandbox ?(action = `Skip) fmt =
       Ok ())
     fmt
 
+let cmd_error cmd err_msg status =
+  match (err_msg, status) with
+  | (None | Some ""), `Exited c ->
+      R.error_msgf "The following command exited with code %d:@\n  %a" c Cmd.pp
+        cmd
+  | (None | Some ""), `Signaled c ->
+      R.error_msgf "The following command exited with signal %d:@\n  %a" c
+        Cmd.pp cmd
+  | Some err_msg, `Exited c ->
+      R.error_msgf "Exit code %d from command @\n  `%a`:@\n%s" c Cmd.pp cmd
+        err_msg
+  | Some err_msg, `Signaled c ->
+      R.error_msgf "Signal %d from command @\n  `%a`:@\n%s" c Cmd.pp cmd err_msg
+
 let run_gen ?err ~dry_run ?(force = false) ?sandbox ~default v i f =
   if not dry_run then OS.Cmd.run_io ?err v i |> f
   else if not force then
@@ -80,6 +94,21 @@ let run ~dry_run ?(force = false) ?sandbox v =
 
 let run_out ~dry_run ?(force = false) ?sandbox ?err ~default v f =
   run_gen ?err ~dry_run ~force ?sandbox ~default v OS.Cmd.in_stdin f
+
+type 'a response = {
+  output : 'a;
+  err_msg : string;
+  status : OS.Cmd.status;
+  run_info : OS.Cmd.run_info;
+}
+
+let run_out_err ~dry_run ?(force = false) ?sandbox ~default v f =
+  OS.File.tmp "dune-release-%s.stderr" >>= fun tmp_file ->
+  let err = OS.Cmd.err_file tmp_file in
+  run_gen ~err ~dry_run ~force ?sandbox ~default v OS.Cmd.in_stdin f
+  >>= fun (stdout, (run_info, status)) ->
+  OS.File.read tmp_file >>| fun stderr ->
+  { err_msg = stderr; status; run_info; output = stdout }
 
 let run_io ~dry_run ?(force = false) ?sandbox ~default v i f =
   run_gen ~dry_run ~force ?sandbox ~default v i f

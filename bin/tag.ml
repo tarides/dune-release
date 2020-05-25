@@ -11,7 +11,7 @@ let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
   Vcs.get () >>= fun repo ->
   Vcs.commit_id ~dirty:false ~commit_ish repo
   |> R.reword_error (fun (`Msg msg) ->
-         R.msgf "Invalid commit-ish %s: %s" commit_ish msg)
+         R.msgf "Due to invalid commit-ish `%s`:\n%s" commit_ish msg)
   >>= fun commit ->
   let tag_commit_opt = Vcs.tag_points_to ~tag repo in
   match (tag_commit_opt, delete) with
