@@ -42,9 +42,7 @@ Running `dune-release tag` again, but providing a different commit should inform
     $ dune-release tag --commit=HEAD^
     [-] Extracting tag from first entry in CHANGES.md
     [-] Using tag "0.1.0"
-    dune-release: [ERROR] A tag with name 0.1.0 already exists, but points to a
-                          different commit. You can delete that tag using the
-                          `-d` flag.
+    dune-release: [ERROR] A tag with name 0.1.0 already exists, but points to a different commit. You can delete that tag using the `-d` flag.
     [3]
 
 Trying to delete the created tag providing a different commit should give a warning. The answer to the question 
