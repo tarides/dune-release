@@ -4,6 +4,8 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
+let format_linebreaks s = String.split_on_char '\n' s |> String.concat "\n  "
+
 open Bos_setup
 open Cmdliner
 open Dune_release
@@ -178,7 +180,12 @@ let warn_if_vcs_dirty msg =
 let handle_error = function
   | Ok 0 -> if Logs.err_count () > 0 then 3 else 0
   | Ok n -> n
-  | Error _ as r -> Logs.on_error_msg ~use:(fun () -> 3) r
+  | Error _ as r ->
+      Logs.on_error
+        ~pp:(fun fmt (`Msg msg) ->
+          format_linebreaks msg |> Format.pp_print_string fmt)
+        ~use:(fun (`Msg _) -> 3)
+        r
 
 let exits =
   Term.exit_info 3 ~doc:"on indiscriminate errors reported on stderr."

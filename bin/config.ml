@@ -74,17 +74,15 @@ let invalid_usage () =
     (default_usage ~raw:() ()) (show_usage ~raw:() ()) (set_usage ~raw:() ())
 
 let run action key_opt value_opt =
-  let res =
-    match (action, key_opt, value_opt) with
-    | "show", key, None -> show key
-    | "set", Some key, Some value -> set key value
-    | _ -> invalid_usage ()
-  in
-  match res with
-  | Ok () -> 0
-  | Error (`Msg s) ->
-      App_log.unhappy (fun l -> l "%s" s);
-      1
+  let open Rresult in
+  (let res =
+     match (action, key_opt, value_opt) with
+     | "show", key, None -> show key
+     | "set", Some key, Some value -> set key value
+     | _ -> invalid_usage ()
+   in
+   res >>= fun () -> Ok 0)
+  |> Cli.handle_error
 
 let man =
   let open Cmdliner in

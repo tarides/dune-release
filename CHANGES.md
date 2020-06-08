@@ -14,6 +14,8 @@
   commit with the commit correspondent to the provided tag (#226, @pitag-ha)
 - Error logs: when an external command fails, include its error message in
   the error message posted by `dune-release` (#231, @pitag-ha)
+- Error log formatting: avoid unnecessary line-breaks; indent only slightly
+  in multi-lines (#234, @pitag-ha)
 
 ### Deprecated
 
