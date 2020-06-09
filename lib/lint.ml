@@ -88,10 +88,14 @@ let lint_res ~msgf = function
 let pp_field = Fmt.(styled `Bold string)
 
 let lint_opam_doc pkg =
-  lint_res
-    ~msgf:(fun l ->
-      l "opam field %a can be parsed by dune-release" pp_field "doc")
-    (Pkg.doc_user_repo_and_path pkg)
+  ( match Pkg.doc_user_repo_and_path pkg with
+  | Ok _ ->
+      report_status `Ok (fun l ->
+          l "opam field %a can be parsed by dune-release" pp_field "doc")
+  | Error _ ->
+      report_status `Fail (fun l ->
+          l "opam field %a can not be parsed by dune-release" pp_field "doc") );
+  0
 
 let lint_opam_home_and_dev pkg =
   lint_res

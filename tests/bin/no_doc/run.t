@@ -68,11 +68,8 @@ We make a dry-run release
     [ OK ] lint opam file whatever.opam.
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
-    [FAIL] opam field doc can be parsed by dune-release
-    dune-release: [ERROR] Could not derive publication directory $PATH from opam
-                          doc field value ""; expected the pattern
-                          $SCHEME://$USER.github.io/$REPO/$PATH
-    [FAIL] lint _build/whatever-0.1.0 failure: 1 errors.
+    [FAIL] opam field doc can not be parsed by dune-release
+    [ OK ] lint _build/whatever-0.1.0 success
     
     [-] Building package in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
@@ -83,8 +80,8 @@ We make a dry-run release
     => chdir _build/whatever-0.1.0
     -: exec: dune runtest -p whatever
     [ OK ] package tests
+    -: rmdir _build/whatever-0.1.0
     
     [+] Distribution for whatever 0.1.0
     [+] Commit ...
     [+] Archive _build/whatever-0.1.0.tbz
-    [1]
