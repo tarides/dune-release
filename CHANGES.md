@@ -16,6 +16,9 @@
   the error message posted by `dune-release` (#231, @pitag-ha)
 - Error log formatting: avoid unnecessary line-breaks; indent only slightly
   in multi-lines (#234, @pitag-ha)
+- Linting step of `dune-release distrib` does not fail when opam's `doc` field
+  is missing. Do not try to generate nor publish the documentation when opam's
+  `doc` field is missing. (#235, @gpetiot)
 
 ### Deprecated
 
