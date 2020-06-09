@@ -85,3 +85,13 @@ We make a dry-run release
     [+] Distribution for whatever 0.1.0
     [+] Commit ...
     [+] Archive _build/whatever-0.1.0.tbz
+
+We publish the documentation
+
+    $ dune-release publish doc
+    [-] Publishing documentation
+    [-] Selected packages: whatever
+    [-] Generating documentation from _build/whatever-0.1.0.tbz
+    [-] Publishing to github
+    dune-release: [ERROR] Could not derive publication directory $PATH from opam doc field value ""; expected the pattern $SCHEME://$USER.github.io/$REPO/$PATH
+    [3]
