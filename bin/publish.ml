@@ -16,7 +16,6 @@ let gen_doc ~dry_run ~force dir pkg_names =
   Ok Fpath.(dir // doc_dir)
 
 let publish_doc ~dry_run ~yes pkg_names pkg =
-  App_log.status (fun l -> l "Publishing documentation");
   Pkg.distrib_file ~dry_run pkg >>= fun archive ->
   Pkg.publish_msg pkg >>= fun msg ->
   Archive.untbz ~dry_run ~clean:true archive >>= fun dir ->
@@ -30,6 +29,21 @@ let publish_doc ~dry_run ~yes pkg_names pkg =
       l "Generating documentation from %a" Text.Pp.path archive);
   gen_doc ~dry_run ~force dir pkg_names >>= fun docdir ->
   Delegate.publish_doc ~dry_run ~yes pkg ~msg ~docdir
+
+(* If the `doc` field of the opam file is not set we do not generate nor
+   publish the documentation, except when using a delegate. *)
+let publish_doc ~dry_run ~yes pkg_names pkg =
+  App_log.status (fun l -> l "Publishing documentation");
+  match Pkg.doc_uri pkg with
+  | Error _ | Ok "" -> (
+      match Pkg.delegate pkg with
+      | Ok (Some _) -> publish_doc ~dry_run ~yes pkg_names pkg
+      | Error _ | Ok None ->
+          Pkg.name pkg >>= fun name ->
+          App_log.status (fun l -> l "No doc field found for package %s" name);
+          App_log.status (fun l -> l "Skipping");
+          Ok () )
+  | Ok _ -> publish_doc ~dry_run ~yes pkg_names pkg
 
 let publish_distrib ~dry_run ~yes pkg =
   App_log.status (fun l -> l "Publishing distribution");
