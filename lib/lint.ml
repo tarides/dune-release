@@ -88,13 +88,17 @@ let lint_res ~msgf = function
 let pp_field = Fmt.(styled `Bold string)
 
 let lint_opam_doc pkg =
-  ( match Pkg.doc_user_repo_and_path pkg with
-  | Ok _ ->
+  ( match Pkg.doc_uri pkg with
+  | Error _ | Ok "" ->
       report_status `Ok (fun l ->
-          l "opam field %a can be parsed by dune-release" pp_field "doc")
-  | Error _ ->
-      report_status `Fail (fun l ->
-          l "opam field %a can not be parsed by dune-release" pp_field "doc") );
+          l "Skipping doc field linting, no doc field found")
+  | Ok _ ->
+      let pass = R.is_ok (Pkg.doc_user_repo_and_path pkg) in
+      let status = if pass then `Ok else `Fail in
+      let verdict = if pass then "can" else "cannot" in
+      report_status status (fun l ->
+          l "opam field %a %s be parsed by dune-release" pp_field "doc" verdict)
+  );
   0
 
 let lint_opam_home_and_dev pkg =

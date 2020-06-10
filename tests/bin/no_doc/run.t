@@ -20,6 +20,7 @@ We need a basic opam project skeleton
     > homepage: "https://github.com/foo/whatever"\
     > dev-repo: "git+https://github.com/foo/whatever.git"\
     > description: "whatever-lib"\
+    > doc: ""\
     > EOF
     $ touch README
     $ touch LICENSE
@@ -75,7 +76,7 @@ We make a dry-run release
     [ OK ] lint opam file whatever-lib.opam.
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
-    [FAIL] opam field doc can not be parsed by dune-release
+    [ OK ] Skipping doc field linting, no doc field found
     [ OK ] lint _build/whatever-0.1.0 success
     => chdir _build/whatever-0.1.0
     => exists ./README
@@ -90,7 +91,7 @@ We make a dry-run release
     [ OK ] lint opam file whatever.opam.
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
-    [FAIL] opam field doc can not be parsed by dune-release
+    [ OK ] Skipping doc field linting, no doc field found
     [ OK ] lint _build/whatever-0.1.0 success
     
     [-] Building package in _build/whatever-0.1.0
