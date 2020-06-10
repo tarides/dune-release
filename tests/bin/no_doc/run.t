@@ -112,6 +112,4 @@ We make a dry-run release
 We publish the documentation
 
     $ dune-release publish doc
-    [-] Publishing documentation
-    [-] No doc field found for package whatever
-    [-] Skipping
+    [-] Skipping documentation publication for package whatever: no doc field in whatever.opam
