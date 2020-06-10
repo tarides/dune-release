@@ -15,6 +15,12 @@ We need a basic opam project skeleton
     > dev-repo: "git+https://github.com/foo/whatever.git"\
     > description: "whatever"\
     > EOF
+    $ cat > whatever-lib.opam << EOF \
+    > opam-version: "2.0"\
+    > homepage: "https://github.com/foo/whatever"\
+    > dev-repo: "git+https://github.com/foo/whatever.git"\
+    > description: "whatever-lib"\
+    > EOF
     $ touch README
     $ touch LICENSE
     $ cat > dune-project << EOF \
@@ -25,7 +31,7 @@ We need a basic opam project skeleton
 We need to set up a git project for dune-release to work properly
 
     $ git init > /dev/null
-    $ git add CHANGES.md whatever.opam dune-project README LICENSE
+    $ git add CHANGES.md whatever.opam whatever-lib.opam dune-project README LICENSE
     $ git commit -m "Initial commit" > /dev/null
     $ dune-release tag -y
     [-] Extracting tag from first entry in CHANGES.md
@@ -45,6 +51,7 @@ We make a dry-run release
     => chdir _build/whatever-0.1.0.build
        [in _build/whatever-0.1.0.build]
     -: exec: dune subst
+    -: write whatever-lib.opam
     -: write whatever.opam
     => exec: bzip2
     -: rmdir _build/whatever-0.1.0.build
@@ -56,6 +63,21 @@ We make a dry-run release
     [-] Linting distrib in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
        [in _build/whatever-0.1.0]
+    => exists ./README
+    [ OK ] File README is present.
+    => exists ./LICENSE
+    [ OK ] File LICENSE is present.
+    => exists ./CHANGES.md
+    [ OK ] File CHANGES is present.
+    => exists whatever-lib.opam
+    [ OK ] File opam is present.
+    -: exec: opam lint -s whatever-lib.opam
+    [ OK ] lint opam file whatever-lib.opam.
+    [ OK ] opam field description is present
+    [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
+    [FAIL] opam field doc can not be parsed by dune-release
+    [ OK ] lint _build/whatever-0.1.0 success
+    => chdir _build/whatever-0.1.0
     => exists ./README
     [ OK ] File README is present.
     => exists ./LICENSE
