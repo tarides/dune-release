@@ -52,8 +52,8 @@ We make a dry-run release
     => chdir _build/whatever-0.1.0.build
        [in _build/whatever-0.1.0.build]
     -: exec: dune subst
-    -: write whatever-lib.opam
-    -: write whatever.opam
+    -: write ...
+    -: write ...
     => exec: bzip2
     -: rmdir _build/whatever-0.1.0.build
     [+] Wrote archive _build/whatever-0.1.0.tbz
@@ -70,10 +70,10 @@ We make a dry-run release
     [ OK ] File LICENSE is present.
     => exists ./CHANGES.md
     [ OK ] File CHANGES is present.
-    => exists whatever-lib.opam
+    => exists ...
     [ OK ] File opam is present.
-    -: exec: opam lint -s whatever-lib.opam
-    [ OK ] lint opam file whatever-lib.opam.
+    -: exec: opam lint -s ...
+    [ OK ] lint opam file ...
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
@@ -85,10 +85,10 @@ We make a dry-run release
     [ OK ] File LICENSE is present.
     => exists ./CHANGES.md
     [ OK ] File CHANGES is present.
-    => exists whatever.opam
+    => exists ...
     [ OK ] File opam is present.
-    -: exec: opam lint -s whatever.opam
-    [ OK ] lint opam file whatever.opam.
+    -: exec: opam lint -s ...
+    [ OK ] lint opam file ...
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
@@ -113,7 +113,7 @@ We publish the documentation, calling publish doc explicitely should fail
 
     $ dune-release publish doc
     [-] Publishing documentation
-    [-] Selected packages: whatever-lib whatever
+    [-] Selected packages: ...
     [-] Generating documentation from _build/whatever-0.1.0.tbz
     [-] Publishing to github
     dune-release: [ERROR] Could not derive publication directory $PATH from opam doc field value ""; expected the pattern $SCHEME://$USER.github.io/$REPO/$PATH
@@ -132,8 +132,8 @@ We do the whole process, calling publish doc implicitely should succeed
     => chdir _build/whatever-0.1.0.build
        [in _build/whatever-0.1.0.build]
     -: exec: dune subst
-    -: write whatever-lib.opam
-    -: write whatever.opam
+    -: write ...
+    -: write ...
     => exec: bzip2
     -: rmdir _build/whatever-0.1.0.build
     [+] Wrote archive _build/whatever-0.1.0.tbz
@@ -151,10 +151,10 @@ We do the whole process, calling publish doc implicitely should succeed
     [ OK ] File LICENSE is present.
     => exists ./CHANGES.md
     [ OK ] File CHANGES is present.
-    => exists whatever-lib.opam
+    => exists ...
     [ OK ] File opam is present.
-    -: exec: opam lint -s whatever-lib.opam
-    [ OK ] lint opam file whatever-lib.opam.
+    -: exec: opam lint -s ...
+    [ OK ] lint opam file ...
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
@@ -166,10 +166,10 @@ We do the whole process, calling publish doc implicitely should succeed
     [ OK ] File LICENSE is present.
     => exists ./CHANGES.md
     [ OK ] File CHANGES is present.
-    => exists whatever.opam
+    => exists ...
     [ OK ] File opam is present.
-    -: exec: opam lint -s whatever.opam
-    [ OK ] lint opam file whatever.opam.
+    -: exec: opam lint -s ...
+    [ OK ] lint opam file ...
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
@@ -198,12 +198,10 @@ We do the whole process, calling publish doc implicitely should succeed
     [?] Push tag 0.1.0 to git@github.com:foo/whatever.git? [Y/n]
     [-] Pushing tag 0.1.0 to git@github.com:foo/whatever.git
     -: exec: git --git-dir .git push --force git@github.com:foo/whatever.git 0.1.0
-    => read /home/gpe/.config/dune/github.token
+    ...
     [?] Create release 0.1.0 on git@github.com:foo/whatever.git? [Y/n]
     [-] Creating release 0.1.0 on git@github.com:foo/whatever.git via github's API
-    => read /home/gpe/.config/dune/github.token
-    -: exec: curl -ufoo:7d818f8a015beea0b10c457993002f58097f789f-L-s-S-K--D---data
-         { "tag_name" : "0.1.0", "body" : "CHANGES:\n\n- Some other feature\n" }
+    ...
     dune-release: [ERROR] Could not find release id in response:
     
     [3]
