@@ -33,10 +33,13 @@ let publish_doc ~dry_run ~yes pkg_names pkg =
 
 let pp_field = Fmt.(styled `Bold string)
 
-(* If the `doc` field of the opam file is not set we do not generate nor
-   publish the documentation, except when using a delegate. *)
-let publish_doc ~dry_run ~yes pkg_names pkg =
+(* If `publish doc` is invoked explicitly from the CLI, we should fail if the
+   documentation cannot be published. If it is not called explicitly, we can
+   skip this step if the `doc` field of the opam file is not set, we do not
+   generate nor publish the documentation, except when using a delegate. *)
+let publish_doc ~from_cli ~dry_run ~yes pkg_names pkg =
   match Pkg.doc_uri pkg with
+  | _ when from_cli -> publish_doc ~dry_run ~yes pkg_names pkg
   | Error _ | Ok "" -> (
       match Pkg.delegate pkg with
       | Ok (Some _) -> publish_doc ~dry_run ~yes pkg_names pkg
@@ -63,9 +66,9 @@ let publish_alt ~dry_run pkg kind =
   Pkg.publish_msg pkg >>= fun msg ->
   Delegate.publish_alt ~dry_run pkg ~kind ~msg ~archive
 
-let publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
-    ?publish_msg ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
-    ~publish_artefacts ~yes () =
+let publish ?(from_cli = false) ?build_dir ?opam ?delegate ?change_log
+    ?distrib_uri ?distrib_file ?publish_msg ~name ~pkg_names ~version ~tag
+    ~keep_v ~dry_run ~publish_artefacts ~yes () =
   let publish_artefacts =
     match publish_artefacts with [] -> None | v -> Some v
   in
@@ -77,7 +80,7 @@ let publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
   let publish_artefact acc artefact =
     acc >>= fun () ->
     match artefact with
-    | `Doc -> publish_doc ~dry_run ~yes pkg_names pkg
+    | `Doc -> publish_doc ~from_cli ~dry_run ~yes pkg_names pkg
     | `Distrib -> publish_distrib ~dry_run ~yes pkg
     | `Alt kind -> publish_alt ~dry_run pkg kind
   in
@@ -89,8 +92,10 @@ let publish_cli () build_dir name pkg_names version tag keep_v opam delegate
     yes =
   publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
     ?publish_msg ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
-    ~publish_artefacts ~yes ()
+    ~publish_artefacts ~yes ~from_cli:true ()
   |> Cli.handle_error
+
+let publish = publish ~from_cli:false
 
 (* Command line interface *)
 
