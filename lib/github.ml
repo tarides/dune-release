@@ -14,6 +14,8 @@ module D = struct
   let dir = Fpath.v "${dir}"
 
   let fetch_head = "${fetch_head}"
+
+  let token = "${token}"
 end
 
 module Parse = struct
@@ -177,13 +179,18 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
 (* Publish releases *)
 
 let github_auth ~dry_run ~user token =
-  Sos.read_file ~dry_run token >>= fun token -> Ok (strf "%s:%s" user token)
+  if dry_run then Ok (strf "%s:%s" user D.token)
+  else
+    Sos.read_file ~dry_run token >>= fun token -> Ok (strf "%s:%s" user token)
 
 let run_with_auth ?(default_body = "") ~dry_run ~auth curl_t =
   let Curl.{ url; args } = Curl.with_auth ~auth curl_t in
   if dry_run then
+    let open Format in
     let _ =
-      Sos.show "exec:@[@ curl %a@]" Format.(pp_print_list pp_print_string) args
+      Sos.show "exec:@[@ curl %a@]"
+        (pp_print_list ~pp_sep:pp_print_space pp_print_string)
+        args
     in
     Ok Curly.Response.{ code = 0; headers = []; body = default_body }
   else
