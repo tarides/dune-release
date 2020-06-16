@@ -69,26 +69,25 @@ let publish_alt ~dry_run pkg kind =
 let publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
     ?publish_msg ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
     ~publish_artefacts ~yes () =
-  let specific =
+  let specific_doc =
     List.exists (function `Doc -> true | _ -> false) publish_artefacts
   in
   let publish_artefacts =
-    match publish_artefacts with [] -> None | v -> Some v
+    match publish_artefacts with [] -> [ `Doc; `Distrib ] | v -> v
   in
   Config.keep_v keep_v >>= fun keep_v ->
   let pkg =
     Pkg.v ~dry_run ?name ?version ?tag ~keep_v ?build_dir ?opam ?change_log
-      ?distrib_uri ?distrib_file ?publish_msg ?publish_artefacts ?delegate ()
+      ?distrib_uri ?distrib_file ?publish_msg ?delegate ()
   in
   let publish_artefact acc artefact =
     acc >>= fun () ->
     match artefact with
-    | `Doc -> publish_doc ~specific ~dry_run ~yes pkg_names pkg
+    | `Doc -> publish_doc ~specific:specific_doc ~dry_run ~yes pkg_names pkg
     | `Distrib -> publish_distrib ~dry_run ~yes pkg
     | `Alt kind -> publish_alt ~dry_run pkg kind
   in
-  Pkg.publish_artefacts pkg >>= fun todo ->
-  List.fold_left publish_artefact (Ok ()) todo >>= fun () -> Ok 0
+  List.fold_left publish_artefact (Ok ()) publish_artefacts >>= fun () -> Ok 0
 
 let publish_cli () build_dir name pkg_names version tag keep_v opam delegate
     change_log distrib_uri distrib_file publish_msg dry_run publish_artefacts
