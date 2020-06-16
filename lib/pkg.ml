@@ -47,7 +47,6 @@ type t = {
   distrib_uri : string option;
   distrib_file : Fpath.t option;
   publish_msg : string option;
-  publish_artefacts : [ `Distrib | `Doc | `Alt of string ] list option;
 }
 
 let opam_fields p = Lazy.force p.opam_fields
@@ -377,11 +376,6 @@ let publish_msg p =
       Text.change_log_file_last_entry change_log >>= fun (_, (_, txt)) ->
       Ok (strf "CHANGES:\n\n%s\n" (String.trim txt))
 
-let publish_artefacts p =
-  match p.publish_artefacts with
-  | Some arts -> Ok arts
-  | None -> Ok [ `Doc; `Distrib ]
-
 let infer_from_dune_project dir =
   let file = Fpath.(dir / "dune-project") in
   Bos.OS.File.exists file >>= function
@@ -458,7 +452,7 @@ let infer_name dir =
 
 let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
     ?opam:opam_file ?opam_descr ?readme ?change_log ?license ?distrib_uri
-    ?distrib_file ?publish_msg ?publish_artefacts ?(distrib = Distrib.v ()) () =
+    ?distrib_file ?publish_msg ?(distrib = Distrib.v ()) () =
   let name =
     match name with None -> infer_name Fpath.(v ".") | Some v -> Ok v
   in
@@ -486,7 +480,6 @@ let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
       distrib_uri;
       distrib_file;
       publish_msg;
-      publish_artefacts;
       distrib;
     }
   in

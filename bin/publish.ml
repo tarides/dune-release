@@ -31,6 +31,29 @@ let publish_doc ~dry_run ~yes pkg_names pkg =
   gen_doc ~dry_run ~force dir pkg_names >>= fun docdir ->
   Delegate.publish_doc ~dry_run ~yes pkg ~msg ~docdir
 
+let pp_field = Fmt.(styled `Bold string)
+
+(* If `publish doc` is invoked explicitly from the CLI, we should fail if the
+   documentation cannot be published. If it is not called explicitly, we can
+   skip this step if the `doc` field of the opam file is not set, we do not
+   generate nor publish the documentation, except when using a delegate. *)
+let publish_doc ~specific ~dry_run ~yes pkg_names pkg =
+  match Pkg.doc_uri pkg with
+  | _ when specific -> publish_doc ~dry_run ~yes pkg_names pkg
+  | Error _ | Ok "" -> (
+      match Pkg.delegate pkg with
+      | Ok (Some _) -> publish_doc ~dry_run ~yes pkg_names pkg
+      | Error _ | Ok None ->
+          Pkg.name pkg >>= fun name ->
+          Pkg.opam pkg >>= fun opam ->
+          App_log.status (fun l ->
+              l
+                "Skipping documentation publication for package %s: no %a \
+                 field in %a"
+                name pp_field "doc" Fpath.pp opam);
+          Ok () )
+  | Ok _ -> publish_doc ~dry_run ~yes pkg_names pkg
+
 let publish_distrib ~dry_run ~yes pkg =
   App_log.status (fun l -> l "Publishing distribution");
   Pkg.distrib_file ~dry_run pkg >>= fun archive ->
@@ -46,23 +69,25 @@ let publish_alt ~dry_run pkg kind =
 let publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
     ?publish_msg ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
     ~publish_artefacts ~yes () =
+  let specific_doc =
+    List.exists (function `Doc -> true | _ -> false) publish_artefacts
+  in
   let publish_artefacts =
-    match publish_artefacts with [] -> None | v -> Some v
+    match publish_artefacts with [] -> [ `Doc; `Distrib ] | v -> v
   in
   Config.keep_v keep_v >>= fun keep_v ->
   let pkg =
     Pkg.v ~dry_run ?name ?version ?tag ~keep_v ?build_dir ?opam ?change_log
-      ?distrib_uri ?distrib_file ?publish_msg ?publish_artefacts ?delegate ()
+      ?distrib_uri ?distrib_file ?publish_msg ?delegate ()
   in
   let publish_artefact acc artefact =
     acc >>= fun () ->
     match artefact with
-    | `Doc -> publish_doc ~dry_run ~yes pkg_names pkg
+    | `Doc -> publish_doc ~specific:specific_doc ~dry_run ~yes pkg_names pkg
     | `Distrib -> publish_distrib ~dry_run ~yes pkg
     | `Alt kind -> publish_alt ~dry_run pkg kind
   in
-  Pkg.publish_artefacts pkg >>= fun todo ->
-  List.fold_left publish_artefact (Ok ()) todo >>= fun () -> Ok 0
+  List.fold_left publish_artefact (Ok ()) publish_artefacts >>= fun () -> Ok 0
 
 let publish_cli () build_dir name pkg_names version tag keep_v opam delegate
     change_log distrib_uri distrib_file publish_msg dry_run publish_artefacts

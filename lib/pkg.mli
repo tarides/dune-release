@@ -29,7 +29,6 @@ val v :
   ?distrib_uri:string ->
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
-  ?publish_artefacts:[ `Distrib | `Doc | `Alt of string ] list ->
   ?distrib:Distrib.t ->
   unit ->
   t
@@ -109,10 +108,6 @@ val archive_url_path : t -> (Fpath.t, R.msg) result
 val distrib_filename : ?opam:bool -> t -> (Fpath.t, R.msg) result
 (** [distrib_filename ~opam p] is a distribution filename for [p]. If [opam] is
     [true] (defaults to [false]), the name follows opam's naming conventions. *)
-
-val publish_artefacts :
-  t -> ([ `Distrib | `Doc | `Alt of string ] list, R.msg) result
-(** [publish_artefacts p] are [p]'s publication artefacts. *)
 
 (** {1 Uri} *)
 
