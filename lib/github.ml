@@ -181,21 +181,21 @@ let run_with_auth ?(default_body = `Null) ~dry_run ~auth curl_t =
 let curl_create_release ~token ~dry_run version msg user repo =
   github_auth ~dry_run ~user token >>= fun auth ->
   let curl_t = Curl.create_release ~version ~msg ~user ~repo in
-  run_with_auth ~dry_run ~auth curl_t >>= fun resp ->
-  Github_v3_api.Release_response.release_id resp
+  run_with_auth ~dry_run ~auth curl_t
+  >>= Github_v3_api.Release_response.release_id
 
 let curl_upload_archive ~token ~dry_run archive user repo release_id =
   let curl_t = Curl.upload_archive ~archive ~user ~repo ~release_id in
   github_auth ~dry_run ~user token >>= fun auth ->
-  run_with_auth ~dry_run ~auth curl_t >>= fun resp ->
-  Github_v3_api.Upload_response.browser_download_url resp
+  run_with_auth ~dry_run ~auth curl_t
+  >>= Github_v3_api.Upload_response.browser_download_url
 
 let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo body =
   let curl_t = Curl.open_pr ~title ~user ~branch ~body ~opam_repo in
   github_auth ~dry_run ~user:distrib_user token >>= fun auth ->
   let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
-  run_with_auth ~dry_run ~default_body ~auth curl_t >>= fun resp ->
-  Github_v3_api.Pull_request_response.html_url resp
+  run_with_auth ~dry_run ~default_body ~auth curl_t
+  >>= Github_v3_api.Pull_request_response.html_url
 
 let dev_repo p =
   Pkg.dev_repo p >>= function
