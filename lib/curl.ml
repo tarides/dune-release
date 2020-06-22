@@ -60,6 +60,8 @@ let upload_archive ~archive ~user ~repo ~release_id =
       "-S";
       "-K";
       "-";
+      "-D";
+      "-";
       "-H";
       "Content-Type:application/x-tar";
       "--data-binary";

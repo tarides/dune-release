@@ -52,6 +52,8 @@ let test_upload_archive =
               "-S";
               "-K";
               "-";
+              "-D";
+              "-";
               "-H";
               "Content-Type:application/x-tar";
               "--data-binary";

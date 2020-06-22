@@ -3,6 +3,7 @@ let () =
     [
       Test_curl.suite;
       Test_github.suite;
+      Test_github_v3_api.suite;
       Test_opam.suite;
       Test_opam_file.suite;
       Test_pkg.suite;

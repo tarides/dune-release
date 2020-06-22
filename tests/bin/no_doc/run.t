@@ -202,6 +202,7 @@ We do the whole process, calling publish doc implicitely should succeed
     [?] Create release 0.1.0 on git@github.com:foo/whatever.git? [Y/n]
     [-] Creating release 0.1.0 on git@github.com:foo/whatever.git via github's API
     ...
-    dune-release: [ERROR] Could not find release id in response:
-    
+    -: exec: curl -u foo:${token} -L -s -S -K - -D - --data
+         { "tag_name" : "0.1.0", "body" : "CHANGES:\n\n- Some other feature\n" }
+    dune-release: [ERROR] Could not retrieve release ID from response
     [3]
