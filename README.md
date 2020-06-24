@@ -29,6 +29,8 @@ Calling `dune-release` without any argument will start the automated release pro
 - create an opam package;
 - submit it to OCaml's opam repository.
 
+If the repository contains multiple opam packages, `dune-release` will try to release all of them by default (ie. one tarball, one github release but several opam files added to the opam repository).
+
 The most basic workflow is:
 
 ```
@@ -37,7 +39,7 @@ dune-release
 ```
 
 Each step is refined and explained with more details below.
-If this is your first time using `dune-release` you might choose to run the `dune-release` commands with the `--dry-run` argument, so that no action is actually performed but it allows you to check what would be done. And then run the `dune-release` commands without `--dry-run` when you are sure of what you are doing.
+By default `dune-release` asks for permission before taking any significant action so you should not be afraid of running it.
 
 
 ### Tag the distribution with a version
@@ -50,7 +52,14 @@ The tagging command of `dune-release` will extract the latest version tag from t
 dune-release tag
 ```
 
-This will only work if the change log follows a certain format. If you do not want to rely on this extraction you can specify it on the command line:
+This will only work if the change log follows a certain format.
+The version number must be in the first item of the change log file (usually a section title). Asciidoc and Markdown files are supported. A typical example of such version in a markdown file is:
+
+```
+## v1.0.1 (2019-09-30)
+```
+
+The version extracted from this change log will be `v1.0.1`. This will be used to infer the tag of the release as well as generate the publication message. If you do not want to rely on this extraction you can specify it on the command line:
 
 ```
 dune-release tag v1.0.1
@@ -98,20 +107,26 @@ dune-release help distrib
 
 Once the distribution archive is created you can now publish it and its documentation online.
 
-```
-dune-release publish
-```
-
 You can publish the archive only with:
 
 ```
 dune-release publish distrib
 ```
 
-or publish the documentation only with:
+This means creating a Github release associated with the tag and upload the distribution tarball as a release artifact.
+
+You can publish the documentation only with:
 
 ```
 dune-release publish doc
+```
+
+This means publishing the dune generated documentation to `gh-pages` to be served as a static website on github.io.
+
+If neither `distrib` neither `doc` is specified, `dune-release` publishes both:
+
+```
+dune-release publish
 ```
 
 The full documentation of this command is available with
@@ -120,26 +135,19 @@ dune-release help publish
 ```
 
 
-### Create an opam package
+### Create an opam package and submit it to the opam repository
 
-The following steps still need the distribution archive created in the preceeding step to be in the build directory. If that's no longer the case but nothing moved in your VCS, you can simply invoke dune-release distrib, it should produce a bit-wise identical archive. If the VCS moved checkout the distribution commit to regenerate the archive or provide, in the subsequent commands, the archive manually via the `--dist-file` option.
-
-To add the package to OCaml's opam repository, start by creating an opam package description in the build directory with:
+To add the package to OCaml's [opam repository](https://github.com/ocaml/opam-repository), we start by creating an opam file to be used on the opam repository. This file includes the download URI for the distribution tarball and the tarball hash:
 
 ```
 dune-release opam pkg
 ```
 
-### Submit the opam package to the opam repository
-
-To submit the package to the [opam repository](https://github.com/ocaml/opam-repository):
+To submit the package to the opam repository and create the associated pull request we run:
 
 ```
 dune-release opam submit
 ```
-
-The latter does nothing more than invoking `opam publish submit` on the package description generated earlier.
-
 
 The full documentation of this command is available with
 ```
