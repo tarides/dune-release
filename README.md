@@ -168,3 +168,14 @@ The main differences between `dune-release` and `topkg` are:
 - Bundle everything as a single binary;
 - Use of `Astring`, `Logs`, `Fpath` and`Bos`;
 - Remove the IPC layer (which is used between `topkg` and `topkg-care`);
+
+### Runtime dependencies
+
+- `bzip2` can be set with the `DUNE_RELEASE_BZIP2` variable (deprecated), otherwise it is expected to be in `PATH`;
+- `tar` can be set with the `DUNE_RELEASE_TAR` variable (deprecated), otherwise it is expected to be in `PATH`;
+- `git` can be set with the `DUNE_RELEASE_GIT` variable (deprecated), otherwise it is expected to be in `PATH`;
+- `hg` can be set with the `DUNE_RELEASE_HG` variable (deprecated), otherwise it is expected to be in `PATH`;
+- `opam` can be set with the `HOST_OS_OPAM` variable (deprecated), otherwise it is looked for in `HOST_OS_XBIN/opam` (deprecated), otherwise it is looked for in `opamHOST_OS_SUFF` (deprecated), otherwise it is expected to be in `PATH`;
+- `dune`, `curl`, `cp` and `ocamlfind` are expected to be in `PATH`.
+
+Using these `DUNE_RELEASE_*` and `HOST_OS_*` environment variables to configure the path to these binaries is deprecated since `dune-release.1.4.0`, and will no longer be supported in `dune-release.2.0.0`, it is thus recommended to only rely on the `PATH` variable.
