@@ -14,12 +14,12 @@ let test_create_release =
           url = "https://api.github.com/repos/you/some-repo/releases";
           args =
             [
-              "-L";
-              "-s";
-              "-S";
-              "-K";
+              "--location";
+              "--silent";
+              "--show-error";
+              "--config";
               "-";
-              "-D";
+              "--dump-header";
               "-";
               "--data";
               {|{ "tag_name" : "1.1.0", "body" : "this is a message" }|};
@@ -47,14 +47,14 @@ let test_upload_archive =
             "https://uploads.github.com/repos/you/some-repo/releases/27/assets?name=foo.tgz";
           args =
             [
-              "-L";
-              "-s";
-              "-S";
-              "-K";
+              "--location";
+              "--silent";
+              "--show-error";
+              "--config";
               "-";
-              "-D";
+              "--dump-header";
               "-";
-              "-H";
+              "--header";
               "Content-Type:application/x-tar";
               "--data-binary";
               "@foo.tgz";
@@ -82,11 +82,11 @@ let test_open_pr =
           url = "https://api.github.com/repos/base/repo/pulls";
           args =
             [
-              "-s";
-              "-S";
-              "-K";
+              "--silent";
+              "--show-error";
+              "--config";
               "-";
-              "-D";
+              "--dump-header";
               "-";
               "--data";
               {|{"title": "This is a PR","base": "master", "body": "This PR fixes everything.\nThis is the best PR.\n", "head": "you:my-best-pr"}|};
@@ -95,7 +95,7 @@ let test_open_pr =
   ]
 
 let test_with_auth =
-  let auth = "foooooooooooo" in
+  let auth = Dune_release.Curl.{ user = "foo"; token = "bar" } in
   let make_test ~test_name ~curl_t ~expected =
     let test_fun () =
       let actual = Dune_release.Curl.with_auth ~auth curl_t in
@@ -108,12 +108,12 @@ let test_with_auth =
       ~curl_t:
         {
           url = "https://api.github.com/repos/base/repo/pulls";
-          args = [ "-s"; "-S"; "-K"; "-"; "-D"; "-" ];
+          args = [ "--config"; "-"; "--dump-header"; "-" ];
         }
       ~expected:
         {
           url = "https://api.github.com/repos/base/repo/pulls";
-          args = [ "-u"; auth; "-s"; "-S"; "-K"; "-"; "-D"; "-" ];
+          args = [ "--user"; "foo:bar"; "--config"; "-"; "--dump-header"; "-" ];
         };
   ]
 

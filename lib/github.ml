@@ -161,9 +161,8 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
 (* Publish releases *)
 
 let github_auth ~dry_run ~user token =
-  if dry_run then Ok (strf "%s:%s" user D.token)
-  else
-    Sos.read_file ~dry_run token >>= fun token -> Ok (strf "%s:%s" user token)
+  if dry_run then Ok Curl.{ user; token = D.token }
+  else Sos.read_file ~dry_run token >>| fun token -> Curl.{ user; token }
 
 let run_with_auth ?(default_body = `Null) ~dry_run ~auth curl_t =
   let Curl.{ url; args } = Curl.with_auth ~auth curl_t in

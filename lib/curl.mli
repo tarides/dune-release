@@ -1,5 +1,7 @@
 type t = { url : string; args : string list }
 
+type auth = { user : string; token : string }
+
 val create_release :
   version:string -> msg:string -> user:string -> repo:string -> t
 
@@ -14,4 +16,4 @@ val open_pr :
   opam_repo:string * string ->
   t
 
-val with_auth : auth:string -> t -> t
+val with_auth : auth:auth -> t -> t
