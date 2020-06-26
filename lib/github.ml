@@ -119,7 +119,7 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
   let create_empty_gh_pages git =
     let msg = "Initial commit by dune-release." in
     let create () =
-      Sos.run_quiet ~dry_run Cmd.(v "git" % "init") >>= fun () ->
+      Sos.run_quiet ~dry_run Cmd.(git % "init") >>= fun () ->
       Vcs.get () >>= fun repo ->
       Ok (git_for_repo repo) >>= fun git ->
       Sos.run_quiet ~dry_run Cmd.(git % "checkout" % "--orphan" % "gh-pages")
