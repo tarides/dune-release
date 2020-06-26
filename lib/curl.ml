@@ -1,6 +1,6 @@
 open Bos_setup
 
-type t = { url : string; args : string list }
+type t = { url : string; args : Curl_option.t list }
 
 let escape_for_json s =
   let len = String.length s in
@@ -40,12 +40,22 @@ let escape_for_json s =
     loop 0 0
 
 let create_release ~version ~msg ~user ~repo =
-  let data =
+  let json =
     strf "{ \"tag_name\" : \"%s\", \"body\" : \"%s\" }"
       (escape_for_json version) (escape_for_json msg)
   in
   let url = strf "https://api.github.com/repos/%s/%s/releases" user repo in
-  let args = [ "-L"; "-s"; "-S"; "-K"; "-"; "-D"; "-"; "--data"; data ] in
+  let args =
+    let open Curl_option in
+    [
+      Location;
+      Silent;
+      Show_error;
+      Config `Stdin;
+      Dump_header `Ignore;
+      Data (`Data json);
+    ]
+  in
   { url; args }
 
 let upload_archive ~archive ~user ~repo ~release_id =
@@ -54,18 +64,15 @@ let upload_archive ~archive ~user ~repo ~release_id =
       user repo release_id (Fpath.filename archive)
   in
   let args =
+    let open Curl_option in
     [
-      "-L";
-      "-s";
-      "-S";
-      "-K";
-      "-";
-      "-D";
-      "-";
-      "-H";
-      "Content-Type:application/x-tar";
-      "--data-binary";
-      strf "@@%s" (Fpath.to_string archive);
+      Location;
+      Silent;
+      Show_error;
+      Config `Stdin;
+      Dump_header `Ignore;
+      Header "Content-Type:application/x-tar";
+      Data_binary (`File (Fpath.to_string archive));
     ]
   in
   { url; args }
@@ -73,11 +80,17 @@ let upload_archive ~archive ~user ~repo ~release_id =
 let open_pr ~title ~user ~branch ~body ~opam_repo =
   let base, repo = opam_repo in
   let url = strf "https://api.github.com/repos/%s/%s/pulls" base repo in
-  let data =
+  let json =
     strf {|{"title": %S,"base": "master", "body": %S, "head": "%s:%s"}|} title
       body user branch
   in
-  let args = [ "-s"; "-S"; "-K"; "-"; "-D"; "-"; "--data"; data ] in
+  let args =
+    let open Curl_option in
+    [
+      Silent; Show_error; Config `Stdin; Dump_header `Ignore; Data (`Data json);
+    ]
+  in
   { url; args }
 
-let with_auth ~auth { url; args } = { url; args = "-u" :: auth :: args }
+let with_auth ~auth { url; args } =
+  { url; args = Curl_option.User auth :: args }

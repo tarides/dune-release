@@ -12,7 +12,8 @@ let opam_version =
 
 let curl =
   let pp fs Dune_release.Curl.{ url; args } =
-    Fmt.string fs url;
-    Fmt.list Fmt.string fs args
+    let args = Dune_release.Curl_option.to_string_list args in
+    Format.fprintf fs "url = %S;@ " url;
+    Format.fprintf fs "args = %a@\n" (Fmt.list ~sep:Fmt.sp Fmt.string) args
   in
   testable pp ( = )
