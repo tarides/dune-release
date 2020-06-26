@@ -161,11 +161,12 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
 (* Publish releases *)
 
 let github_auth ~dry_run ~user token =
-  if dry_run then Ok Curl.{ user; token = D.token }
-  else Sos.read_file ~dry_run token >>| fun token -> Curl.{ user; token }
+  if dry_run then Ok Curl_option.{ user; token = D.token }
+  else Sos.read_file ~dry_run token >>| fun token -> Curl_option.{ user; token }
 
 let run_with_auth ?(default_body = `Null) ~dry_run ~auth curl_t =
   let Curl.{ url; args } = Curl.with_auth ~auth curl_t in
+  let args = Curl_option.to_string_list args in
   if dry_run then
     Sos.show "exec:@[@ curl %a@]"
       Format.(pp_print_list ~pp_sep:pp_print_space pp_print_string)
