@@ -1,4 +1,4 @@
-## unreleased
+## 1.4.0 (2020-07-13)
 
 ### Added
 
@@ -8,6 +8,8 @@
   release scripts (#221, @pitag-ha)
 - Use Curly instead of Cmd to interact with github (#202, @gpetiot)
 - Add `x-commit-hash` field to the opam file when releasing (#224, @gpetiot)
+- Add support for common alternative names for the license and 
+  ChangeLog file (#204, @paurkedal)
 
 ### Changed
 
@@ -42,6 +44,7 @@
   (#177, @gpetiot)
 - The `git` command used in `publish doc` should check `DUNE_RELEASE_GIT` (even
   if deprecated) before `PATH`. (#242, @gpetiot)
+- Adapt the docs to the removal of the `log` subcommand (#196, @gpetiot)
 
 ### Removed
 
