@@ -1,3 +1,21 @@
+## unreleased
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+- Fix the priority of the `--distrib-uri` option in `dune-release opam pkg`.
+  It used to have lower precendence than the url file written by `dune-release publish`
+  and therefore made it impossible to overwrite it if needed. (#255, @NathanReb)
+
+### Security
+
 ## 1.4.0 (2020-07-13)
 
 ### Added

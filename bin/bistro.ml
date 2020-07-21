@@ -17,7 +17,7 @@ let bistro () dry_run name pkg_names version tag keep_v =
       >>= fun _publish_ret ->
       Opam.get_pkgs ~dry_run ~keep_v ~tag ~name ~pkg_names ~version ()
       >>= fun pkgs ->
-      Opam.pkg ~dry_run ~pkgs >>= fun _opam_pkg_ret ->
+      Opam.pkg ~dry_run ~pkgs () >>= fun _opam_pkg_ret ->
       Opam.submit ~dry_run ~pkgs ~pkg_names ~no_auto_open:false ~yes:false ()
       >>= fun _opam_submit_ret -> Ok 0 )
 
