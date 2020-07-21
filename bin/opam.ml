@@ -239,7 +239,7 @@ let get_pkgs ?build_dir ?opam ?distrib_file ?readme ?change_log ?publish_msg
     let pkg =
       Pkg.v ?name ?opam ?tag ?version ?distrib_file ~dry_run:false ~keep_v ()
     in
-    Pkg.distrib_archive_path pkg
+    Pkg.distrib_file ~dry_run pkg
   in
   Pkg.infer_pkg_names Fpath.(v ".") pkg_names >>= fun pkg_names ->
   let pkg_names = List.map (fun n -> Some n) pkg_names in

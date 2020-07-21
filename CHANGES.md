@@ -13,6 +13,9 @@
 - Fix the priority of the `--distrib-uri` option in `dune-release opam pkg`.
   It used to have lower precendence than the url file written by `dune-release publish`
   and therefore made it impossible to overwrite it if needed. (#255, @NathanReb)
+- Fix a bug with --distrib-file in `dune-release opam pkg` where you would need
+  the regular dune-release generated archive to be around even though you specified
+  a custom distrib archive file. (#255, @NathanReb)
 
 ### Security
 
@@ -26,7 +29,7 @@
   release scripts (#221, @pitag-ha)
 - Use Curly instead of Cmd to interact with github (#202, @gpetiot)
 - Add `x-commit-hash` field to the opam file when releasing (#224, @gpetiot)
-- Add support for common alternative names for the license and 
+- Add support for common alternative names for the license and
   ChangeLog file (#204, @paurkedal)
 
 ### Changed
