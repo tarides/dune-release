@@ -66,7 +66,7 @@ let archive_url ~dry_run ~opam_file pkg =
           uri);
     Ok uri )
 
-let pkg ~dry_run pkg =
+let pkg ~dry_run ~distrib_uri pkg =
   let warn_if_vcs_dirty () =
     Cli.warn_if_vcs_dirty
       "The opam package may be inconsistent with the distribution."
@@ -77,7 +77,10 @@ let pkg ~dry_run pkg =
   get_pkg_dir pkg >>= fun dir ->
   Pkg.opam pkg >>= fun opam_f ->
   Pkg.distrib_file ~dry_run pkg >>= fun distrib_file ->
-  archive_url ~dry_run ~opam_file:opam_f pkg >>= fun uri ->
+  ( match distrib_uri with
+  | Some uri -> Ok uri
+  | None -> archive_url ~dry_run ~opam_file:opam_f pkg )
+  >>= fun uri ->
   Opam.Url.with_distrib_file ~dry_run ~uri distrib_file >>= fun url ->
   OS.Dir.exists dir >>= fun exists ->
   (if exists then Sos.delete_dir ~dry_run dir else Ok ()) >>= fun () ->
@@ -229,15 +232,14 @@ let field pkgs field =
 
 (* Command *)
 
-let get_pkgs ?build_dir ?opam ?distrib_uri ?distrib_file ?readme ?change_log
-    ?publish_msg ?pkg_descr ~dry_run ~keep_v ~tag ~name ~pkg_names ~version () =
+let get_pkgs ?build_dir ?opam ?distrib_file ?readme ?change_log ?publish_msg
+    ?pkg_descr ~dry_run ~keep_v ~tag ~name ~pkg_names ~version () =
   Config.keep_v keep_v >>= fun keep_v ->
   let distrib_file =
     let pkg =
-      Pkg.v ?name ?opam ?tag ?version ?distrib_file ?distrib_uri ~dry_run:false
-        ~keep_v ()
+      Pkg.v ?name ?opam ?tag ?version ?distrib_file ~dry_run:false ~keep_v ()
     in
-    Pkg.distrib_archive_path pkg
+    Pkg.distrib_file ~dry_run pkg
   in
   Pkg.infer_pkg_names Fpath.(v ".") pkg_names >>= fun pkg_names ->
   let pkg_names = List.map (fun n -> Some n) pkg_names in
@@ -245,15 +247,15 @@ let get_pkgs ?build_dir ?opam ?distrib_uri ?distrib_file ?readme ?change_log
   List.map
     (fun name ->
       Pkg.v ~dry_run ?build_dir ?name ?version ?opam ?tag ?opam_descr:pkg_descr
-        ~keep_v ?distrib_uri ~distrib_file ?readme ?change_log ?publish_msg ())
+        ~keep_v ~distrib_file ?readme ?change_log ?publish_msg ())
     pkg_names
 
 let descr ~pkgs = descr pkgs
 
-let pkg ~dry_run ~pkgs =
+let pkg ?distrib_uri ~dry_run ~pkgs () =
   List.fold_left
     (fun acc p ->
-      match (acc, pkg ~dry_run p) with
+      match (acc, pkg ~dry_run ~distrib_uri p) with
       | Ok i, Ok () -> Ok i
       | (Error _ as e), _ | _, (Error _ as e) -> e)
     (Ok 0) pkgs
@@ -289,12 +291,12 @@ let field ~pkgs ~field_name = field pkgs field_name
 let opam_cli () dry_run build_dir local_repo remote_repo opam_repo user keep_v
     opam distrib_uri distrib_file tag name pkg_names version pkg_descr readme
     change_log publish_msg action field_name no_auto_open yes =
-  get_pkgs ?build_dir ?opam ?distrib_uri ?distrib_file ?pkg_descr ?readme
-    ?change_log ?publish_msg ~dry_run ~keep_v ~tag ~name ~pkg_names ~version ()
+  get_pkgs ?build_dir ?opam ?distrib_file ?pkg_descr ?readme ?change_log
+    ?publish_msg ~dry_run ~keep_v ~tag ~name ~pkg_names ~version ()
   >>= (fun pkgs ->
         match action with
         | `Descr -> descr ~pkgs
-        | `Pkg -> pkg ~dry_run ~pkgs
+        | `Pkg -> pkg ~dry_run ?distrib_uri ~pkgs ()
         | `Submit ->
             submit ?local_repo ?remote_repo ?opam_repo ?user ~dry_run ~pkgs
               ~pkg_names ~no_auto_open ~yes ()

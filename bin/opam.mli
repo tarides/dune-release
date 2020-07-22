@@ -9,7 +9,6 @@
 val get_pkgs :
   ?build_dir:Fpath.t ->
   ?opam:Fpath.t ->
-  ?distrib_uri:string ->
   ?distrib_file:Fpath.t ->
   ?readme:Fpath.t ->
   ?change_log:Fpath.t ->
@@ -33,7 +32,11 @@ val descr : pkgs:Dune_release.Pkg.t list -> (int, Bos_setup.R.msg) result
     exit code (0 for success, 1 for failure) or error messages. *)
 
 val pkg :
-  dry_run:bool -> pkgs:Dune_release.Pkg.t list -> (int, Bos_setup.R.msg) result
+  ?distrib_uri:string ->
+  dry_run:bool ->
+  pkgs:Dune_release.Pkg.t list ->
+  unit ->
+  (int, Bos_setup.R.msg) result
 (** [pkg ~dry_run ~pkgs] creates the opam package descriptions for packages
     [pkgs] and upgrades them to opam 2.0 if necessary. Returns the exit code (0
     for success, 1 for failure) or error messages. *)
