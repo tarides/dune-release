@@ -28,6 +28,17 @@ val cmd : t -> Bos.Cmd.t
 val get : ?dir:Fpath.t -> unit -> (t, R.msg) result
 (** [get] is like {!find} but returns an error if no VCS was found. *)
 
+val run_git_quiet :
+  dry_run:bool -> ?force:bool -> t -> Bos_setup.Cmd.t -> (unit, R.msg) result
+
+val run_git_string :
+  dry_run:bool ->
+  ?force:bool ->
+  default:string * Bos.OS.Cmd.run_status ->
+  t ->
+  Bos_setup.Cmd.t ->
+  (string, R.msg) result
+
 (** {1:state Repository state} *)
 
 val is_dirty : t -> (bool, R.msg) result

@@ -59,12 +59,11 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
       OS.Dir.contents dir >>= fun files ->
       List.fold_left delete (Ok ()) (List.filter not_git files)
   in
-  let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   let replace_dir_and_push docdir dir =
     let msg = strf "Update %s doc to %s." name version in
     Vcs.get () >>= fun repo ->
-    Ok (git_for_repo repo) >>= fun git ->
-    Sos.run_quiet ~dry_run ~force:(dir <> D.dir) Cmd.(git % "checkout" % branch)
+    Vcs.run_git_quiet repo ~dry_run ~force:(dir <> D.dir)
+      Cmd.(v "checkout" % branch)
     >>= fun () ->
     delete dir >>= fun () ->
     Sos.cp ~dry_run ~rec_:true ~force:true ~src:Fpath.(docdir / ".") ~dst:dir
@@ -72,9 +71,10 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
     (if dry_run then Ok true else Vcs.is_dirty repo) >>= function
     | false -> Ok false
     | true ->
-        Sos.run ~dry_run Cmd.(git % "add" % p dir) >>= fun () ->
-        Sos.run_quiet ~dry_run Cmd.(git % "commit" % "-m" % msg) >>= fun () ->
-        Sos.run_quiet ~dry_run Cmd.(git % "push") >>= fun () -> Ok true
+        Vcs.run_git_quiet repo ~dry_run Cmd.(v "add" % p dir) >>= fun () ->
+        Vcs.run_git_quiet repo ~dry_run Cmd.(v "commit" % "-m" % msg)
+        >>= fun () ->
+        Vcs.run_git_quiet repo ~dry_run Cmd.(v "push") >>= fun () -> Ok true
   in
   if not (Fpath.is_rooted ~root:Fpath.(v ".") dir) then
     R.error_msgf "%a directory is not rooted in the repository or not relative"
@@ -95,7 +95,6 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
         Ok ()
     | true ->
         let push_spec = strf "%s:%s" branch branch in
-        Ok (git_for_repo repo) >>= fun git ->
         Prompt.(
           confirm_or_abort ~yes
             ~question:(fun l ->
@@ -106,7 +105,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
         App_log.status (fun l ->
             l "Pushing new documentation to %a" Text.Pp.url
               (remote ^ "#gh-pages"));
-        Sos.run_quiet ~dry_run Cmd.(git % "push" % remote % push_spec)
+        Vcs.run_git_quiet repo ~dry_run Cmd.(v "push" % remote % push_spec)
         >>= fun () ->
         Sos.delete_dir ~dry_run clonedir >>= fun () ->
         log_publish_result "Published documentation for" (name, version) dir;
@@ -118,46 +117,44 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
   Pkg.name p >>= fun name ->
   Pkg.version p >>= fun version ->
   let remote = strf "git@@github.com:%s/%s.git" user repo in
-  let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
+  Vcs.get () >>= fun vcs ->
   let force = user <> D.user in
-  let create_empty_gh_pages git =
+  let create_empty_gh_pages () =
     let msg = "Initial commit by dune-release." in
     let create () =
-      Sos.run_quiet ~dry_run Cmd.(git % "init") >>= fun () ->
-      Vcs.get () >>= fun repo ->
-      Ok (git_for_repo repo) >>= fun git ->
-      Sos.run_quiet ~dry_run Cmd.(git % "checkout" % "--orphan" % "gh-pages")
+      Vcs.run_git_quiet vcs ~dry_run Cmd.(v "init") >>= fun () ->
+      Vcs.run_git_quiet vcs ~dry_run
+        Cmd.(v "checkout" % "--orphan" % "gh-pages")
       >>= fun () ->
       Sos.write_file ~dry_run (Fpath.v "README") ""
       (* need some file *) >>= fun () ->
-      Sos.run_quiet ~dry_run Cmd.(git % "add" % "README") >>= fun () ->
-      Sos.run_quiet ~dry_run Cmd.(git % "commit" % "README" % "-m" % msg)
+      Vcs.run_git_quiet vcs ~dry_run Cmd.(v "add" % "README") >>= fun () ->
+      Vcs.run_git_quiet vcs ~dry_run Cmd.(v "commit" % "README" % "-m" % msg)
     in
     OS.Dir.with_tmp "gh-pages-%s.tmp"
       (fun dir () ->
         Sos.with_dir ~dry_run dir create () |> R.join >>= fun () ->
-        let git_fetch =
-          Cmd.(git % "fetch" % Fpath.to_string dir % "gh-pages")
-        in
-        Sos.run_quiet ~dry_run ~force git_fetch)
+        Vcs.run_git_quiet vcs ~dry_run ~force
+          Cmd.(v "fetch" % Fpath.to_string dir % "gh-pages"))
       ()
     |> R.join
   in
-  Vcs.get () >>= fun vcs ->
-  Ok (git_for_repo vcs) >>= fun git ->
-  let git_fetch = Cmd.(git % "fetch" % remote % "gh-pages") in
-  ( match Sos.run_quiet ~dry_run ~force git_fetch with
+  ( match
+      Vcs.run_git_quiet vcs ~dry_run ~force
+        Cmd.(v "fetch" % remote % "gh-pages")
+    with
   | Ok () -> Ok ()
   | Error _ ->
       App_log.status (fun l ->
           l "Creating new gh-pages branch with inital commit on %s/%s" user repo);
-      create_empty_gh_pages git )
+      create_empty_gh_pages () )
   >>= fun () ->
-  Sos.run_out ~dry_run ~force
-    Cmd.(git % "rev-parse" % "FETCH_HEAD")
-    ~default:D.fetch_head OS.Cmd.to_string
+  Vcs.run_git_string vcs ~dry_run ~force
+    Cmd.(v "rev-parse" % "FETCH_HEAD")
+    ~default:(Sos.out D.fetch_head)
   >>= fun id ->
-  Sos.run_quiet ~dry_run ~force Cmd.(git % "branch" % "-f" % "gh-pages" % id)
+  Vcs.run_git_quiet vcs ~dry_run ~force
+    Cmd.(v "branch" % "-f" % "gh-pages" % id)
   >>= fun () ->
   publish_in_git_branch ~dry_run ~remote ~branch:"gh-pages" ~name ~version
     ~docdir ~dir ~yes
@@ -239,7 +236,6 @@ let assert_tag_exists ~dry_run tag =
   else R.error_msgf "%s is not a valid tag" tag
 
 let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
-  let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   (match distrib_uri with Some uri -> Ok uri | None -> Pkg.infer_distrib_uri p)
   >>= fun uri ->
   ( match Pkg.distrib_user_and_repo uri with
@@ -249,7 +245,6 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   Pkg.tag p >>= fun tag ->
   assert_tag_exists ~dry_run tag >>= fun () ->
   Vcs.get () >>= fun vcs ->
-  Ok (git_for_repo vcs) >>= fun git ->
   Pkg.tag p >>= fun tag ->
   check_tag ~dry_run vcs tag >>= fun () ->
   dev_repo p >>= fun upstr ->
@@ -261,7 +256,7 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   >>= fun () ->
   App_log.status (fun l ->
       l "Pushing tag %a to %a" Text.Pp.version tag Text.Pp.url upstr);
-  Sos.run_quiet ~dry_run Cmd.(git % "push" % "--force" % upstr % tag)
+  Vcs.run_git_quiet vcs ~dry_run Cmd.(v "push" % "--force" % upstr % tag)
   >>= fun () ->
   (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
   >>= fun token ->
