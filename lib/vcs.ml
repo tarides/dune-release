@@ -88,7 +88,7 @@ let git_commit_ptime_s ~dry_run r commit_ish =
   let time = Cmd.(v "show" % "-s" % "--format=%ct" % commit_ish) in
   run_git ~dry_run ~force:true r time ~default:Default.string OS.Cmd.out_string
   >>= fun ptime ->
-  try Ok (int_of_string ptime)
+  try Ok (Int64.of_string ptime)
   with Failure e ->
     R.error_msgf "Could not parse timestamp from %S: %s" ptime e
 
@@ -186,12 +186,12 @@ let hg_commit_ptime_s r ~rev =
     Cmd.(v "log" % "--template" % "'{date(date, \"%s\")}'" % "--rev" % rev)
   in
   run_hg r time OS.Cmd.out_string >>= fun ptime ->
-  try Ok (int_of_string ptime)
+  try Ok (Int64.of_string ptime)
   with Failure _ -> R.error_msgf "Could not parse timestamp from %S" ptime
 
 let hg_describe ~dirty r ~rev =
   let get_distance s =
-    try Ok (int_of_string s)
+    try Ok (Int64.of_string s)
     with Failure _ ->
       R.error_msgf "%a: Could not parse hg tag distance." Fpath.pp (dir r)
   in
@@ -201,7 +201,7 @@ let hg_describe ~dirty r ~rev =
       OS.Cmd.out_string
   in
   (parent "{latesttagdistance}" >>= get_distance >>= function
-   | 1 -> parent "{latesttag}"
+   | 1L -> parent "{latesttag}"
    | _ -> parent "{latesttag}-{latesttagdistance}-{node|short}")
   >>= fun descr ->
   match dirty with

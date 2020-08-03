@@ -16,6 +16,7 @@
 - Fix a bug with --distrib-file in `dune-release opam pkg` where you would need
   the regular dune-release generated archive to be around even though you specified
   a custom distrib archive file. (#255, @NathanReb)
+- Use int64 for timestamps. (#261, @gpetiot)
 
 ### Security
 

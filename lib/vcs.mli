@@ -42,7 +42,7 @@ val commit_id :
     working tree is dirty. *)
 
 val commit_ptime_s :
-  dry_run:bool -> ?commit_ish:commit_ish -> t -> (int, R.msg) result
+  dry_run:bool -> ?commit_ish:commit_ish -> t -> (int64, R.msg) result
 (** [commit_ptime_s t ~commit_ish] is the POSIX time in seconds of commit
     [commit_ish] (defaults to ["HEAD"]) of repository [r]. *)
 

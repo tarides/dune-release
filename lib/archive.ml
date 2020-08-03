@@ -54,8 +54,19 @@ module Tar = struct
         (Sbytes.blit_string octal 0 h off (String.length octal))
     else
       R.error_msg
-        (strf "field %s: can't encode %d in %d-digit octal number" field
-           (len - 1) n)
+        (strf "field %s: can't encode %d in %d-digit octal number" field n
+           (len - 1))
+
+  let set_octal64 field off len (* terminating NULL included *) h (n : int64) =
+    let octal = Format.sprintf "%0*Lo" (len - 1) n in
+    if String.length octal < len then
+      R.reword_error
+        (fun _ -> R.msgf "field %s: cannot set %Ld at offset %d" field n off)
+        (Sbytes.blit_string octal 0 h off (String.length octal))
+    else
+      R.error_msg
+        (strf "field %s: can't encode %Ld in %d-digit octal number" field n
+           (len - 1))
 
   let header_checksum h =
     let len = Bytes.length h in
@@ -72,7 +83,7 @@ module Tar = struct
     set_octal "owner" 108 8 h 0 >>= fun () ->
     set_octal "group" 116 8 h 0 >>= fun () ->
     set_octal "size" 124 12 h size >>= fun () ->
-    set_octal "mtime" 136 12 h mtime >>= fun () ->
+    set_octal64 "mtime" 136 12 h mtime >>= fun () ->
     set_string 148 h "        " (* Checksum *) >>= fun () ->
     set_string 156 h typeflag >>= fun () ->
     set_string 257 h "ustar" >>= fun () ->
