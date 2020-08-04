@@ -14,7 +14,7 @@ val tar :
   Fpath.t ->
   exclude_paths:Fpath.set ->
   root:Fpath.t ->
-  mtime:int ->
+  mtime:int64 ->
   (string, R.msg) result
 (** [tar dir ~exclude_paths ~root ~mtime] is a (us)tar archive that contains the
     file hierarchy [dir] except the relative hierarchies present in
