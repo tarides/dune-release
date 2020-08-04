@@ -397,6 +397,7 @@ let infer_from_dune_project dir =
 let infer_pkg_names dir = function
   | [] ->
       Bos.OS.Dir.contents ~dotfiles:false ~rel:false dir >>= fun files ->
+      let files = List.fast_sort Fpath.compare files |> List.rev in
       let opam_files =
         List.filter
           (fun p -> String.is_suffix ~affix:".opam" Fpath.(to_string p))

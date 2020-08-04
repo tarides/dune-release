@@ -17,6 +17,7 @@
   the regular dune-release generated archive to be around even though you specified
   a custom distrib archive file. (#255, @NathanReb)
 - Use int64 for timestamps. (#261, @gpetiot)
+- Define the order of packages (#263, @gpetiot)
 
 ### Security
 

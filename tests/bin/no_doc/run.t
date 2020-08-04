@@ -52,8 +52,8 @@ We make a dry-run release
     => chdir _build/whatever-0.1.0.build
        [in _build/whatever-0.1.0.build]
     -: exec: dune subst
-    -: write ...
-    -: write ...
+    -: write whatever.opam
+    -: write whatever-lib.opam
     => exec: bzip2
     -: rmdir _build/whatever-0.1.0.build
     [+] Wrote archive _build/whatever-0.1.0.tbz
@@ -70,10 +70,10 @@ We make a dry-run release
     [ OK ] File LICENSE is present.
     => exists ./CHANGES.md
     [ OK ] File CHANGES is present.
-    => exists ...
+    => exists whatever.opam
     [ OK ] File opam is present.
-    -: exec: opam lint -s ...
-    [ OK ] lint opam file ...
+    -: exec: opam lint -s whatever.opam
+    [ OK ] lint opam file whatever.opam.
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
@@ -85,10 +85,10 @@ We make a dry-run release
     [ OK ] File LICENSE is present.
     => exists ./CHANGES.md
     [ OK ] File CHANGES is present.
-    => exists ...
+    => exists whatever-lib.opam
     [ OK ] File opam is present.
-    -: exec: opam lint -s ...
-    [ OK ] lint opam file ...
+    -: exec: opam lint -s whatever-lib.opam
+    [ OK ] lint opam file whatever-lib.opam.
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
@@ -113,7 +113,7 @@ We publish the documentation, calling publish doc explicitely should fail
 
     $ dune-release publish doc
     [-] Publishing documentation
-    [-] Selected packages: ...
+    [-] Selected packages: whatever whatever-lib
     [-] Generating documentation from _build/whatever-0.1.0.tbz
     [-] Publishing to github
     dune-release: [ERROR] Could not derive publication directory $PATH from opam doc field value ""; expected the pattern $SCHEME://$USER.github.io/$REPO/$PATH
@@ -132,8 +132,8 @@ We do the whole process, calling publish doc implicitely should succeed
     => chdir _build/whatever-0.1.0.build
        [in _build/whatever-0.1.0.build]
     -: exec: dune subst
-    -: write ...
-    -: write ...
+    -: write whatever.opam
+    -: write whatever-lib.opam
     => exec: bzip2
     -: rmdir _build/whatever-0.1.0.build
     [+] Wrote archive _build/whatever-0.1.0.tbz
@@ -151,10 +151,10 @@ We do the whole process, calling publish doc implicitely should succeed
     [ OK ] File LICENSE is present.
     => exists ./CHANGES.md
     [ OK ] File CHANGES is present.
-    => exists ...
+    => exists whatever.opam
     [ OK ] File opam is present.
-    -: exec: opam lint -s ...
-    [ OK ] lint opam file ...
+    -: exec: opam lint -s whatever.opam
+    [ OK ] lint opam file whatever.opam.
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
@@ -166,10 +166,10 @@ We do the whole process, calling publish doc implicitely should succeed
     [ OK ] File LICENSE is present.
     => exists ./CHANGES.md
     [ OK ] File CHANGES is present.
-    => exists ...
+    => exists whatever-lib.opam
     [ OK ] File opam is present.
-    -: exec: opam lint -s ...
-    [ OK ] lint opam file ...
+    -: exec: opam lint -s whatever-lib.opam
+    [ OK ] lint opam file whatever-lib.opam.
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
@@ -201,7 +201,6 @@ We do the whole process, calling publish doc implicitely should succeed
     ...
     [?] Create release 0.1.0 on git@github.com:foo/whatever.git? [Y/n]
     [-] Creating release 0.1.0 on git@github.com:foo/whatever.git via github's API
-    ...
     -: exec: curl --user foo:${token} --location --silent --show-error --config -
          --dump-header - --data
          { "tag_name" : "0.1.0", "body" : "CHANGES:\n\n- Some other feature\n" }
