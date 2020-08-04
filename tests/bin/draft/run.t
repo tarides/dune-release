@@ -31,9 +31,7 @@ We need to set up a git project for dune-release to work properly
     > /dune\
     > run.t\
     > EOF
-    $ git init 2> /dev/null > /dev/null
-    $ git config user.name "dune-release-test"
-    $ git config user.email "pseudo@pseudo.invalid"
+    $ git init > /dev/null
     $ git add CHANGES.md whatever.opam dune-project README LICENSE .gitignore
     $ git commit -m "Initial commit" > /dev/null
     $ dune-release tag -y
@@ -41,9 +39,9 @@ We need to set up a git project for dune-release to work properly
     [-] Using tag "0.1.0"
     [+] Tagged HEAD with version 0.1.0
 
-We make a dry-run release:
+We do the whole dune-release process
 
-(1) Creating the distribution archive
+(1) distrib
 
     $ dune-release distrib --dry-run
     [-] Building source archive
@@ -97,22 +95,26 @@ We make a dry-run release:
     [+] Commit ...
     [+] Archive _build/whatever-0.1.0.tbz
 
+(2) publish
 
-(2) Publihsing the distribution
-
-    $ yes | dune-release publish --dry-run
+    $ yes | dune-release publish --dry-run --draft
     [-] Skipping documentation publication for package whatever: no doc field in whatever.opam
     [-] Publishing distribution
     => must exists _build/whatever-0.1.0.tbz
     [-] Publishing to github
     -: exec: git --git-dir .git rev-parse --verify 0.1.0
     -: exec: git --git-dir .git rev-parse --verify 0.1.0
+    -: exec:
+         git --git-dir .git ls-remote --quiet --tags   https://github.com/foo/whatever.git 0.1.0
+    [?] Push tag 0.1.0 to git@github.com:foo/whatever.git? [Y/n]
+    [-] Pushing tag 0.1.0 to git@github.com:foo/whatever.git
+    -: exec: git --git-dir .git push --force git@github.com:foo/whatever.git 0.1.0
     ...
     [?] Create release 0.1.0 on https://github.com/foo/whatever.git? [Y/n]
     [-] Creating release 0.1.0 on https://github.com/foo/whatever.git via github's API
     -: exec: curl --user foo:${token} --location --silent --show-error --config -
          --dump-header - --data
-         {"tag_name":"0.1.0","name":"0.1.0","body":"CHANGES:\n\n- Some other feature\n","draft":false}
+         { "tag_name" : "0.1.0", "body" : "CHANGES:\n\n- Some other feature\n", "draft" : true }
     [+] Succesfully created release with id 1
     [?] Upload _build/whatever-0.1.0.tbz as release asset? [Y/n]
     [-] Uploading _build/whatever-0.1.0.tbz as a release asset for 0.1.0 via github's API
@@ -120,26 +122,3 @@ We make a dry-run release:
          --dump-header - --header Content-Type:application/x-tar --data-binary
          @_build/whatever-0.1.0.tbz
     -: write _build/whatever-0.1.0.url
-
-
-(3) Creating an opam package
-
-    $ echo "https://foo.fr/archive/foo/foo.tbz" > _build/whatever-0.1.0.url
-
-    $ dune-release opam pkg
-    [-] Creating opam package description for whatever
-    [+] Wrote opam package description _build/whatever.0.1.0/opam
-
-    $ cat _build/whatever.0.1.0/opam
-    opam-version: "2.0"
-    homepage: "https://github.com/foo/whatever"
-    dev-repo: "git+https://github.com/foo/whatever.git"
-    description: "whatever"
-    x-commit-hash: ...
-    synopsis: ""
-    url {
-      src: "https://foo.fr/archive/foo/foo.tbz"
-      checksum: [
-    ...
-      ]
-    }

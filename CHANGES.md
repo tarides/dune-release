@@ -6,11 +6,14 @@
 - Log curl calls on verbose/debug mode (#281, @gpetiot)
 - Try to publish the release asset again after it failed (#272, @gpetiot)
 - Improve error reporting of failing git comands (#257, @gpetiot)
-- Suggest a solution for users without ssh setup ( #304, @pitag-ha)
+- Suggest a solution for users without ssh setup (#304, @pitag-ha)
 - Allow including git submodules to the distrib tarball by passing the
   `--include-submodules` flag to `dune-release`, `dune-release bistro` or
   `dune-release distrib` (#300, @NathanReb)
 - Support 'git://' scheme for dev-repo uri (#331, @gpetiot)
+- Support creation of draft releases and draft PRs. Define a new option
+  `--draft` for 'dune-release publish' and 'dune-release opam submit' commands.
+  (#248, @gpetiot)
 
 ### Changed
 

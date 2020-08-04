@@ -1,8 +1,8 @@
 let test_create_release =
-  let make_test ~test_name ~tag ~version ~msg ~user ~repo ~expected =
+  let make_test ~test_name ~tag ~version ~msg ~user ~repo ~draft ~expected =
     let test_fun () =
       let actual =
-        Dune_release.Curl.create_release ~tag ~version ~msg ~user ~repo
+        Dune_release.Curl.create_release ~tag ~version ~msg ~user ~repo ~draft
       in
       Alcotest.check Alcotest_ext.curl test_name expected actual
     in
@@ -10,7 +10,7 @@ let test_create_release =
   in
   [
     make_test ~test_name:"simple" ~tag:"1.1.0" ~version:"1.1.0"
-      ~msg:"this is a message" ~user:"you" ~repo:"some-repo"
+      ~msg:"this is a message" ~user:"you" ~repo:"some-repo" ~draft:false
       ~expected:
         {
           url = "https://api.github.com/repos/you/some-repo/releases";
@@ -23,7 +23,7 @@ let test_create_release =
               Dump_header `Ignore;
               Data
                 (`Data
-                  {|{"tag_name":"1.1.0","name":"1.1.0","body":"this is a message"}|});
+                  {|{"tag_name":"1.1.0","name":"1.1.0","body":"this is a message","draft":false}|});
             ];
         };
   ]
@@ -60,10 +60,11 @@ let test_upload_archive =
   ]
 
 let test_open_pr =
-  let make_test ~test_name ~title ~user ~branch ~body ~opam_repo ~expected =
+  let make_test ~test_name ~title ~user ~branch ~body ~opam_repo ~draft
+      ~expected =
     let test_fun () =
       let actual =
-        Dune_release.Curl.open_pr ~title ~user ~branch ~body ~opam_repo
+        Dune_release.Curl.open_pr ~title ~user ~branch ~body ~opam_repo ~draft
       in
       Alcotest.check Alcotest_ext.curl test_name expected actual
     in
@@ -73,7 +74,7 @@ let test_open_pr =
     make_test ~test_name:"simple" ~title:"This is a PR" ~user:"you"
       ~branch:"my-best-pr"
       ~body:"This PR fixes everything.\nThis is the best PR.\n"
-      ~opam_repo:("base", "repo")
+      ~opam_repo:("base", "repo") ~draft:false
       ~expected:
         {
           url = "https://api.github.com/repos/base/repo/pulls";
@@ -85,7 +86,7 @@ let test_open_pr =
               Dump_header `Ignore;
               Data
                 (`Data
-                  {|{"title":"This is a PR","base":"master","body":"This PR fixes everything.\nThis is the best PR.\n","head":"you:my-best-pr"}|});
+                  {|{"title":"This is a PR","base":"master","body":"This PR fixes everything.\nThis is the best PR.\n","head":"you:my-best-pr","draft":false}|});
             ];
         };
   ]

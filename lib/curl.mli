@@ -1,7 +1,13 @@
 type t = { url : string; args : Curl_option.t list }
 
 val create_release :
-  version:string -> tag:string -> msg:string -> user:string -> repo:string -> t
+  version:string ->
+  tag:string ->
+  msg:string ->
+  user:string ->
+  repo:string ->
+  draft:bool ->
+  t
 
 val get_release : version:string -> user:string -> repo:string -> t
 
@@ -14,6 +20,7 @@ val open_pr :
   branch:Vcs.commit_ish ->
   body:string ->
   opam_repo:string * string ->
+  draft:bool ->
   t
 
 val with_auth : auth:Curl_option.auth -> t -> t

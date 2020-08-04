@@ -61,6 +61,9 @@ val token : [ `Token of Fpath.t option ] Term.t
 val dry_run : [ `Dry_run of bool ] Term.t
 (** A [--dry-run] option to do not perform any action. *)
 
+val draft : [ `Draft of bool ] Term.t
+(** A [--draft] option to produce a draft release. *)
+
 val yes : [ `Yes of bool ] Term.t
 (** A [--yes] option to skip confirmation prompts. *)
 

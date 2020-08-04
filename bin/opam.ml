@@ -111,7 +111,7 @@ let pp_opam_repo fmt opam_repo =
   Format.fprintf fmt "%s/%s" user repo
 
 let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
-    ~title ~opam_repo ~auto_open ~yes pkg =
+    ~title ~opam_repo ~auto_open ~yes ~draft pkg =
   Pkg.opam_descr pkg >>= fun (syn, _) ->
   Pkg.opam_homepage pkg >>= fun homepage ->
   Pkg.opam_doc pkg >>= fun doc ->
@@ -135,7 +135,7 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
       l "Opening pull request to merge branch %a of %a into %a" Text.Pp.commit
         branch Text.Pp.url remote_repo pp_opam_repo opam_repo);
   Github.open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo
-    msg
+    ~draft msg
   >>= function
   | `Already_exists ->
       App_log.blank_line ();
@@ -160,7 +160,7 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
         | Error _ -> msg ())
 
 let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
-    remote_repo pkgs auto_open =
+    remote_repo pkgs auto_open ~draft =
   List.fold_left
     (fun acc pkg ->
       get_pkg_dir pkg >>= fun pkg_dir ->
@@ -200,7 +200,7 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
     names
   >>= fun branch ->
   open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
-    ~title ~opam_repo ~auto_open ~yes pkg
+    ~title ~opam_repo ~auto_open ~yes ~draft pkg
 
 let field pkgs field =
   match field with
@@ -254,7 +254,7 @@ let pkg ?distrib_uri ~dry_run ~pkgs () =
     (Ok 0) pkgs
 
 let submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ?token
-    ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes () =
+    ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes ~draft () =
   let opam_repo =
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
@@ -279,7 +279,7 @@ let submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ?token
   App_log.status (fun m ->
       m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
   submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user:config.user
-    local_repo remote_repo pkgs auto_open
+    local_repo remote_repo pkgs auto_open ~draft
 
 let field ~pkgs ~field_name = field pkgs field_name
 
@@ -290,7 +290,7 @@ let opam_cli () (`Dry_run dry_run) (`Build_dir build_dir)
     (`Package_version version) (`Pkg_descr pkg_descr) (`Readme readme)
     (`Change_log change_log) (`Publish_msg publish_msg) (`Action action)
     (`Field_name field_name) (`No_auto_open no_auto_open) (`Yes yes)
-    (`Token token) =
+    (`Token token) (`Draft draft) =
   get_pkgs ?build_dir ?opam ?distrib_file ?pkg_descr ?readme ?change_log
     ?publish_msg ~dry_run ~keep_v ~tag ~pkg_names ~version ()
   >>= (fun pkgs ->
@@ -299,7 +299,7 @@ let opam_cli () (`Dry_run dry_run) (`Build_dir build_dir)
         | `Pkg -> pkg ~dry_run ?distrib_uri ~pkgs ()
         | `Submit ->
             submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ?token
-              ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes ()
+              ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes ~draft ()
         | `Field -> field ~pkgs ~field_name)
   |> Cli.handle_error
 
@@ -438,7 +438,7 @@ let cmd =
       $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $ Cli.pkg_names
       $ Cli.pkg_version $ pkg_descr $ Cli.readme $ Cli.change_log
       $ Cli.publish_msg $ action $ field_arg $ no_auto_open $ Cli.yes
-      $ Cli.token)
+      $ Cli.token $ Cli.draft)
   in
   (t, info)
 

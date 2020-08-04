@@ -148,6 +148,13 @@ let dry_run =
   in
   named (fun x -> `Dry_run x) Arg.(value & flag & info [ "dry-run" ] ~doc)
 
+let draft =
+  let doc =
+    "Produce a draft release that cannot be merged accidentally and has to be \
+     undrafted before proceeding with the actual release."
+  in
+  named (fun x -> `Draft x) Arg.(value & flag & info [ "draft" ] ~doc)
+
 let yes =
   let doc = "Do not prompt for confirmation and keep going instead" in
   named (fun x -> `Yes x) Arg.(value & flag & info [ "y"; "yes" ] ~doc)

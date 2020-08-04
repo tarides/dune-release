@@ -32,6 +32,7 @@ val publish_distrib :
   msg:string ->
   archive:Fpath.t ->
   yes:bool ->
+  draft:bool ->
   Pkg.t ->
   (string, R.msg) Result.result
 (** Push the tag, create a Github release, upload the distribution archive and
@@ -53,6 +54,7 @@ val open_pr :
   user:string ->
   branch:Vcs.commit_ish ->
   opam_repo:string * string ->
+  draft:bool ->
   string ->
   ([ `Url of string | `Already_exists ], R.msg) result
 

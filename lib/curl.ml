@@ -2,7 +2,7 @@ open Bos_setup
 
 type t = { url : string; args : Curl_option.t list }
 
-let create_release ~version ~tag ~msg ~user ~repo =
+let create_release ~version ~tag ~msg ~user ~repo ~draft =
   let json : string =
     Yojson.Basic.to_string
       (`Assoc
@@ -10,6 +10,7 @@ let create_release ~version ~tag ~msg ~user ~repo =
           ("tag_name", `String tag);
           ("name", `String version);
           ("body", `String msg);
+          ("draft", `Bool draft);
         ])
   in
   let url = strf "https://api.github.com/repos/%s/%s/releases" user repo in
@@ -55,7 +56,7 @@ let upload_archive ~archive ~user ~repo ~release_id =
   in
   { url; args }
 
-let open_pr ~title ~user ~branch ~body ~opam_repo =
+let open_pr ~title ~user ~branch ~body ~opam_repo ~draft =
   let base, repo = opam_repo in
   let url = strf "https://api.github.com/repos/%s/%s/pulls" base repo in
   let json =
@@ -66,6 +67,7 @@ let open_pr ~title ~user ~branch ~body ~opam_repo =
           ("base", `String "master");
           ("body", `String body);
           ("head", `String (strf "%s:%s" user branch));
+          ("draft", `Bool draft);
         ])
   in
   let args =

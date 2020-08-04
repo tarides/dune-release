@@ -58,11 +58,12 @@ let publish_doc ~specific ~dry_run ~yes pkg_names pkg =
           Ok ())
   | Ok _ -> publish_doc ~dry_run ~yes pkg_names pkg
 
-let publish_distrib ?token ?distrib_uri ~dry_run ~yes pkg =
+let publish_distrib ?token ?distrib_uri ~dry_run ~yes ~draft pkg =
   App_log.status (fun l -> l "Publishing distribution");
   Pkg.distrib_file ~dry_run pkg >>= fun archive ->
   Pkg.publish_msg pkg >>= fun msg ->
   Delegate.publish_distrib ?token ?distrib_uri ~dry_run ~yes pkg ~msg ~archive
+    ~draft
 
 let publish_alt ?distrib_uri ~dry_run pkg kind =
   App_log.status (fun l -> l "Publishing %s" kind);
@@ -72,7 +73,7 @@ let publish_alt ?distrib_uri ~dry_run pkg kind =
 
 let publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
     ?publish_msg ?token ~pkg_names ~version ~tag ~keep_v ~dry_run
-    ~publish_artefacts ~yes () =
+    ~publish_artefacts ~yes ~draft () =
   let specific_doc =
     List.exists (function `Doc -> true | _ -> false) publish_artefacts
   in
@@ -88,7 +89,7 @@ let publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
     acc >>= fun () ->
     match artefact with
     | `Doc -> publish_doc ~specific:specific_doc ~dry_run ~yes pkg_names pkg
-    | `Distrib -> publish_distrib ?token ?distrib_uri ~dry_run ~yes pkg
+    | `Distrib -> publish_distrib ?token ?distrib_uri ~dry_run ~yes ~draft pkg
     | `Alt kind ->
         App_log.unhappy (fun l ->
             l Deprecate.Delegates.warning_usage_alt_artefacts
@@ -102,10 +103,10 @@ let publish_cli () (`Build_dir build_dir) (`Package_names pkg_names)
     (`Dist_opam opam) (`Delegate delegate) (`Change_log change_log)
     (`Dist_uri distrib_uri) (`Dist_file distrib_file) (`Publish_msg publish_msg)
     (`Dry_run dry_run) (`Publish_artefacts publish_artefacts) (`Yes yes)
-    (`Token token) =
+    (`Token token) (`Draft draft) =
   publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
     ?publish_msg ?token ~pkg_names ~version ~tag ~keep_v ~dry_run
-    ~publish_artefacts ~yes ()
+    ~publish_artefacts ~yes ~draft ()
   |> Cli.handle_error
 
 (* Command line interface *)
@@ -204,7 +205,7 @@ let cmd =
       pure publish_cli $ Cli.setup $ Cli.build_dir $ Cli.pkg_names
       $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ Cli.dist_opam $ delegate
       $ Cli.change_log $ Cli.dist_uri $ Cli.dist_file $ Cli.publish_msg
-      $ Cli.dry_run $ artefacts $ Cli.yes $ Cli.token),
+      $ Cli.dry_run $ artefacts $ Cli.yes $ Cli.token $ Cli.draft),
     Term.info "publish" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )
 
 (*---------------------------------------------------------------------------

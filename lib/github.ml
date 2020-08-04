@@ -206,9 +206,9 @@ let run_with_auth ?(meth = `POST) ?(default_body = `Null) ~dry_run ~auth curl_t
         Json.from_string resp.body
     | Error e -> R.error_msgf "curl execution failed: %a" Curly.Error.pp e
 
-let curl_create_release ~token ~dry_run ~version ~tag msg user repo =
+let curl_create_release ~token ~dry_run ~version ~tag ~draft msg user repo =
   github_auth ~dry_run ~user token >>= fun auth ->
-  let curl_t = Curl.create_release ~version ~tag ~msg ~user ~repo in
+  let curl_t = Curl.create_release ~version ~tag ~msg ~user ~repo ~draft in
   let default_body = `Assoc [ ("id", `Int D.release_id) ] in
   run_with_auth ~dry_run ~default_body ~auth curl_t
   >>= Github_v3_api.Release_response.release_id
@@ -226,8 +226,9 @@ let curl_upload_archive ~token ~dry_run ~yes archive user repo release_id =
       run_with_auth ~dry_run ~default_body ~auth curl_t
       >>= Github_v3_api.Upload_response.browser_download_url)
 
-let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo body =
-  let curl_t = Curl.open_pr ~title ~user ~branch ~body ~opam_repo in
+let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo ~draft
+    body =
+  let curl_t = Curl.open_pr ~title ~user ~branch ~body ~opam_repo ~draft in
   github_auth ~dry_run ~user:distrib_user token >>= fun auth ->
   let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
   run_with_auth ~dry_run ~default_body ~auth curl_t
@@ -336,7 +337,7 @@ let curl_get_release ~dry_run ~token ~version ~user ~repo =
   >>= Github_v3_api.Release_response.release_id
 
 let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
-    =
+    ~draft =
   match curl_get_release ~dry_run ~token ~version ~user ~repo with
   | Error _ ->
       Prompt.(
@@ -349,7 +350,7 @@ let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
       App_log.status (fun l ->
           l "Creating release %a on %a via github's API" Text.Pp.version version
             Text.Pp.url dev_repo);
-      curl_create_release ~token ~dry_run ~version ~tag msg user repo
+      curl_create_release ~token ~dry_run ~version ~tag msg user repo ~draft
       >>= fun id ->
       App_log.success (fun l -> l "Succesfully created release with id %d" id);
       Ok id
@@ -357,7 +358,7 @@ let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
       App_log.status (fun l -> l "Release with id %d already exists" id);
       Ok id
 
-let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
+let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes ~draft p =
   (match distrib_uri with Some uri -> Ok uri | None -> Pkg.infer_repo_uri p)
   >>= fun uri ->
   (match Uri.Github.get_user_and_repo uri with
@@ -374,6 +375,7 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
   >>= fun token ->
   create_release ~dry_run ~yes ~dev_repo ~token ~version ~msg ~tag ~user ~repo
+    ~draft
   >>= fun id ->
   Prompt.(
     confirm_or_abort ~yes
