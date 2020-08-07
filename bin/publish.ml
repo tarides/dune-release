@@ -54,17 +54,17 @@ let publish_doc ~specific ~dry_run ~yes pkg_names pkg =
           Ok () )
   | Ok _ -> publish_doc ~dry_run ~yes pkg_names pkg
 
-let publish_distrib ?token ~dry_run ~yes pkg =
+let publish_distrib ?token ?distrib_uri ~dry_run ~yes pkg =
   App_log.status (fun l -> l "Publishing distribution");
   Pkg.distrib_file ~dry_run pkg >>= fun archive ->
   Pkg.publish_msg pkg >>= fun msg ->
-  Delegate.publish_distrib ?token ~dry_run ~yes pkg ~msg ~archive
+  Delegate.publish_distrib ?token ?distrib_uri ~dry_run ~yes pkg ~msg ~archive
 
-let publish_alt ~dry_run pkg kind =
+let publish_alt ?distrib_uri ~dry_run pkg kind =
   App_log.status (fun l -> l "Publishing %s" kind);
   Pkg.distrib_file ~dry_run pkg >>= fun archive ->
   Pkg.publish_msg pkg >>= fun msg ->
-  Delegate.publish_alt ~dry_run pkg ~kind ~msg ~archive
+  Delegate.publish_alt ?distrib_uri ~dry_run pkg ~kind ~msg ~archive
 
 let publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
     ?publish_msg ?token ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
@@ -78,14 +78,14 @@ let publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
   Config.keep_v keep_v >>= fun keep_v ->
   let pkg =
     Pkg.v ~dry_run ?name ?version ?tag ~keep_v ?build_dir ?opam ?change_log
-      ?distrib_uri ?distrib_file ?publish_msg ?delegate ()
+      ?distrib_file ?publish_msg ?delegate ()
   in
   let publish_artefact acc artefact =
     acc >>= fun () ->
     match artefact with
     | `Doc -> publish_doc ~specific:specific_doc ~dry_run ~yes pkg_names pkg
-    | `Distrib -> publish_distrib ?token ~dry_run ~yes pkg
-    | `Alt kind -> publish_alt ~dry_run pkg kind
+    | `Distrib -> publish_distrib ?token ?distrib_uri ~dry_run ~yes pkg
+    | `Alt kind -> publish_alt ?distrib_uri ~dry_run pkg kind
   in
   List.fold_left publish_artefact (Ok ()) publish_artefacts >>= fun () -> Ok 0
 

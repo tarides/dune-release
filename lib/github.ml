@@ -226,9 +226,9 @@ let assert_tag_exists ~dry_run tag =
   if Vcs.tag_exists ~dry_run repo tag then Ok ()
   else R.error_msgf "%s is not a valid tag" tag
 
-let publish_distrib ?token ~dry_run ~msg ~archive ~yes p =
+let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
-  ( match Pkg.distrib_user_and_repo p with
+  ( match Pkg.distrib_user_and_repo ?uri:distrib_uri p with
   | Error _ as e -> if dry_run then Ok (D.user, D.repo) else e
   | r -> r )
   >>= fun (user, repo) ->

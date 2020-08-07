@@ -44,7 +44,6 @@ type t = {
   change_logs : Fpath.t list option;
   licenses : Fpath.t list option;
   distrib : Distrib.t;
-  distrib_uri : string option;
   distrib_file : Fpath.t option;
   publish_msg : string option;
 }
@@ -262,32 +261,28 @@ let distrib_uri_of_homepage p =
   | Some (uri, _) ->
       path_of_distrib p >>| fun path -> Some (uri_append uri path)
 
-let distrib_uri p =
-  let subst_uri p uri =
-    name p >>= fun name ->
-    tag p >>= fun tag ->
-    let defs = String.Map.(empty |> add "NAME" name |> add "TAG" tag) in
-    Pat.of_string uri >>| fun pat -> Pat.format defs pat
-  in
-  let uri =
-    match p.distrib_uri with
-    | Some u -> Ok u
-    | None -> (
-        distrib_uri_of_homepage p >>= function
-        | Some u -> Ok u
-        | None -> (
-            distrib_uri_of_dev_repo p >>= function
-            | Some u -> Ok u
-            | None -> err_not_found () ) )
-  in
-  uri >>= fun uri ->
+let distrib_uri ?uri p =
+  ( match uri with
+  | Some u -> Ok u
+  | None -> (
+      distrib_uri_of_homepage p >>= function
+      | Some u -> Ok u
+      | None -> (
+          distrib_uri_of_dev_repo p >>= function
+          | Some u -> Ok u
+          | None -> err_not_found () ) ) )
+  >>= fun uri ->
   ( match uri_domain uri with
   | [ "io"; "github"; user ] -> (
       match Text.split_uri ~rel:true uri with
       | None -> R.error_msgf "invalid uri: %s" uri
       | Some (_, _, path) -> Ok ("https://github.com/" ^ user ^ "/" ^ path) )
   | _ -> Ok uri )
-  >>= subst_uri p
+  >>= fun uri ->
+  name p >>= fun name ->
+  tag p >>= fun tag ->
+  let defs = String.Map.(empty |> add "NAME" name |> add "TAG" tag) in
+  Pat.of_string uri >>| Pat.format defs
 
 let distrib_filename ?(opam = false) p =
   let sep = if opam then '.' else '-' in
@@ -312,8 +307,8 @@ let distrib_file ~dry_run p =
       |> R.reword_error_msg (fun _ ->
              R.msgf "Did you forget to call 'dune-release distrib' ?")
 
-let distrib_user_and_repo p =
-  distrib_uri p >>= fun uri ->
+let distrib_user_and_repo ?uri p =
+  distrib_uri ?uri p >>= fun uri ->
   let uri_error uri =
     R.msgf
       "Could not derive user and repo from opam dev-repo field value %a; \
@@ -452,8 +447,8 @@ let infer_name dir =
               exit 1 ) )
 
 let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
-    ?opam:opam_file ?opam_descr ?readme ?change_log ?license ?distrib_uri
-    ?distrib_file ?publish_msg ?(distrib = Distrib.v ()) () =
+    ?opam:opam_file ?opam_descr ?readme ?change_log ?license ?distrib_file
+    ?publish_msg ?(distrib = Distrib.v ()) () =
   let name =
     match name with None -> infer_name Fpath.(v ".") | Some v -> Ok v
   in
@@ -478,7 +473,6 @@ let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
       readmes;
       change_logs;
       licenses;
-      distrib_uri;
       distrib_file;
       publish_msg;
       distrib;

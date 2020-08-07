@@ -24,6 +24,7 @@ end
 
 val publish_distrib :
   ?token:Fpath.t ->
+  ?distrib_uri:string ->
   dry_run:bool ->
   msg:string ->
   archive:Fpath.t ->

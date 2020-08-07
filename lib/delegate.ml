@@ -18,11 +18,11 @@ let run_delegate ~dry_run del args =
 
 (* Publish request *)
 
-let publish_distrib ?token ~dry_run ~msg ~archive ~yes pkg =
+let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes pkg =
   Pkg.delegate pkg >>= function
   | None ->
       App_log.status (fun l -> l "Publishing to github");
-      Github.publish_distrib ?token ~dry_run ~yes ~msg ~archive pkg
+      Github.publish_distrib ?token ?distrib_uri ~dry_run ~yes ~msg ~archive pkg
       >>= fun url ->
       Pkg.archive_url_path pkg >>= fun url_file ->
       Sos.write_file ~dry_run url_file url >>= fun () -> Ok ()
@@ -30,7 +30,7 @@ let publish_distrib ?token ~dry_run ~msg ~archive ~yes pkg =
       App_log.status (fun l -> l "Using delegate %a" Cmd.pp del);
       Pkg.name pkg >>= fun name ->
       Pkg.tag pkg >>= fun version ->
-      Pkg.distrib_uri pkg >>= fun distrib_uri ->
+      Pkg.distrib_uri ?uri:distrib_uri pkg >>= fun distrib_uri ->
       run_delegate ~dry_run del
         Cmd.(
           v "publish" % "distrib" % distrib_uri % name % version % msg
@@ -49,14 +49,14 @@ let publish_doc ~dry_run ~msg ~docdir ~yes pkg =
       run_delegate ~dry_run del
         Cmd.(v "publish" % "doc" % doc_uri % name % version % msg % p docdir)
 
-let publish_alt ~dry_run ~kind ~msg ~archive p =
+let publish_alt ?distrib_uri ~dry_run ~kind ~msg ~archive p =
   Pkg.delegate p >>= function
   | None -> R.error_msgf "No default delegate to publish %s" kind
   | Some del ->
       App_log.status (fun l -> l "Using delegate %a" Cmd.pp del);
       Pkg.name p >>= fun name ->
       Pkg.version p >>= fun version ->
-      Pkg.distrib_uri p >>= fun distrib_uri ->
+      Pkg.distrib_uri ?uri:distrib_uri p >>= fun distrib_uri ->
       run_delegate ~dry_run del
         Cmd.(
           v "publish" % "alt" % distrib_uri % kind % name % version % msg

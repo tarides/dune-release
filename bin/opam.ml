@@ -169,8 +169,8 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
         | Ok () -> Ok 0
         | Error _ -> msg () )
 
-let submit ~token ~dry_run ~yes ~opam_repo ~user local_repo remote_repo pkgs
-    auto_open =
+let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
+    remote_repo pkgs auto_open =
   List.fold_left
     (fun acc pkg ->
       get_pkg_dir pkg >>= fun pkg_dir ->
@@ -190,7 +190,7 @@ let submit ~token ~dry_run ~yes ~opam_repo ~user local_repo remote_repo pkgs
   list_map Pkg.name pkgs >>= fun names ->
   let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
   Pkg.publish_msg pkg >>= fun changes ->
-  Pkg.distrib_user_and_repo pkg >>= fun (distrib_user, repo) ->
+  Pkg.distrib_user_and_repo ?uri:distrib_uri pkg >>= fun (distrib_user, repo) ->
   let user =
     match user with
     | Some user -> user (* from the .yaml configuration file *)
@@ -259,8 +259,8 @@ let pkg ?distrib_uri ~dry_run ~pkgs () =
       | (Error _ as e), _ | _, (Error _ as e) -> e)
     (Ok 0) pkgs
 
-let submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run ~pkgs
-    ~pkg_names ~no_auto_open ~yes () =
+let submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ?token
+    ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes () =
   let opam_repo =
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
@@ -284,8 +284,8 @@ let submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run ~pkgs
   >>= fun token ->
   App_log.status (fun m ->
       m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
-  submit ~token ~dry_run ~yes ~opam_repo ~user:config.user local_repo
-    remote_repo pkgs auto_open
+  submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user:config.user
+    local_repo remote_repo pkgs auto_open
 
 let field ~pkgs ~field_name = field pkgs field_name
 
@@ -299,8 +299,8 @@ let opam_cli () dry_run build_dir local_repo remote_repo opam_repo user keep_v
         | `Descr -> descr ~pkgs
         | `Pkg -> pkg ~dry_run ?distrib_uri ~pkgs ()
         | `Submit ->
-            submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run
-              ~pkgs ~pkg_names ~no_auto_open ~yes ()
+            submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ?token
+              ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes ()
         | `Field -> field ~pkgs ~field_name)
   |> Cli.handle_error
 
