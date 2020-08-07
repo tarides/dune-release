@@ -81,9 +81,8 @@ val change_log : t -> (Fpath.t, R.msg) result
 val licenses : t -> (Fpath.t list, R.msg) result
 (** [licenses p] are [p]'s license files. *)
 
-val distrib_uri : ?raw:bool -> t -> (string, R.msg) result
-(** [distrib_uri p] is [p]'s distribution URI. If [raw] is [true] defaults to
-    [false], [p]'s raw URI distribution pattern is returned. *)
+val distrib_uri : t -> (string, R.msg) result
+(** [distrib_uri p] is [p]'s distribution URI. *)
 
 val distrib_file : dry_run:bool -> t -> (Fpath.t, R.msg) result
 (** [distrib_file p] is [p]'s distribution archive. *)

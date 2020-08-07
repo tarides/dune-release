@@ -262,7 +262,7 @@ let distrib_uri_of_homepage p =
   | Some (uri, _) ->
       path_of_distrib p >>| fun path -> Some (uri_append uri path)
 
-let distrib_uri ?(raw = false) p =
+let distrib_uri p =
   let subst_uri p uri =
     name p >>= fun name ->
     tag p >>= fun tag ->
@@ -287,7 +287,7 @@ let distrib_uri ?(raw = false) p =
       | None -> R.error_msgf "invalid uri: %s" uri
       | Some (_, _, path) -> Ok ("https://github.com/" ^ user ^ "/" ^ path) )
   | _ -> Ok uri )
-  >>= fun uri -> if raw then Ok uri else subst_uri p uri
+  >>= subst_uri p
 
 let distrib_filename ?(opam = false) p =
   let sep = if opam then '.' else '-' in
