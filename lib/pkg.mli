@@ -80,8 +80,9 @@ val change_log : t -> (Fpath.t, R.msg) result
 val licenses : t -> (Fpath.t list, R.msg) result
 (** [licenses p] are [p]'s license files. *)
 
-val distrib_uri : ?uri:string -> t -> (string, R.msg) result
-(** [distrib_uri p] is [p]'s distribution URI. *)
+val infer_distrib_uri : t -> (string, R.msg) result
+(** [infer_distrib_uri p] infers [p]'s distribution URI from the homepage and
+    dev-repo fields. *)
 
 val distrib_file : dry_run:bool -> t -> (Fpath.t, R.msg) result
 (** [distrib_file p] is [p]'s distribution archive. *)
@@ -115,7 +116,7 @@ val doc_dir : Fpath.t
 
 val doc_user_repo_and_path : t -> (string * string * Fpath.t, R.msg) result
 
-val distrib_user_and_repo : ?uri:string -> t -> (string * string, R.msg) result
+val distrib_user_and_repo : string -> (string * string, R.msg) result
 
 type f =
   dry_run:bool ->

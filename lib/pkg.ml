@@ -261,16 +261,13 @@ let distrib_uri_of_homepage p =
   | Some (uri, _) ->
       path_of_distrib p >>| fun path -> Some (uri_append uri path)
 
-let distrib_uri ?uri p =
-  ( match uri with
-  | Some u -> Ok u
-  | None -> (
-      distrib_uri_of_homepage p >>= function
-      | Some u -> Ok u
-      | None -> (
-          distrib_uri_of_dev_repo p >>= function
-          | Some u -> Ok u
-          | None -> err_not_found () ) ) )
+let infer_distrib_uri p =
+  (distrib_uri_of_homepage p >>= function
+   | Some u -> Ok u
+   | None -> (
+       distrib_uri_of_dev_repo p >>= function
+       | Some u -> Ok u
+       | None -> err_not_found () ))
   >>= fun uri ->
   ( match uri_domain uri with
   | [ "io"; "github"; user ] -> (
@@ -307,8 +304,7 @@ let distrib_file ~dry_run p =
       |> R.reword_error_msg (fun _ ->
              R.msgf "Did you forget to call 'dune-release distrib' ?")
 
-let distrib_user_and_repo ?uri p =
-  distrib_uri ?uri p >>= fun uri ->
+let distrib_user_and_repo uri =
   let uri_error uri =
     R.msgf
       "Could not derive user and repo from opam dev-repo field value %a; \

@@ -106,7 +106,7 @@ let lint_opam_home_and_dev pkg =
     ~msgf:(fun l ->
       l "opam fields %a and %a can be parsed by dune-release" pp_field
         "homepage" pp_field "dev-repo")
-    (Pkg.distrib_user_and_repo pkg)
+    (Pkg.infer_distrib_uri pkg >>= Pkg.distrib_user_and_repo)
 
 let lint_opam_github_fields pkg = lint_opam_doc pkg + lint_opam_home_and_dev pkg
 

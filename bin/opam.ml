@@ -58,7 +58,7 @@ let archive_url ~dry_run ~opam_file pkg =
   else if dry_run && not opam_file_exists then Ok D.distrib_uri
   else (
     Logs.warn (fun l -> l "Could not find %a." Text.Pp.path url_file);
-    Pkg.distrib_uri pkg >>= fun uri ->
+    Pkg.infer_distrib_uri pkg >>= fun uri ->
     Logs.warn (fun l ->
         l
           "using %s for as url.src. Note that it might differ from the one \
@@ -190,7 +190,11 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
   list_map Pkg.name pkgs >>= fun names ->
   let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
   Pkg.publish_msg pkg >>= fun changes ->
-  Pkg.distrib_user_and_repo ?uri:distrib_uri pkg >>= fun (distrib_user, repo) ->
+  ( match distrib_uri with
+  | Some uri -> Ok uri
+  | None -> Pkg.infer_distrib_uri pkg )
+  >>= Pkg.distrib_user_and_repo
+  >>= fun (distrib_user, repo) ->
   let user =
     match user with
     | Some user -> user (* from the .yaml configuration file *)
