@@ -134,16 +134,27 @@ let handle_opam_lint_exit ~dry_run ~verbose_lint_cmd ~opam_file status output =
       match verbose_lint_output with
       | Ok (out, _) | Error (`Msg out) -> `Fail out )
 
-let check_has_description ~opam_file pkg =
-  Pkg.opam_field_hd pkg "description" >>= function
-  | None ->
-      R.error_msgf "%a does not have a 'description' field." Fpath.pp opam_file
-  | Some _ -> Ok ()
-
-let lint_descr ~opam_file pkg =
-  lint_res
-    ~msgf:(fun l -> l "opam field %a is present" pp_field "description")
-    (check_has_description ~opam_file pkg)
+let lint_descr_or_synopsis ~opam_file pkg =
+  match Pkg.opam_field_hd pkg "description" with
+  | Ok None | Ok (Some "") | Error _ -> (
+      match Pkg.opam_field_hd pkg "synopsis" with
+      | Ok None | Ok (Some "") | Error _ ->
+          report_status `Fail (fun l ->
+              l "opam field %a or %a must be present" pp_field "description"
+                pp_field "synopsis");
+          Logs.on_error_msg
+            ~use:(fun () -> 1)
+            (R.error_msgf
+               "%a does not have a 'description' or a 'synopsis' field."
+               Fpath.pp opam_file)
+      | Ok (Some _) ->
+          report_status `Ok (fun l ->
+              l "opam field %a is present" pp_field "synopsis");
+          0 )
+  | Ok (Some _) ->
+      report_status `Ok (fun l ->
+          l "opam field %a is present" pp_field "description");
+      0
 
 let opam_lint ~dry_run ~opam_file_version ~opam_tool_version opam_file =
   let base_lint_cmd = opam_lint_cmd ~opam_file_version ~opam_tool_version in
@@ -157,7 +168,9 @@ let extra_opam_lint ~opam_file_version ~opam_file pkg =
   let is_2_0_format =
     match opam_file_version with Some "2.0" -> true | _ -> false
   in
-  let descr_err = if is_2_0_format then lint_descr ~opam_file pkg else 0 in
+  let descr_err =
+    if is_2_0_format then lint_descr_or_synopsis ~opam_file pkg else 0
+  in
   let github_field_errs = lint_opam_github_fields pkg in
   descr_err + github_field_errs
 

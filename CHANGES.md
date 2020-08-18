@@ -11,6 +11,7 @@
 
 - Attach the changelog to the annotated tag message (#283, @gpetiot)
 - Deprecate the use of delegates in `dune-release publish` (#276, @pitag-ha)
+- Linting will check 'synopsis' field when there is no 'description' field in the opam file (#269, @gpetiot)
 
 ### Deprecated
 
