@@ -42,11 +42,17 @@ val header_title : ?flavour:flavour -> string -> string
 
 (** {1 Toy change log parsing} *)
 
+val change_log_last_entry :
+  ?flavour:[< `Asciidoc | `Markdown > `Markdown ] ->
+  string ->
+  (string * (string * string)) option
+(** [change_log_last_entry ?flavour changes] tries to parse the last change log
+    entry of the string [changes] using the [flavour] syntax. *)
+
 val change_log_file_last_entry :
   Fpath.t -> (string * (string * string), R.msg) result
 (** [change_log_file_last_entry file] tries to parse the last change log entry
-    of the file [file] using {!flavour_of_fpath} and and
-    {!change_log_last_entry}. *)
+    of the file [file] using {!flavour_of_fpath} and {!change_log_last_entry}. *)
 
 (** {1 Toy URI parsing} *)
 

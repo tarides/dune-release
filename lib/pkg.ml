@@ -363,9 +363,8 @@ let publish_msg p =
   match p.publish_msg with
   | Some msg -> Ok msg
   | None ->
-      change_log p >>= fun change_log ->
-      Text.change_log_file_last_entry change_log >>= fun (_, (_, txt)) ->
-      Ok (strf "CHANGES:\n\n%s\n" (String.trim txt))
+      change_log p >>= Text.change_log_file_last_entry >>| fun (_, (_, txt)) ->
+      strf "CHANGES:\n\n%s\n" txt
 
 let infer_from_dune_project dir =
   let file = Fpath.(dir / "dune-project") in
