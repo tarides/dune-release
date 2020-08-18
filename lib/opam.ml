@@ -48,10 +48,8 @@ let cmd = Cmd.of_list @@ Cmd.to_list @@ tool "opam" `Host_os
 
 (* Publish *)
 
-let shortest x =
-  List.hd (List.sort (fun x y -> compare (String.length x) (String.length y)) x)
-
-let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
+let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version ~main_pkg
+    ~all_pkgs =
   let msg =
     match msg with
     | None -> Ok Cmd.empty
@@ -74,8 +72,7 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
     Printf.sprintf "https://github.com/%s/%s.git" user repo
   in
   let remote_branch = "master" in
-  let pkg = shortest names in
-  let branch = Fmt.strf "release-%s-%s" pkg version in
+  let branch = Fmt.strf "release-%s-%s" main_pkg version in
   let prepare_repo () =
     App_log.status (fun l ->
         l "Fetching %a" Text.Pp.url (upstream ^ "#" ^ remote_branch));
@@ -148,7 +145,7 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
   Sos.with_dir ~dry_run local_repo
     (fun () ->
       prepare_repo () >>= fun () ->
-      prepare_packages names >>= fun () ->
+      prepare_packages all_pkgs >>= fun () ->
       commit_and_push () >>= fun () -> Ok branch)
     ()
   |> R.join

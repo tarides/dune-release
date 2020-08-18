@@ -84,7 +84,7 @@ let read_string default ~descr =
     default;
   match read () with None -> default | Some s -> s
 
-let create_config ~user ~remote_repo ~local_repo pkgs file =
+let create_config ~user ~remote_repo ~local_repo pkg file =
   Fmt.pr
     "%a does not exist!\n\
      Please answer a few questions to help me create it for you:\n\n\
@@ -93,7 +93,6 @@ let create_config ~user ~remote_repo ~local_repo pkgs file =
   (match user with
   | Some u -> Ok u
   | None ->
-      let pkg = List.hd pkgs in
       Pkg.infer_distrib_uri pkg >>= Pkg.distrib_user_and_repo >>= fun (u, _) ->
       Ok u)
   >>= fun default_user ->
@@ -155,10 +154,10 @@ let find () =
   OS.File.exists file >>= fun exists ->
   if exists then OS.File.read file >>= of_yaml >>| fun x -> Some x else Ok None
 
-let v ~user ~remote_repo ~local_repo pkgs =
+let v ~user ~remote_repo ~local_repo pkg =
   find () >>= function
   | Some f -> Ok f
-  | None -> file () >>= create_config ~user ~remote_repo ~local_repo pkgs
+  | None -> file () >>= create_config ~user ~remote_repo ~local_repo pkg
 
 let reset_terminal : (unit -> unit) option ref = ref None
 

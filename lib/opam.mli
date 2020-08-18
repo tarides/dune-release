@@ -22,11 +22,13 @@ val prepare :
   remote_repo:string ->
   opam_repo:string * string ->
   version:string ->
-  string list ->
+  main_pkg:string ->
+  all_pkgs:string list ->
   (string, R.msg) result
-(** [prepare ~local_repo ~version pkgs] adds the packages [pkg.version] to a new
-    branch in the local opam repository [local_repo], using the commit message
-    [msg] (if any). Return the new branch. *)
+(** [prepare ~local_repo ~version ~main_pkg ~all_pkgs] adds the packages from
+    [all_pkgs] to a new branch named "release-[main_pkg]-version" in the local
+    opam repository [local_repo], using the commit message [msg] (if any).
+    Commits and pushes the changes, then returns the new branch. *)
 
 (** {1:file Files} *)
 

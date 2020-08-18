@@ -34,6 +34,9 @@ val v :
 val infer_pkg_names : Fpath.t -> string list -> (string list, R.msg) result
 (** Infer the package list. *)
 
+val infer_main_pkg : Fpath.t -> t list -> (t, R.msg) result
+(** Infer the main package. *)
+
 val name : t -> (string, R.msg) result
 (** [name p] is [p]'s name. *)
 

@@ -160,7 +160,7 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
         | Error _ -> msg ())
 
 let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
-    remote_repo pkgs auto_open =
+    remote_repo ~main_pkg:pkg ~pkgs auto_open =
   List.fold_left
     (fun acc pkg ->
       get_pkg_dir pkg >>= fun pkg_dir ->
@@ -175,7 +175,6 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
           Ok 1)
     (Ok 0) pkgs
   >>= fun _ ->
-  let pkg = List.hd pkgs in
   Pkg.version pkg >>= fun version ->
   list_map Pkg.name pkgs >>= fun names ->
   let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
@@ -197,7 +196,10 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
   let msg = strf "%s\n\n%s\n" title changes in
   App_log.status (fun l ->
       l "Preparing pull request to %a" pp_opam_repo opam_repo);
-  Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~opam_repo ~version names
+  Pkg.name pkg >>= fun main_pkg ->
+  list_map Pkg.name pkgs >>= fun all_pkgs ->
+  Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~opam_repo ~version
+    ~main_pkg ~all_pkgs
   >>= fun branch ->
   open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
     ~title ~opam_repo ~auto_open ~yes pkg
@@ -235,11 +237,10 @@ let get_pkgs ?build_dir ?opam ?distrib_file ?readme ?change_log ?publish_msg
     Pkg.distrib_file ~dry_run pkg
   in
   Pkg.infer_pkg_names Fpath.(v ".") pkg_names >>= fun pkg_names ->
-  let pkg_names = List.map (fun n -> Some n) pkg_names in
   distrib_file >>| fun distrib_file ->
   List.map
     (fun name ->
-      Pkg.v ~dry_run ?build_dir ?name ?version ?opam ?tag ?opam_descr:pkg_descr
+      Pkg.v ~dry_run ?build_dir ~name ?version ?opam ?tag ?opam_descr:pkg_descr
         ~keep_v ~distrib_file ?readme ?change_log ?publish_msg ())
     pkg_names
 
@@ -258,7 +259,8 @@ let submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ?token
   let opam_repo =
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
-  Config.v ~user ~local_repo ~remote_repo pkgs >>= fun config ->
+  Pkg.infer_main_pkg (Fpath.v ".") pkgs >>= fun main_pkg ->
+  Config.v ~user ~local_repo ~remote_repo main_pkg >>= fun config ->
   (match local_repo with
   | Some r -> Ok Fpath.(v r)
   | None -> (
@@ -279,7 +281,7 @@ let submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ?token
   App_log.status (fun m ->
       m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
   submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user:config.user
-    local_repo remote_repo pkgs auto_open
+    local_repo remote_repo ~main_pkg ~pkgs auto_open
 
 let field ~pkgs ~field_name = field pkgs field_name
 

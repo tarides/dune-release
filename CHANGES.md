@@ -59,6 +59,7 @@
   dune-project would be silently ignored by `dune-release distrib`.
 - Fix rewriting of github references in changelog (#330, @gpetiot)
 - Fixes a bug under cygwin where dune-release was unable to find the commit hash corresponding to the release tag (#329, @gpetiot)
+- Infer the main package from the dune-project if possible (#267, @gpetiot)
 
 ### Security
 

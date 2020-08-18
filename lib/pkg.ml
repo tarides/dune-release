@@ -438,6 +438,10 @@ let infer_name dir =
                      (name <name>) to dune-project");
               exit 1))
 
+let infer_main_pkg dir pkgs =
+  infer_name dir >>| fun main_pkg_name ->
+  List.find (fun pkg -> String.equal pkg.name main_pkg_name) pkgs
+
 let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
     ?opam:opam_file ?opam_descr ?readme ?change_log ?license ?distrib_file
     ?publish_msg () =

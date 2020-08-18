@@ -26,7 +26,7 @@ val v :
   user:string option ->
   remote_repo:string option ->
   local_repo:string option ->
-  Pkg.t list ->
+  Pkg.t ->
   (t, Bos_setup.R.msg) result
 
 val token : dry_run:bool -> unit -> (Fpath.t, Bos_setup.R.msg) result
