@@ -124,7 +124,7 @@ type f =
   dir:Fpath.t ->
   args:Cmd.t ->
   out:(OS.Cmd.run_out -> (string * OS.Cmd.run_status, Sos.error) result) ->
-  t ->
+  string list ->
   (string * OS.Cmd.run_status, Sos.error) result
 
 (** {1 Test} *)

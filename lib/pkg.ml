@@ -560,20 +560,20 @@ type f =
   dir:Fpath.t ->
   args:Cmd.t ->
   out:(OS.Cmd.run_out -> (string * OS.Cmd.run_status, Sos.error) result) ->
-  t ->
+  string list ->
   (string * OS.Cmd.run_status, Sos.error) result
 
-let run ~dry_run ~dir ~args ~out ~default p cmd =
-  let name = p.name in
-  let cmd = Cmd.(v "dune" % cmd % "-p" % name %% args) in
+let run ~dry_run ~dir ~args ~out ~default pkg_names cmd =
+  let pkgs = String.concat ~sep:"," pkg_names in
+  let cmd = Cmd.(v "dune" % cmd % "-p" % pkgs %% args) in
   let run () = Sos.run_out ~dry_run cmd ~default out in
   R.join @@ Sos.with_dir ~dry_run dir run ()
 
-let test ~dry_run ~dir ~args ~out p =
-  run ~dry_run ~dir ~args ~out ~default:(Sos.out "") p "runtest"
+let test ~dry_run ~dir ~args ~out pkg_names =
+  run ~dry_run ~dir ~args ~out ~default:(Sos.out "") pkg_names "runtest"
 
-let build ~dry_run ~dir ~args ~out p =
-  run ~dry_run ~dir ~args ~out ~default:(Sos.out "") p "build"
+let build ~dry_run ~dir ~args ~out pkg_names =
+  run ~dry_run ~dir ~args ~out ~default:(Sos.out "") pkg_names "build"
 
 (* tags *)
 
