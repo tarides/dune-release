@@ -18,6 +18,10 @@ module D = struct
   let token = "${token}"
 
   let pr_url = "${pr_url}"
+
+  let download_url = "${download_url}"
+
+  let release_id = 1
 end
 
 module Parse = struct
@@ -181,13 +185,17 @@ let run_with_auth ?(default_body = `Null) ~dry_run ~auth curl_t =
 let curl_create_release ~token ~dry_run version msg user repo =
   github_auth ~dry_run ~user token >>= fun auth ->
   let curl_t = Curl.create_release ~version ~msg ~user ~repo in
-  run_with_auth ~dry_run ~auth curl_t
+  let default_body = `Assoc [ ("id", `Int D.release_id) ] in
+  run_with_auth ~dry_run ~default_body ~auth curl_t
   >>= Github_v3_api.Release_response.release_id
 
 let curl_upload_archive ~token ~dry_run archive user repo release_id =
   let curl_t = Curl.upload_archive ~archive ~user ~repo ~release_id in
   github_auth ~dry_run ~user token >>= fun auth ->
-  run_with_auth ~dry_run ~auth curl_t
+  let default_body =
+    `Assoc [ ("browser_download_url", `String D.download_url) ]
+  in
+  run_with_auth ~dry_run ~default_body ~auth curl_t
   >>= Github_v3_api.Upload_response.browser_download_url
 
 let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo body =
