@@ -81,6 +81,7 @@ let pkg ~dry_run ~distrib_uri pkg =
   | Some uri -> Ok uri
   | None -> archive_url ~dry_run ~opam_file:opam_f pkg )
   >>= fun uri ->
+  let uri = String.trim uri in
   Opam.Url.with_distrib_file ~dry_run ~uri distrib_file >>= fun url ->
   OS.Dir.exists dir >>= fun exists ->
   (if exists then Sos.delete_dir ~dry_run dir else Ok ()) >>= fun () ->

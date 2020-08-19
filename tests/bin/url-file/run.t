@@ -134,9 +134,7 @@ We make a dry-run release:
     x-commit-hash: ...
     synopsis: ""
     url {
-      src: """
-    https://foo.fr/archive/foo/foo.tbz
-    """
+      src: "https://foo.fr/archive/foo/foo.tbz"
       checksum: [
     ...
       ]
