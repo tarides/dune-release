@@ -48,8 +48,10 @@ let check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar
   Pkg.infer_pkg_names dir pkg_names >>= fun pkg_names ->
   (if skip_lint then Ok 0 else lint_distrib ~dry_run ~dir ~pkg_names pkg)
   >>= fun c0 ->
-  (if skip_build then Ok 0 else build_distrib ~dry_run ~dir pkg) >>= fun c1 ->
-  (if skip_tests || skip_build then Ok 0 else test_distrib ~dry_run ~dir pkg)
+  (if skip_build then Ok 0 else build_distrib ~dry_run ~dir pkg_names)
+  >>= fun c1 ->
+  ( if skip_tests || skip_build then Ok 0
+  else test_distrib ~dry_run ~dir pkg_names )
   >>= fun c2 ->
   match c0 + c1 + c2 with
   | 0 -> Sos.delete_dir ~dry_run dir >>= fun () -> Ok 0

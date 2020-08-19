@@ -96,12 +96,12 @@ We make a dry-run release
     
     [-] Building package in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
-    -: exec: dune build -p whatever
+    -: exec: dune build -p whatever,whatever-lib
     [ OK ] package builds
     
     [-] Running package tests in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
-    -: exec: dune runtest -p whatever
+    -: exec: dune runtest -p whatever,whatever-lib
     [ OK ] package tests
     -: rmdir _build/whatever-0.1.0
     
@@ -177,12 +177,12 @@ We do the whole process, calling publish doc implicitely should succeed
     
     [-] Building package in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
-    -: exec: dune build -p whatever
+    -: exec: dune build -p whatever,whatever-lib
     [ OK ] package builds
     
     [-] Running package tests in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
-    -: exec: dune runtest -p whatever
+    -: exec: dune runtest -p whatever,whatever-lib
     [ OK ] package tests
     -: rmdir _build/whatever-0.1.0
     

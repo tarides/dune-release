@@ -19,6 +19,8 @@
 - Use int64 for timestamps. (#261, @gpetiot)
 - Define the order of packages (#263, @gpetiot)
 - Allow the dry-run mode to continue even after some API call's response were expected by using placeholder values (#262, @gpetiot)
+- Build and run tests for all selected packages when checking distribution tarball
+  (#266, @NathanReb)
 
 ### Security
 
