@@ -17,3 +17,13 @@ val confirm_or_abort :
   (unit, Rresult.R.msg) result
 (** Same as [confirm] but returns [Ok ()] for yes and
     [Error (`Msg "Aborting on user demand")] for no *)
+
+val try_again :
+  question:('a, unit) Logs.msgf ->
+  yes:bool ->
+  default_answer:answer ->
+  (unit -> ('b, 'c) result) ->
+  ('b, Rresult.R.msg) result
+(** [try_again ~question ~yes ~default_answer f] prompts the user to try running
+    [f] again if it failed, until [f] eventually succeeds or the user aborts the
+    process by answering no. *)

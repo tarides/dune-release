@@ -197,14 +197,18 @@ let curl_create_release ~token ~dry_run version msg user repo =
   run_with_auth ~dry_run ~default_body ~auth curl_t
   >>= Github_v3_api.Release_response.release_id
 
-let curl_upload_archive ~token ~dry_run archive user repo release_id =
+let curl_upload_archive ~token ~dry_run ~yes archive user repo release_id =
   let curl_t = Curl.upload_archive ~archive ~user ~repo ~release_id in
   github_auth ~dry_run ~user token >>= fun auth ->
   let default_body =
     `Assoc [ ("browser_download_url", `String D.download_url) ]
   in
-  run_with_auth ~dry_run ~default_body ~auth curl_t
-  >>= Github_v3_api.Upload_response.browser_download_url
+  Prompt.try_again ~yes ~default_answer:Prompt.Yes
+    ~question:(fun l ->
+      l "Uploading %a as release asset failed. Try again?" Text.Pp.path archive)
+    (fun () ->
+      run_with_auth ~dry_run ~default_body ~auth curl_t
+      >>= Github_v3_api.Upload_response.browser_download_url)
 
 let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo body =
   let curl_t = Curl.open_pr ~title ~user ~branch ~body ~opam_repo in
@@ -280,7 +284,7 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   App_log.status (fun l ->
       l "Uploading %a as a release asset for %a via github's API" Text.Pp.path
         archive Text.Pp.version tag);
-  curl_upload_archive ~token ~dry_run archive user repo id
+  curl_upload_archive ~token ~dry_run ~yes archive user repo id
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

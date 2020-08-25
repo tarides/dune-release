@@ -4,6 +4,7 @@
 
 - Add a `--token` option to `dune-release publish` and `dune-release opam` commands to specify a github token. This allows dune-release to be called through a Github Actions workflow and use the github token through an environment variable. (#284, @gpetiot)
 - Log curl calls on verbose/debug mode (#281, @gpetiot)
+- Try to publish the release asset again after it failed (#272, @gpetiot)
 
 ### Changed
 
