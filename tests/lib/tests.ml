@@ -11,4 +11,5 @@ let () =
       Test_tags.suite;
       Test_text.suite;
       Test_sos.suite;
+      Test_vcs.suite;
     ]

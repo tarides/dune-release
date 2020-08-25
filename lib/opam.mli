@@ -22,8 +22,9 @@ val prepare :
   remote_repo:string ->
   opam_repo:string * string ->
   version:string ->
+  tag:Vcs.commit_ish ->
   string list ->
-  (string, R.msg) result
+  (Vcs.commit_ish, R.msg) result
 (** [prepare ~local_repo ~version pkgs] adds the packages [pkg.version] to a new
     branch in the local opam repository [local_repo], using the commit message
     [msg] (if any). Return the new branch. *)

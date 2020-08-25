@@ -205,9 +205,9 @@ let run_with_auth ?(default_body = `Null) ~dry_run ~auth curl_t =
         Json.from_string resp.body
     | Error e -> R.error_msgf "curl execution failed: %a" Curly.Error.pp e
 
-let curl_create_release ~token ~dry_run version msg user repo =
+let curl_create_release ~token ~dry_run ~version ~tag msg user repo =
   github_auth ~dry_run ~user token >>= fun auth ->
-  let curl_t = Curl.create_release ~version ~msg ~user ~repo in
+  let curl_t = Curl.create_release ~version ~tag ~msg ~user ~repo in
   let default_body = `Assoc [ ("id", `Int D.release_id) ] in
   run_with_auth ~dry_run ~default_body ~auth curl_t
   >>= Github_v3_api.Release_response.release_id
@@ -338,9 +338,9 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   | r -> r)
   >>= fun (user, repo) ->
   Pkg.tag p >>= fun tag ->
+  Pkg.version p >>= fun version ->
   assert_tag_exists ~dry_run tag >>= fun () ->
   Vcs.get () >>= fun vcs ->
-  Pkg.tag p >>= fun tag ->
   check_tag ~dry_run vcs tag >>= fun () ->
   dev_repo p >>= fun dev_repo ->
   push_tag ~dry_run ~yes ~dev_repo vcs tag >>= fun () ->
@@ -349,13 +349,14 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   Prompt.(
     confirm_or_abort ~yes
       ~question:(fun l ->
-        l "Create release %a on %a?" Text.Pp.version tag Text.Pp.url dev_repo)
+        l "Create release %a on %a?" Text.Pp.version version Text.Pp.url
+          dev_repo)
       ~default_answer:Yes)
   >>= fun () ->
   App_log.status (fun l ->
-      l "Creating release %a on %a via github's API" Text.Pp.version tag
+      l "Creating release %a on %a via github's API" Text.Pp.version version
         Text.Pp.url dev_repo);
-  curl_create_release ~token ~dry_run tag msg user repo >>= fun id ->
+  curl_create_release ~token ~dry_run ~version ~tag msg user repo >>= fun id ->
   App_log.success (fun l -> l "Succesfully created release with id %d" id);
   Prompt.(
     confirm_or_abort ~yes
@@ -364,7 +365,7 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   >>= fun () ->
   App_log.status (fun l ->
       l "Uploading %a as a release asset for %a via github's API" Text.Pp.path
-        archive Text.Pp.version tag);
+        archive Text.Pp.version version);
   curl_upload_archive ~token ~dry_run ~yes archive user repo id
 
 (*---------------------------------------------------------------------------

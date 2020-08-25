@@ -183,6 +183,34 @@ let git_ls_remote ~dry_run r ~kind ~filter upstream =
 let git_submodule_update ~dry_run r =
   run_git_quiet ~dry_run r Cmd.(v "submodule" % "update" % "--init")
 
+let unallowed_substrings = Re.(compile (alt [ str "@{"; str ".." ]))
+
+(* See the reference here: https://git-scm.com/docs/git-check-ref-format *)
+let git_sanitize_tag t =
+  if String.equal t "@" then "_AT_"
+  else
+    String.fold_left
+      (fun (ret, i) c ->
+        let s =
+          match (i, c) with
+          | 0, '/' -> "_SLASH_"
+          | i, '/' when i = String.length t - 1 -> "_SLASH_"
+          | i, '.' when i = String.length t - 1 -> "_DOT_"
+          | _, ' ' -> "_SPACE_"
+          | _, '~' -> "_TILDE_"
+          | _, '^' -> "_CARET_"
+          | _, ':' -> "_COLON_"
+          | _, '?' -> "_QUEST_"
+          | _, '*' -> "_TIMES_"
+          | _, '[' -> "_LBRACKET_"
+          | _, '\\' -> "_BSLASH_"
+          | _ -> String.of_char c
+        in
+        (ret ^ s, i + 1))
+      ("", 0) t
+    |> fst
+    |> Re.replace_string ~all:true unallowed_substrings ~by:"__"
+
 (* Hg support *)
 
 let hg_rev commit_ish = match commit_ish with "HEAD" -> "tip" | c -> c
@@ -267,6 +295,8 @@ let hg_tag r ~force ~sign ~msg ~rev tag =
 
 let hg_delete_tag r tag =
   run_hg r Cmd.(v "tag" % "--remove" % tag) OS.Cmd.out_stdout
+
+let hg_sanitize_tag t = t
 
 (* Generic VCS support *)
 
@@ -361,6 +391,10 @@ let submodule_update ~dry_run r =
   match r with
   | (`Git, _, _) as r -> git_submodule_update ~dry_run r
   | `Hg, _, _ -> R.error_msgf "submodule update is not supported with mercurial"
+
+let sanitize_tag = function
+  | `Git, _, _ -> git_sanitize_tag
+  | `Hg, _, _ -> hg_sanitize_tag
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

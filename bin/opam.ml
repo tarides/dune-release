@@ -177,6 +177,7 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
   >>= fun _ ->
   let pkg = List.hd pkgs in
   Pkg.version pkg >>= fun version ->
+  Pkg.tag pkg >>= fun tag ->
   list_map Pkg.name pkgs >>= fun names ->
   let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
   Pkg.publish_msg pkg >>= fun changes ->
@@ -197,7 +198,8 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
   let msg = strf "%s\n\n%s\n" title changes in
   App_log.status (fun l ->
       l "Preparing pull request to %a" pp_opam_repo opam_repo);
-  Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~opam_repo ~version names
+  Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
+    names
   >>= fun branch ->
   open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
     ~title ~opam_repo ~auto_open ~yes pkg

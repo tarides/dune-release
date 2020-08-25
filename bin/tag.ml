@@ -7,8 +7,8 @@
 open Bos_setup
 open Dune_release
 
-let vcs_tag pkg tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
-  Vcs.get () >>= fun repo ->
+let vcs_tag repo pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete ~msg
+    ~yes =
   Vcs.commit_id ~dirty:false ~commit_ish repo
   |> R.reword_error (fun (`Msg msg) ->
          R.msgf "Due to invalid commit-ish `%s`:\n%s" commit_ish msg)
@@ -63,32 +63,36 @@ let vcs_tag pkg tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
       | Some msg -> Ok msg
       | None ->
           Pkg.publish_msg pkg >>| fun msg ->
-          strf "Distribution %s\n\n%s" tag msg)
+          strf "Distribution %s\n\n%s" version msg)
       >>= fun msg ->
       Vcs.tag repo ~dry_run ~force ~sign ~msg ~commit_ish tag >>| fun () ->
       App_log.success (fun m ->
           m "Tagged %a with version %a" Text.Pp.commit commit_ish
             Text.Pp.version tag)
 
-let tag () (`Dry_run dry_run) (`Change_log change_log) (`Version tag)
+let tag () (`Dry_run dry_run) (`Change_log change_log) (`Version version)
     (`Commit_ish commit_ish) (`Force force) (`Sign sign) (`Delete delete)
     (`Msg msg) (`Yes yes) =
   (let pkg = Pkg.v ~dry_run ?change_log () in
+   Vcs.get () >>= fun vcs ->
    let tag =
-     match tag with
-     | Some t ->
+     match version with
+     | Some v ->
+         let t = Vcs.sanitize_tag vcs v in
          App_log.status (fun l -> l "Using provided tag %S" t);
-         Ok t
+         Ok (t, v)
      | None ->
          Pkg.change_log pkg >>= fun changelog ->
          App_log.status (fun l ->
              l "Extracting tag from first entry in %a" Text.Pp.path changelog);
-         Pkg.extract_tag pkg >>| fun t ->
+         Pkg.extract_tag pkg >>| fun v ->
+         let t = Vcs.sanitize_tag vcs v in
          App_log.status (fun l -> l "Using tag %S" t);
-         t
+         (t, v)
    in
-   tag >>= fun tag ->
-   vcs_tag pkg tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes
+   tag >>= fun (tag, version) ->
+   vcs_tag vcs pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete ~msg
+     ~yes
    >>= fun () -> Ok 0)
   |> Cli.handle_error
 

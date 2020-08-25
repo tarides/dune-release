@@ -1,14 +1,16 @@
 let test_create_release =
-  let make_test ~test_name ~version ~msg ~user ~repo ~expected =
+  let make_test ~test_name ~tag ~version ~msg ~user ~repo ~expected =
     let test_fun () =
-      let actual = Dune_release.Curl.create_release ~version ~msg ~user ~repo in
+      let actual =
+        Dune_release.Curl.create_release ~tag ~version ~msg ~user ~repo
+      in
       Alcotest.check Alcotest_ext.curl test_name expected actual
     in
     (test_name, `Quick, test_fun)
   in
   [
-    make_test ~test_name:"simple" ~version:"1.1.0" ~msg:"this is a message"
-      ~user:"you" ~repo:"some-repo"
+    make_test ~test_name:"simple" ~tag:"1.1.0" ~version:"1.1.0"
+      ~msg:"this is a message" ~user:"you" ~repo:"some-repo"
       ~expected:
         {
           url = "https://api.github.com/repos/you/some-repo/releases";

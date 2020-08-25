@@ -74,7 +74,7 @@ module Pp : sig
   val version : string Fmt.t
   (** [version] formats a package version. *)
 
-  val commit : string Fmt.t
+  val commit : Vcs.commit_ish Fmt.t
   (** [commit] formats a commit-ish. *)
 
   val dirty : unit Fmt.t
