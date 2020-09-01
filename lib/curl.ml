@@ -26,6 +26,16 @@ let create_release ~version ~tag ~msg ~user ~repo =
   in
   { url; args }
 
+let get_release ~version ~user ~repo =
+  let url =
+    strf "https://api.github.com/repos/%s/%s/releases/tags/%s" user repo version
+  in
+  let args =
+    let open Curl_option in
+    [ Location; Silent; Show_error; Config `Stdin; Dump_header `Ignore ]
+  in
+  { url; args }
+
 let upload_archive ~archive ~user ~repo ~release_id =
   let url =
     strf "https://uploads.github.com/repos/%s/%s/releases/%d/assets?name=%s"
