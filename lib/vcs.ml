@@ -96,7 +96,7 @@ let git_describe ~dirty r commit_ish =
   let dirty = dirty && commit_ish = "HEAD" in
   let git_describe =
     Cmd.(
-      git_work_tree r % "describe" % "--always"
+      git_work_tree r % "describe" % "--always" % "--tags"
       %% on dirty (v "--dirty")
       %% on (not dirty) (v commit_ish))
   in
