@@ -66,6 +66,9 @@ dune-release tag v1.0.1
 ```
 
 You can also directly use your VCS instead if the `dune-release tag` command does not fit your needs.
+Note that `dune-release` and `dune` only work with annotated tags (i.e. tags created with
+`git tag -a`) and that if you want to take care of the tagging yourself you should take this into
+account.
 
 If you need to delete a tag created by `dune-release`, use the following command:
 
