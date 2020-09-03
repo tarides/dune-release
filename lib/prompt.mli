@@ -19,11 +19,13 @@ val confirm_or_abort :
     [Error (`Msg "Aborting on user demand")] for no *)
 
 val try_again :
+  ?limit:int ->
   question:('a, unit) Logs.msgf ->
   yes:bool ->
   default_answer:answer ->
   (unit -> ('b, Rresult.R.msg) result) ->
   ('b, Rresult.R.msg) result
-(** [try_again ~question ~yes ~default_answer f] prompts the user to try running
-    [f] again if it failed, until [f] eventually succeeds or the user aborts the
-    process by answering no. *)
+(** [try_again ?limit ~question ~yes ~default_answer f] prompts the user to try
+    running [f] again if it failed, until [f] eventually succeeds or the user
+    aborts the process by answering no or the maximum number of retries [limit]
+    is reached (retries only once by default). *)

@@ -30,10 +30,11 @@ let confirm_or_abort ~question ~yes ~default_answer =
   if confirm ~question ~yes ~default_answer then Ok ()
   else Error (`Msg "Aborting on user demand")
 
-let rec try_again ~question ~yes ~default_answer f =
+let rec try_again ?(limit = 1) ~question ~yes ~default_answer f =
   match f () with
   | Ok x -> Ok x
-  | Error (`Msg err) ->
+  | Error (`Msg err) when limit > 0 ->
       App_log.unhappy (fun l -> l "%s" err);
       confirm_or_abort ~yes ~question ~default_answer >>= fun () ->
-      try_again ~question ~yes ~default_answer f
+      try_again ~limit:(limit - 1) ~question ~yes ~default_answer f
+  | Error x -> Error x
