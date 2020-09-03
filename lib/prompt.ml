@@ -33,6 +33,7 @@ let confirm_or_abort ~question ~yes ~default_answer =
 let rec try_again ~question ~yes ~default_answer f =
   match f () with
   | Ok x -> Ok x
-  | Error _ ->
+  | Error (`Msg err) ->
+      App_log.unhappy (fun l -> l "%s" err);
       confirm_or_abort ~yes ~question ~default_answer >>= fun () ->
       try_again ~question ~yes ~default_answer f
