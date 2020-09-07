@@ -13,6 +13,7 @@ open Bos_setup
 (** {1 Publish} *)
 
 val publish_distrib :
+  ?token:Fpath.t ->
   dry_run:bool ->
   msg:string ->
   archive:Fpath.t ->

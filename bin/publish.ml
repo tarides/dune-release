@@ -54,11 +54,11 @@ let publish_doc ~specific ~dry_run ~yes pkg_names pkg =
           Ok () )
   | Ok _ -> publish_doc ~dry_run ~yes pkg_names pkg
 
-let publish_distrib ~dry_run ~yes pkg =
+let publish_distrib ?token ~dry_run ~yes pkg =
   App_log.status (fun l -> l "Publishing distribution");
   Pkg.distrib_file ~dry_run pkg >>= fun archive ->
   Pkg.publish_msg pkg >>= fun msg ->
-  Delegate.publish_distrib ~dry_run ~yes pkg ~msg ~archive
+  Delegate.publish_distrib ?token ~dry_run ~yes pkg ~msg ~archive
 
 let publish_alt ~dry_run pkg kind =
   App_log.status (fun l -> l "Publishing %s" kind);
@@ -67,7 +67,7 @@ let publish_alt ~dry_run pkg kind =
   Delegate.publish_alt ~dry_run pkg ~kind ~msg ~archive
 
 let publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
-    ?publish_msg ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
+    ?publish_msg ?token ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
     ~publish_artefacts ~yes () =
   let specific_doc =
     List.exists (function `Doc -> true | _ -> false) publish_artefacts
@@ -84,16 +84,16 @@ let publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
     acc >>= fun () ->
     match artefact with
     | `Doc -> publish_doc ~specific:specific_doc ~dry_run ~yes pkg_names pkg
-    | `Distrib -> publish_distrib ~dry_run ~yes pkg
+    | `Distrib -> publish_distrib ?token ~dry_run ~yes pkg
     | `Alt kind -> publish_alt ~dry_run pkg kind
   in
   List.fold_left publish_artefact (Ok ()) publish_artefacts >>= fun () -> Ok 0
 
 let publish_cli () build_dir name pkg_names version tag keep_v opam delegate
     change_log distrib_uri distrib_file publish_msg dry_run publish_artefacts
-    yes =
+    yes token =
   publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
-    ?publish_msg ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
+    ?publish_msg ?token ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
     ~publish_artefacts ~yes ()
   |> Cli.handle_error
 
@@ -180,7 +180,7 @@ let cmd =
       pure publish_cli $ Cli.setup $ Cli.build_dir $ Cli.dist_name
       $ Cli.pkg_names $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v
       $ Cli.dist_opam $ delegate $ Cli.change_log $ Cli.dist_uri $ Cli.dist_file
-      $ Cli.publish_msg $ Cli.dry_run $ artefacts $ Cli.yes),
+      $ Cli.publish_msg $ Cli.dry_run $ artefacts $ Cli.yes $ Cli.token),
     Term.info "publish" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )
 
 (*---------------------------------------------------------------------------
