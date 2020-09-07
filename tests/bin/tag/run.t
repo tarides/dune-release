@@ -30,6 +30,17 @@ Running `dune-release tag` for the first time should tag HEAD with the current v
     [-] Using tag "0.1.0"
     [+] Tagged HEAD with version 0.1.0
 
+Checking the message attached to the tag.
+
+    $ git show 0.1.0
+    tag 0.1.0
+    Tagger: ...
+    Date:   ...
+    
+    Distribution 0.1.0
+    
+    ...
+
 Running `dune-release tag` again should inform the user that that tag already exists.
 
     $ dune-release tag
