@@ -7,7 +7,7 @@
 open Bos_setup
 open Dune_release
 
-let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
+let vcs_tag pkg tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
   Vcs.get () >>= fun repo ->
   Vcs.commit_id ~dirty:false ~commit_ish repo
   |> R.reword_error (fun (`Msg msg) ->
@@ -59,9 +59,12 @@ let vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
               commit_ish)
           ~default_answer:Yes)
       >>= fun () ->
-      let msg =
-        match msg with None -> strf "Distribution %s" tag | Some m -> m
-      in
+      ( match msg with
+      | Some msg -> Ok msg
+      | None ->
+          Pkg.publish_msg pkg >>| fun msg ->
+          strf "Distribution %s\n\n%s" tag msg )
+      >>= fun msg ->
       Vcs.tag repo ~dry_run ~force ~sign ~msg ~commit_ish tag >>| fun () ->
       App_log.success (fun m ->
           m "Tagged %a with version %a" Text.Pp.commit commit_ish
@@ -83,8 +86,8 @@ let tag () dry_run name change_log tag commit_ish force sign delete msg yes =
          t
    in
    tag >>= fun tag ->
-   vcs_tag tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes >>= fun () ->
-   Ok 0)
+   vcs_tag pkg tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes
+   >>= fun () -> Ok 0)
   |> Cli.handle_error
 
 (* Command line interface *)

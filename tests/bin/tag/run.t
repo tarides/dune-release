@@ -39,6 +39,10 @@ Checking the message attached to the tag.
     
     Distribution 0.1.0
     
+    CHANGES:
+    
+    - Some other feature
+    
     ...
 
 Running `dune-release tag` again should inform the user that that tag already exists.

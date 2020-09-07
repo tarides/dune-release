@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Attach the changelog to the annotated tag message (#283, @gpetiot)
+
 ### Deprecated
 
 ### Removed
