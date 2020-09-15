@@ -46,6 +46,16 @@ val publish_doc :
   Pkg.t ->
   (unit, R.msg) Result.result
 
+val undraft_release :
+  token:Fpath.t ->
+  dry_run:bool ->
+  user:string ->
+  repo:string ->
+  release_id:int ->
+  (string, R.msg) Result.result
+(** [undraft_release] updates an existing release to undraft it and returns the
+    release archive download URL. *)
+
 val open_pr :
   token:Fpath.t ->
   dry_run:bool ->

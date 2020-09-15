@@ -37,6 +37,24 @@ let get_release ~version ~user ~repo =
   in
   { url; args }
 
+let undraft_release ~user ~repo ~release_id =
+  let json = strf {|{ "draft" : %b }|} false in
+  let url =
+    strf "https://api.github.com/repos/%s/%s/releases/%i" user repo release_id
+  in
+  let args =
+    let open Curl_option in
+    [
+      Location;
+      Silent;
+      Show_error;
+      Config `Stdin;
+      Dump_header `Ignore;
+      Data (`Data json);
+    ]
+  in
+  { url; meth = `PATCH; args }
+
 let upload_archive ~archive ~user ~repo ~release_id =
   let url =
     strf "https://uploads.github.com/repos/%s/%s/releases/%d/assets?name=%s"

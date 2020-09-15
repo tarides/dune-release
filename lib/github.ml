@@ -233,6 +233,15 @@ let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo ~draft
   run_with_auth ~dry_run ~default_body ~auth curl_t
   >>= Github_v3_api.Pull_request_response.html_url
 
+let undraft_release ~token ~dry_run ~user ~repo ~release_id =
+  let curl_t = Curl.undraft_release ~user ~repo ~release_id in
+  github_auth ~dry_run ~user token >>= fun auth ->
+  let default_body =
+    `Assoc [ ("browser_download_url", `String D.download_url) ]
+  in
+  run_with_auth ~dry_run ~default_body ~auth curl_t
+  >>= Github_v3_api.Upload_response.browser_download_url
+
 let dev_repo p =
   Pkg.dev_repo p >>= function
   | Some r -> Ok r

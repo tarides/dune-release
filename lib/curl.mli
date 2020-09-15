@@ -11,6 +11,8 @@ val create_release :
 
 val get_release : version:string -> user:string -> repo:string -> t
 
+val undraft_release : user:string -> repo:string -> release_id:int -> t
+
 val upload_archive :
   archive:Fpath.t -> user:string -> repo:string -> release_id:int -> t
 
