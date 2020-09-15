@@ -14,6 +14,7 @@ open Bos_setup
 
 val publish_distrib :
   ?token:Fpath.t ->
+  ?distrib_uri:string ->
   dry_run:bool ->
   msg:string ->
   archive:Fpath.t ->
@@ -30,6 +31,7 @@ val publish_doc :
   (unit, R.msg) result
 
 val publish_alt :
+  ?distrib_uri:string ->
   dry_run:bool ->
   kind:string ->
   msg:string ->

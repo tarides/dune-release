@@ -94,7 +94,8 @@ let create_config ~user ~remote_repo ~local_repo pkgs file =
   | Some u -> Ok u
   | None ->
       let pkg = List.hd pkgs in
-      Pkg.distrib_user_and_repo pkg >>= fun (u, _) -> Ok u )
+      Pkg.infer_distrib_uri pkg >>= Pkg.distrib_user_and_repo >>= fun (u, _) ->
+      Ok u )
   >>= fun default_user ->
   let user = read_string default_user ~descr:"What is your GitHub ID?" in
   let default_remote =
