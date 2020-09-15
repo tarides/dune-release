@@ -14,6 +14,7 @@ let test_create_release =
       ~expected:
         {
           url = "https://api.github.com/repos/you/some-repo/releases";
+          meth = `POST;
           args =
             [
               Location;
@@ -46,6 +47,7 @@ let test_upload_archive =
         {
           url =
             "https://uploads.github.com/repos/you/some-repo/releases/27/assets?name=foo.tgz";
+          meth = `POST;
           args =
             [
               Location;
@@ -78,6 +80,7 @@ let test_open_pr =
       ~expected:
         {
           url = "https://api.github.com/repos/base/repo/pulls";
+          meth = `POST;
           args =
             [
               Silent;
@@ -105,11 +108,13 @@ let test_with_auth =
       ~curl_t:
         {
           url = "https://api.github.com/repos/base/repo/pulls";
+          meth = `POST;
           args = [ Config `Stdin; Dump_header `Ignore ];
         }
       ~expected:
         {
           url = "https://api.github.com/repos/base/repo/pulls";
+          meth = `POST;
           args = [ User auth; Config `Stdin; Dump_header `Ignore ];
         };
   ]

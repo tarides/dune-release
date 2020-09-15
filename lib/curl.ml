@@ -1,6 +1,6 @@
 open Bos_setup
 
-type t = { url : string; args : Curl_option.t list }
+type t = { url : string; meth : Curly.Meth.t; args : Curl_option.t list }
 
 let create_release ~version ~tag ~msg ~user ~repo ~draft =
   let json : string =
@@ -25,7 +25,7 @@ let create_release ~version ~tag ~msg ~user ~repo ~draft =
       Data (`Data json);
     ]
   in
-  { url; args }
+  { url; meth = `GET; args }
 
 let get_release ~version ~user ~repo =
   let url =
@@ -54,7 +54,7 @@ let upload_archive ~archive ~user ~repo ~release_id =
       Data_binary (`File (Fpath.to_string archive));
     ]
   in
-  { url; args }
+  { url; meth = `POST; args }
 
 let open_pr ~title ~user ~branch ~body ~opam_repo ~draft =
   let base, repo = opam_repo in
@@ -76,7 +76,7 @@ let open_pr ~title ~user ~branch ~body ~opam_repo ~draft =
       Silent; Show_error; Config `Stdin; Dump_header `Ignore; Data (`Data json);
     ]
   in
-  { url; args }
+  { url; meth = `POST; args }
 
-let with_auth ~auth { url; args } =
-  { url; args = Curl_option.User auth :: args }
+let with_auth ~auth { url; meth; args } =
+  { url; meth; args = Curl_option.User auth :: args }

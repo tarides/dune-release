@@ -183,9 +183,8 @@ let github_auth ~dry_run ~user token =
   if dry_run then Ok Curl_option.{ user; token = D.token }
   else Sos.read_file ~dry_run token >>| fun token -> Curl_option.{ user; token }
 
-let run_with_auth ?(meth = `POST) ?(default_body = `Null) ~dry_run ~auth curl_t
-    =
-  let Curl.{ url; args } = Curl.with_auth ~auth curl_t in
+let run_with_auth ?(default_body = `Null) ~dry_run ~auth curl_t =
+  let Curl.{ url; args; meth } = Curl.with_auth ~auth curl_t in
   let args = Curl_option.to_string_list args in
   if dry_run then
     Sos.show "exec:@[@ curl %a@]"
@@ -333,7 +332,7 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
 let curl_get_release ~dry_run ~token ~version ~user ~repo =
   github_auth ~dry_run ~user token >>= fun auth ->
   let curl_t = Curl.get_release ~version ~user ~repo in
-  run_with_auth ~meth:`GET ~dry_run ~auth curl_t
+  run_with_auth ~dry_run ~auth curl_t
   >>= Github_v3_api.Release_response.release_id
 
 let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo

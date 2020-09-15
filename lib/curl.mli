@@ -1,4 +1,4 @@
-type t = { url : string; args : Curl_option.t list }
+type t = { url : string; meth : Curly.Meth.t; args : Curl_option.t list }
 
 val create_release :
   version:string ->
