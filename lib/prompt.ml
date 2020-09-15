@@ -1,5 +1,7 @@
 type answer = Yes | No
 
+open Bos_setup.R.Infix
+
 let ask f ~default_answer =
   let options : ('a, Format.formatter, unit, unit) format4 =
     match default_answer with Yes -> " [Y/n]" | No -> " [y/N]"
@@ -27,3 +29,12 @@ let confirm ~question ~yes ~default_answer =
 let confirm_or_abort ~question ~yes ~default_answer =
   if confirm ~question ~yes ~default_answer then Ok ()
   else Error (`Msg "Aborting on user demand")
+
+let rec try_again ?(limit = 1) ~question ~yes ~default_answer f =
+  match f () with
+  | Ok x -> Ok x
+  | Error (`Msg err) when limit > 0 ->
+      App_log.unhappy (fun l -> l "%s" err);
+      confirm_or_abort ~yes ~question ~default_answer >>= fun () ->
+      try_again ~limit:(limit - 1) ~question ~yes ~default_answer f
+  | Error x -> Error x
