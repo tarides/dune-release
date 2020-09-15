@@ -178,8 +178,16 @@ let run_with_auth ?(default_body = `Null) ~dry_run ~auth curl_t =
     >>| fun () -> default_body
   else
     OS.Cmd.must_exist (Cmd.v "curl") >>= fun _ ->
-    match Curly.(run ~args (Request.make ~url ~meth:`POST ())) with
-    | Ok Curly.Response.{ body; _ } -> Json.from_string body
+    let req = Curly.Request.make ~url ~meth:`POST () in
+    Logs.debug (fun l ->
+        l "[curl] executing request:@;<1 2>%a" Curly.Request.pp req);
+    Logs.debug (fun l ->
+        l "[curl] with args:@;<1 2>%a" (Fmt.list ~sep:Fmt.sp Fmt.string) args);
+    match Curly.run ~args req with
+    | Ok resp ->
+        Logs.debug (fun l ->
+            l "[curl] response received:@;<1 2>%a" Curly.Response.pp resp);
+        Json.from_string resp.body
     | Error e -> R.error_msgf "curl execution failed: %a" Curly.Error.pp e
 
 let curl_create_release ~token ~dry_run version msg user repo =
