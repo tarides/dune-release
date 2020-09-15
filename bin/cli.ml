@@ -53,6 +53,18 @@ let opam =
   let docv = "FILE" in
   Arg.(value & opt (some path_arg) None & info [ "opam" ] ~doc ~docv)
 
+let token =
+  let doc =
+    "The github token to use. The regular case is to have a locally store the \
+     github token that $(b,dune-release) can automatically use and to not set \
+     this option. This option is used to override the local configuration \
+     token for example as part of a Github Actions workflow where the github \
+     token is provided through an environment variable."
+  in
+  let docv = "FILE" in
+  let env = Arg.env_var "DUNE_RELEASE_GITHUB_TOKEN" in
+  Arg.(value & opt (some path_arg) None & info [ "token" ] ~doc ~docv ~env)
+
 let keep_v =
   let doc = "Do not drop the initial 'v' in the version string." in
   Arg.(value & flag & info [ "keep-v" ] ~doc)

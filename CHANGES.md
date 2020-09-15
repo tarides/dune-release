@@ -2,6 +2,8 @@
 
 ### Added
 
+- Add a `--token` option to `dune-release publish` and `dune-release opam` commands to specify a github token. This allows dune-release to be called through a Github Actions workflow and use the github token through an environment variable. (#284, @gpetiot)
+
 ### Changed
 
 ### Deprecated

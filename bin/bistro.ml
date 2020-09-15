@@ -6,19 +6,20 @@
 
 open Bos_setup.R.Infix
 
-let bistro () dry_run name pkg_names version tag keep_v =
+let bistro () dry_run name pkg_names version tag keep_v token =
   Cli.handle_error
     ( Dune_release.Config.keep_v keep_v >>= fun keep_v ->
       Distrib.distrib ~dry_run ~name ~pkg_names ~version ~tag ~keep_v
         ~keep_dir:false ~skip_lint:false ~skip_build:false ~skip_tests:false ()
       >>= fun _distrib_ret ->
-      Publish.publish ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
+      Publish.publish ?token ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
         ~publish_artefacts:[] ~yes:false ()
       >>= fun _publish_ret ->
       Opam.get_pkgs ~dry_run ~keep_v ~tag ~name ~pkg_names ~version ()
       >>= fun pkgs ->
       Opam.pkg ~dry_run ~pkgs () >>= fun _opam_pkg_ret ->
-      Opam.submit ~dry_run ~pkgs ~pkg_names ~no_auto_open:false ~yes:false ()
+      Opam.submit ?token ~dry_run ~pkgs ~pkg_names ~no_auto_open:false
+        ~yes:false ()
       >>= fun _opam_submit_ret -> Ok 0 )
 
 (* Command line interface *)
@@ -48,7 +49,7 @@ let man =
 let cmd =
   ( Term.(
       pure bistro $ Cli.setup $ Cli.dry_run $ Cli.dist_name $ Cli.pkg_names
-      $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v),
+      $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ Cli.token),
     Term.info "bistro" ~doc ~sdocs ~exits ~man ~man_xrefs )
 
 (*---------------------------------------------------------------------------

@@ -226,7 +226,7 @@ let assert_tag_exists ~dry_run tag =
   if Vcs.tag_exists ~dry_run repo tag then Ok ()
   else R.error_msgf "%s is not a valid tag" tag
 
-let publish_distrib ~dry_run ~msg ~archive ~yes p =
+let publish_distrib ?token ~dry_run ~msg ~archive ~yes p =
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   ( match Pkg.distrib_user_and_repo p with
   | Error _ as e -> if dry_run then Ok (D.user, D.repo) else e
@@ -249,7 +249,8 @@ let publish_distrib ~dry_run ~msg ~archive ~yes p =
       l "Pushing tag %a to %a" Text.Pp.version tag Text.Pp.url upstr);
   Sos.run_quiet ~dry_run Cmd.(git % "push" % "--force" % upstr % tag)
   >>= fun () ->
-  Config.token ~dry_run () >>= fun token ->
+  (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
+  >>= fun token ->
   Prompt.(
     confirm_or_abort ~yes
       ~question:(fun l ->

@@ -46,6 +46,7 @@ val submit :
   ?remote_repo:string ->
   ?opam_repo:string * string ->
   ?user:string ->
+  ?token:Fpath.t ->
   dry_run:bool ->
   pkgs:Dune_release.Pkg.t list ->
   pkg_names:string list ->

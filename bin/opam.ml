@@ -169,9 +169,8 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
         | Ok () -> Ok 0
         | Error _ -> msg () )
 
-let submit ~dry_run ~yes ~opam_repo ~user local_repo remote_repo pkgs auto_open
-    =
-  Config.token ~dry_run () >>= fun token ->
+let submit ~token ~dry_run ~yes ~opam_repo ~user local_repo remote_repo pkgs
+    auto_open =
   List.fold_left
     (fun acc pkg ->
       get_pkg_dir pkg >>= fun pkg_dir ->
@@ -260,8 +259,8 @@ let pkg ?distrib_uri ~dry_run ~pkgs () =
       | (Error _ as e), _ | _, (Error _ as e) -> e)
     (Ok 0) pkgs
 
-let submit ?local_repo ?remote_repo ?opam_repo ?user ~dry_run ~pkgs ~pkg_names
-    ~no_auto_open ~yes () =
+let submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run ~pkgs
+    ~pkg_names ~no_auto_open ~yes () =
   let opam_repo =
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
@@ -281,16 +280,18 @@ let submit ?local_repo ?remote_repo ?opam_repo ?user ~dry_run ~pkgs ~pkg_names
       | None -> R.error_msg "Unknown remote repository." ) )
   >>= fun remote_repo ->
   Config.auto_open (not no_auto_open) >>= fun auto_open ->
+  (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
+  >>= fun token ->
   App_log.status (fun m ->
       m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
-  submit ~dry_run ~yes ~opam_repo ~user:config.user local_repo remote_repo pkgs
-    auto_open
+  submit ~token ~dry_run ~yes ~opam_repo ~user:config.user local_repo
+    remote_repo pkgs auto_open
 
 let field ~pkgs ~field_name = field pkgs field_name
 
 let opam_cli () dry_run build_dir local_repo remote_repo opam_repo user keep_v
     opam distrib_uri distrib_file tag name pkg_names version pkg_descr readme
-    change_log publish_msg action field_name no_auto_open yes =
+    change_log publish_msg action field_name no_auto_open yes token =
   get_pkgs ?build_dir ?opam ?distrib_file ?pkg_descr ?readme ?change_log
     ?publish_msg ~dry_run ~keep_v ~tag ~name ~pkg_names ~version ()
   >>= (fun pkgs ->
@@ -298,8 +299,8 @@ let opam_cli () dry_run build_dir local_repo remote_repo opam_repo user keep_v
         | `Descr -> descr ~pkgs
         | `Pkg -> pkg ~dry_run ?distrib_uri ~pkgs ()
         | `Submit ->
-            submit ?local_repo ?remote_repo ?opam_repo ?user ~dry_run ~pkgs
-              ~pkg_names ~no_auto_open ~yes ()
+            submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run
+              ~pkgs ~pkg_names ~no_auto_open ~yes ()
         | `Field -> field ~pkgs ~field_name)
   |> Cli.handle_error
 
@@ -421,7 +422,7 @@ let cmd =
       $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $ Cli.dist_name
       $ Cli.pkg_names $ Cli.pkg_version $ pkg_descr $ Cli.readme
       $ Cli.change_log $ Cli.publish_msg $ action $ field_arg $ no_auto_open
-      $ Cli.yes)
+      $ Cli.yes $ Cli.token)
   in
   (t, info)
 
