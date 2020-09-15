@@ -25,4 +25,6 @@ val open_pr :
   draft:bool ->
   t
 
+val undraft_pr : opam_repo:string * string -> pr_id:int -> t
+
 val with_auth : auth:Curl_option.auth -> t -> t

@@ -68,6 +68,16 @@ val open_pr :
   string ->
   ([ `Url of string | `Already_exists ], R.msg) result
 
+val undraft_pr :
+  token:Fpath.t ->
+  dry_run:bool ->
+  distrib_user:string ->
+  opam_repo:string * string ->
+  pr_id:int ->
+  ([ `Url of string | `Already_exists ], R.msg) result
+(** [undraft_pr] updates an existing pull request to undraft it and returns the
+    pull request URL. *)
+
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
 

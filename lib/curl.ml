@@ -96,5 +96,19 @@ let open_pr ~title ~user ~branch ~body ~opam_repo ~draft =
   in
   { url; meth = `POST; args }
 
+let undraft_pr ~opam_repo ~pr_id =
+  let base, repo = opam_repo in
+  let url =
+    strf "https://api.github.com/repos/%s/%s/pulls/%i" base repo pr_id
+  in
+  let json = strf {|{ "draft": %b }|} false in
+  let args =
+    let open Curl_option in
+    [
+      Silent; Show_error; Config `Stdin; Dump_header `Ignore; Data (`Data json);
+    ]
+  in
+  { url; meth = `PATCH; args }
+
 let with_auth ~auth { url; meth; args } =
   { url; meth; args = Curl_option.User auth :: args }

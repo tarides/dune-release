@@ -242,6 +242,13 @@ let undraft_release ~token ~dry_run ~user ~repo ~release_id =
   run_with_auth ~dry_run ~default_body ~auth curl_t
   >>= Github_v3_api.Upload_response.browser_download_url
 
+let undraft_pr ~token ~dry_run ~distrib_user ~opam_repo ~pr_id =
+  let curl_t = Curl.undraft_pr ~opam_repo ~pr_id in
+  github_auth ~dry_run ~user:distrib_user token >>= fun auth ->
+  let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
+  run_with_auth ~dry_run ~default_body ~auth curl_t
+  >>= Github_v3_api.Pull_request_response.html_url
+
 let dev_repo p =
   Pkg.dev_repo p >>= function
   | Some r -> Ok r
