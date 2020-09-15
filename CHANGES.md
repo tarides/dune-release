@@ -27,6 +27,7 @@
 - Allow the dry-run mode to continue even after some API call's response were expected by using placeholder values (#262, @gpetiot)
 - Build and run tests for all selected packages when checking distribution tarball
   (#266, @NathanReb)
+- Improve trimming of the changelog to preserve the indentation of the list of changes. (#268, @gpetiot)
 
 ### Security
 

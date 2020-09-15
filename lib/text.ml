@@ -109,7 +109,17 @@ let change_log_last_entry ?flavour text =
       | "" ->
           Logs.app (fun m -> m "%S %S" h changes);
           None
-      | version -> Some (version, (h, changes)) )
+      | version ->
+          let changes =
+            match
+              String.cuts ~sep:"\n" changes
+              |> List.map (String.drop ~rev:true ~sat:Char.Ascii.is_white)
+            with
+            | [] -> "(none)"
+            | "" :: lines -> String.concat ~sep:"\n" lines
+            | lines -> String.concat ~sep:"\n" lines
+          in
+          Some (version, (h, changes)) )
 
 let change_log_file_last_entry file =
   let flavour = flavour_of_fpath file in

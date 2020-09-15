@@ -9,5 +9,6 @@ let () =
       Test_pkg.suite;
       Test_stdext.suite;
       Test_tags.suite;
+      Test_text.suite;
       Test_sos.suite;
     ]
