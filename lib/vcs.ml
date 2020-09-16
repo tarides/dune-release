@@ -62,6 +62,12 @@ let run_git ~dry_run ?force ~default r args out =
   | `Exited 0 -> Ok response.output
   | _ -> Sos.cmd_error git (Some response.err_msg) response.status
 
+let run_git_quiet ~dry_run ?force r args =
+  run_git ~dry_run ?force ~default:Default.unit r args OS.Cmd.out_null
+
+let run_git_string ~dry_run ?force ~default r args =
+  run_git ~dry_run ?force ~default r args OS.Cmd.out_string
+
 let git_is_dirty r =
   let status_cmd = Cmd.(cmd r %% git_work_tree r % "status" % "--porcelain") in
   Sos.run_out_err ~dry_run:false status_cmd ~default:Default.string
@@ -80,13 +86,13 @@ let dirtify_if ~dirty r id =
 let git_commit_id ~dirty r commit_ish =
   let dirty = dirty && commit_ish = "HEAD" in
   let id = Cmd.(v "rev-parse" % "--verify" % (commit_ish ^ "^{commit}")) in
-  run_git ~dry_run:false r id ~default:Default.string OS.Cmd.out_string
-  >>= fun id -> dirtify_if ~dirty r id
+  run_git_string ~dry_run:false r id ~default:Default.string >>= fun id ->
+  dirtify_if ~dirty r id
 
 let git_commit_ptime_s ~dry_run r commit_ish =
   let commit_ish = commit_ish ^ "^{commit}" in
   let time = Cmd.(v "show" % "-s" % "--format=%ct" % commit_ish) in
-  run_git ~dry_run ~force:true r time ~default:Default.string OS.Cmd.out_string
+  run_git_string ~dry_run ~force:true r time ~default:Default.string
   >>= fun ptime ->
   try Ok (Int64.of_string ptime)
   with Failure e ->
@@ -100,15 +106,10 @@ let git_describe ~dirty r commit_ish =
       %% on dirty (v "--dirty")
       %% on (not dirty) (v commit_ish))
   in
-  run_git ~dry_run:false r git_describe ~default:Default.string
-    OS.Cmd.out_string
+  run_git_string ~dry_run:false r git_describe ~default:Default.string
 
 let git_tag_exists ~dry_run r tag =
-  match
-    run_git ~dry_run r
-      Cmd.(v "rev-parse" % "--verify" % tag)
-      ~default:Default.unit OS.Cmd.out_null
-  with
+  match run_git_quiet ~dry_run r Cmd.(v "rev-parse" % "--verify" % tag) with
   | Ok () -> true
   | _ -> false
 
@@ -116,9 +117,7 @@ let git_branch_exists ~dry_run r br =
   let cmd =
     Cmd.(v "show-ref" % "--verify" % "--quiet" % ("refs/heads/" ^ br))
   in
-  match run_git ~dry_run r cmd ~default:Default.unit OS.Cmd.out_null with
-  | Ok () -> true
-  | _ -> false
+  match run_git_quiet ~dry_run r cmd with Ok () -> true | _ -> false
 
 let git_clone ~dry_run ?force ?branch ~dir:d r =
   let branch =
@@ -132,9 +131,9 @@ let git_checkout ~dry_run r ~branch ~commit_ish =
   let branch =
     match branch with None -> Cmd.empty | Some branch -> Cmd.(v "-b" % branch)
   in
-  run_git ~dry_run ~force:true r
+  run_git_string ~dry_run ~force:true r
     Cmd.(git_work_tree r % "checkout" % "--quiet" %% branch % commit_ish)
-    ~default:Default.string OS.Cmd.out_string
+    ~default:Default.string
   >>= fun _ -> Ok ()
 
 let git_tag ~dry_run r ~force ~sign ~msg ~commit_ish tag =
@@ -145,9 +144,7 @@ let git_tag ~dry_run r ~force ~sign ~msg ~commit_ish tag =
     ~default:Default.unit OS.Cmd.out_stdout
 
 let git_delete_tag ~dry_run r tag =
-  run_git ~dry_run r
-    Cmd.(v "tag" % "-d" % tag)
-    ~default:Default.unit OS.Cmd.out_null
+  run_git_quiet ~dry_run r Cmd.(v "tag" % "-d" % tag)
 
 (* Hg support *)
 

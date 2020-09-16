@@ -6,6 +6,10 @@
 
 open Bos_setup
 
+module D = struct
+  let fetch_head = "${fetch_head}"
+end
+
 let os_tool_env name os =
   let pre = match os with `Build_os -> "BUILD_OS_" | `Host_os -> "HOST_OS_" in
   pre ^ String.Ascii.uppercase name
@@ -72,23 +76,26 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
   let remote_branch = "master" in
   let pkg = shortest names in
   let branch = Fmt.strf "release-%s-%s" pkg version in
-  let run = Sos.run_quiet ~sandbox:false ~dry_run ~force:true in
-  let run_out = Sos.run_out ~sandbox:false ~dry_run ~force:true in
   let prepare_repo () =
-    let git_fetch = Cmd.(git % "fetch" % upstream % remote_branch) in
     App_log.status (fun l ->
         l "Fetching %a" Text.Pp.url (upstream ^ "#" ^ remote_branch));
-    run git_fetch >>= fun () ->
-    run_out
-      Cmd.(git % "rev-parse" % "FETCH_HEAD")
-      ~default:"${fetch_head}" OS.Cmd.to_string
+    Vcs.run_git_quiet repo ~dry_run ~force:true
+      Cmd.(v "fetch" % upstream % remote_branch)
+    >>= fun () ->
+    Vcs.run_git_string repo ~dry_run ~force:true ~default:(Sos.out D.fetch_head)
+      Cmd.(v "rev-parse" % "FETCH_HEAD")
     >>= fun id ->
     (* make a branch *)
     let delete_branch () =
       if not (Vcs.branch_exists ~dry_run:false repo branch) then Ok ()
       else
-        match run Cmd.(git % "checkout" % "master") with
-        | Ok () -> run Cmd.(git % "branch" % "-D" % branch)
+        match
+          Vcs.run_git_quiet repo ~dry_run ~force:true
+            Cmd.(v "checkout" % "master")
+        with
+        | Ok () ->
+            Vcs.run_git_quiet repo ~dry_run ~force:true
+              Cmd.(v "branch" % "-D" % branch)
         | Error _ ->
             let out = OS.Cmd.run_out Cmd.(git % "status") in
             OS.Cmd.out_lines out >>= fun (out, _) ->
@@ -108,7 +115,9 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
     let dst = Fpath.(v "packages" / name / dir) in
     let cp f =
       OS.File.exists Fpath.(src / f) >>= function
-      | true -> run Cmd.(v "cp" % p Fpath.(src / f) % p Fpath.(dst / f))
+      | true ->
+          Sos.run_quiet ~sandbox:false ~dry_run ~force:true
+            Cmd.(v "cp" % p Fpath.(src / f) % p Fpath.(dst / f))
       | _ -> Ok ()
     in
     OS.Dir.exists src >>= fun exists ->
@@ -123,19 +132,18 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
     cp "url" >>= fun () ->
     cp "descr" >>= fun () ->
     (* git add *)
-    run Cmd.(git % "add" % p dst)
+    Vcs.run_git_quiet repo ~dry_run ~force:true Cmd.(v "add" % p dst)
   in
   let rec prepare_packages = function
     | [] -> Ok ()
     | h :: t -> prepare_package h >>= fun () -> prepare_packages t
   in
   let commit_and_push () =
-    Sos.run_quiet ~dry_run ~sandbox:false Cmd.(git % "commit" %% msg)
-    >>= fun () ->
+    Vcs.run_git_quiet repo ~dry_run Cmd.(v "commit" %% msg) >>= fun () ->
     App_log.status (fun l ->
         l "Pushing %a to %a" Text.Pp.commit branch Text.Pp.url remote_repo);
-    Sos.run_quiet ~dry_run ~sandbox:false
-      Cmd.(git % "push" % "--force" % remote_repo % branch)
+    Vcs.run_git_quiet repo ~dry_run
+      Cmd.(v "push" % "--force" % remote_repo % branch)
   in
   Sos.with_dir ~dry_run local_repo
     (fun () ->
