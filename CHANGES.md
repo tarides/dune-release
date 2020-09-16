@@ -9,6 +9,7 @@
 ### Changed
 
 - Attach the changelog to the annotated tag message (#283, @gpetiot)
+- Deprecate the use of delegates in `dune-release publish` (#276, @pitag-ha)
 
 ### Deprecated
 
