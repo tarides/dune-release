@@ -34,8 +34,8 @@ let test_release_id =
   [ make_test Create_release_response.gh_v3_api_example (Ok 1) ]
 
 let test_html_url =
-  let make_test json expected =
-    let test_name = "html_url" in
+  let make_test name json expected =
+    let test_name = "html_url: " ^ name in
     let test_fun () =
       let json = Yojson.Basic.from_string json in
       match Dune_release.Github_v3_api.Pull_request_response.html_url json with
@@ -47,8 +47,10 @@ let test_html_url =
     (test_name, `Quick, test_fun)
   in
   [
-    make_test Pull_request_response.gh_v3_api_example
+    make_test "passing" Pull_request_response.gh_v3_api_example
       "https://github.com/octocat/Hello-World/pull/1347";
+    make_test "failing" Pull_request_response.gh_v3_api_failure
+      {|Could not retrieve pull request URL from response, unexpected Github API error: "Validation Failed"|};
   ]
 
 let suite =

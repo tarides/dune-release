@@ -519,3 +519,18 @@ let gh_v3_api_example =
   "changed_files": 5
 }
 |}
+
+let gh_v3_api_failure =
+  {|
+{
+  "message": "Validation Failed",
+  "errors": [
+    {
+      "resource": "PullRequest",
+      "code": "custom",
+      "message": "A pull request already exists for kit-ty-kate:release-opam-0install-0.3."
+    }
+  ],
+  "documentation_url": "https://docs.github.com/rest/reference/pulls#create-a-pull-request"
+}
+|}
