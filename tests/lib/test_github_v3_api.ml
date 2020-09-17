@@ -49,8 +49,16 @@ let test_html_url =
   [
     make_test "passing" Pull_request_response.gh_v3_api_example
       "https://github.com/octocat/Hello-World/pull/1347";
-    make_test "failing" Pull_request_response.gh_v3_api_failure
-      {|Could not retrieve pull request URL from response, unexpected Github API error: "Validation Failed"|};
+    make_test "handled failure" Pull_request_response.gh_v3_api_handled_failure
+      {|ALREADY_EXISTS|};
+    make_test "unhandled failure"
+      Pull_request_response.gh_v3_api_unhandled_failure
+      {|Github API error:
+  Could not retrieve pull request URL from response
+  Github API returned: "Validation Failed"
+  See the documentation "https://docs.github.com/rest/reference/pulls#create-a-pull-request" that might help you resolve this error.
+  - Error message: "This is an unhandled failure."
+  - Code: "custom"|};
   ]
 
 let suite =

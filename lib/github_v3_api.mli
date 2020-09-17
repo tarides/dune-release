@@ -1,9 +1,5 @@
 open Bos_setup
 
-val error_message : Yojson.Basic.t -> string option
-(** [error_message j] extracts the message from [j] if the JSON value [j]
-    carries an error message. *)
-
 module Upload_response : sig
   val browser_download_url : Yojson.Basic.t -> (string, R.msg) result
   (** [browser_download_url response] extracts the browser_download_url field

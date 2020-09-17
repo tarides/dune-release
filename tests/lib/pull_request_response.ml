@@ -520,7 +520,7 @@ let gh_v3_api_example =
 }
 |}
 
-let gh_v3_api_failure =
+let gh_v3_api_handled_failure =
   {|
 {
   "message": "Validation Failed",
@@ -529,6 +529,21 @@ let gh_v3_api_failure =
       "resource": "PullRequest",
       "code": "custom",
       "message": "A pull request already exists for kit-ty-kate:release-opam-0install-0.3."
+    }
+  ],
+  "documentation_url": "https://docs.github.com/rest/reference/pulls#create-a-pull-request"
+}
+|}
+
+let gh_v3_api_unhandled_failure =
+  {|
+{
+  "message": "Validation Failed",
+  "errors": [
+    {
+      "resource": "PullRequest",
+      "code": "custom",
+      "message": "This is an unhandled failure."
     }
   ],
   "documentation_url": "https://docs.github.com/rest/reference/pulls#create-a-pull-request"

@@ -22,3 +22,12 @@ let int_field ~field json =
       R.error_msgf "Could not find %S from:@ %a" field Yojson.Basic.pp json
   | `Int i -> R.ok i
   | _ -> R.error_msgf "Could not parse %S from:@ %a" field Yojson.Basic.pp json
+
+let list_field ~field json =
+  match Yojson.Basic.Util.member field json with
+  | exception _ ->
+      R.error_msgf "Could not find %S from:@ %a" field Yojson.Basic.pp json
+  | `Null ->
+      R.error_msgf "Could not find %S from:@ %a" field Yojson.Basic.pp json
+  | `List l -> R.ok l
+  | _ -> R.error_msgf "Could not parse %S from:@ %a" field Yojson.Basic.pp json

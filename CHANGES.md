@@ -45,6 +45,7 @@
 - Trim the data of the `url` file before filling the `url.src` field. This fixes an issue that caused the `url.src` field to be a multi-line string instead of single line. (#270, @gpetiot)
 - Fix a bug causing dune-release to exclude all hidden files and folders (starting with `.`) at the
   repository from the distrib archive (#298, @NathanReb)
+- Better report GitHub API errors, all of the error messages reported by the GitHub API are now checked and reported to the user. (#290, @gpetiot)
 
 ### Security
 
