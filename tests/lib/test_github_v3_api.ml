@@ -39,10 +39,10 @@ let test_html_url =
     let test_fun () =
       let json = Yojson.Basic.from_string json in
       match Dune_release.Github_v3_api.Pull_request_response.html_url json with
-      | Ok (`Url actual) -> Alcotest.(check string) __LOC__ actual expected
+      | Ok (`Url actual) -> Alcotest.(check string) __LOC__ expected actual
       | Ok `Already_exists ->
-          Alcotest.(check string) __LOC__ "ALREADY_EXISTS" expected
-      | Error (`Msg msg) -> Alcotest.(check string) __LOC__ msg expected
+          Alcotest.(check string) __LOC__ expected "ALREADY_EXISTS"
+      | Error (`Msg msg) -> Alcotest.(check string) __LOC__ expected msg
     in
     (test_name, `Quick, test_fun)
   in
