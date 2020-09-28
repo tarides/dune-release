@@ -130,16 +130,16 @@ let handle_opam_lint_exit ~dry_run ~verbose_lint_cmd ~opam_file status output =
       match verbose_lint_output with
       | Ok (out, _) | Error (`Msg out) -> `Fail out)
 
-let check_has_description ~opam_file pkg =
-  Pkg.opam_field_hd pkg "description" >>= function
+let check_has_synopsis ~opam_file pkg =
+  Pkg.opam_field_hd pkg "synopsis" >>= function
   | None ->
-      R.error_msgf "%a does not have a 'description' field." Fpath.pp opam_file
+      R.error_msgf "%a does not have a 'synopsis' field." Fpath.pp opam_file
   | Some _ -> Ok ()
 
 let lint_descr ~opam_file pkg =
   lint_res
-    ~msgf:(fun l -> l "opam field %a is present" pp_field "description")
-    (check_has_description ~opam_file pkg)
+    ~msgf:(fun l -> l "opam field %a is present" pp_field "synopsis")
+    (check_has_synopsis ~opam_file pkg)
 
 let opam_lint ~dry_run ~opam_file_version ~opam_tool_version opam_file =
   let base_lint_cmd = opam_lint_cmd ~opam_file_version ~opam_tool_version in
