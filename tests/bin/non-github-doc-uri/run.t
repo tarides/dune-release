@@ -14,7 +14,7 @@ We need a basic opam project skeleton
     > homepage: "https://whatever.io"\
     > dev-repo: "git+https://whatever.io/dev/whatever.git"\
     > doc: "https://whatever.io/doc/main.html"\
-    > description: "whatever"\
+    > synopsis: "whatever"\
     > EOF
     $ touch README
     $ touch LICENSE
@@ -77,7 +77,7 @@ We do the whole dune-release process
     [ OK ] File opam is present.
     -: exec: opam lint -s whatever.opam
     [ OK ] lint opam file whatever.opam.
-    [ OK ] opam field description is present
+    [ OK ] opam field synopsis is present
     [FAIL] opam fields homepage and dev-repo can be parsed by dune-release
     dune-release: [ERROR] Github development repository URL could not be
                           inferred.

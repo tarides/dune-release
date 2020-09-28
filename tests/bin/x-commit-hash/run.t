@@ -14,7 +14,7 @@ We need a basic opam project skeleton
     > homepage: "https://github.com/foo/whatever"\
     > dev-repo: "git+https://github.com/foo/whatever.git"\
     > doc: "https://foo.github.io/whatever/"\
-    > description: "whatever"\
+    > synopsis: "whatever"\
     > EOF
     $ touch README
     $ touch LICENSE
@@ -76,7 +76,7 @@ We make a dry-run release
     [ OK ] File opam is present.
     -: exec: opam lint -s whatever.opam
     [ OK ] lint opam file whatever.opam.
-    [ OK ] opam field description is present
+    [ OK ] opam field synopsis is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] opam field doc can be parsed by dune-release
     [ OK ] lint of _build/whatever-0.1.0 and package whatever success

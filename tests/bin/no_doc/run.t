@@ -14,13 +14,13 @@ We need a basic opam project skeleton with an empty doc field
     > opam-version: "2.0"\
     > homepage: "https://github.com/foo/whatever"\
     > dev-repo: "git+https://github.com/foo/whatever.git"\
-    > description: "whatever"\
+    > synopsis: "whatever"\
     > EOF
     $ cat > whatever-lib.opam << EOF \
     > opam-version: "2.0"\
     > homepage: "https://github.com/foo/whatever"\
     > dev-repo: "git+https://github.com/foo/whatever.git"\
-    > description: "whatever-lib"\
+    > synopsis: "whatever-lib"\
     > doc: ""\
     > EOF
     $ touch README
