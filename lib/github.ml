@@ -38,10 +38,9 @@ module Parse = struct
     | _ -> None
 
   let ssh_uri_from_http uri =
-    (* if that fails, assume it's already an ssh uri *)
     match String.cut ~sep:"https://github.com/" uri with
-    | Some ("", path) -> "git@github.com:" ^ path
-    | _ -> uri
+    | Some ("", path) -> Some ("git@github.com:" ^ path)
+    | _ -> None
 end
 
 (* Publish documentation *)
@@ -267,7 +266,17 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
   remote_has_tag_uptodate () >>= function
   | true -> Ok () (* No need to push, avoiding the need to guess the uri. *)
   | false -> (
-      let uri = Parse.ssh_uri_from_http dev_repo in
+      let uri =
+        match Parse.ssh_uri_from_http dev_repo with
+        | Some uri -> uri
+        | None ->
+            App_log.unhappy (fun l ->
+                l
+                  "The uri %a is not recognized as a gihub uri, we are going \
+                   to assume it is already a ssh uri."
+                  Text.Pp.url dev_repo);
+            dev_repo
+      in
       Prompt.confirm_or_abort ~yes
         ~question:(fun l ->
           l "Push tag %a to %a?" Text.Pp.version tag Text.Pp.url uri)

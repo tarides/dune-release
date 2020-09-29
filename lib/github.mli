@@ -19,7 +19,7 @@ module Parse : sig
         [Some "username"].
       - Returns [None] if [remote_uri] isn't in the expected format. *)
 
-  val ssh_uri_from_http : string -> string
+  val ssh_uri_from_http : string -> string option
   (** [ssh_uri_from_http] Guess an SSH URI from a Github HTTP url. *)
 end
 
