@@ -37,9 +37,19 @@ module Parse = struct
         user_from_regexp_opt uri "https://github\\.com/\\(.+\\)/.+\\(\\.git\\)?"
     | _ -> None
 
+  let path_from_regexp_opt uri regexp =
+    try
+      Some
+        ( "git@github.com:"
+        ^ Re.(Group.get (exec (Emacs.compile_pat regexp) uri) 1) )
+    with Not_found -> None
+
   let ssh_uri_from_http uri =
-    match String.cut ~sep:"https://github.com/" uri with
-    | Some ("", path) -> Some ("git@github.com:" ^ path)
+    match uri with
+    | _ when Bos_setup.String.is_prefix uri ~affix:"git@" ->
+        path_from_regexp_opt uri "git@github\\.com:\\(.+\\)"
+    | _ when Bos_setup.String.is_prefix uri ~affix:"https://" ->
+        path_from_regexp_opt uri "https://github\\.com/\\(.+\\)"
     | _ -> None
 end
 
