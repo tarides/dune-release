@@ -14,52 +14,57 @@ open Rresult
 val path_arg : Fpath.t Arg.conv
 (** [path_arg] is a path argument converter. *)
 
-val pkg_names : string list Term.t
+val named : ('a -> 'b) -> 'a Cmdliner.Term.t -> 'b Cmdliner.Term.t
+(** Use this to wrap your arguments in a polymorphic variant constructor to avoid
+    confusion when they are later passed to your main function.
+    Example: [named (fun x -> `My_arg x] Arg.(value ...)] *)
+
+val pkg_names : [ `Package_names of string list ] Term.t
 (** A [--pkg-names] option to specify the packages to release. *)
 
-val pkg_version : string option Term.t
+val pkg_version : [ `Package_version of string option ] Term.t
 (** A [--pkg-version] option to specify the packages version. *)
 
-val keep_v : bool Term.t
+val keep_v : [ `Keep_v of bool ] Term.t
 (** A [--keep-v] option to not drop the 'v' at the beginning of version strings. *)
 
-val dist_name : string option Term.t
+val dist_name : [ `Dist_name of string option ] Term.t
 (** A [--name] option to specify the distribution name. *)
 
-val dist_tag : string option Term.t
+val dist_tag : [ `Dist_tag of string option ] Term.t
 (** A [--tag] option to define the tag to build the distribution from. *)
 
-val dist_file : Fpath.t option Term.t
+val dist_file : [ `Dist_file of Fpath.t option ] Term.t
 (** A [--dist-file] option to define the distribution archive file. *)
 
-val dist_uri : string option Term.t
+val dist_uri : [ `Dist_uri of string option ] Term.t
 (** A [--dist-uri] option to define the distribution archive URI on the WWW. *)
 
-val dist_opam : Fpath.t option Term.t
+val dist_opam : [ `Dist_opam of Fpath.t option ] Term.t
 (** An [--dist-opam] option to define the opam file. *)
 
-val readme : Fpath.t option Term.t
+val readme : [ `Readme of Fpath.t option ] Term.t
 (** A [--readme] option to define the readme. *)
 
-val change_log : Fpath.t option Term.t
+val change_log : [ `Change_log of Fpath.t option ] Term.t
 (** A [--change-log] option to define the change log. *)
 
-val opam : Fpath.t option Term.t
+val opam : [ `Opam of Fpath.t option ] Term.t
 (** An [--opam] option to define an opam file. *)
 
-val build_dir : Fpath.t option Term.t
+val build_dir : [ `Build_dir of Fpath.t option ] Term.t
 (** A [--build-dir] option to define the build directory. *)
 
-val publish_msg : string option Term.t
+val publish_msg : [ `Publish_msg of string option ] Term.t
 (** A [--msg] option to define a publication message. *)
 
-val token : Fpath.t option Term.t
+val token : [ `Token of Fpath.t option ] Term.t
 (** A [--token] option to define the github token. *)
 
-val dry_run : bool Term.t
+val dry_run : [ `Dry_run of bool ] Term.t
 (** A [--dry-run] option to do not perform any action. *)
 
-val yes : bool Term.t
+val yes : [ `Yes of bool ] Term.t
 (** A [--yes] option to skip confirmation prompts. *)
 
 (** {1 Terms} *)

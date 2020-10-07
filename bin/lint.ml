@@ -7,7 +7,8 @@
 open Bos_setup
 open Dune_release
 
-let lint () dry_run name pkg_names version tag keep_v lints =
+let lint () (`Dry_run dry_run) (`Dist_name name) (`Package_names pkg_names)
+    (`Package_version version) (`Dist_tag tag) (`Keep_v keep_v) (`Lints lints) =
   Cli.handle_error
     ( Config.keep_v keep_v >>= fun keep_v ->
       Pkg.infer_pkg_names Fpath.(v ".") pkg_names >>= fun pkg_names ->
@@ -34,7 +35,9 @@ let lints =
   in
   let test = Arg.enum test in
   let docv = "TEST" in
-  Arg.(value & pos_all test Lint.all & info [] ~doc ~docv)
+  Cli.named
+    (fun x -> `Lints x)
+    Arg.(value & pos_all test Lint.all & info [] ~doc ~docv)
 
 let doc = "Check package distribution consistency and conventions"
 

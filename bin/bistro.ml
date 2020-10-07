@@ -6,7 +6,8 @@
 
 open Bos_setup.R.Infix
 
-let bistro () dry_run name pkg_names version tag keep_v token =
+let bistro () (`Dry_run dry_run) (`Dist_name name) (`Package_names pkg_names)
+    (`Package_version version) (`Dist_tag tag) (`Keep_v keep_v) (`Token token) =
   Cli.handle_error
     ( Dune_release.Config.keep_v keep_v >>= fun keep_v ->
       Distrib.distrib ~dry_run ~name ~pkg_names ~version ~tag ~keep_v

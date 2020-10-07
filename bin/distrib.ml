@@ -88,8 +88,10 @@ let distrib ?build_dir ~dry_run ~name ~pkg_names ~version ~tag ~keep_v ~keep_dir
   log_footprint pkg ar >>= fun () ->
   (if dry_run then Ok () else warn_if_vcs_dirty ()) >>= fun () -> Ok errs
 
-let distrib_cli () dry_run build_dir name pkg_names version tag keep_v keep_dir
-    skip_lint skip_build skip_tests =
+let distrib_cli () (`Dry_run dry_run) (`Build_dir build_dir) (`Dist_name name)
+    (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
+    (`Keep_v keep_v) (`Keep_dir keep_dir) (`Skip_lint skip_lint)
+    (`Skip_build skip_build) (`Skip_tests skip_tests) =
   distrib ?build_dir ~dry_run ~name ~pkg_names ~version ~tag ~keep_v ~keep_dir
     ~skip_lint ~skip_build ~skip_tests ()
   |> Cli.handle_error
@@ -102,22 +104,30 @@ let keep_build_dir =
   let doc =
     "Keep the distribution build directory after successful archival."
   in
-  Arg.(value & flag & info [ "keep-build-dir" ] ~doc)
+  Cli.named
+    (fun x -> `Keep_dir x)
+    Arg.(value & flag & info [ "keep-build-dir" ] ~doc)
 
 let skip_lint =
   let doc = "Do not lint the archive distribution." in
-  Arg.(value & flag & info [ "skip-lint" ] ~doc)
+  Cli.named
+    (fun x -> `Skip_lint x)
+    Arg.(value & flag & info [ "skip-lint" ] ~doc)
 
 let skip_build =
   let doc = "Do not try to build the package from the archive." in
-  Arg.(value & flag & info [ "skip-build" ] ~doc)
+  Cli.named
+    (fun x -> `Skip_build x)
+    Arg.(value & flag & info [ "skip-build" ] ~doc)
 
 let skip_tests =
   let doc =
     "Do not try to build and run the package tests from the archive. Implied \
      by $(b,--skip-build)."
   in
-  Arg.(value & flag & info [ "skip-tests" ] ~doc)
+  Cli.named
+    (fun x -> `Skip_tests x)
+    Arg.(value & flag & info [ "skip-tests" ] ~doc)
 
 let doc = "Create a package distribution archive"
 

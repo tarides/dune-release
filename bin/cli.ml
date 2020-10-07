@@ -14,10 +14,14 @@ open Dune_release
 
 let path_arg = Arg.conv Fpath.(of_string, pp)
 
+let named f = Cmdliner.Term.(app (const f))
+
 let dist_tag =
   let doc = "The tag from which the distribution archive is built." in
-  Arg.(
-    value & opt (some string) None & info [ "t"; "tag" ] ~doc ~docv:"DIST_TAG")
+  named
+    (fun x -> `Dist_tag x)
+    Arg.(
+      value & opt (some string) None & info [ "t"; "tag" ] ~doc ~docv:"DIST_TAG")
 
 let dist_name =
   let doc =
@@ -27,7 +31,9 @@ let dist_name =
      word in the title of $(b,README.md)."
   in
   let docv = "DIST_NAME" in
-  Arg.(value & opt (some string) None & info [ "n"; "name" ] ~doc ~docv)
+  named
+    (fun x -> `Dist_name x)
+    Arg.(value & opt (some string) None & info [ "n"; "name" ] ~doc ~docv)
 
 let pkg_names =
   let doc =
@@ -35,7 +41,9 @@ let pkg_names =
      the $(b,*.opam) files present in the current directory."
   in
   let docv = "PKG_NAMES" in
-  Arg.(value & opt (list string) [] & info [ "p"; "pkg-names" ] ~doc ~docv)
+  named
+    (fun x -> `Package_names x)
+    Arg.(value & opt (list string) [] & info [ "p"; "pkg-names" ] ~doc ~docv)
 
 let pkg_version =
   let doc =
@@ -43,7 +51,10 @@ let pkg_version =
      tag."
   in
   let docv = "PKG_VERSION" in
-  Arg.(value & opt (some string) None & info [ "-V"; "pkg-version" ] ~doc ~docv)
+  named
+    (fun x -> `Package_version x)
+    Arg.(
+      value & opt (some string) None & info [ "-V"; "pkg-version" ] ~doc ~docv)
 
 let opam =
   let doc =
@@ -51,7 +62,9 @@ let opam =
      the package description."
   in
   let docv = "FILE" in
-  Arg.(value & opt (some path_arg) None & info [ "opam" ] ~doc ~docv)
+  named
+    (fun x -> `Opam x)
+    Arg.(value & opt (some path_arg) None & info [ "opam" ] ~doc ~docv)
 
 let token =
   let doc =
@@ -63,11 +76,13 @@ let token =
   in
   let docv = "FILE" in
   let env = Arg.env_var "DUNE_RELEASE_GITHUB_TOKEN" in
-  Arg.(value & opt (some path_arg) None & info [ "token" ] ~doc ~docv ~env)
+  named
+    (fun x -> `Token x)
+    Arg.(value & opt (some path_arg) None & info [ "token" ] ~doc ~docv ~env)
 
 let keep_v =
   let doc = "Do not drop the initial 'v' in the version string." in
-  Arg.(value & flag & info [ "keep-v" ] ~doc)
+  named (fun x -> `Keep_v x) Arg.(value & flag & info [ "keep-v" ] ~doc)
 
 let dist_file =
   let doc =
@@ -76,7 +91,9 @@ let dist_file =
      $(b,--dist-name) and $(b,--dist-version))."
   in
   let docv = "FILE" in
-  Arg.(value & opt (some path_arg) None & info [ "dist-file" ] ~doc ~docv)
+  named
+    (fun x -> `Dist_file x)
+    Arg.(value & opt (some path_arg) None & info [ "dist-file" ] ~doc ~docv)
 
 let dist_opam =
   let doc =
@@ -85,7 +102,9 @@ let dist_opam =
      package name $(i,NAME) (see option $(b,--dist-name))."
   in
   let docv = "FILE" in
-  Arg.(value & opt (some path_arg) None & info [ "dist-opam" ] ~doc ~docv)
+  named
+    (fun x -> `Dist_opam x)
+    Arg.(value & opt (some path_arg) None & info [ "dist-opam" ] ~doc ~docv)
 
 let dist_uri =
   let doc =
@@ -93,21 +112,27 @@ let dist_uri =
      package description."
   in
   let docv = "URI" in
-  Arg.(value & opt (some string) None & info [ "dist-uri" ] ~doc ~docv)
+  named
+    (fun x -> `Dist_uri x)
+    Arg.(value & opt (some string) None & info [ "dist-uri" ] ~doc ~docv)
 
 let readme =
   let doc =
     "The readme to use. If absent, provided by the package description."
   in
   let docv = "FILE" in
-  Arg.(value & opt (some path_arg) None & info [ "readme" ] ~doc ~docv)
+  named
+    (fun x -> `Readme x)
+    Arg.(value & opt (some path_arg) None & info [ "readme" ] ~doc ~docv)
 
 let change_log =
   let doc =
     "The change log to use. If absent, provided by the package description."
   in
   let docv = "FILE" in
-  Arg.(value & opt (some path_arg) None & info [ "change-log" ] ~doc ~docv)
+  named
+    (fun x -> `Change_log x)
+    Arg.(value & opt (some path_arg) None & info [ "change-log" ] ~doc ~docv)
 
 let build_dir =
   let doc =
@@ -115,7 +140,9 @@ let build_dir =
      description."
   in
   let docv = "BUILD_DIR" in
-  Arg.(value & opt (some path_arg) None & info [ "build-dir" ] ~doc ~docv)
+  named
+    (fun x -> `Build_dir x)
+    Arg.(value & opt (some path_arg) None & info [ "build-dir" ] ~doc ~docv)
 
 let publish_msg =
   let doc =
@@ -123,17 +150,19 @@ let publish_msg =
      version (see $(b,dune-release log -l))."
   in
   let docv = "MSG" in
-  Arg.(value & opt (some string) None & info [ "m"; "message" ] ~doc ~docv)
+  named
+    (fun x -> `Publish_msg x)
+    Arg.(value & opt (some string) None & info [ "m"; "message" ] ~doc ~docv)
 
 let dry_run =
   let doc =
     "Don't actually perform any action, just show what would be done."
   in
-  Arg.(value & flag & info [ "dry-run" ] ~doc)
+  named (fun x -> `Dry_run x) Arg.(value & flag & info [ "dry-run" ] ~doc)
 
 let yes =
   let doc = "Do not prompt for confirmation and keep going instead" in
-  Arg.(value & flag & info [ "y"; "yes" ] ~doc)
+  named (fun x -> `Yes x) Arg.(value & flag & info [ "y"; "yes" ] ~doc)
 
 (* Terms *)
 
