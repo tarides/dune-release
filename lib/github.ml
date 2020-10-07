@@ -264,14 +264,30 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
       Vcs.commit_id ~dirty:false ~commit_ish:tag vcs >>= fun local_rev ->
       Vcs.ls_remote ~dry_run vcs ~kind:`Tag ~filter:tag dev_repo >>= function
       | [] -> Ok false
-      | (rev, _) :: _ when local_rev = rev -> Ok true
-      | (rev, _) :: _ ->
-          App_log.unhappy (fun l ->
-              l
-                "The tag %a is present on the remote but points to a different \
-                 commit (%a)."
-                Text.Pp.version tag Text.Pp.commit rev);
-          Ok false
+      | (remote_rev_unpeeled, _) :: _ -> (
+          (* Resolve again in case of annotated commits (most common case).
+             This is a no-op for non-annotated commits. In case of error, we
+             can assume that the remote is different because we checked that we
+             have the tag locally. *)
+          match Vcs.commit_id ~commit_ish:remote_rev_unpeeled vcs with
+          | Ok remote_rev when remote_rev = local_rev ->
+              if remote_rev_unpeeled = remote_rev then
+                App_log.unhappy (fun l ->
+                    l
+                      "The tag present on the remote is not annotated (it was \
+                       not created by dune-release tag.)");
+              Ok true
+          | r ->
+              let pp_r fmt = function
+                | Ok remote_rev -> Text.Pp.commit fmt remote_rev
+                | Error _ -> Format.fprintf fmt "that we don't have locally"
+              in
+              App_log.unhappy (fun l ->
+                  l
+                    "The tag %a is present on the remote but points to a \
+                     different commit (%a)."
+                    Text.Pp.version tag pp_r r);
+              Ok false )
   in
   remote_has_tag_uptodate () >>= function
   | true -> Ok () (* No need to push, avoiding the need to guess the uri. *)
