@@ -511,7 +511,13 @@ let assert_tag_exists ~dry_run repo tag =
   if Vcs.tag_exists ~dry_run repo tag then Ok ()
   else R.error_msgf "%s is not a valid tag" tag
 
-let distrib_archive ~dry_run ~keep_dir p =
+let pull_submodules ~dry_run ~dist_build_dir =
+  Sos.with_dir ~dry_run dist_build_dir
+    (fun () -> Vcs.get () >>= Vcs.submodule_update ~dry_run)
+    ()
+  |> R.join
+
+let distrib_archive ~dry_run ~keep_dir ~include_submodules p =
   Archive.ensure_bzip2 () >>= fun () ->
   build_dir p >>= fun build_dir ->
   tag p >>= fun tag ->
@@ -526,6 +532,9 @@ let distrib_archive ~dry_run ~keep_dir p =
   Vcs.get ~dir:dist_build_dir () >>= fun clone_vcs ->
   Ok (Fmt.strf "dune-release-dist-%s" tag) >>= fun branch ->
   Vcs.checkout ~dry_run clone_vcs ~branch ~commit_ish:tag >>= fun () ->
+  ( if include_submodules then pull_submodules ~dry_run ~dist_build_dir
+  else Ok () )
+  >>= fun () ->
   distrib_prepare ~dry_run ~dist_build_dir ~version >>= fun () ->
   let exclude_paths = Fpath.Set.of_list Distrib.exclude_paths in
   Archive.tar dist_build_dir ~exclude_paths ~root ~mtime >>= fun tar ->

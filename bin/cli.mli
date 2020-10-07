@@ -67,6 +67,9 @@ val dry_run : [ `Dry_run of bool ] Term.t
 val yes : [ `Yes of bool ] Term.t
 (** A [--yes] option to skip confirmation prompts. *)
 
+val include_submodules : [ `Include_submodules of bool ] Term.t
+(** A [--include-submodules] flag to include submodules in the distrib tarball *)
+
 (** {1 Terms} *)
 
 val setup : unit Term.t

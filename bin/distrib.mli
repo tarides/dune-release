@@ -18,6 +18,7 @@ val distrib :
   skip_lint:bool ->
   skip_build:bool ->
   skip_tests:bool ->
+  include_submodules:bool ->
   unit ->
   (int, Bos_setup.R.msg) result
 (** [distrib ~build_dir ~dry_run ~name ~pkg_names ~version ~tag ~keep_v
