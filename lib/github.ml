@@ -268,7 +268,7 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
       | (rev, _) :: _ ->
           App_log.unhappy (fun l ->
               l
-                "The tag %a is present on the remote but point to a different \
+                "The tag %a is present on the remote but points to a different \
                  commit (%a)."
                 Text.Pp.version tag Text.Pp.commit rev);
           Ok false
