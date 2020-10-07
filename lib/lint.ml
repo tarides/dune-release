@@ -7,6 +7,65 @@ let report_status status f =
       f (fun ?header ?tags fmt ->
           l ?header ?tags ("%a " ^^ fmt) Text.Pp.status status))
 
+type cmds = {
+  distrib : bool;
+  publish : bool;
+  opam_pkg : bool;
+  opam_submit : bool;
+}
+
+type status = OK | KO
+
+type linting_check = {
+  name : string;
+  msg_ok : string;
+  msg_ko : string;
+  required_for_steps : cmds;
+  check : dry_run:bool -> Pkg.t -> bool;
+}
+
+type check_status = {
+  distrib : status;
+  publish : status;
+  opam_pkg : status;
+  opam_submit : status;
+}
+
+let pp_status fmt { distrib; publish; opam_pkg; opam_submit } =
+  let pp fmt = function
+    | OK -> Format.fprintf fmt "OK"
+    | KO -> Format.fprintf fmt "KO"
+  in
+  Format.fprintf fmt
+    "[distrib:%a]@,[publish:%a]@,[opam-pkg:%a]@,[opam-submit:%a]" pp distrib pp
+    publish pp opam_pkg pp opam_submit
+
+let check ~dry_run pkg { name; msg_ok; msg_ko; required_for_steps; check } =
+  let status =
+    if check ~dry_run pkg then
+      { distrib = OK; publish = OK; opam_pkg = OK; opam_submit = OK }
+    else
+      {
+        distrib = (if required_for_steps.distrib then KO else OK);
+        publish = (if required_for_steps.publish then KO else OK);
+        opam_pkg = (if required_for_steps.opam_pkg then KO else OK);
+        opam_submit = (if required_for_steps.opam_submit then KO else OK);
+      }
+  in
+  match status with
+  | { distrib = OK; publish = OK; opam_pkg = OK; opam_submit = OK } ->
+      report_status `Ok (fun m ->
+          m "@[@<10>%s@ @<10>%s@ %a.@]" name msg_ok pp_status status);
+      0
+  | _ ->
+      report_status `Fail (fun m ->
+          m "@[@<10>%s@ @<10>%s@ %a.@]" name msg_ko pp_status status);
+      1
+
+let all_checks ~dry_run pkg checks =
+  let go acc x = acc + check ~dry_run pkg x in
+  List.fold_left go 0 checks
+
 type std_file = {
   generic_name : string;
   get_path : Pkg.t -> (Fpath.t list, R.msg) result;
@@ -23,33 +82,37 @@ let std_files =
     };
   ]
 
-let status_to_presence = function
-  | `Ok -> "present"
-  | `Fail | `Warn -> "missing"
-
-let lint_exists_file ~dry_run { generic_name; get_path } pkg =
-  let status =
-    get_path pkg >>= function
-    | [] -> Ok `Fail
-    | path :: _ ->
-        Sos.file_exists ~dry_run path >>= fun exists ->
-        Ok (if exists then `Ok else `Fail)
-  in
-  status >>= fun status ->
-  let presence = status_to_presence status in
-  report_status status (fun m ->
-      m "@[File %a@ is@ %s.@]" Text.Pp.path (Fpath.v generic_name) presence);
-  let err_count = match status with `Ok -> 0 | `Fail -> 1 in
-  Ok err_count
+let std_files_linting_checks =
+  List.map
+    (fun { generic_name; get_path } ->
+      {
+        name = generic_name;
+        msg_ok = "is present";
+        msg_ko = "is missing";
+        required_for_steps =
+          {
+            distrib = true;
+            publish = true;
+            opam_pkg = true;
+            opam_submit = true;
+          };
+        check =
+          (fun ~dry_run pkg ->
+            match
+              get_path pkg >>= function
+              | [] -> Ok `Fail
+              | path :: _ ->
+                  Sos.file_exists ~dry_run path >>= fun exists ->
+                  Ok (if exists then `Ok else `Fail)
+            with
+            | Ok `Ok -> true
+            | Ok `Fail -> false
+            | Error _ -> false);
+      })
+    std_files
 
 let lint_std_files ~dry_run pkg =
-  let go errs file =
-    let new_err =
-      Logs.on_error_msg ~use:(fun () -> 1) (lint_exists_file ~dry_run file pkg)
-    in
-    errs + new_err
-  in
-  List.fold_left go 0 std_files
+  all_checks ~dry_run pkg std_files_linting_checks
 
 let lint_file_with_cmd ~dry_run ~file_kind ~cmd ~handle_exit file errs =
   let run_linter cmd file ~exists =
