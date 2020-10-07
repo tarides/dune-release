@@ -43,7 +43,6 @@ type t = {
   readmes : Fpath.t list option;
   change_logs : Fpath.t list option;
   licenses : Fpath.t list option;
-  distrib : Distrib.t;
   distrib_file : Fpath.t option;
   publish_msg : string option;
 }
@@ -443,7 +442,7 @@ let infer_name dir =
 
 let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
     ?opam:opam_file ?opam_descr ?readme ?change_log ?license ?distrib_file
-    ?publish_msg ?(distrib = Distrib.v ()) () =
+    ?publish_msg () =
   let name =
     match name with None -> infer_name Fpath.(v ".") | Some v -> Ok v
   in
@@ -470,7 +469,6 @@ let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
       licenses;
       distrib_file;
       publish_msg;
-      distrib;
     }
   in
   p
@@ -505,13 +503,11 @@ let distrib_version_opam_files ~dry_run ~version =
       let content = prepare_opam_for_distrib ~version ~content in
       Sos.write_file ~dry_run file (String.concat ~sep:"\n" content))
 
-let distrib_prepare ~dry_run p ~dist_build_dir ~version =
-  let d = p.distrib in
+let distrib_prepare ~dry_run ~dist_build_dir ~version =
   Sos.with_dir ~dry_run dist_build_dir
     (fun () ->
       Sos.run ~dry_run Cmd.(v "dune" % "subst") >>= fun () ->
-      distrib_version_opam_files ~dry_run ~version >>= fun () ->
-      Distrib.massage d () >>= fun () -> Distrib.exclude_paths d ())
+      distrib_version_opam_files ~dry_run ~version)
     ()
   |> R.join
 
@@ -534,8 +530,8 @@ let distrib_archive ~dry_run ~keep_dir p =
   Vcs.get ~dir:dist_build_dir () >>= fun clone ->
   Ok (Fmt.strf "dune-release-dist-%s" tag) >>= fun branch ->
   Vcs.checkout ~dry_run clone ~branch ~commit_ish:tag >>= fun () ->
-  distrib_prepare ~dry_run p ~dist_build_dir ~version >>= fun exclude_paths ->
-  let exclude_paths = Fpath.Set.of_list exclude_paths in
+  distrib_prepare ~dry_run ~dist_build_dir ~version >>= fun () ->
+  let exclude_paths = Fpath.Set.of_list Distrib.exclude_paths in
   Archive.tar dist_build_dir ~exclude_paths ~root ~mtime >>= fun tar ->
   distrib_archive_path p >>= fun archive ->
   Archive.bzip2 ~dry_run ~force:true ~dst:archive tar >>= fun () ->

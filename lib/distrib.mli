@@ -4,38 +4,8 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** {1 Distribution description} *)
-
-open Rresult
-
-(** {1:distrib Distribution description} *)
-
-type t
-(** The type for describing distribution creation. *)
-
-val v :
-  ?massage:(unit -> (unit, R.msg) result) ->
-  ?exclude_paths:(unit -> (Fpath.t list, R.msg) result) ->
-  unit ->
-  t
-(** [distrib ~massage ~exclude_paths ()] influences the distribution creation
-    process performed by the [dune-release] tool. See the {{!distdetails} full
-    details about distribution creation}.
-
-    In the following the {e distribution build directory} is a private clone of
-    the package's source repository's [HEAD] when [dune-release distrib] is
-    invoked.
-
-    - [massage] is invoked in the distribution build directory, before
-      archiving. It can be used to generate distribution time build artefacts.
-      Defaults to {!massage}.
-    - [exclude_paths ()] is invoked in the distribution build directory, after
-      massaging, to determine the paths that are excluded from being added to
-      the distribution archive. Defaults to {!exclude_paths}. *)
-
-val massage : t -> unit -> (unit, R.msg) result
-
-val exclude_paths : t -> unit -> (Fpath.t list, R.msg) result
+val exclude_paths : Fpath.t list
+(** List of paths to exclude from the distribution tarball *)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
