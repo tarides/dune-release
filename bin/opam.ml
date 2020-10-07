@@ -294,9 +294,14 @@ let submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ?token
 
 let field ~pkgs ~field_name = field pkgs field_name
 
-let opam_cli () dry_run build_dir local_repo remote_repo opam_repo user keep_v
-    opam distrib_uri distrib_file tag name pkg_names version pkg_descr readme
-    change_log publish_msg action field_name no_auto_open yes token =
+let opam_cli () (`Dry_run dry_run) (`Build_dir build_dir)
+    (`Local_repo local_repo) (`Remote_repo remote_repo) (`Opam_repo opam_repo)
+    (`User user) (`Keep_v keep_v) (`Dist_opam opam) (`Dist_uri distrib_uri)
+    (`Dist_file distrib_file) (`Dist_tag tag) (`Dist_name name)
+    (`Package_names pkg_names) (`Package_version version) (`Pkg_descr pkg_descr)
+    (`Readme readme) (`Change_log change_log) (`Publish_msg publish_msg)
+    (`Action action) (`Field_name field_name) (`No_auto_open no_auto_open)
+    (`Yes yes) (`Token token) =
   get_pkgs ?build_dir ?opam ?distrib_file ?pkg_descr ?readme ?change_log
     ?publish_msg ~dry_run ~keep_v ~tag ~name ~pkg_names ~version ()
   >>= (fun pkgs ->
@@ -322,37 +327,50 @@ let action =
       (Arg.doc_alts_enum action)
   in
   let action = Arg.enum action in
-  Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
+  Cli.named
+    (fun x -> `Action x)
+    Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
 
 let field_arg =
   let doc = "the field to output ($(b,field) action)" in
-  Arg.(value & pos 1 (some string) None & info [] ~doc ~docv:"FIELD")
+  Cli.named
+    (fun x -> `Field_name x)
+    Arg.(value & pos 1 (some string) None & info [] ~doc ~docv:"FIELD")
 
 let no_auto_open =
   let doc = "Do not open a browser to view the new pull-request." in
-  Arg.(value & flag & info [ "no-auto-open" ] ~doc)
+  Cli.named
+    (fun x -> `No_auto_open x)
+    Arg.(value & flag & info [ "no-auto-open" ] ~doc)
 
 let user =
   let doc =
     "the name of the GitHub account where to push new opam-repository branches."
   in
-  Arg.(value & opt (some string) None & info [ "u"; "user" ] ~doc ~docv:"USER")
+  Cli.named
+    (fun x -> `User x)
+    Arg.(
+      value & opt (some string) None & info [ "u"; "user" ] ~doc ~docv:"USER")
 
 let local_repo =
   let doc = "Location of the local fork of opam-repository" in
   let env = Arg.env_var "DUNE_RELEASE_LOCAL_REPO" in
-  Arg.(
-    value
-    & opt (some string) None
-    & info ~env [ "l"; "--local-repo" ] ~doc ~docv:"PATH")
+  Cli.named
+    (fun x -> `Local_repo x)
+    Arg.(
+      value
+      & opt (some string) None
+      & info ~env [ "l"; "--local-repo" ] ~doc ~docv:"PATH")
 
 let remote_repo =
   let doc = "Location of the remote fork of opam-repository" in
   let env = Arg.env_var "DUNE_RELEASE_REMOTE_REPO" in
-  Arg.(
-    value
-    & opt (some string) None
-    & info ~env [ "r"; "--remote-repo" ] ~doc ~docv:"URI")
+  Cli.named
+    (fun x -> `Remote_repo x)
+    Arg.(
+      value
+      & opt (some string) None
+      & info ~env [ "r"; "--remote-repo" ] ~doc ~docv:"URI")
 
 let opam_repo =
   let doc =
@@ -361,10 +379,12 @@ let opam_repo =
   in
   let docv = "GITHUB_USER_OR_ORG/REPO_NAME" in
   let env = Arg.env_var "DUNE_RELEASE_OPAM_REPO" in
-  Arg.(
-    value
-    & opt (some (pair ~sep:'/' string string)) None
-    & info ~env [ "opam-repo" ] ~doc ~docv)
+  Cli.named
+    (fun x -> `Opam_repo x)
+    Arg.(
+      value
+      & opt (some (pair ~sep:'/' string string)) None
+      & info ~env [ "opam-repo" ] ~doc ~docv)
 
 let pkg_descr =
   let doc =
@@ -380,7 +400,9 @@ let pkg_descr =
      'Contact:' or '%%VERSION'."
   in
   let docv = "FILE" in
-  Arg.(value & opt (some Cli.path_arg) None & info [ "pkg-descr" ] ~doc ~docv)
+  Cli.named
+    (fun x -> `Pkg_descr x)
+    Arg.(value & opt (some Cli.path_arg) None & info [ "pkg-descr" ] ~doc ~docv)
 
 let doc = "Interaction with opam and the OCaml opam repository"
 

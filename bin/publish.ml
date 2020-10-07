@@ -85,9 +85,12 @@ let publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
   in
   List.fold_left publish_artefact (Ok ()) publish_artefacts >>= fun () -> Ok 0
 
-let publish_cli () build_dir name pkg_names version tag keep_v opam delegate
-    change_log distrib_uri distrib_file publish_msg dry_run publish_artefacts
-    yes token =
+let publish_cli () (`Build_dir build_dir) (`Dist_name name)
+    (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
+    (`Keep_v keep_v) (`Dist_opam opam) (`Delegate delegate)
+    (`Change_log change_log) (`Dist_uri distrib_uri) (`Dist_file distrib_file)
+    (`Publish_msg publish_msg) (`Dry_run dry_run)
+    (`Publish_artefacts publish_artefacts) (`Yes yes) (`Token token) =
   publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
     ?publish_msg ?token ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
     ~publish_artefacts ~yes ()
@@ -106,9 +109,11 @@ let delegate =
   in
   let docv = "TOOL" in
   let to_cmd = function None -> None | Some s -> Some (Cmd.v s) in
-  Term.(
-    const to_cmd
-    $ Arg.(value & opt (some string) None & info [ "delegate" ] ~doc ~docv))
+  Cli.named
+    (fun x -> `Delegate x)
+    Term.(
+      const to_cmd
+      $ Arg.(value & opt (some string) None & info [ "delegate" ] ~doc ~docv))
 
 let artefacts =
   let alt_prefix = "alt-" in
@@ -135,7 +140,9 @@ let artefacts =
        absent, the set of default publication artefacts is determined by the \
        package description."
   in
-  Arg.(value & pos_all artefact [] & info [] ~doc ~docv:"ARTEFACT")
+  Cli.named
+    (fun x -> `Publish_artefacts x)
+    Arg.(value & pos_all artefact [] & info [] ~doc ~docv:"ARTEFACT")
 
 let doc =
   Deprecate_delegates.artefacts_warning

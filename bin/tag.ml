@@ -70,7 +70,9 @@ let vcs_tag pkg tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
           m "Tagged %a with version %a" Text.Pp.commit commit_ish
             Text.Pp.version tag)
 
-let tag () dry_run name change_log tag commit_ish force sign delete msg yes =
+let tag () (`Dry_run dry_run) (`Dist_name name) (`Change_log change_log)
+    (`Version tag) (`Commit_ish commit_ish) (`Force force) (`Sign sign)
+    (`Delete delete) (`Msg msg) (`Yes yes) =
   (let pkg = Pkg.v ~dry_run ?change_log ?name () in
    let tag =
      match tag with
@@ -99,31 +101,39 @@ let version =
     "The version tag to use. If absent, automatically extracted from the \
      package's change log."
   in
-  Arg.(value & pos 0 (some string) None & info [] ~doc ~docv:"VERSION")
+  Cli.named
+    (fun x -> `Version x)
+    Arg.(value & pos 0 (some string) None & info [] ~doc ~docv:"VERSION")
 
 let commit =
   let doc = "Commit-ish $(docv) to tag." in
-  Arg.(value & opt string "HEAD" & info [ "commit" ] ~doc ~docv:"COMMIT-ISH")
+  Cli.named
+    (fun x -> `Commit_ish x)
+    Arg.(value & opt string "HEAD" & info [ "commit" ] ~doc ~docv:"COMMIT-ISH")
 
 let msg =
   let doc =
     "Commit message for the tag. If absent, the message 'Distribution \
      $(i,VERSION)' is used."
   in
-  Arg.(
-    value & opt (some string) None & info [ "m"; "message" ] ~doc ~docv:"MSG")
+  Cli.named
+    (fun x -> `Msg x)
+    Arg.(
+      value & opt (some string) None & info [ "m"; "message" ] ~doc ~docv:"MSG")
 
 let sign =
   let doc = "Sign the tag using the VCS's default signing key." in
-  Arg.(value & flag & info [ "s"; "sign" ] ~doc)
+  Cli.named (fun x -> `Sign x) Arg.(value & flag & info [ "s"; "sign" ] ~doc)
 
 let force =
   let doc = "If the tag exists, replace it rather than fail." in
-  Arg.(value & flag & info [ "f"; "force" ] ~doc)
+  Cli.named (fun x -> `Force x) Arg.(value & flag & info [ "f"; "force" ] ~doc)
 
 let delete =
   let doc = "Delete the specified tag rather than create it." in
-  Arg.(value & flag & info [ "d"; "delete" ] ~doc)
+  Cli.named
+    (fun x -> `Delete x)
+    Arg.(value & flag & info [ "d"; "delete" ] ~doc)
 
 let doc = "Tag the package's source repository with a version"
 
