@@ -20,7 +20,6 @@ type t = {
   opam_fields : (string list String.map, R.msg) result Lazy.t;
   readmes : Fpath.t list option;
   change_logs : Fpath.t list option;
-  licenses : Fpath.t list option;
   distrib_file : Fpath.t option;
   publish_msg : string option;
 }
@@ -132,7 +131,7 @@ let build_dir p =
 let readmes p =
   match p.readmes with
   | Some f -> Ok f
-  | None -> find_files (Fpath.v ".") ~names_wo_ext:[ "readme" ]
+  | None -> Sos.find_files (Fpath.v ".") ~names_wo_ext:[ "readme" ]
 
 let readme p =
   readmes p >>= function
@@ -175,11 +174,6 @@ let opam_descr p =
               Opam.Descr.of_readme_file readme)
       | Some v -> R.error_msgf "unsupported opam version: %s" v
       | None -> R.error_msgf "missing opam-version field")
-
-let licenses p =
-  match p.licenses with
-  | Some f -> Ok f
-  | None -> find_files (Fpath.v ".") ~names_wo_ext:[ "license"; "copying" ]
 
 let dev_repo p =
   opam_field_hd p "dev-repo" >>= function
@@ -361,8 +355,8 @@ let infer_name dir =
               exit 1))
 
 let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
-    ?opam:opam_file ?opam_descr ?readme ?change_log ?license ?distrib_file
-    ?publish_msg () =
+    ?opam:opam_file ?opam_descr ?readme ?change_log ?distrib_file ?publish_msg
+    () =
   let name =
     match name with None -> infer_name Fpath.(v ".") | Some v -> Ok v
   in
@@ -370,7 +364,6 @@ let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
   let change_logs =
     match change_log with Some c -> Some [ c ] | None -> None
   in
-  let licenses = match license with Some l -> Some [ l ] | None -> None in
   let name = Rresult.R.error_msg_to_invalid_arg name in
   let rec opam_fields = lazy (opam p >>= fun o -> Opam.File.fields ~dry_run o)
   and p =
@@ -386,7 +379,6 @@ let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
       opam_fields;
       readmes;
       change_logs;
-      licenses;
       distrib_file;
       publish_msg;
     }

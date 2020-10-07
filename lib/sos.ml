@@ -224,3 +224,7 @@ let relativize ~src ~dst =
     ~none:(fun () ->
       R.error_msgf "Could define path from %a to %a" Fpath.pp src Fpath.pp dst)
     (Fpath.relativize ~root:src dst)
+
+let find_files path ~names_wo_ext =
+  OS.Dir.contents path >>| fun files ->
+  Stdext.Path.find_files files ~names_wo_ext

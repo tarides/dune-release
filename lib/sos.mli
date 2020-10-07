@@ -132,3 +132,6 @@ val relativize : src:Fpath.t -> dst:Fpath.t -> (Fpath.t, error) result
 (** [relativize ~src ~dst] return a relative path from [src] to [dst]. If such a
     path can't be expressed, i.e. [srs] and [dst] don't have a common root,
     returns an error. *)
+
+val find_files :
+  Fpath.t -> names_wo_ext:string list -> (Fpath.t list, error) result

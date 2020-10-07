@@ -12,10 +12,13 @@ type std_file = {
   get_path : Pkg.t -> (Fpath.t list, R.msg) result;
 }
 
+let licenses () =
+  Sos.find_files (Fpath.v ".") ~names_wo_ext:[ "license"; "copying" ]
+
 let std_files =
   [
     { generic_name = "README"; get_path = Pkg.readmes };
-    { generic_name = "LICENSE"; get_path = Pkg.licenses };
+    { generic_name = "LICENSE"; get_path = (fun _ -> licenses ()) };
     { generic_name = "CHANGES"; get_path = Pkg.change_logs };
     {
       generic_name = "opam";

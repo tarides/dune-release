@@ -25,7 +25,6 @@ val v :
   ?opam_descr:Fpath.t ->
   ?readme:Fpath.t ->
   ?change_log:Fpath.t ->
-  ?license:Fpath.t ->
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
   unit ->
@@ -75,9 +74,6 @@ val change_logs : t -> (Fpath.t list, R.msg) result
 
 val change_log : t -> (Fpath.t, R.msg) result
 (** [change_log p] is the first element of [change_logs p]. *)
-
-val licenses : t -> (Fpath.t list, R.msg) result
-(** [licenses p] are [p]'s license files. *)
 
 val infer_distrib_uri : t -> (string, R.msg) result
 (** [infer_distrib_uri p] infers [p]'s distribution URI from the homepage and
