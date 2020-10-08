@@ -124,8 +124,9 @@ let path_set_of_dir dir ~exclude_paths =
   let traverse = `Sat not_excluded in
   let elements = `Sat not_excluded in
   let err _ e = e in
-  OS.Dir.fold_contents ~dotfiles:true ~err ~elements ~traverse Fpath.Set.add
-    Fpath.Set.empty dir
+  OS.Dir.contents ~dotfiles:true dir
+  >>= OS.Path.fold ~dotfiles:true ~err ~elements ~traverse Fpath.Set.add
+        Fpath.Set.empty
 
 let tar dir ~exclude_paths ~root ~mtime =
   let tar_add file tar =
