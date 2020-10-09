@@ -11,6 +11,9 @@
 
 - Attach the changelog to the annotated tag message (#283, @gpetiot)
 - Deprecate the use of delegates in `dune-release publish` (#276, @pitag-ha)
+- Do not remove versioned files from the tarball anymore. We used to exclude
+  `.gitignore`, `.gitattributes` and other such files from the archive.
+  (#299, @NathanReb)
 
 ### Deprecated
 

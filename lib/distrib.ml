@@ -4,17 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-let default_exclude_paths =
-  List.map Fpath.v
-    [
-      ".git";
-      ".gitignore";
-      ".gitattributes";
-      ".hg";
-      ".hgignore";
-      "build";
-      "_build";
-    ]
+let default_exclude_paths = List.map Fpath.v [ ".git"; ".hg" ]
 
 let exclude_paths = default_exclude_paths
 
