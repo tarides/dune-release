@@ -290,7 +290,11 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
               Ok false )
   in
   remote_has_tag_uptodate () >>= function
-  | true -> Ok () (* No need to push, avoiding the need to guess the uri. *)
+  | true ->
+      App_log.status (fun l ->
+          l "The tag %a is present and uptodate on the remote." Text.Pp.version
+            tag);
+      Ok () (* No need to push, avoiding the need to guess the uri. *)
   | false -> (
       let uri =
         match Parse.ssh_uri_from_http dev_repo with
