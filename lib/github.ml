@@ -290,8 +290,10 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
   remote_has_tag_uptodate () >>= function
   | true ->
       App_log.status (fun l ->
-          l "The tag %a is present and uptodate on the remote." Text.Pp.version
-            tag);
+          l
+            "The tag %a is present and uptodate on the remote: skipping the \
+             tag push"
+            Text.Pp.version tag);
       Ok () (* No need to push, avoiding the need to guess the uri. *)
   | false -> (
       let uri =
