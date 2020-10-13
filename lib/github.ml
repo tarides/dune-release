@@ -263,8 +263,8 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
     Vcs.ls_remote ~dry_run vcs ~kind:`Tag ~filter:tag dev_repo >>= function
     | [] -> Ok false
     | (remote_rev_unpeeled, _) :: _ -> (
-        (* Resolve again in case of annotated commits (most common case).
-           This is a no-op for non-annotated commits. In case of error, we
+        (* Resolve again in case of annotated tags (most common case).
+           This is a no-op for non-annotated tags. In case of error, we
            can assume that the remote is different because we checked that we
            have the tag locally. *)
         match Vcs.commit_id ~commit_ish:remote_rev_unpeeled vcs with
