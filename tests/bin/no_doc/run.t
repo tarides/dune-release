@@ -229,9 +229,11 @@ We do the whole process, calling publish doc implicitely should succeed
     [-] Preparing pull request to ocaml/opam-repository
     ...
     [-] Fetching https://github.com/ocaml/opam-repository.git#master
+    ...
     => exec:
          git --git-dir .git fetch https://github.com/ocaml/opam-repository.git master
     => exec: git --git-dir .git rev-parse FETCH_HEAD
+    ...
     [-] Checking out a local release-whatever-0.1.0 branch
     => exec: git --git-dir .git add packages/whatever/whatever.0.1.0
     => exec: git --git-dir .git add packages/whatever-lib/whatever-lib.0.1.0
