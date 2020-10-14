@@ -98,12 +98,9 @@ We make a dry-run release:
     [-] Publishing to github
     -: exec: git --git-dir .git rev-parse --verify 0.1.0
     -: exec: git --git-dir .git rev-parse --verify 0.1.0
-    [?] Push tag 0.1.0 to git@github.com:foo/whatever.git? [Y/n]
-    [-] Pushing tag 0.1.0 to git@github.com:foo/whatever.git
-    -: exec: git --git-dir .git push --force git@github.com:foo/whatever.git 0.1.0
     ...
-    [?] Create release 0.1.0 on git@github.com:foo/whatever.git? [Y/n]
-    [-] Creating release 0.1.0 on git@github.com:foo/whatever.git via github's API
+    [?] Create release 0.1.0 on https://github.com/foo/whatever.git? [Y/n]
+    [-] Creating release 0.1.0 on https://github.com/foo/whatever.git via github's API
     -: exec: curl --user foo:${token} --location --silent --show-error --config -
          --dump-header - --data
          { "tag_name" : "0.1.0", "body" : "CHANGES:\n\n- Some other feature\n" }

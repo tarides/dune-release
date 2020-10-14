@@ -36,6 +36,21 @@ module Parse = struct
     | _ when Bos_setup.String.is_prefix uri ~affix:"https://" ->
         user_from_regexp_opt uri "https://github\\.com/\\(.+\\)/.+\\(\\.git\\)?"
     | _ -> None
+
+  let path_from_regexp_opt uri regexp =
+    try
+      Some
+        ( "git@github.com:"
+        ^ Re.(Group.get (exec (Emacs.compile_pat regexp) uri) 1) )
+    with Not_found -> None
+
+  let ssh_uri_from_http uri =
+    match uri with
+    | _ when Bos_setup.String.is_prefix uri ~affix:"git@" ->
+        path_from_regexp_opt uri "git@github\\.com:\\(.+\\)"
+    | _ when Bos_setup.String.is_prefix uri ~affix:"https://" ->
+        path_from_regexp_opt uri "https://github\\.com/\\(.+\\)"
+    | _ -> None
 end
 
 (* Publish documentation *)
@@ -235,6 +250,81 @@ let assert_tag_exists ~dry_run tag =
   if Vcs.tag_exists ~dry_run repo tag then Ok ()
   else R.error_msgf "%s is not a valid tag" tag
 
+(* Ask the user then push the tag. Guess the ssh URI from the dev-repo.
+   This function can abort:
+   - The user answered "N" to pushing the tag
+   - The push failed
+
+   This function does nothing if the tag is already present on the remote and
+   point to the same ref. *)
+let push_tag ~dry_run ~yes ~dev_repo vcs tag =
+  let remote_has_tag_uptodate () =
+    Vcs.commit_id ~dirty:false ~commit_ish:tag vcs >>= fun local_rev ->
+    Vcs.ls_remote ~dry_run vcs ~kind:`Tag ~filter:tag dev_repo >>= function
+    | [] -> Ok false
+    | (remote_rev_unpeeled, _) :: _ -> (
+        (* Resolve again in case of annotated tags (most common case).
+           This is a no-op for non-annotated tags. In case of error, we
+           can assume that the remote is different because we checked that we
+           have the tag locally. *)
+        match Vcs.commit_id ~commit_ish:remote_rev_unpeeled vcs with
+        | Ok remote_rev when remote_rev = local_rev ->
+            if remote_rev_unpeeled = remote_rev then
+              App_log.unhappy (fun l ->
+                  l
+                    "The tag present on the remote is not annotated (it was \
+                     not created by dune-release tag.)");
+            Ok true
+        | r ->
+            let pp_r fmt = function
+              | Ok remote_rev -> Text.Pp.commit fmt remote_rev
+              | Error _ -> Format.fprintf fmt "that we don't have locally"
+            in
+            App_log.unhappy (fun l ->
+                l
+                  "The tag %a is present on the remote but points to a \
+                   different commit (%a)."
+                  Text.Pp.version tag pp_r r);
+            Ok false )
+  in
+  remote_has_tag_uptodate () >>= function
+  | true ->
+      App_log.status (fun l ->
+          l
+            "The tag %a is present and uptodate on the remote: skipping the \
+             tag push"
+            Text.Pp.version tag);
+      Ok () (* No need to push, avoiding the need to guess the uri. *)
+  | false -> (
+      let uri =
+        match Parse.ssh_uri_from_http dev_repo with
+        | Some uri -> uri
+        | None ->
+            App_log.unhappy (fun l ->
+                l
+                  "The uri %a is not recognized as a gihub uri, we are going \
+                   to assume it is already a ssh uri."
+                  Text.Pp.url dev_repo);
+            dev_repo
+      in
+      Prompt.confirm_or_abort ~yes
+        ~question:(fun l ->
+          l "Push tag %a to %a?" Text.Pp.version tag Text.Pp.url uri)
+        ~default_answer:Yes
+      >>= fun () ->
+      App_log.status (fun l ->
+          l "Pushing tag %a to %a" Text.Pp.version tag Text.Pp.url uri);
+      match
+        Vcs.run_git_quiet vcs ~dry_run Cmd.(v "push" % "--force" % uri % tag)
+      with
+      | Ok () as ok -> ok
+      | Error (`Msg e) ->
+          R.error_msgf
+            "%s\n\
+             Pushing the tag failed, please push it manually and run the \
+             command again"
+            e )
+
 let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   (match distrib_uri with Some uri -> Ok uri | None -> Pkg.infer_distrib_uri p)
   >>= fun uri ->
@@ -247,28 +337,19 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   Vcs.get () >>= fun vcs ->
   Pkg.tag p >>= fun tag ->
   check_tag ~dry_run vcs tag >>= fun () ->
-  dev_repo p >>= fun upstr ->
-  Prompt.(
-    confirm_or_abort ~yes
-      ~question:(fun l ->
-        l "Push tag %a to %a?" Text.Pp.version tag Text.Pp.url upstr)
-      ~default_answer:Yes)
-  >>= fun () ->
-  App_log.status (fun l ->
-      l "Pushing tag %a to %a" Text.Pp.version tag Text.Pp.url upstr);
-  Vcs.run_git_quiet vcs ~dry_run Cmd.(v "push" % "--force" % upstr % tag)
-  >>= fun () ->
+  dev_repo p >>= fun dev_repo ->
+  push_tag ~dry_run ~yes ~dev_repo vcs tag >>= fun () ->
   (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
   >>= fun token ->
   Prompt.(
     confirm_or_abort ~yes
       ~question:(fun l ->
-        l "Create release %a on %a?" Text.Pp.version tag Text.Pp.url upstr)
+        l "Create release %a on %a?" Text.Pp.version tag Text.Pp.url dev_repo)
       ~default_answer:Yes)
   >>= fun () ->
   App_log.status (fun l ->
       l "Creating release %a on %a via github's API" Text.Pp.version tag
-        Text.Pp.url upstr);
+        Text.Pp.url dev_repo);
   curl_create_release ~token ~dry_run tag msg user repo >>= fun id ->
   App_log.success (fun l -> l "Succesfully created release with id %d" id);
   Prompt.(

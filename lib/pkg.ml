@@ -205,11 +205,7 @@ let licenses p =
 let dev_repo p =
   opam_field_hd p "dev-repo" >>= function
   | None -> Ok None
-  | Some r -> (
-      let uri = chop_git_prefix r in
-      match String.cut ~sep:"https://github.com/" uri with
-      | Some ("", path) -> Ok (Some ("git@github.com:" ^ path))
-      | _ -> Ok (Some uri) )
+  | Some r -> Ok (Some (chop_git_prefix r))
 
 let err_not_found () =
   R.error_msg "no distribution URI found, see dune-release's API documentation."
