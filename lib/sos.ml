@@ -224,3 +224,35 @@ let relativize ~src ~dst =
     ~none:(fun () ->
       R.error_msgf "Could define path from %a to %a" Fpath.pp src Fpath.pp dst)
     (Fpath.relativize ~root:src dst)
+
+module Draft_release = struct
+  let path = Fpath.v ".draft_release"
+
+  let set ~dry_run id = write_file ~dry_run path (String.of_int id)
+
+  let get ~dry_run =
+    read_file ~dry_run path >>= fun release_id ->
+    match String.to_int release_id with
+    | Some i -> Ok i
+    | None -> R.error_msg "Could not retrieve id of draft release."
+
+  let unset ~dry_run =
+    file_exists ~dry_run path >>= fun exists ->
+    if exists then delete_path ~dry_run path else Ok ()
+end
+
+module Draft_pr = struct
+  let path = Fpath.v ".draft_pr"
+
+  let set ~dry_run id = write_file ~dry_run path (String.of_int id)
+
+  let get ~dry_run =
+    read_file ~dry_run path >>= fun release_id ->
+    match String.to_int release_id with
+    | Some i -> Ok i
+    | None -> R.error_msg "Could not retrieve id of draft pull request."
+
+  let unset ~dry_run =
+    file_exists ~dry_run path >>= fun exists ->
+    if exists then delete_path ~dry_run path else Ok ()
+end

@@ -232,8 +232,8 @@ let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo ~draft
   let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
   run_with_auth ~dry_run ~default_body ~auth curl_t >>= fun json ->
   (if draft then
-    Github_v3_api.Pull_request_response.number json >>= fun number ->
-    Sos.write_file ~dry_run (Fpath.v ".draft_pr") (String.of_int number)
+    Github_v3_api.Pull_request_response.number json
+    >>= Sos.Draft_pr.set ~dry_run
   else Ok ())
   >>= fun () -> Github_v3_api.Pull_request_response.html_url json
 
@@ -399,9 +399,8 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes ~draft p =
   create_release ~dry_run ~yes ~dev_repo ~token ~version ~msg ~tag ~user ~repo
     ~draft
   >>= fun id ->
-  (if draft then
-    Sos.write_file ~dry_run (Fpath.v ".draft_release") (String.of_int id)
-  else Ok ())
+  (if draft then Sos.Draft_release.set ~dry_run id
+  else Sos.Draft_release.unset ~dry_run)
   >>= fun () ->
   App_log.success (fun l -> l "Succesfully created release with id %d" id);
   Prompt.(

@@ -31,24 +31,16 @@ let undraft ?opam ~name ?distrib_uri ?distrib_file ?opam_repo ?user ?token
   (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
   >>= fun token ->
   App_log.status (fun l -> l "Undrafting release");
-  Sos.read_file ~dry_run (Fpath.v ".draft_release") >>= fun release_id ->
-  ( match String.to_int release_id with
-  | Some i -> Ok i
-  | None -> R.error_msg "Could not retrieve id of draft release." )
-  >>= fun release_id ->
+  Sos.Draft_release.get ~dry_run >>= fun release_id ->
   Github.undraft_release ~token ~dry_run ~user ~repo ~release_id >>= fun url ->
   App_log.success (fun m ->
       m "The release has been undrafted and is available at %s\n" url);
   App_log.status (fun l -> l "Undrafting pull request");
-  Sos.read_file ~dry_run (Fpath.v ".draft_pr") >>= fun pr_id ->
-  ( match String.to_int pr_id with
-  | Some i -> Ok i
-  | None -> R.error_msg "Could not retrieve id of draft pull request." )
-  >>= fun pr_id ->
+  Sos.Draft_pr.get ~dry_run >>= fun pr_id ->
   Github.undraft_pr ~token ~dry_run ~distrib_user ~opam_repo ~pr_id
   >>= fun url ->
-  Sos.delete_path ~dry_run (Fpath.v ".draft_release") >>= fun () ->
-  Sos.delete_path ~dry_run (Fpath.v ".draft_pr") >>= fun () ->
+  Sos.Draft_release.unset ~dry_run >>= fun () ->
+  Sos.Draft_pr.unset ~dry_run >>= fun () ->
   App_log.success (fun m -> m "The pull-request has been undrafted at %s\n" url);
   Ok 0
 
