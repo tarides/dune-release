@@ -74,7 +74,7 @@ val undraft_pr :
   distrib_user:string ->
   opam_repo:string * string ->
   pr_id:int ->
-  ([ `Url of string | `Already_exists ], R.msg) result
+  (string, R.msg) result
 (** [undraft_pr] updates an existing pull request to undraft it and returns the
     pull request URL. *)
 

@@ -230,8 +230,12 @@ let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo ~draft
   let curl_t = Curl.open_pr ~title ~user ~branch ~body ~opam_repo ~draft in
   github_auth ~dry_run ~user:distrib_user token >>= fun auth ->
   let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
-  run_with_auth ~dry_run ~default_body ~auth curl_t
-  >>= Github_v3_api.Pull_request_response.html_url
+  run_with_auth ~dry_run ~default_body ~auth curl_t >>= fun json ->
+  (if draft then
+    Github_v3_api.Pull_request_response.number json >>= fun number ->
+    Sos.write_file ~dry_run (Fpath.v ".draft_pr") (String.of_int number)
+  else Ok ())
+  >>= fun () -> Github_v3_api.Pull_request_response.html_url json
 
 let undraft_release ~token ~dry_run ~user ~repo ~release_id =
   let curl_t = Curl.undraft_release ~user ~repo ~release_id in
@@ -248,6 +252,9 @@ let undraft_pr ~token ~dry_run ~distrib_user ~opam_repo ~pr_id =
   let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
   run_with_auth ~dry_run ~default_body ~auth curl_t
   >>= Github_v3_api.Pull_request_response.html_url
+  >>= function
+  | `Url url -> Ok url
+  | `Already_exists -> R.error_msgf "impossible"
 
 let dev_repo p =
   Pkg.dev_repo p >>= function
@@ -392,6 +399,11 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes ~draft p =
   create_release ~dry_run ~yes ~dev_repo ~token ~version ~msg ~tag ~user ~repo
     ~draft
   >>= fun id ->
+  (if draft then
+    Sos.write_file ~dry_run (Fpath.v ".draft_release") (String.of_int id)
+  else Ok ())
+  >>= fun () ->
+  App_log.success (fun l -> l "Succesfully created release with id %d" id);
   Prompt.(
     confirm_or_abort ~yes
       ~question:(fun l -> l "Upload %a as release asset?" Text.Pp.path archive)

@@ -115,6 +115,7 @@ We do the whole dune-release process
     -: exec: curl --user foo:${token} --location --silent --show-error --config -
          --dump-header - --data
          { "tag_name" : "0.1.0", "body" : "CHANGES:\n\n- Some other feature\n", "draft" : true }
+    -: write .draft_release
     [+] Succesfully created release with id 1
     [?] Upload _build/whatever-0.1.0.tbz as release asset? [Y/n]
     [-] Uploading _build/whatever-0.1.0.tbz as a release asset for 0.1.0 via github's API

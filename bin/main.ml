@@ -17,6 +17,7 @@ let cmds =
     Lint.cmd;
     Delegate_info.cmd;
     Config.cmd;
+    Undraft.cmd;
   ]
 
 (* Command line interface *)
