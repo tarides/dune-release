@@ -163,10 +163,10 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
     remote_repo pkgs auto_open ~draft =
   (if draft then Ok ()
   else
-    match Sos.Draft_release.get ~dry_run with
-    | Ok _ ->
+    match Sos.Draft_release.is_set ~dry_run with
+    | Ok true ->
         R.error_msg "Cannot open a non-draft pull request for a draft release."
-    | Error _ -> Ok ())
+    | _ -> Ok ())
   >>= fun () ->
   List.fold_left
     (fun acc pkg ->

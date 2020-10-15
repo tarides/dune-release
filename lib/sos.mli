@@ -136,6 +136,8 @@ val relativize : src:Fpath.t -> dst:Fpath.t -> (Fpath.t, error) result
 module Draft_release : sig
   val set : dry_run:bool -> int -> (unit, error) result
 
+  val is_set : dry_run:bool -> (bool, error) result
+
   val get : dry_run:bool -> (int, error) result
 
   val unset : dry_run:bool -> (unit, error) result

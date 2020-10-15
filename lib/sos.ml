@@ -167,9 +167,9 @@ let read_file ~dry_run p =
 let file_exists ~dry_run p =
   if not dry_run then OS.File.exists p
   else
-    let action = match OS.File.exists p with Ok true -> `Done | _ -> `Skip in
-    let _ = show ~action "exists %a" Fpath.pp p in
-    Ok true
+    OS.File.exists p >>| fun exists ->
+    if exists then ignore (show ~action:`Done "exists %a" Fpath.pp p);
+    exists
 
 let dir_exists ~dry_run p =
   if not dry_run then OS.Dir.exists p
@@ -229,6 +229,8 @@ module Draft_release = struct
   let path = Fpath.v ".draft_release"
 
   let set ~dry_run id = write_file ~dry_run path (String.of_int id)
+
+  let is_set ~dry_run = file_exists ~dry_run path
 
   let get ~dry_run =
     read_file ~dry_run path >>= fun release_id ->
