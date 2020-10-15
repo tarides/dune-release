@@ -69,4 +69,11 @@ module Pull_request_response = struct
       ~on_ok:(fun x -> `Url x)
       ~default_msg:"Could not retrieve pull request URL from response"
       ~handled_errors:[ ("A pull request already exists", `Already_exists) ]
+
+  let number json =
+    handle_errors json
+      ~try_:(Json.int_field ~field:"number")
+      ~on_ok:(fun x -> x)
+      ~default_msg:"Could not retrieve pull request number from response"
+      ~handled_errors:[]
 end

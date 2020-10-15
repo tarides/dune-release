@@ -18,4 +18,8 @@ module Pull_request_response : sig
   (** [html_url response] extracts the html_url field from a github json
       response, or [`Already_exists] if the corresponding pull request already
       exists, or error messages. *)
+
+  val number : Yojson.Basic.t -> (int, R.msg) result
+  (** [number response] extracts the number field from a github json response,
+      or error messages. *)
 end
