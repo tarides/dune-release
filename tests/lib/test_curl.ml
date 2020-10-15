@@ -119,6 +119,58 @@ let test_with_auth =
         };
   ]
 
+let test_undraft_release =
+  let make_test ~test_name ~user ~repo ~release_id ~expected =
+    let test_fun () =
+      let actual = Dune_release.Curl.undraft_release ~user ~repo ~release_id in
+      Alcotest.check Alcotest_ext.curl test_name expected actual
+    in
+    (test_name, `Quick, test_fun)
+  in
+  [
+    make_test ~test_name:"basic" ~user:"user" ~repo:"some-repo" ~release_id:42
+      ~expected:
+        {
+          url = "https://api.github.com/repos/user/some-repo/releases/42";
+          meth = `PATCH;
+          args =
+            [
+              Location;
+              Silent;
+              Show_error;
+              Config `Stdin;
+              Dump_header `Ignore;
+              Data (`Data {|{ "draft" : false }|});
+            ];
+        };
+  ]
+
+let test_undraft_pr =
+  let make_test ~test_name ~opam_repo ~pr_id ~expected =
+    let test_fun () =
+      let actual = Dune_release.Curl.undraft_pr ~opam_repo ~pr_id in
+      Alcotest.check Alcotest_ext.curl test_name expected actual
+    in
+    (test_name, `Quick, test_fun)
+  in
+  [
+    make_test ~test_name:"basic" ~opam_repo:("x", "y") ~pr_id:42
+      ~expected:
+        {
+          url = "https://api.github.com/repos/x/y/pulls/42";
+          meth = `PATCH;
+          args =
+            [
+              Silent;
+              Show_error;
+              Config `Stdin;
+              Dump_header `Ignore;
+              Data (`Data {|{ "draft": false }|});
+            ];
+        };
+  ]
+
 let suite =
   ( "Curl",
-    test_create_release @ test_upload_archive @ test_open_pr @ test_with_auth )
+    test_create_release @ test_upload_archive @ test_open_pr @ test_with_auth
+    @ test_undraft_release @ test_undraft_pr )

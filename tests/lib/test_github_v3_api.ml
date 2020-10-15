@@ -61,5 +61,20 @@ let test_html_url =
   - Code: "custom"|};
   ]
 
+let test_number =
+  let make_test json expected =
+    let test_name = "number" in
+    let test_fun () =
+      let json = Yojson.Basic.from_string json in
+      let actual =
+        Dune_release.Github_v3_api.Pull_request_response.number json
+      in
+      Alcotest.(check (Alcotest_ext.result_msg int)) __LOC__ expected actual
+    in
+    (test_name, `Quick, test_fun)
+  in
+  [ make_test Pull_request_response.gh_v3_api_example (Ok 1347) ]
+
 let suite =
-  ("Github_v3_api", test_archive_upload_url @ test_release_id @ test_html_url)
+  ( "Github_v3_api",
+    test_archive_upload_url @ test_release_id @ test_html_url @ test_number )
