@@ -43,7 +43,9 @@ let publish_doc ~specific ~dry_run ~yes pkg_names pkg =
   | Error _ | Ok "" -> (
       match Pkg.delegate pkg with
       | Ok (Some _) ->
-          App_log.unhappy (fun l -> l Deprecate_delegates.warning_usage);
+          App_log.unhappy (fun l ->
+              l Deprecate.Delegates.warning_usage
+                Deprecate.Delegates.new_workflow);
           publish_doc ~dry_run ~yes pkg_names pkg
       | Error _ | Ok None ->
           Pkg.name pkg >>= fun name ->
@@ -61,6 +63,12 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~yes pkg =
   Pkg.distrib_file ~dry_run pkg >>= fun archive ->
   Pkg.publish_msg pkg >>= fun msg ->
   Delegate.publish_distrib ?token ?distrib_uri ~dry_run ~yes pkg ~msg ~archive
+
+let publish_alt ?distrib_uri ~dry_run pkg kind =
+  App_log.status (fun l -> l "Publishing %s" kind);
+  Pkg.distrib_file ~dry_run pkg >>= fun archive ->
+  Pkg.publish_msg pkg >>= fun msg ->
+  Delegate.publish_alt ?distrib_uri ~dry_run pkg ~kind ~msg ~archive
 
 let publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
     ?publish_msg ?token ~pkg_names ~version ~tag ~keep_v ~dry_run
@@ -81,7 +89,11 @@ let publish ?build_dir ?opam ?delegate ?change_log ?distrib_uri ?distrib_file
     match artefact with
     | `Doc -> publish_doc ~specific:specific_doc ~dry_run ~yes pkg_names pkg
     | `Distrib -> publish_distrib ?token ?distrib_uri ~dry_run ~yes pkg
-    | `Alt kind -> Deprecate_delegates.publish_alt ~dry_run pkg kind
+    | `Alt kind ->
+        App_log.unhappy (fun l ->
+            l Deprecate.Delegates.warning_usage_alt_artefacts
+              Deprecate.Delegates.new_workflow);
+        publish_alt ~dry_run pkg kind
   in
   List.fold_left publish_artefact (Ok ()) publish_artefacts >>= fun () -> Ok 0
 
@@ -102,10 +114,8 @@ open Cmdliner
 
 let delegate =
   let doc =
-    "Warning: " ^ Deprecate_delegates.warning
-    ^ "\n\
-      \ The delegate tool $(docv) to use. If absent, see \
-       dune-release-delegate(7) for the lookup procedure."
+    "The delegate tool $(docv) to use. If absent, see dune-release-delegate(7) \
+     for the lookup procedure. $(b,Warning:) " ^ Deprecate.Delegates.warning
   in
   let docv = "TOOL" in
   let to_cmd = function None -> None | Some s -> Some (Cmd.v s) in
@@ -124,14 +134,16 @@ let artefacts =
         match String.(with_range ~first:(length alt_prefix) s) with
         | "" -> `Error "`alt-' alternative artefact kind is missing"
         | kind ->
-            App_log.unhappy (fun l -> l Deprecate_delegates.warning_usage);
+            App_log.unhappy (fun l ->
+                l Deprecate.Delegates.warning_usage_alt_artefacts
+                  Deprecate.Delegates.new_workflow);
             `Ok (`Alt kind))
     | s -> `Error (strf "`%s' unknown publication artefact" s)
   in
   let printer ppf = function
     | `Doc -> Fmt.string ppf "doc"
     | `Distrib -> Fmt.string ppf "distrib"
-    | `Alt a -> Fmt.pf ppf Deprecate_delegates.alt_artefacts_pp a
+    | `Alt a -> Fmt.pf ppf "alt-%s" a
   in
   let artefact = (parser, printer) in
   let doc =
@@ -145,15 +157,20 @@ let artefacts =
     Arg.(value & pos_all artefact [] & info [] ~doc ~docv:"ARTEFACT")
 
 let doc =
-  Deprecate_delegates.artefacts_warning
-  ^ "Publish package distribution archives and other artefacts"
+  "Publish package distribution archives and other artefacts. "
+  ^ Deprecate.Delegates.artefacts_warning
 
 let sdocs = Manpage.s_common_options
 
 let exits = Cli.exits
 
 let envs =
-  [ Term.env_info "DUNE_RELEASE_DELEGATE" ~doc:Deprecate_delegates.env_var_doc ]
+  [
+    Term.env_info "DUNE_RELEASE_DELEGATE"
+      ~doc:
+        ("The package delegate to use, see dune-release-delegate(7). "
+       ^ Deprecate.Delegates.env_var_warning);
+  ]
 
 let man_xrefs = [ `Main; `Cmd "distrib" ]
 
@@ -163,9 +180,8 @@ let man =
     `P "$(mname) $(tname) [$(i,OPTION)]... [$(i,ARTEFACT)]...";
     `S Manpage.s_description;
     `P
-      (Deprecate_delegates.artefacts_warning
-     ^ "The $(tname) command publishes package distribution archives and other \
-        artefacts.");
+      ("The $(tname) command publishes package distribution archives and other \
+        artefacts. " ^ Deprecate.Delegates.artefacts_warning);
     `P
       "Artefact publication always relies on a distribution archive having \
        been generated before with dune-release-distrib(1).";
@@ -174,7 +190,13 @@ let man =
     `I
       ( "$(b,doc)",
         "Publishes the documentation of a distribution archive on the WWW." );
-    `I ("$(b,alt)-$(i,KIND)", Deprecate_delegates.module_publish_man_alt);
+    `I
+      ( "$(b,alt)-$(i,KIND)",
+        "Publishes the alternative artefact of kind $(i,KIND) of a \
+         distribution archive. The semantics of alternative artefacts is left \
+         to the delegate, it could be anything, an email, a pointless tweet, a \
+         feed entry etc. See dune-release-delegate(7) for more details. "
+        ^ Deprecate.Delegates.artefacts_warning );
   ]
 
 let cmd =

@@ -28,6 +28,8 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes pkg =
       Sos.write_file ~dry_run url_file url >>= fun () -> Ok ()
   | Some del ->
       App_log.status (fun l -> l "Using delegate %a" Cmd.pp del);
+      App_log.unhappy (fun l ->
+          l Deprecate.Delegates.warning_usage Deprecate.Delegates.new_workflow);
       Pkg.name pkg >>= fun name ->
       Pkg.tag pkg >>= fun version ->
       (match distrib_uri with
