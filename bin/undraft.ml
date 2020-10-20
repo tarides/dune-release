@@ -1,6 +1,44 @@
 open Bos_setup
 open Dune_release
 
+let get_pkg_dir pkg =
+  Pkg.build_dir pkg >>= fun bdir ->
+  Pkg.distrib_filename ~opam:true pkg >>= fun fname -> Ok Fpath.(bdir // fname)
+
+let update_opam_file ~dry_run ~url pkg =
+  get_pkg_dir pkg >>= fun dir ->
+  Pkg.opam pkg >>= fun opam_f ->
+  OS.Dir.create dir >>= fun _ ->
+  let dest_opam_file = Fpath.(dir / "opam") in
+  let url = OpamUrl.parse url in
+  Pkg.distrib_file ~dry_run pkg >>= fun distrib_file ->
+  let file = Fpath.to_string distrib_file in
+  let hash algo = OpamHash.compute ~kind:algo file in
+  let checksum = List.map hash [ `SHA256; `SHA512 ] in
+  let url = OpamFile.URL.create ~checksum url in
+  OS.File.read opam_f >>= fun opam ->
+  let opam_t = OpamFile.OPAM.read_from_string opam in
+  ( match OpamVersion.to_string (OpamFile.OPAM.opam_version opam_t) with
+  | "2.0" ->
+      let file x = OpamFile.make (OpamFilename.of_string (Fpath.to_string x)) in
+      let opam_t = OpamFile.OPAM.with_url url opam_t in
+      if not dry_run then
+        OpamFile.OPAM.write_with_preserved_format ~format_from:(file opam_f)
+          (file dest_opam_file) opam_t;
+      Ok ()
+  | ("1.0" | "1.1" | "1.2") as v ->
+      App_log.status (fun l ->
+          l "Upgrading opam file %a from opam format %s to 2.0" Text.Pp.path
+            opam_f v);
+      let opam =
+        OpamFile.OPAM.with_url url opam_t |> OpamFile.OPAM.write_to_string
+      in
+      Sos.write_file ~dry_run dest_opam_file opam
+  | s -> Fmt.kstrf (fun x -> Error (`Msg x)) "invalid opam version: %s" s )
+  >>| fun () ->
+  App_log.success (fun m ->
+      m "Wrote opam package description %a" Text.Pp.path dest_opam_file)
+
 let undraft ?opam ~name ?distrib_uri ?distrib_file ?opam_repo ?user ?token
     ?local_repo ?remote_repo ~dry_run ~yes:_ () =
   let pkg = Pkg.v ?name ?opam ?distrib_file ~dry_run:false () in
@@ -37,6 +75,7 @@ let undraft ?opam ~name ?distrib_uri ?distrib_file ?opam_repo ?user ?token
       m "The release has been undrafted and is available at %s\n" url);
   App_log.status (fun l -> l "Undrafting pull request");
   Sos.Draft_pr.get ~dry_run >>= fun pr_id ->
+  update_opam_file ~dry_run ~url pkg >>= fun () ->
   Github.undraft_pr ~token ~dry_run ~distrib_user ~opam_repo ~pr_id
   >>= fun url ->
   Sos.Draft_release.unset ~dry_run >>= fun () ->
