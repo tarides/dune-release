@@ -4,7 +4,7 @@ let test_upgrade =
     let url = OpamFile.URL.create (OpamUrl.of_string url) in
     let test_fun () =
       let opam_t = OpamFile.OPAM.read_from_string opam in
-      let filename = "opam" in
+      let filename = OpamFilename.of_string "opam" in
       let id = "6814f8b26946358c72b926706f210025f36619b0" in
       let actual =
         Dune_release.Opam_file.upgrade ~filename ~url ~id opam_t ~version:v

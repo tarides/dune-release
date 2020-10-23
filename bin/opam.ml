@@ -25,7 +25,7 @@ end
 
 let write_opam_file ~dry_run ~id ~url ~opam_f pkg dest_opam_file =
   OS.File.read opam_f >>= fun opam ->
-  let filename = Fpath.filename dest_opam_file in
+  let filename = OpamFilename.of_string (Fpath.filename dest_opam_file) in
   let opam_t = OpamFile.OPAM.read_from_string opam in
   match OpamVersion.to_string (OpamFile.OPAM.opam_version opam_t) with
   | "2.0" ->
