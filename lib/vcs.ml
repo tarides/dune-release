@@ -62,6 +62,16 @@ let run_git ~dry_run ?force ~default r args out =
   >>= fun response ->
   match response.status with
   | `Exited 0 -> Ok response.output
+  | `Exited 128
+    when String.is_prefix response.err_msg
+           ~affix:"git@github.com: Permission denied" ->
+      let hint =
+        "\n\
+         Hint from dune-release: the reason for the Permission denied error is \
+         probably a failing ssh connection. For more information, see \
+         https://github.com/ocamllabs/dune-release#publish-troubleshooting ."
+      in
+      Sos.cmd_error git (Some (response.err_msg ^ hint)) response.status
   | _ -> Sos.cmd_error git (Some response.err_msg) response.status
 
 let run_git_quiet ~dry_run ?force r args =

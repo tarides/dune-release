@@ -137,6 +137,15 @@ The full documentation of this command is available with
 dune-release help publish
 ```
 
+## Publish troubleshooting
+
+If github returns a `Permission denied` error during `dune-release publish`, the reason is probably a failing ssh connection. In that case, we suggest that you set up ssh. If you prefer not to and you've already set up https instead, we suggest that you configure git as follows:
+```
+git config [--global] url."https://github.com/".pushInsteadOf "git@github.com:"
+```
+Running that line once will configure git to always push over https - either for that repository or globally.
+
+In more detail: `dune-release publish` always pushes to github over ssh by explicitly giving git the github uri of your project with ssh prefix (`git@github.com:`). By configuring git as suggested above, git will automatically replace that prefix by the https one when pushing and push over https instead.
 
 ### Create an opam package and submit it to the opam repository
 
