@@ -6,6 +6,7 @@
 - Log curl calls on verbose/debug mode (#281, @gpetiot)
 - Try to publish the release asset again after it failed (#272, @gpetiot)
 - Improve error reporting of failing git comands (#257, @gpetiot)
+- Suggest a solution for users without ssh setup ( #304, @pitag-ha)
 
 ### Changed
 
