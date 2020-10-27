@@ -137,7 +137,7 @@ The full documentation of this command is available with
 dune-release help publish
 ```
 
-## Publish troubleshooting
+#### Publish troubleshooting
 
 If github returns a `Permission denied` error during `dune-release publish`, the reason is probably a failing ssh connection. In that case, we suggest that you set up ssh. If you prefer not to and you've already set up https instead, we suggest that you configure git as follows:
 ```
