@@ -7,6 +7,9 @@
 - Try to publish the release asset again after it failed (#272, @gpetiot)
 - Improve error reporting of failing git comands (#257, @gpetiot)
 - Suggest a solution for users without ssh setup ( #304, @pitag-ha)
+- Allow including git submodules to the distrib tarball by passing the
+  `--include-submodules` flag to `dune-release`, `dune-release bistro` or
+  `dune-release distrib` (#300, @NathanReb)
 
 ### Changed
 
@@ -18,6 +21,8 @@
 - Don't try to push the tag if it is already present and point to the same ref on the remote.
   `dune-release` must guess which URI to pass to `git push` and may guess it wrong.
   This change allows users to push the tag manually to avoid using that code. (#219, @Julow)
+- Recursively exclude all `.git`/`.hg` files and folders from the distrib
+  tarball (#300, @NathanReb)
 
 ### Deprecated
 

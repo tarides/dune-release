@@ -92,7 +92,11 @@ val publish_msg : t -> (string, R.msg) result
 (** {1 Distribution} *)
 
 val distrib_archive :
-  dry_run:bool -> keep_dir:bool -> t -> (Fpath.t, R.msg) result
+  dry_run:bool ->
+  keep_dir:bool ->
+  include_submodules:bool ->
+  t ->
+  (Fpath.t, R.msg) result
 (** [distrib_archive ~keep_dir p] creates a distribution archive for [p] and
     returns its path. If [keep_dir] is [true] the repository checkout used to
     create the distribution archive is kept in the build directory. *)

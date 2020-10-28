@@ -179,6 +179,9 @@ let git_ls_remote ~dry_run r ~kind ~filter upstream =
     ~default:Default.list OS.Cmd.out_lines
   >>= parse_ls_remote []
 
+let git_submodule_update ~dry_run r =
+  run_git_quiet ~dry_run r Cmd.(v "submodule" % "update" % "--init")
+
 (* Hg support *)
 
 let hg_rev commit_ish = match commit_ish with "HEAD" -> "tip" | c -> c
@@ -352,6 +355,11 @@ let ls_remote ~dry_run r ?(kind = `All) ?filter upstream =
   match r with
   | (`Git, _, _) as r -> git_ls_remote ~dry_run r ~kind ~filter upstream
   | `Hg, _, _ -> R.error_msgf "ls_remote is only implemented for Git"
+
+let submodule_update ~dry_run r =
+  match r with
+  | (`Git, _, _) as r -> git_submodule_update ~dry_run r
+  | `Hg, _, _ -> R.error_msgf "submodule update is not supported with mercurial"
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

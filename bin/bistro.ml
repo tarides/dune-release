@@ -7,11 +7,13 @@
 open Bos_setup.R.Infix
 
 let bistro () (`Dry_run dry_run) (`Dist_name name) (`Package_names pkg_names)
-    (`Package_version version) (`Dist_tag tag) (`Keep_v keep_v) (`Token token) =
+    (`Package_version version) (`Dist_tag tag) (`Keep_v keep_v) (`Token token)
+    (`Include_submodules include_submodules) =
   Cli.handle_error
     ( Dune_release.Config.keep_v keep_v >>= fun keep_v ->
       Distrib.distrib ~dry_run ~name ~pkg_names ~version ~tag ~keep_v
-        ~keep_dir:false ~skip_lint:false ~skip_build:false ~skip_tests:false ()
+        ~keep_dir:false ~skip_lint:false ~skip_build:false ~skip_tests:false
+        ~include_submodules ()
       >>= fun _distrib_ret ->
       Publish.publish ?token ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
         ~publish_artefacts:[] ~yes:false ()
@@ -50,7 +52,8 @@ let man =
 let cmd =
   ( Term.(
       pure bistro $ Cli.setup $ Cli.dry_run $ Cli.dist_name $ Cli.pkg_names
-      $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ Cli.token),
+      $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ Cli.token
+      $ Cli.include_submodules),
     Term.info "bistro" ~doc ~sdocs ~exits ~man ~man_xrefs )
 
 (*---------------------------------------------------------------------------

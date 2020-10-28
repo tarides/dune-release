@@ -120,6 +120,10 @@ val ls_remote :
     [kind] filters results on their kind (branch or tag), the default is [`All].
     Only implemented for Git. *)
 
+val submodule_update : dry_run:bool -> t -> (unit, R.msg) result
+(** [submodule r] pulls in all submodules in [r]. Only works for git
+    repositories *)
+
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
 

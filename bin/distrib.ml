@@ -77,11 +77,11 @@ let log_wrote_archive ar =
   Ok ()
 
 let distrib ?build_dir ~dry_run ~name ~pkg_names ~version ~tag ~keep_v ~keep_dir
-    ~skip_lint ~skip_build ~skip_tests () =
+    ~skip_lint ~skip_build ~skip_tests ~include_submodules () =
   App_log.status (fun l -> l "Building source archive");
   Config.keep_v keep_v >>= fun keep_v ->
   let pkg = Pkg.v ~dry_run ?name ?version ~keep_v ?build_dir ?tag () in
-  Pkg.distrib_archive ~dry_run ~keep_dir pkg >>= fun ar ->
+  Pkg.distrib_archive ~dry_run ~keep_dir ~include_submodules pkg >>= fun ar ->
   log_wrote_archive ar >>= fun () ->
   check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar
   >>= fun errs ->
@@ -91,9 +91,10 @@ let distrib ?build_dir ~dry_run ~name ~pkg_names ~version ~tag ~keep_v ~keep_dir
 let distrib_cli () (`Dry_run dry_run) (`Build_dir build_dir) (`Dist_name name)
     (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
     (`Keep_v keep_v) (`Keep_dir keep_dir) (`Skip_lint skip_lint)
-    (`Skip_build skip_build) (`Skip_tests skip_tests) =
+    (`Skip_build skip_build) (`Skip_tests skip_tests)
+    (`Include_submodules include_submodules) =
   distrib ?build_dir ~dry_run ~name ~pkg_names ~version ~tag ~keep_v ~keep_dir
-    ~skip_lint ~skip_build ~skip_tests ()
+    ~skip_lint ~skip_build ~skip_tests ~include_submodules ()
   |> Cli.handle_error
 
 (* Command line interface *)
@@ -206,7 +207,8 @@ let cmd =
   ( Term.(
       pure distrib_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.dist_name
       $ Cli.pkg_names $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v
-      $ keep_build_dir $ skip_lint $ skip_build $ skip_tests),
+      $ keep_build_dir $ skip_lint $ skip_build $ skip_tests
+      $ Cli.include_submodules),
     Term.info "distrib" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )
 
 (*---------------------------------------------------------------------------

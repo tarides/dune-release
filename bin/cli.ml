@@ -164,6 +164,12 @@ let yes =
   let doc = "Do not prompt for confirmation and keep going instead" in
   named (fun x -> `Yes x) Arg.(value & flag & info [ "y"; "yes" ] ~doc)
 
+let include_submodules =
+  let doc = "Include git submodules into the distribution archive" in
+  named
+    (fun x -> `Include_submodules x)
+    Arg.(value & flag & info [ "include-submodules" ] ~doc)
+
 (* Terms *)
 
 let setup style_renderer log_level cwd =
