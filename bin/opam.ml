@@ -343,49 +343,6 @@ let no_auto_open =
     (fun x -> `No_auto_open x)
     Arg.(value & flag & info [ "no-auto-open" ] ~doc)
 
-let user =
-  let doc =
-    "the name of the GitHub account where to push new opam-repository branches."
-  in
-  Cli.named
-    (fun x -> `User x)
-    Arg.(
-      value & opt (some string) None & info [ "u"; "user" ] ~doc ~docv:"USER")
-
-let local_repo =
-  let doc = "Location of the local fork of opam-repository" in
-  let env = Arg.env_var "DUNE_RELEASE_LOCAL_REPO" in
-  Cli.named
-    (fun x -> `Local_repo x)
-    Arg.(
-      value
-      & opt (some string) None
-      & info ~env [ "l"; "--local-repo" ] ~doc ~docv:"PATH")
-
-let remote_repo =
-  let doc = "Location of the remote fork of opam-repository" in
-  let env = Arg.env_var "DUNE_RELEASE_REMOTE_REPO" in
-  Cli.named
-    (fun x -> `Remote_repo x)
-    Arg.(
-      value
-      & opt (some string) None
-      & info ~env [ "r"; "--remote-repo" ] ~doc ~docv:"URI")
-
-let opam_repo =
-  let doc =
-    "The Github opam-repository to which packages should be released. Use this \
-     to release to a custom repo. Useful for testing purposes."
-  in
-  let docv = "GITHUB_USER_OR_ORG/REPO_NAME" in
-  let env = Arg.env_var "DUNE_RELEASE_OPAM_REPO" in
-  Cli.named
-    (fun x -> `Opam_repo x)
-    Arg.(
-      value
-      & opt (some (pair ~sep:'/' string string)) None
-      & info ~env [ "opam-repo" ] ~doc ~docv)
-
 let pkg_descr =
   let doc =
     "The opam descr file to use for the opam package. If absent and the opam \
@@ -444,8 +401,8 @@ let cmd =
   let info = Term.info "opam" ~doc ~sdocs ~envs ~man ~man_xrefs in
   let t =
     Term.(
-      pure opam_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ local_repo
-      $ remote_repo $ opam_repo $ user $ Cli.keep_v $ Cli.dist_opam
+      pure opam_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.local_repo
+      $ Cli.remote_repo $ Cli.opam_repo $ Cli.user $ Cli.keep_v $ Cli.dist_opam
       $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $ Cli.dist_name
       $ Cli.pkg_names $ Cli.pkg_version $ pkg_descr $ Cli.readme
       $ Cli.change_log $ Cli.publish_msg $ action $ field_arg $ no_auto_open
