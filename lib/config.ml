@@ -53,7 +53,7 @@ let of_yaml_exn str =
     match find "local" with
     | None -> None
     | Some v -> (
-        match Fpath.of_string v with Ok x -> Some x | Error _ -> None )
+        match Fpath.of_string v with Ok x -> Some x | Error _ -> None)
   in
   {
     user = find "user";
@@ -90,12 +90,12 @@ let create_config ~user ~remote_repo ~local_repo pkgs file =
      Please answer a few questions to help me create it for you:\n\n\
      %!"
     Fpath.pp file;
-  ( match user with
+  (match user with
   | Some u -> Ok u
   | None ->
       let pkg = List.hd pkgs in
       Pkg.infer_distrib_uri pkg >>= Pkg.distrib_user_and_repo >>= fun (u, _) ->
-      Ok u )
+      Ok u)
   >>= fun default_user ->
   let user = read_string default_user ~descr:"What is your GitHub ID?" in
   let default_remote =
@@ -249,7 +249,7 @@ let file = lazy (find ())
 let read f default =
   Lazy.force file >>| function
   | None -> default
-  | Some t -> ( match f t with None -> default | Some b -> b )
+  | Some t -> ( match f t with None -> default | Some b -> b)
 
 let keep_v v = if v then Ok true else read (fun t -> t.keep_v) false
 

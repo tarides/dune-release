@@ -55,9 +55,9 @@ val submit :
   unit ->
   (int, Bos_setup.R.msg) result
 (** [submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ~dry_run
-    ~pkgs ~pkg_names ~no_auto_open ~yes ()] opens a pull request on the opam
-    repository for the packages [pkgs]. Returns the exit code (0 for success, 1
-    for failure) or error messages. *)
+    ~pkgs ~pkg_names ~no_auto_open ~yes ()]
+    opens a pull request on the opam repository for the packages [pkgs]. Returns
+    the exit code (0 for success, 1 for failure) or error messages. *)
 
 val field :
   pkgs:Dune_release.Pkg.t list ->

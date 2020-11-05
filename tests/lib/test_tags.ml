@@ -11,13 +11,13 @@ let run f =
 let check f ?version ?tag ?keep_v ?opam ~cat ~name expected =
   let test () =
     run
-      ( ( match opam with
+      ( (match opam with
         | None -> Ok None
         | Some lines ->
             let file = Fpath.(v "opam-tmp") in
             let lines = ("opam-version", "1.2") :: lines in
             let lines = List.map (fun (k, v) -> Fmt.strf "%s: %S" k v) lines in
-            Bos.OS.File.write_lines file lines >>| fun () -> Some file )
+            Bos.OS.File.write_lines file lines >>| fun () -> Some file)
       >>= fun opam ->
         let p = Pkg.v ~dry_run:false ~name ?tag ?version ?keep_v ?opam () in
         let n = Fmt.strf "check %S" expected in

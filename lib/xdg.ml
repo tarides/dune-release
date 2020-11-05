@@ -5,7 +5,7 @@ let home =
   with Not_found -> (
     try (Unix.getpwuid (Unix.getuid ())).Unix.pw_dir
     with Unix.Unix_error _ | Not_found ->
-      if Sys.win32 then try Sys.getenv "AppData" with Not_found -> "" else "" )
+      if Sys.win32 then try Sys.getenv "AppData" with Not_found -> "" else "")
 
 let ( / ) = Filename.concat
 

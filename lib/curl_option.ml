@@ -15,9 +15,11 @@ type t =
 
 let to_string_list opts =
   List.fold_left
-    (fun acc -> function Location -> "--location" :: acc
+    (fun acc -> function
+      | Location -> "--location" :: acc
       | User { user; token } -> "--user" :: strf "%s:%s" user token :: acc
-      | Silent -> "--silent" :: acc | Show_error -> "--show-error" :: acc
+      | Silent -> "--silent" :: acc
+      | Show_error -> "--show-error" :: acc
       | Config `Stdin -> "--config" :: "-" :: acc
       | Config (`File f) -> "--config" :: f :: acc
       | Dump_header `Ignore -> "--dump-header" :: "-" :: acc

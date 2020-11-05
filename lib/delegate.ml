@@ -30,9 +30,9 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes pkg =
       App_log.status (fun l -> l "Using delegate %a" Cmd.pp del);
       Pkg.name pkg >>= fun name ->
       Pkg.tag pkg >>= fun version ->
-      ( match distrib_uri with
+      (match distrib_uri with
       | Some uri -> Ok uri
-      | None -> Pkg.infer_distrib_uri pkg )
+      | None -> Pkg.infer_distrib_uri pkg)
       >>= fun distrib_uri ->
       run_delegate ~dry_run del
         Cmd.(
@@ -59,9 +59,9 @@ let publish_alt ?distrib_uri ~dry_run ~kind ~msg ~archive p =
       App_log.status (fun l -> l "Using delegate %a" Cmd.pp del);
       Pkg.name p >>= fun name ->
       Pkg.version p >>= fun version ->
-      ( match distrib_uri with
+      (match distrib_uri with
       | Some uri -> Ok uri
-      | None -> Pkg.infer_distrib_uri p )
+      | None -> Pkg.infer_distrib_uri p)
       >>= fun distrib_uri ->
       run_delegate ~dry_run del
         Cmd.(

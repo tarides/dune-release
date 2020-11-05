@@ -33,7 +33,7 @@ let current_dir ?(sandbox = true) () =
         | None -> assert false
         | Some d ->
             if sandbox then assert (List.hd (Fpath.segs d) = "_build");
-            Some d )
+            Some d)
 
 let last_dir = ref root
 
@@ -53,7 +53,7 @@ let show ?sandbox ?(action = `Skip) fmt =
     | Some d ->
         if not (Fpath.equal d !last_dir) then (
           last_dir := d;
-          Fmt.pf ppf "   [in %a]\n" Fmt.(styled `Underline Fpath.pp) d )
+          Fmt.pf ppf "   [in %a]\n" Fmt.(styled `Underline Fpath.pp) d)
   in
   Fmt.kstrf
     (fun s ->

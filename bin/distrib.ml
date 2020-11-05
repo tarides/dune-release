@@ -50,8 +50,8 @@ let check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar
   >>= fun c0 ->
   (if skip_build then Ok 0 else build_distrib ~dry_run ~dir pkg_names)
   >>= fun c1 ->
-  ( if skip_tests || skip_build then Ok 0
-  else test_distrib ~dry_run ~dir pkg_names )
+  (if skip_tests || skip_build then Ok 0
+  else test_distrib ~dry_run ~dir pkg_names)
   >>= fun c2 ->
   match c0 + c1 + c2 with
   | 0 -> Sos.delete_dir ~dry_run dir >>= fun () -> Ok 0
@@ -59,9 +59,8 @@ let check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar
 
 let warn_if_vcs_dirty () =
   Cli.warn_if_vcs_dirty
-    ( "The distribution archive may be inconsistent."
-    ^ " Uncommitted changes to files (including dune-project) will be ignored."
-    )
+    ("The distribution archive may be inconsistent."
+   ^ " Uncommitted changes to files (including dune-project) will be ignored.")
 
 let log_footprint pkg archive =
   Pkg.name pkg >>= fun name ->

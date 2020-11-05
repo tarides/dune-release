@@ -62,13 +62,13 @@ let opam_homepage_sld p =
   opam_homepage p >>| function
   | None -> None
   | Some uri -> (
-      match uri_sld uri with None -> None | Some sld -> Some (uri, sld) )
+      match uri_sld uri with None -> None | Some sld -> Some (uri, sld))
 
 let opam_doc_sld p =
   opam_doc p >>| function
   | None -> None
   | Some uri -> (
-      match uri_sld uri with None -> None | Some sld -> Some (uri, sld) )
+      match uri_sld uri with None -> None | Some sld -> Some (uri, sld))
 
 let name p = Ok p.name
 
@@ -123,7 +123,7 @@ let delegate p =
             | None -> (
                 opam_homepage_sld p >>= function
                 | Some (_, sld) -> Ok (cmd sld)
-                | None -> not_found None ) )
+                | None -> not_found None))
       in
       guess_delegate () >>= fun cmd ->
       let x = Cmd.v cmd in
@@ -131,7 +131,7 @@ let delegate p =
       | true -> Ok (Some x)
       | false ->
           if cmd <> "github-dune-release-delegate" then not_found (Some x)
-          else Ok None )
+          else Ok None)
 
 let build_dir p =
   match p.build_dir with Some b -> Ok b | None -> Ok (Fpath.v "_build")
@@ -171,7 +171,7 @@ let opam_descr p =
           opam_field_hd p "description" >>= fun d ->
           match s with
           | Some s -> Ok (s, d)
-          | None -> R.error_msgf "missing synopsis" )
+          | None -> R.error_msgf "missing synopsis")
       | Some ("1.2" | "1.0") -> (
           let descr_file = descr_file_for_opam opam in
           OS.File.exists descr_file >>= function
@@ -183,9 +183,9 @@ let opam_descr p =
               readme p >>= fun readme ->
               Logs.info (fun m ->
                   m "Extracting opam descr from %a" Fpath.pp readme);
-              Opam.Descr.of_readme_file readme )
+              Opam.Descr.of_readme_file readme)
       | Some v -> R.error_msgf "unsupported opam version: %s" v
-      | None -> R.error_msgf "missing opam-version field" )
+      | None -> R.error_msgf "missing opam-version field")
 
 let change_logs p =
   match p.change_logs with
@@ -219,7 +219,7 @@ let dev_repo_is_on_github p =
       | _ -> (
           match String.cut ~sep:"git+ssh://git@github.com/" r with
           | Some ("", _) -> true
-          | _ -> false ) )
+          | _ -> false))
 
 let homepage_is_on_github p =
   opam_homepage_sld p >>| function
@@ -246,7 +246,7 @@ let distrib_uri_of_dev_repo p =
         | _ -> (
             match String.cut ~sep:"git+ssh://git@github.com/" dev_repo with
             | Some ("", path) -> "https://github.com/" ^ chop_ext path
-            | _ -> chop_git_prefix (chop_ext dev_repo) )
+            | _ -> chop_git_prefix (chop_ext dev_repo))
       in
       path_of_distrib p >>| fun path -> Some (uri_append dev_repo path)
 
@@ -262,14 +262,14 @@ let infer_distrib_uri p =
    | None -> (
        distrib_uri_of_dev_repo p >>= function
        | Some u -> Ok u
-       | None -> err_not_found () ))
+       | None -> err_not_found ()))
   >>= fun uri ->
-  ( match uri_domain uri with
+  (match uri_domain uri with
   | [ "io"; "github"; user ] -> (
       match Text.split_uri ~rel:true uri with
       | None -> R.error_msgf "invalid uri: %s" uri
-      | Some (_, _, path) -> Ok ("https://github.com/" ^ user ^ "/" ^ path) )
-  | _ -> Ok uri )
+      | Some (_, _, path) -> Ok ("https://github.com/" ^ user ^ "/" ^ path))
+  | _ -> Ok uri)
   >>= fun uri ->
   name p >>= fun name ->
   tag p >>= fun tag ->
@@ -321,7 +321,7 @@ let distrib_user_and_repo uri =
             in
             Fpath.of_string repo
             >>= (fun repo -> Ok (user, Fpath.(to_string @@ rem_ext repo)))
-            |> R.reword_error_msg (fun _ -> uri_error uri) )
+            |> R.reword_error_msg (fun _ -> uri_error uri))
 
 let doc_uri p =
   opam_field_hd p "doc" >>| function None -> "" | Some uri -> uri
@@ -342,9 +342,9 @@ let doc_user_repo_and_path p =
   | Some (_, host, path) -> (
       if path = "" then Error (uri_error uri)
       else
-        ( match String.cut ~sep:"." host with
+        (match String.cut ~sep:"." host with
         | Some (user, g) when String.equal g "github.io" -> Ok user
-        | _ -> Error (uri_error uri) )
+        | _ -> Error (uri_error uri))
         >>= fun user ->
         match String.cut ~sep:"/" path with
         | None -> Ok (user, path, Fpath.v ".")
@@ -352,7 +352,7 @@ let doc_user_repo_and_path p =
         | Some (repo, path) ->
             Fpath.of_string path
             >>| (fun p -> (user, repo, Fpath.rem_empty_seg p))
-            |> R.reword_error_msg (fun _ -> uri_error uri) )
+            |> R.reword_error_msg (fun _ -> uri_error uri))
 
 let publish_msg p =
   match p.publish_msg with
@@ -420,7 +420,7 @@ let infer_from_readme dir =
           in
           Bos.OS.File.exists (Fpath.v (name ^ ".opam")) >>| function
           | false -> None
-          | true -> Some name ) )
+          | true -> Some name))
 
 let infer_name dir =
   infer_from_dune_project dir >>= function
@@ -436,7 +436,7 @@ let infer_name dir =
                   m
                     "cannot determine distribution name automatically: add \
                      (name <name>) to dune-project");
-              exit 1 ) )
+              exit 1))
 
 let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
     ?opam:opam_file ?opam_descr ?readme ?change_log ?license ?distrib_file
@@ -534,8 +534,8 @@ let distrib_archive ~dry_run ~keep_dir ~include_submodules p =
   Vcs.get ~dir:dist_build_dir () >>= fun clone_vcs ->
   Ok (Fmt.strf "dune-release-dist-%s" tag) >>= fun branch ->
   Vcs.checkout ~dry_run clone_vcs ~branch ~commit_ish:tag >>= fun () ->
-  ( if include_submodules then pull_submodules ~dry_run ~dist_build_dir
-  else Ok () )
+  (if include_submodules then pull_submodules ~dry_run ~dist_build_dir
+  else Ok ())
   >>= fun () ->
   distrib_prepare ~dry_run ~dist_build_dir ~version >>= fun () ->
   let exclude_paths = Fpath.Set.of_list Distrib.exclude_paths in

@@ -64,7 +64,7 @@ module List = struct
     let rec fmap acc = function
       | [] -> List.rev acc
       | hd :: tl -> (
-          match f hd with None -> fmap acc tl | Some x -> fmap (x :: acc) tl )
+          match f hd with None -> fmap acc tl | Some x -> fmap (x :: acc) tl)
     in
     fmap [] l
 end

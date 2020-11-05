@@ -170,7 +170,7 @@ let setup style_renderer log_level cwd =
   | Some dir -> (
       match OS.Dir.set_current dir with
       | Ok () -> `Ok ()
-      | Error (`Msg m) -> `Error (false, m) )
+      | Error (`Msg m) -> `Error (false, m))
 
 (* use cmdliner evaluation error *)
 

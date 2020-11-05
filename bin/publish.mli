@@ -26,9 +26,10 @@ val publish :
   (int, Bos_setup.R.msg) result
 (** [publish ~build_dir ~opam ~delegate ~change_log ~distrib_uri ~distrib_file
     ~publish_msg ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
-    ~publish_artefacts ~yes ()] publishes the artefacts [publish_artefacts] of
-    the package built with [name], [version] and [tag]. Returns the exit code (0
-    for success, 1 for failure) or error messages.
+    ~publish_artefacts ~yes ()]
+    publishes the artefacts [publish_artefacts] of the package built with
+    [name], [version] and [tag]. Returns the exit code (0 for success, 1 for
+    failure) or error messages.
 
     - [keep_v] indicates whether the version is prefixed by 'v'. *)
 

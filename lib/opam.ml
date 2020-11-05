@@ -42,7 +42,7 @@ let tool name os =
           | None -> (
               match ocamlfindable name with
               | Some cmd -> cmd
-              | None -> Cmd.v name ) ) )
+              | None -> Cmd.v name)))
 
 let cmd = Cmd.of_list @@ Cmd.to_list @@ tool "opam" `Host_os
 
@@ -63,8 +63,8 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
   in
   msg >>= fun msg ->
   Sos.dir_exists ~dry_run Fpath.(local_repo / ".git") >>= fun exists ->
-  ( if exists then Ok ()
-  else R.error_msgf "%a is not a valid Git repository." Fpath.pp local_repo )
+  (if exists then Ok ()
+  else R.error_msgf "%a is not a valid Git repository." Fpath.pp local_repo)
   >>= fun () ->
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   Vcs.get () >>= fun repo ->
@@ -121,11 +121,11 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version names =
       | _ -> Ok ()
     in
     OS.Dir.exists src >>= fun exists ->
-    ( if exists then Ok ()
+    (if exists then Ok ()
     else
       R.error_msgf
         "%a does not exist, did you run:\n  dune-release opam pkg -p %s\n"
-        Fpath.pp src name )
+        Fpath.pp src name)
     >>= fun () ->
     OS.Dir.create ~path:true dst >>= fun _ ->
     cp "opam" >>= fun () ->
@@ -251,7 +251,7 @@ module Descr = struct
           let start = start |> skip_non_white |> skip_white in
           match String.Sub.head start with
           | None -> error l
-          | Some _ -> ok start )
+          | Some _ -> ok start)
     in
     let drop_line l =
       String.is_prefix ~affix:"Home page:" l
@@ -269,7 +269,7 @@ module Descr = struct
         Ok (String.cuts ~sep text) >>= fun text ->
         Ok (List.filter keep_line text) >>= function
         | [] | [ "" ] -> Ok (synopsis, None)
-        | text -> Ok (synopsis, Some (String.concat ~sep text)) )
+        | text -> Ok (synopsis, Some (String.concat ~sep text)))
 
   let of_readme_file file =
     let flavour = Text.flavour_of_fpath file in

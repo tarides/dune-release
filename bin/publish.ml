@@ -53,7 +53,7 @@ let publish_doc ~specific ~dry_run ~yes pkg_names pkg =
                 "Skipping documentation publication for package %s: no %a \
                  field in %a"
                 name pp_field "doc" Fpath.pp opam);
-          Ok () )
+          Ok ())
   | Ok _ -> publish_doc ~dry_run ~yes pkg_names pkg
 
 let publish_distrib ?token ?distrib_uri ~dry_run ~yes pkg =
@@ -125,7 +125,7 @@ let artefacts =
         | "" -> `Error "`alt-' alternative artefact kind is missing"
         | kind ->
             App_log.unhappy (fun l -> l Deprecate_delegates.warning_usage);
-            `Ok (`Alt kind) )
+            `Ok (`Alt kind))
     | s -> `Error (strf "`%s' unknown publication artefact" s)
   in
   let printer ppf = function
@@ -163,9 +163,9 @@ let man =
     `P "$(mname) $(tname) [$(i,OPTION)]... [$(i,ARTEFACT)]...";
     `S Manpage.s_description;
     `P
-      ( Deprecate_delegates.artefacts_warning
-      ^ "The $(tname) command publishes package distribution archives and \
-         other artefacts." );
+      (Deprecate_delegates.artefacts_warning
+     ^ "The $(tname) command publishes package distribution archives and other \
+        artefacts.");
     `P
       "Artefact publication always relies on a distribution archive having \
        been generated before with dune-release-distrib(1).";
