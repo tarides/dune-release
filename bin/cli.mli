@@ -70,6 +70,22 @@ val yes : [ `Yes of bool ] Term.t
 val include_submodules : [ `Include_submodules of bool ] Term.t
 (** A [--include-submodules] flag to include submodules in the distrib tarball *)
 
+val user : [ `User of string option ] Term.t
+(** A [--user] option to define the name of the GitHub account where to push new
+    opam-repository branches. *)
+
+val local_repo : [ `Local_repo of string option ] Term.t
+(** A [--local-repo] option to define the location of the local fork of
+    opam-repository. *)
+
+val remote_repo : [ `Remote_repo of string option ] Term.t
+(** A [--remote-repo] option to define the location of the remote fork of
+    opam-repository. *)
+
+val opam_repo : [ `Opam_repo of (string * string) option ] Term.t
+(** A [--opam_repo] option to define the Github opam-repository to which
+    packages should be released. *)
+
 (** {1 Terms} *)
 
 val setup : unit Term.t

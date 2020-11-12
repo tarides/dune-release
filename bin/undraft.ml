@@ -184,52 +184,9 @@ let man =
        opened before with dune-release-opam(2).";
   ]
 
-let opam_repo =
-  let doc =
-    "The Github opam-repository to which packages should be released. Use this \
-     to release to a custom repo. Useful for testing purposes."
-  in
-  let docv = "GITHUB_USER_OR_ORG/REPO_NAME" in
-  let env = Arg.env_var "DUNE_RELEASE_OPAM_REPO" in
-  Cli.named
-    (fun x -> `Opam_repo x)
-    Arg.(
-      value
-      & opt (some (pair ~sep:'/' string string)) None
-      & info ~env [ "opam-repo" ] ~doc ~docv)
-
-let user =
-  let doc =
-    "the name of the GitHub account where to push new opam-repository branches."
-  in
-  Cli.named
-    (fun x -> `User x)
-    Arg.(
-      value & opt (some string) None & info [ "u"; "user" ] ~doc ~docv:"USER")
-
-let local_repo =
-  let doc = "Location of the local fork of opam-repository" in
-  let env = Arg.env_var "DUNE_RELEASE_LOCAL_REPO" in
-  Cli.named
-    (fun x -> `Local_repo x)
-    Arg.(
-      value
-      & opt (some string) None
-      & info ~env [ "l"; "--local-repo" ] ~doc ~docv:"PATH")
-
-let remote_repo =
-  let doc = "Location of the remote fork of opam-repository" in
-  let env = Arg.env_var "DUNE_RELEASE_REMOTE_REPO" in
-  Cli.named
-    (fun x -> `Remote_repo x)
-    Arg.(
-      value
-      & opt (some string) None
-      & info ~env [ "r"; "--remote-repo" ] ~doc ~docv:"URI")
-
 let cmd =
   ( Term.(
       pure undraft_cli $ Cli.setup $ Cli.dist_name $ Cli.dist_uri
-      $ Cli.dist_opam $ Cli.dist_file $ opam_repo $ user $ Cli.token
-      $ local_repo $ remote_repo $ Cli.pkg_names $ Cli.dry_run $ Cli.yes),
+      $ Cli.dist_opam $ Cli.dist_file $ Cli.opam_repo $ Cli.user $ Cli.token
+      $ Cli.local_repo $ Cli.remote_repo $ Cli.pkg_names $ Cli.dry_run $ Cli.yes),
     Term.info "undraft" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )
