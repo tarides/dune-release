@@ -34,21 +34,31 @@ let test_release_id =
   [ make_test Create_release_response.gh_v3_api_example (Ok 1) ]
 
 let test_html_url =
-  let make_test json expected =
-    let test_name = "html_url" in
+  let make_test name json expected =
+    let test_name = "html_url: " ^ name in
     let test_fun () =
       let json = Yojson.Basic.from_string json in
       match Dune_release.Github_v3_api.Pull_request_response.html_url json with
-      | Ok (`Url actual) -> Alcotest.(check string) __LOC__ actual expected
+      | Ok (`Url actual) -> Alcotest.(check string) __LOC__ expected actual
       | Ok `Already_exists ->
-          Alcotest.(check string) __LOC__ "ALREADY_EXISTS" expected
-      | Error (`Msg msg) -> Alcotest.(check string) __LOC__ msg expected
+          Alcotest.(check string) __LOC__ expected "ALREADY_EXISTS"
+      | Error (`Msg msg) -> Alcotest.(check string) __LOC__ expected msg
     in
     (test_name, `Quick, test_fun)
   in
   [
-    make_test Pull_request_response.gh_v3_api_example
+    make_test "passing" Pull_request_response.gh_v3_api_example
       "https://github.com/octocat/Hello-World/pull/1347";
+    make_test "handled failure" Pull_request_response.gh_v3_api_handled_failure
+      {|ALREADY_EXISTS|};
+    make_test "unhandled failure"
+      Pull_request_response.gh_v3_api_unhandled_failure
+      {|Github API error:
+  Could not retrieve pull request URL from response
+  Github API returned: "Validation Failed"
+  See the documentation "https://docs.github.com/rest/reference/pulls#create-a-pull-request" that might help you resolve this error.
+  - Error message: "This is an unhandled failure."
+  - Code: "custom"|};
   ]
 
 let suite =

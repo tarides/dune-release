@@ -12,3 +12,9 @@ val string_field : field:string -> Yojson.Basic.t -> (string, R.msg) result
 val int_field : field:string -> Yojson.Basic.t -> (int, R.msg) result
 (** [int_field ~field j] returns the value of field [field] from the JSON value
     [j] if it is an integer, or returns the associated error message otherwise. *)
+
+val list_field :
+  field:string -> Yojson.Basic.t -> (Yojson.Basic.t list, R.msg) result
+(** [list_field ~field j] returns the list of values of field [field] from the
+    JSON value [j] if it is a list, or returns the associated error message
+    otherwise. *)
