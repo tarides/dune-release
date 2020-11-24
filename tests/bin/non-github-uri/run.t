@@ -76,9 +76,12 @@ We do the whole dune-release process
     -: exec: opam lint -s whatever.opam
     [ OK ] lint opam file whatever.opam.
     [ OK ] opam field description is present
-    [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
+    [FAIL] opam fields homepage and dev-repo can be parsed by dune-release
+    dune-release: [ERROR] Could not derive user and repo from uri
+                          "https://whatever.io"; expected the pattern
+                          $SCHEME://$HOST/$USER/$REPO[.$EXT][/$DIR]
     [ OK ] Skipping doc field linting, no doc field found
-    [ OK ] lint _build/whatever-0.1.0 success
+    [FAIL] lint _build/whatever-0.1.0 failure: 1 errors.
     
     [-] Building package in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
@@ -89,11 +92,11 @@ We do the whole dune-release process
     => chdir _build/whatever-0.1.0
     -: exec: dune runtest -p whatever
     [ OK ] package tests
-    -: rmdir _build/whatever-0.1.0
     
     [+] Distribution for whatever 0.1.0
     [+] Commit ...
     [+] Archive _build/whatever-0.1.0.tbz
+    [1]
 
 (2) publish distrib
 
