@@ -226,14 +226,17 @@ let curl_upload_archive ~token ~dry_run ~yes archive user repo release_id =
       >>= Github_v3_api.Upload_response.browser_download_url)
 
 let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo ~draft
-    body =
+    body pkg =
   let curl_t = Curl.open_pr ~title ~user ~branch ~body ~opam_repo ~draft in
   github_auth ~dry_run ~user:distrib_user token >>= fun auth ->
   let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
   run_with_auth ~dry_run ~default_body ~auth curl_t >>= fun json ->
   (if draft then
+    Pkg.build_dir pkg >>= fun build_dir ->
+    Pkg.name pkg >>= fun name ->
+    Pkg.version pkg >>= fun version ->
     Github_v3_api.Pull_request_response.number json
-    >>= Sos.Draft_pr.set ~dry_run
+    >>= Config.Draft_pr.set ~dry_run ~build_dir ~name ~version
   else Ok ())
   >>= fun () -> Github_v3_api.Pull_request_response.html_url json
 
@@ -393,14 +396,17 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes ~draft p =
   Vcs.get () >>= fun vcs ->
   check_tag ~dry_run vcs tag >>= fun () ->
   dev_repo p >>= fun dev_repo ->
+  Pkg.build_dir p >>= fun build_dir ->
+  Pkg.name p >>= fun name ->
+  Pkg.version p >>= fun version ->
   push_tag ~dry_run ~yes ~dev_repo vcs tag >>= fun () ->
   (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
   >>= fun token ->
   create_release ~dry_run ~yes ~dev_repo ~token ~version ~msg ~tag ~user ~repo
     ~draft
   >>= fun id ->
-  (if draft then Sos.Draft_release.set ~dry_run id
-  else Sos.Draft_release.unset ~dry_run)
+  (if draft then Config.Draft_release.set ~dry_run ~build_dir ~name ~version id
+  else Config.Draft_release.unset ~dry_run ~build_dir ~name ~version)
   >>= fun () ->
   App_log.success (fun l -> l "Succesfully created release with id %d" id);
   Prompt.(

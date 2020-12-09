@@ -48,9 +48,11 @@ let update_opam_file ~dry_run ~url pkg =
       m "Wrote opam package description %a" Text.Pp.path dest_opam_file)
 
 let undraft ?opam ~name ?distrib_uri ?distrib_file ?opam_repo ?user ?token
-    ?local_repo ?remote_repo ?pkg_names ~dry_run ~yes:_ () =
-  let pkg = Pkg.v ?name ?opam ?distrib_file ~dry_run:false () in
+    ?local_repo ?remote_repo ?build_dir ?pkg_names ~dry_run ~yes:_ () =
+  let pkg = Pkg.v ?name ?opam ?distrib_file ?build_dir ~dry_run:false () in
   Pkg.name pkg >>= fun pkg_name ->
+  Pkg.build_dir pkg >>= fun build_dir ->
+  Pkg.version pkg >>= fun version ->
   let pkg_names = match pkg_names with Some x -> x | None -> [] in
   let pkg_names = pkg_name :: pkg_names in
   let opam_repo =
@@ -87,16 +89,17 @@ let undraft ?opam ~name ?distrib_uri ?distrib_file ?opam_repo ?user ?token
   (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
   >>= fun token ->
   App_log.status (fun l -> l "Undrafting release");
-  Sos.Draft_release.get ~dry_run >>= fun release_id ->
+  Config.Draft_release.get ~dry_run ~build_dir ~name:pkg_name ~version
+  >>= fun release_id ->
   Github.undraft_release ~token ~dry_run ~user ~repo ~release_id >>= fun url ->
   App_log.success (fun m ->
       m "The release has been undrafted and is available at %s\n" url);
   App_log.status (fun l -> l "Undrafting pull request");
-  Sos.Draft_pr.get ~dry_run >>= fun pr_id ->
+  Config.Draft_pr.get ~dry_run ~build_dir ~name:pkg_name ~version
+  >>= fun pr_id ->
   update_opam_file ~dry_run ~url pkg >>= fun () ->
   App_log.status (fun l ->
       l "Preparing pull request to %a" pp_opam_repo opam_repo);
-  Pkg.version pkg >>= fun version ->
   let branch = Fmt.strf "release-%s-%s" pkg_name version in
   Sos.with_dir ~dry_run local_repo
     (fun () ->
@@ -137,17 +140,19 @@ let undraft ?opam ~name ?distrib_uri ?distrib_file ?opam_repo ?user ?token
   >>= fun () ->
   Github.undraft_pr ~token ~dry_run ~distrib_user ~opam_repo ~pr_id
   >>= fun url ->
-  Sos.Draft_release.unset ~dry_run >>= fun () ->
-  Sos.Draft_pr.unset ~dry_run >>= fun () ->
+  Config.Draft_release.unset ~dry_run ~build_dir ~name:pkg_name ~version
+  >>= fun () ->
+  Config.Draft_pr.unset ~dry_run ~build_dir ~name:pkg_name ~version
+  >>= fun () ->
   App_log.success (fun m -> m "The pull-request has been undrafted at %s\n" url);
   Ok 0
 
 let undraft_cli () (`Dist_name name) (`Dist_uri distrib_uri) (`Dist_opam opam)
     (`Dist_file distrib_file) (`Opam_repo opam_repo) (`User user) (`Token token)
-    (`Local_repo local_repo) (`Remote_repo remote_repo)
+    (`Local_repo local_repo) (`Remote_repo remote_repo) (`Build_dir build_dir)
     (`Package_names pkg_names) (`Dry_run dry_run) (`Yes yes) =
   undraft ?opam ~name ?distrib_uri ?distrib_file ?opam_repo ?user ?token
-    ?local_repo ?remote_repo ~pkg_names ~dry_run ~yes ()
+    ?local_repo ?remote_repo ?build_dir ~pkg_names ~dry_run ~yes ()
   |> Cli.handle_error
 
 (* Command line interface *)
@@ -188,5 +193,6 @@ let cmd =
   ( Term.(
       pure undraft_cli $ Cli.setup $ Cli.dist_name $ Cli.dist_uri
       $ Cli.dist_opam $ Cli.dist_file $ Cli.opam_repo $ Cli.user $ Cli.token
-      $ Cli.local_repo $ Cli.remote_repo $ Cli.pkg_names $ Cli.dry_run $ Cli.yes),
+      $ Cli.local_repo $ Cli.remote_repo $ Cli.build_dir $ Cli.pkg_names
+      $ Cli.dry_run $ Cli.yes),
     Term.info "undraft" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )

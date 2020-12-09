@@ -135,7 +135,7 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
       l "Opening pull request to merge branch %a of %a into %a" Text.Pp.commit
         branch Text.Pp.url remote_repo pp_opam_repo opam_repo);
   Github.open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo
-    ~draft msg
+    ~draft msg pkg
   >>= function
   | `Already_exists ->
       App_log.blank_line ();
@@ -161,13 +161,6 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
 
 let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
     remote_repo pkgs auto_open ~draft =
-  (if draft then Ok ()
-  else
-    match Sos.Draft_release.is_set ~dry_run with
-    | Ok true ->
-        R.error_msg "Cannot open a non-draft pull request for a draft release."
-    | _ -> Ok ())
-  >>= fun () ->
   List.fold_left
     (fun acc pkg ->
       get_pkg_dir pkg >>= fun pkg_dir ->
@@ -185,6 +178,15 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
   let pkg = List.hd pkgs in
   Pkg.version pkg >>= fun version ->
   Pkg.tag pkg >>= fun tag ->
+  Pkg.build_dir pkg >>= fun build_dir ->
+  Pkg.name pkg >>= fun name ->
+  (if draft then Ok ()
+  else
+    match Config.Draft_release.is_set ~dry_run ~build_dir ~name ~version with
+    | Ok true ->
+        R.error_msg "Cannot open a non-draft pull request for a draft release."
+    | _ -> Ok ())
+  >>= fun () ->
   list_map Pkg.name pkgs >>= fun names ->
   let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
   Pkg.publish_msg pkg >>= fun changes ->

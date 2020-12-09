@@ -66,6 +66,7 @@ val open_pr :
   opam_repo:string * string ->
   draft:bool ->
   string ->
+  Pkg.t ->
   ([ `Url of string | `Already_exists ], R.msg) result
 
 val undraft_pr :
