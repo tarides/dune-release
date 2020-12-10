@@ -68,9 +68,9 @@ Commit the change in dune-project and run distrib.
     dune-release: [WARNING] The repo is dirty. The distribution archive may be
                             inconsistent. Uncommitted changes to files (including
                             dune-project) will be ignored.
-    [+] Wrote archive _build/liba-626c61c.tbz
+    [+] Wrote archive ...
     
-    [-] Linting distrib in _build/liba-626c61c
+    [-] Linting distrib in ...
     [ OK ] File README is present.
     [ OK ] File LICENSE is present.
     [ OK ] File CHANGES is present.
@@ -79,7 +79,7 @@ Commit the change in dune-project and run distrib.
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
-    [ OK ] lint _build/liba-626c61c success
+    [ OK ] lint ...
     [ OK ] File README is present.
     [ OK ] File LICENSE is present.
     [ OK ] File CHANGES is present.
@@ -88,14 +88,14 @@ Commit the change in dune-project and run distrib.
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
-    [ OK ] lint _build/liba-626c61c success
+    [ OK ] lint ...
     
-    [-] Building package in _build/liba-626c61c
+    [-] Building package in ...
     [ OK ] package builds
     
-    [-] Running package tests in _build/liba-626c61c
+    [-] Running package tests in ...
     [ OK ] package tests
     
-    [+] Distribution for liba 626c61c
-    [+] Commit 626c61ce17854f1db8db41908b26339a138a8813
-    [+] Archive _build/liba-626c61c.tbz
+    [+] Distribution for liba ...
+    [+] Commit ...
+    [+] Archive ...
