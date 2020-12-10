@@ -52,6 +52,9 @@
   repository from the distrib archive (#298, @NathanReb)
 - Better report GitHub API errors, all of the error messages reported by the GitHub API are now checked and reported to the user. (#290, @gpetiot)
 - Fix error message when `dune-release tag` cannot guess the project name (#319, @lehy)
+- Always warn about uncommitted changes at the start of dune distrib
+  (#320, @lehy).  Otherwise uncommitted changes to dune-project would
+  be silently ignored by dune distrib.
 
 ### Security
 
