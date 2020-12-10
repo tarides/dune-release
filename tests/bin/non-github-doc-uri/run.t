@@ -39,6 +39,9 @@ We do the whole dune-release process
 
     $ dune-release distrib --dry-run
     [-] Building source archive
+    dune-release: [WARNING] The repo is dirty. The distribution archive may be
+                            inconsistent. Uncommitted changes to files (including
+                            dune-project) will be ignored.
     => rmdir _build/whatever-0.1.0.build
     -: exec: git --git-dir .git rev-parse --verify 0.1.0
     => exec: git --git-dir .git show -s --format=%ct 0.1.0^{commit}

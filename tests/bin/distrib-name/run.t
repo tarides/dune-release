@@ -26,7 +26,6 @@ Set up a project with two packaged libraries, no name in dune-project.
     $ echo "(lang dune 2.7)" > dune-project
     $ git init . > /dev/null
     $ git add liba/* libb*/ CHANGES.md README LICENSE *.opam dune-project
-    $ git status
     $ git commit -m 'Commit.' > /dev/null
 
 Try dune-release with no project name.
@@ -69,9 +68,9 @@ Commit the change in dune-project and run distrib.
     dune-release: [WARNING] The repo is dirty. The distribution archive may be
                             inconsistent. Uncommitted changes to files (including
                             dune-project) will be ignored.
-    [+] Wrote archive _build/liba-a23cbd9.tbz
+    [+] Wrote archive _build/liba-626c61c.tbz
     
-    [-] Linting distrib in _build/liba-a23cbd9
+    [-] Linting distrib in _build/liba-626c61c
     [ OK ] File README is present.
     [ OK ] File LICENSE is present.
     [ OK ] File CHANGES is present.
@@ -80,7 +79,7 @@ Commit the change in dune-project and run distrib.
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
-    [ OK ] lint _build/liba-a23cbd9 success
+    [ OK ] lint _build/liba-626c61c success
     [ OK ] File README is present.
     [ OK ] File LICENSE is present.
     [ OK ] File CHANGES is present.
@@ -89,14 +88,14 @@ Commit the change in dune-project and run distrib.
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
-    [ OK ] lint _build/liba-a23cbd9 success
+    [ OK ] lint _build/liba-626c61c success
     
-    [-] Building package in _build/liba-a23cbd9
+    [-] Building package in _build/liba-626c61c
     [ OK ] package builds
     
-    [-] Running package tests in _build/liba-a23cbd9
+    [-] Running package tests in _build/liba-626c61c
     [ OK ] package tests
     
-    [+] Distribution for liba a23cbd9
-    [+] Commit a23cbd9b2d83ce2f08e64e7c325659ce219d6f3e
-    [+] Archive _build/liba-a23cbd9.tbz
+    [+] Distribution for liba 626c61c
+    [+] Commit 626c61ce17854f1db8db41908b26339a138a8813
+    [+] Archive _build/liba-626c61c.tbz
