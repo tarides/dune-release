@@ -18,7 +18,8 @@ We need a basic opam project skeleton
     > _build\
     > .formatted\
     > dune\
-    > run.t*\
+    > .mdx\
+    > run.t\
     > EOF
 
 We also need a dotfile that we will properly version
@@ -39,9 +40,6 @@ The generated tarball should contain the dotfile
 
     $ dune-release distrib --skip-lint --skip-build --skip-test
     [-] Building source archive
-    dune-release: [WARNING] The repo is dirty. The distribution archive may be
-                            inconsistent. Uncommitted changes to files (including
-                            dune-project) will be ignored.
     [+] Wrote archive _build/whatever-0.1.0.tbz
     
     [+] Distribution for whatever 0.1.0
