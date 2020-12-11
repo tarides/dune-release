@@ -23,18 +23,6 @@ let dist_tag =
     Arg.(
       value & opt (some string) None & info [ "t"; "tag" ] ~doc ~docv:"DIST_TAG")
 
-let dist_name =
-  let doc =
-    "The name $(docv) of the distribution. If absent provided by i)   the \
-     $(i,name) field in $(b,dune-project); ii)  the longest prefix of all the \
-     $(b,*.opam) files present in the current directory; and iii) the first \
-     word in the title of $(b,README.md)."
-  in
-  let docv = "DIST_NAME" in
-  named
-    (fun x -> `Dist_name x)
-    Arg.(value & opt (some string) None & info [ "n"; "name" ] ~doc ~docv)
-
 let pkg_names =
   let doc =
     "The names $(docv) of the opam packages to release. If absent provided by \

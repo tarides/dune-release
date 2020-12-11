@@ -16,6 +16,8 @@ We need a basic opam project skeleton
     > EOF
     $ cat > .gitignore << EOF \
     > _build\
+    > .formatted\
+    > dune\
     > run.t*\
     > EOF
 

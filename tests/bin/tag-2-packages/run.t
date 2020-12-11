@@ -20,23 +20,8 @@ Set up a project with two packaged libraries, no name in dune-project.
 Check error message about name in dune-project.
 
     $ dune-release tag -y
-    dune-release: [ERROR] cannot determine name automatically: use `--name <name>` or add (name <name>) to dune-project
+    dune-release: [ERROR] cannot determine distribution name automatically: add (name <name>) to dune-project
     [1]
-
-Use --name to set name.
-
-    $ cat > CHANGES.md << EOF \
-    > ## 0.43.0\
-    > \
-    > - Some other feature\
-    > \
-    > EOF
-    $ git add CHANGES.md && git commit -m '0.43' > /dev/null
-
-    $ dune-release tag -y --name toto
-    [-] Extracting tag from first entry in CHANGES.md
-    [-] Using tag "0.43.0"
-    [+] Tagged HEAD with version 0.43.0
 
 Use (name <name>) in dune-project (not committed).
 

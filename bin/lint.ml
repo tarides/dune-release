@@ -7,12 +7,12 @@
 open Bos_setup
 open Dune_release
 
-let lint () (`Dry_run dry_run) (`Dist_name name) (`Package_names pkg_names)
+let lint () (`Dry_run dry_run) (`Package_names pkg_names)
     (`Package_version version) (`Dist_tag tag) (`Keep_v keep_v) (`Lints lints) =
   Cli.handle_error
     ( Config.keep_v keep_v >>= fun keep_v ->
       Pkg.infer_pkg_names Fpath.(v ".") pkg_names >>= fun pkg_names ->
-      let pkg = Pkg.v ~dry_run ?name ?version ~keep_v ?tag () in
+      let pkg = Pkg.v ~dry_run ?version ~keep_v ?tag () in
       OS.Dir.current () >>= fun dir ->
       List.fold_left
         (fun acc name ->
@@ -63,8 +63,8 @@ let man =
 
 let cmd =
   ( Term.(
-      pure lint $ Cli.setup $ Cli.dry_run $ Cli.dist_name $ Cli.pkg_names
-      $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ lints),
+      pure lint $ Cli.setup $ Cli.dry_run $ Cli.pkg_names $ Cli.pkg_version
+      $ Cli.dist_tag $ Cli.keep_v $ lints),
     Term.info "lint" ~doc ~sdocs ~exits ~man ~man_xrefs )
 
 (*---------------------------------------------------------------------------

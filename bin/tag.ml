@@ -70,10 +70,10 @@ let vcs_tag pkg tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
           m "Tagged %a with version %a" Text.Pp.commit commit_ish
             Text.Pp.version tag)
 
-let tag () (`Dry_run dry_run) (`Dist_name name) (`Change_log change_log)
-    (`Version tag) (`Commit_ish commit_ish) (`Force force) (`Sign sign)
-    (`Delete delete) (`Msg msg) (`Yes yes) =
-  (let pkg = Pkg.v ~dry_run ?change_log ?name () in
+let tag () (`Dry_run dry_run) (`Change_log change_log) (`Version tag)
+    (`Commit_ish commit_ish) (`Force force) (`Sign sign) (`Delete delete)
+    (`Msg msg) (`Yes yes) =
+  (let pkg = Pkg.v ~dry_run ?change_log () in
    let tag =
      match tag with
      | Some t ->
@@ -154,8 +154,8 @@ let man =
 
 let cmd =
   ( Term.(
-      pure tag $ Cli.setup $ Cli.dry_run $ Cli.dist_name $ Cli.change_log
-      $ version $ commit $ force $ sign $ delete $ msg $ Cli.yes),
+      pure tag $ Cli.setup $ Cli.dry_run $ Cli.change_log $ version $ commit
+      $ force $ sign $ delete $ msg $ Cli.yes),
     Term.info "tag" ~doc ~sdocs ~exits ~man ~man_xrefs )
 
 (*---------------------------------------------------------------------------

@@ -28,9 +28,6 @@ val pkg_version : [ `Package_version of string option ] Term.t
 val keep_v : [ `Keep_v of bool ] Term.t
 (** A [--keep-v] option to not drop the 'v' at the beginning of version strings. *)
 
-val dist_name : [ `Dist_name of string option ] Term.t
-(** A [--name] option to specify the distribution name. *)
-
 val dist_tag : [ `Dist_tag of string option ] Term.t
 (** A [--tag] option to define the tag to build the distribution from. *)
 
