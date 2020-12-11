@@ -90,9 +90,14 @@ Now that the release is tagged in your VCS, generate a distribution archive for 
 dune-release distrib
 ```
 
-This uses the source tree of the HEAD commit for creating a distribution in the build directory. The distribution version string is the VCS tag description (e.g. `git-describe`) of the HEAD commit. Alternatively it can be specified on the command line.
+This uses the source tree of the HEAD commit for creating a distribution in the build directory.
+Note that any uncommitted change will therefore be ignored. The distribution version string is the
+VCS tag description (e.g. `git-describe`) of the HEAD commit. Alternatively it can be specified on
+the command line.
 
-Basic checks are performed on the distribution archive when it is created, but save time by catching errors early. Hence test that your source repository lints and that it builds in the current build environment and that the package tests pass.
+Basic checks are performed on the distribution archive when it is created, but save time by catching
+errors early. Hence test that your source repository lints and that it builds in the current build
+environment and that the package tests pass.
 
 ```
 dune-release lint
