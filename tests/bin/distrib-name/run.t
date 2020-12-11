@@ -7,9 +7,7 @@ Set up a project with two packaged libraries, no name in dune-project.
     > - Some other feature\
     > \
     > EOF
-    $ echo "let f x = x" > liba/main.ml
     $ echo "(library (public_name liba))" > liba/dune
-    $ echo "let f x = x" > libb/main.ml
     $ echo "(library (public_name libb))" > libb/dune
     $ cat > liba.opam << EOF \
     > opam-version: "2.0" \
