@@ -44,11 +44,6 @@ dune-release distrib --dry-run with no project name.
     dune-release: [ERROR] cannot determine name automatically: use `--name <name>` or add (name <name>) to dune-project
     [1]
 
-<!-- This does not work at the moment. --name is not taken into -->
-<!-- account by the dune subst called by dune-release distrib -->
-<!-- Run with --name. -->
-<!--     $ dune-release distrib --name toto -->
-
 Add an uncommitted name to dune-project. (Because of a dune limitation
 this name must be one the .opam file names.)
 
