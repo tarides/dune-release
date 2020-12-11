@@ -13,13 +13,6 @@ Set up a project with two packaged libraries, no name in dune-project.
     $ echo "(library (public_name libb))" > libb/dune
     $ cat > liba.opam << EOF \
     > opam-version: "2.0" \
-    > description: "Description"\
-    > synopsis: "Synopsis"\
-    > maintainer: "Maintainer"\
-    > authors: "Authors"\
-    > homepage: "homepage"\
-    > dev-repo: "git://dev-repo"\
-    > bug-reports: "bug-reports"\
     > EOF
     $ cp liba.opam libb.opam
     $ touch README LICENSE
@@ -28,13 +21,20 @@ Set up a project with two packaged libraries, no name in dune-project.
     $ git add liba/* libb*/ CHANGES.md README LICENSE *.opam dune-project
     $ git commit -m 'Commit.' > /dev/null
 
-Try dune-release with no project name.
+Try dune-release distrib with no project name.
 
-    $ dune-release distrib
+    $ dune-release distrib --skip-lint
     [-] Building source archive
     dune-release: [WARNING] The repo is dirty. The distribution archive may be
                             inconsistent. Uncommitted changes to files (including
                             dune-project) will be ignored.
+    dune-release: [ERROR] cannot determine name automatically: use `-p <name>`
+    [1]
+
+dune-release distrib --dry-run with no project name.
+
+    $ dune-release distrib --skip-lint --dry-run
+    [-] Building source archive
     dune-release: [ERROR] cannot determine name automatically: use `-p <name>`
     [1]
 
@@ -50,7 +50,7 @@ this name must be one the .opam file names.)
 
 Run dune-release distrib with the uncomitted name in dune-project.
 
-    $ dune-release distrib
+    $ dune-release distrib --skip-lint
     [-] Building source archive
     dune-release: [WARNING] The repo is dirty. The distribution archive may be
                             inconsistent. Uncommitted changes to files (including
@@ -63,32 +63,12 @@ Run dune-release distrib with the uncomitted name in dune-project.
 Commit the change in dune-project and run distrib.
 
     $ git add dune-project && git commit -m 'add name' > /dev/null
-    $ dune-release distrib
+    $ dune-release distrib --skip-lint
     [-] Building source archive
     dune-release: [WARNING] The repo is dirty. The distribution archive may be
                             inconsistent. Uncommitted changes to files (including
                             dune-project) will be ignored.
     [+] Wrote archive ...
-    
-    [-] Linting distrib in ...
-    [ OK ] File README is present.
-    [ OK ] File LICENSE is present.
-    [ OK ] File CHANGES is present.
-    [ OK ] File opam is present.
-    [ OK ] lint opam file libb.opam.
-    [ OK ] opam field description is present
-    [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
-    [ OK ] Skipping doc field linting, no doc field found
-    [ OK ] lint ...
-    [ OK ] File README is present.
-    [ OK ] File LICENSE is present.
-    [ OK ] File CHANGES is present.
-    [ OK ] File opam is present.
-    [ OK ] lint opam file liba.opam.
-    [ OK ] opam field description is present
-    [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
-    [ OK ] Skipping doc field linting, no doc field found
-    [ OK ] lint ...
     
     [-] Building package in ...
     [ OK ] package builds
