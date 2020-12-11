@@ -37,6 +37,7 @@ We do the whole dune-release process
 
 (1) distrib
 
+    $ git status
     $ dune-release distrib --dry-run
     [-] Building source archive
     dune-release: [WARNING] The repo is dirty. The distribution archive may be
