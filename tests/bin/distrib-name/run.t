@@ -1,4 +1,8 @@
-Set up a project with two packaged libraries, no name in dune-project.
+Set up a project with two packaged libraries, no name in
+dune-project. This goes with the fix for #320, where:
+- one sets a name in dune-project but does not commit it
+- dune distrib ignores this name and fails, complaining that you
+  should set a name.
 
     $ mkdir liba libb
     $ cat > CHANGES.md << EOF \
