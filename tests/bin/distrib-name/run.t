@@ -28,14 +28,17 @@ Try dune-release distrib with no project name.
     dune-release: [WARNING] The repo is dirty. The distribution archive may be
                             inconsistent. Uncommitted changes to files (including
                             dune-project) will be ignored.
-    dune-release: [ERROR] cannot determine name automatically: use `-p <name>`
+    dune-release: [ERROR] cannot determine name automatically: use `--name <name>` or add (name <name>) to dune-project
     [1]
 
 dune-release distrib --dry-run with no project name.
 
     $ dune-release distrib --skip-lint --dry-run
     [-] Building source archive
-    dune-release: [ERROR] cannot determine name automatically: use `-p <name>`
+    dune-release: [WARNING] The repo is dirty. The distribution archive may be
+                            inconsistent. Uncommitted changes to files (including
+                            dune-project) will be ignored.
+    dune-release: [ERROR] cannot determine name automatically: use `--name <name>` or add (name <name>) to dune-project
     [1]
 
 <!-- This does not work at the moment. --name is not taken into -->
