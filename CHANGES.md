@@ -29,9 +29,9 @@
 ### Removed
 
 - Option --name is removed from all commands. When used with
-  `dune-release distrib`, it was previously effectively ignored. The
-  alternative is to add a `(name <name>)` stanza to
-  `dune-project`. (#324, @lehy)
+  `dune-release distrib`, it was previously effectively ignored. Now
+  it is required to add a `(name <name>)` stanza to
+  `dune-project`. (#327, @lehy)
 
 ### Fixed
 
