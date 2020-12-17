@@ -140,9 +140,12 @@ let git_clone ~dry_run ?force ?branch ~dir:d r =
   run_git ~dry_run ?force r clone ~default:Default.unit OS.Cmd.out_stdout
   >>= fun () -> Ok ()
 
-let git_checkout ~dry_run r ~branch ~commit_ish =
+let git_checkout ?(create = true) ~dry_run r ~branch ~commit_ish =
   let branch =
-    match branch with None -> Cmd.empty | Some branch -> Cmd.(v "-b" % branch)
+    match branch with
+    | None -> Cmd.empty
+    | Some branch when create -> Cmd.(v "-b" % branch)
+    | Some branch -> Cmd.v branch
   in
   run_git_string ~dry_run ~force:true r
     Cmd.(git_work_tree r % "checkout" % "--quiet" %% branch % commit_ish)
@@ -367,9 +370,9 @@ let clone ~dry_run ?force ?branch ~dir r =
   | (`Git, _, _) as r -> git_clone ~dry_run ?force ?branch ~dir r
   | (`Hg, _, _) as r -> hg_clone r ~dir
 
-let checkout ~dry_run ?branch r ~commit_ish =
+let checkout ?create ~dry_run ?branch r ~commit_ish =
   match r with
-  | (`Git, _, _) as r -> git_checkout ~dry_run r ~branch ~commit_ish
+  | (`Git, _, _) as r -> git_checkout ?create ~dry_run r ~branch ~commit_ish
   | (`Hg, _, _) as r -> hg_checkout r ~branch ~rev:(hg_rev commit_ish)
 
 let tag ~dry_run ?(force = false) ?(sign = false) ?msg ?(commit_ish = "HEAD") r

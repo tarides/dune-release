@@ -121,7 +121,8 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
         ~default:(Sos.out D.fetch_head)
         Cmd.(v "rev-parse" % "FETCH_HEAD")
       >>= fun id ->
-      Vcs.checkout vcs ~dry_run:false ~branch ~commit_ish:id >>= fun () ->
+      Vcs.checkout vcs ~create:false ~dry_run:false ~branch ~commit_ish:id
+      >>= fun () ->
       let prepare_package name =
         let dir = name ^ "." ^ version in
         let dst = Fpath.(v "packages" / name / dir) in

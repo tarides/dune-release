@@ -82,6 +82,7 @@ val clone :
 (** [clone ~dir r] clones [r] in directory [dir]. *)
 
 val checkout :
+  ?create:bool ->
   dry_run:bool ->
   ?branch:commit_ish ->
   t ->
