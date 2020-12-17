@@ -47,9 +47,9 @@ let update_opam_file ~dry_run ~url pkg =
   App_log.success (fun m ->
       m "Wrote opam package description %a" Text.Pp.path dest_opam_file)
 
-let undraft ?opam ~name ?distrib_uri ?distrib_file ?opam_repo ?user ?token
-    ?local_repo ?remote_repo ?build_dir ?pkg_names ~dry_run ~yes:_ () =
-  let pkg = Pkg.v ?name ?opam ?distrib_file ?build_dir ~dry_run:false () in
+let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
+    ?remote_repo ?build_dir ?pkg_names ~dry_run ~yes:_ () =
+  let pkg = Pkg.v ?opam ?distrib_file ?build_dir ~dry_run:false () in
   Pkg.name pkg >>= fun pkg_name ->
   Pkg.build_dir pkg >>= fun build_dir ->
   Pkg.version pkg >>= fun version ->
@@ -147,12 +147,12 @@ let undraft ?opam ~name ?distrib_uri ?distrib_file ?opam_repo ?user ?token
   App_log.success (fun m -> m "The pull-request has been undrafted at %s\n" url);
   Ok 0
 
-let undraft_cli () (`Dist_name name) (`Dist_uri distrib_uri) (`Dist_opam opam)
+let undraft_cli () (`Dist_uri distrib_uri) (`Dist_opam opam)
     (`Dist_file distrib_file) (`Opam_repo opam_repo) (`User user) (`Token token)
     (`Local_repo local_repo) (`Remote_repo remote_repo) (`Build_dir build_dir)
     (`Package_names pkg_names) (`Dry_run dry_run) (`Yes yes) =
-  undraft ?opam ~name ?distrib_uri ?distrib_file ?opam_repo ?user ?token
-    ?local_repo ?remote_repo ?build_dir ~pkg_names ~dry_run ~yes ()
+  undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
+    ?remote_repo ?build_dir ~pkg_names ~dry_run ~yes ()
   |> Cli.handle_error
 
 (* Command line interface *)
@@ -191,8 +191,7 @@ let man =
 
 let cmd =
   ( Term.(
-      pure undraft_cli $ Cli.setup $ Cli.dist_name $ Cli.dist_uri
-      $ Cli.dist_opam $ Cli.dist_file $ Cli.opam_repo $ Cli.user $ Cli.token
-      $ Cli.local_repo $ Cli.remote_repo $ Cli.build_dir $ Cli.pkg_names
-      $ Cli.dry_run $ Cli.yes),
+      pure undraft_cli $ Cli.setup $ Cli.dist_uri $ Cli.dist_opam
+      $ Cli.dist_file $ Cli.opam_repo $ Cli.user $ Cli.token $ Cli.local_repo
+      $ Cli.remote_repo $ Cli.build_dir $ Cli.pkg_names $ Cli.dry_run $ Cli.yes),
     Term.info "undraft" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )
