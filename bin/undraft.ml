@@ -91,7 +91,10 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
   App_log.status (fun l -> l "Undrafting release");
   Config.Draft_release.get ~dry_run ~build_dir ~name:pkg_name ~version
   >>= fun release_id ->
-  Github.undraft_release ~token ~dry_run ~user ~repo ~release_id >>= fun url ->
+  Pkg.distrib_filename pkg >>= fun b ->
+  Ok Fpath.(b + ".tbz") >>= fun archive ->
+  Github.undraft_release ~token ~dry_run ~user ~repo ~release_id ~name:archive
+  >>= fun url ->
   App_log.success (fun m ->
       m "The release has been undrafted and is available at %s\n" url);
   App_log.status (fun l -> l "Undrafting pull request");

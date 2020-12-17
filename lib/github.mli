@@ -52,6 +52,7 @@ val undraft_release :
   user:string ->
   repo:string ->
   release_id:int ->
+  name:Fpath.t ->
   (string, R.msg) Result.result
 (** [undraft_release] updates an existing release to undraft it and returns the
     release archive download URL. *)

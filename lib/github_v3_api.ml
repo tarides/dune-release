@@ -44,6 +44,24 @@ let handle_errors json ~try_ ~on_ok ~default_msg ~handled_errors =
                ~post:" that might help you resolve this error.")
             documentation_url pp_errors errors)
 
+module Undraft_release_response = struct
+  let same_name name json =
+    match Json.string_field ~field:"name" json with
+    | Ok name' -> String.equal (Fpath.to_string name) name'
+    | Error _ -> false
+
+  let browser_download_url ~name json =
+    handle_errors json
+      ~try_:(fun json ->
+        Json.list_field ~field:"assets" json >>= fun assets ->
+        match List.find_opt (same_name name) assets with
+        | Some json -> Json.string_field ~field:"browser_download_url" json
+        | None -> R.error_msg "No asset matches the release")
+      ~on_ok:(fun x -> x)
+      ~default_msg:"Could not retrieve archive download URL from response"
+      ~handled_errors:[]
+end
+
 module Upload_response = struct
   let browser_download_url json =
     handle_errors json

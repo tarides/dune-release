@@ -1,5 +1,13 @@
 open Bos_setup
 
+module Undraft_release_response : sig
+  val browser_download_url :
+    name:Fpath.t -> Yojson.Basic.t -> (string, R.msg) result
+  (** [browser_download_url ~release_id response] extracts the
+      browser_download_url field from a github release asset upload response
+      named [name], or error messages. *)
+end
+
 module Upload_response : sig
   val browser_download_url : Yojson.Basic.t -> (string, R.msg) result
   (** [browser_download_url response] extracts the browser_download_url field
