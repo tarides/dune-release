@@ -237,11 +237,11 @@ let field pkgs field =
 (* Command *)
 
 let get_pkgs ?build_dir ?opam ?distrib_file ?readme ?change_log ?publish_msg
-    ?pkg_descr ~dry_run ~keep_v ~tag ~name ~pkg_names ~version () =
+    ?pkg_descr ~dry_run ~keep_v ~tag ~pkg_names ~version () =
   Config.keep_v keep_v >>= fun keep_v ->
   let distrib_file =
     let pkg =
-      Pkg.v ?name ?opam ?tag ?version ?distrib_file ~dry_run:false ~keep_v ()
+      Pkg.v ?opam ?tag ?version ?distrib_file ~dry_run:false ~keep_v ()
     in
     Pkg.distrib_file ~dry_run pkg
   in
@@ -297,13 +297,13 @@ let field ~pkgs ~field_name = field pkgs field_name
 let opam_cli () (`Dry_run dry_run) (`Build_dir build_dir)
     (`Local_repo local_repo) (`Remote_repo remote_repo) (`Opam_repo opam_repo)
     (`User user) (`Keep_v keep_v) (`Dist_opam opam) (`Dist_uri distrib_uri)
-    (`Dist_file distrib_file) (`Dist_tag tag) (`Dist_name name)
-    (`Package_names pkg_names) (`Package_version version) (`Pkg_descr pkg_descr)
-    (`Readme readme) (`Change_log change_log) (`Publish_msg publish_msg)
-    (`Action action) (`Field_name field_name) (`No_auto_open no_auto_open)
-    (`Yes yes) (`Token token) =
+    (`Dist_file distrib_file) (`Dist_tag tag) (`Package_names pkg_names)
+    (`Package_version version) (`Pkg_descr pkg_descr) (`Readme readme)
+    (`Change_log change_log) (`Publish_msg publish_msg) (`Action action)
+    (`Field_name field_name) (`No_auto_open no_auto_open) (`Yes yes)
+    (`Token token) =
   get_pkgs ?build_dir ?opam ?distrib_file ?pkg_descr ?readme ?change_log
-    ?publish_msg ~dry_run ~keep_v ~tag ~name ~pkg_names ~version ()
+    ?publish_msg ~dry_run ~keep_v ~tag ~pkg_names ~version ()
   >>= (fun pkgs ->
         match action with
         | `Descr -> descr ~pkgs
@@ -446,10 +446,10 @@ let cmd =
     Term.(
       pure opam_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ local_repo
       $ remote_repo $ opam_repo $ user $ Cli.keep_v $ Cli.dist_opam
-      $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $ Cli.dist_name
-      $ Cli.pkg_names $ Cli.pkg_version $ pkg_descr $ Cli.readme
-      $ Cli.change_log $ Cli.publish_msg $ action $ field_arg $ no_auto_open
-      $ Cli.yes $ Cli.token)
+      $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $ Cli.pkg_names
+      $ Cli.pkg_version $ pkg_descr $ Cli.readme $ Cli.change_log
+      $ Cli.publish_msg $ action $ field_arg $ no_auto_open $ Cli.yes
+      $ Cli.token)
   in
   (t, info)
 

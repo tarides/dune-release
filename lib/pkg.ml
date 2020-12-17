@@ -434,8 +434,8 @@ let infer_name dir =
           | None ->
               Logs.err (fun m ->
                   m
-                    "cannot determine name automatically: use `--name <name>` \
-                     or add (name <name>) to dune-project");
+                    "cannot determine distribution name automatically: add \
+                     (name <name>) to dune-project");
               exit 1 ) )
 
 let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir

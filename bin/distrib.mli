@@ -9,7 +9,6 @@
 val distrib :
   ?build_dir:Fpath.t ->
   dry_run:bool ->
-  name:string option ->
   pkg_names:string list ->
   version:string option ->
   tag:string option ->

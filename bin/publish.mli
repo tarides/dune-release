@@ -15,7 +15,6 @@ val publish :
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
   ?token:Fpath.t ->
-  name:string option ->
   pkg_names:string list ->
   version:string option ->
   tag:string option ->

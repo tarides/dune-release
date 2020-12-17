@@ -6,20 +6,19 @@
 
 open Bos_setup.R.Infix
 
-let bistro () (`Dry_run dry_run) (`Dist_name name) (`Package_names pkg_names)
+let bistro () (`Dry_run dry_run) (`Package_names pkg_names)
     (`Package_version version) (`Dist_tag tag) (`Keep_v keep_v) (`Token token)
     (`Include_submodules include_submodules) =
   Cli.handle_error
     ( Dune_release.Config.keep_v keep_v >>= fun keep_v ->
-      Distrib.distrib ~dry_run ~name ~pkg_names ~version ~tag ~keep_v
-        ~keep_dir:false ~skip_lint:false ~skip_build:false ~skip_tests:false
-        ~include_submodules ()
+      Distrib.distrib ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir:false
+        ~skip_lint:false ~skip_build:false ~skip_tests:false ~include_submodules
+        ()
       >>= fun _distrib_ret ->
-      Publish.publish ?token ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
+      Publish.publish ?token ~pkg_names ~version ~tag ~keep_v ~dry_run
         ~publish_artefacts:[] ~yes:false ()
       >>= fun _publish_ret ->
-      Opam.get_pkgs ~dry_run ~keep_v ~tag ~name ~pkg_names ~version ()
-      >>= fun pkgs ->
+      Opam.get_pkgs ~dry_run ~keep_v ~tag ~pkg_names ~version () >>= fun pkgs ->
       Opam.pkg ~dry_run ~pkgs () >>= fun _opam_pkg_ret ->
       Opam.submit ?token ~dry_run ~pkgs ~pkg_names ~no_auto_open:false
         ~yes:false ()
@@ -51,9 +50,8 @@ let man =
 
 let cmd =
   ( Term.(
-      pure bistro $ Cli.setup $ Cli.dry_run $ Cli.dist_name $ Cli.pkg_names
-      $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ Cli.token
-      $ Cli.include_submodules),
+      pure bistro $ Cli.setup $ Cli.dry_run $ Cli.pkg_names $ Cli.pkg_version
+      $ Cli.dist_tag $ Cli.keep_v $ Cli.token $ Cli.include_submodules),
     Term.info "bistro" ~doc ~sdocs ~exits ~man ~man_xrefs )
 
 (*---------------------------------------------------------------------------

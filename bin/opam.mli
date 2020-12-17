@@ -17,7 +17,6 @@ val get_pkgs :
   dry_run:bool ->
   keep_v:bool ->
   tag:string option ->
-  name:string option ->
   pkg_names:string list ->
   version:string option ->
   unit ->

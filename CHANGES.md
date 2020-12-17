@@ -28,6 +28,11 @@
 
 ### Removed
 
+- Option --name is removed from all commands. When used with
+  `dune-release distrib`, it was previously effectively ignored. Now
+  it is required to add a `(name <name>)` stanza to
+  `dune-project`. (#327, @lehy)
+
 ### Fixed
 
 - Fix the priority of the `--distrib-uri` option in `dune-release opam pkg`.
