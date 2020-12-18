@@ -94,17 +94,6 @@ let pkg ~dry_run ~distrib_uri pkg =
       m "Wrote opam package description %a" Text.Pp.path dest_opam_file);
   if not dry_run then warn_if_vcs_dirty () else Ok ()
 
-let github_issue =
-  Re.(
-    compile
-    @@ seq [ group (compl [ alpha ]); group (seq [ char '#'; rep1 digit ]) ])
-
-let rewrite_github_refs user repo msg =
-  Re.replace github_issue msg ~f:(fun s ->
-      let x = Re.Group.get s 1 in
-      let y = Re.Group.get s 2 in
-      Fmt.strf "%s%s/%s%s" x user repo y)
-
 let rec pp_list pp ppf = function
   | [] -> ()
   | [ x ] -> pp ppf x
@@ -204,7 +193,7 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
         | Some user -> user (* trying to infer it from the remote repo URI *)
         | None -> distrib_user )
   in
-  let changes = rewrite_github_refs distrib_user repo changes in
+  let changes = Text.rewrite_github_refs ~user:distrib_user ~repo changes in
   let msg = strf "%s\n\n%s\n" title changes in
   App_log.status (fun l ->
       l "Preparing pull request to %a" pp_opam_repo opam_repo);

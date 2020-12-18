@@ -47,4 +47,24 @@ change B
       ~expected:(Some ("v0.1", ("# v0.1", "change A")));
   ]
 
-let suite = ("Text", test_change_log_last_entry)
+let test_rewrite_github_refs =
+  let user = "user" and repo = "repo" in
+  let make_test name (input, expected) =
+    let name = "rewrite_github_refs " ^ name in
+    let test_fun () =
+      Alcotest.(check string)
+        name expected
+        (Dune_release.Text.rewrite_github_refs ~user ~repo input)
+    in
+    (name, `Quick, test_fun)
+  in
+  [
+    make_test "rewritten 0" ("... #123 ...", "... user/repo#123 ...");
+    make_test "rewritten 1" ("... (#123 ...", "... (user/repo#123 ...");
+    make_test "not rewritten 0" ("... xyz#123 ...", "... xyz#123 ...");
+    make_test "not rewritten 1" ("... (xyz#123 ...", "... (xyz#123 ...");
+    make_test "not rewritten 2" ("... xy0#123 ...", "... xy0#123 ...");
+    make_test "not rewritten 3" ("... (xy0#123 ...", "... (xy0#123 ...");
+  ]
+
+let suite = ("Text", test_change_log_last_entry @ test_rewrite_github_refs)

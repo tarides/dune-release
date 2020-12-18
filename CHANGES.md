@@ -55,6 +55,7 @@
 - Always warn about uncommitted changes at the start of `dune-release
   distrib` (#325, @lehy).  Otherwise uncommitted changes to
   dune-project would be silently ignored by `dune-release distrib`.
+- Fix rewriting of github references in changelog (#330, @gpetiot)
 
 ### Security
 

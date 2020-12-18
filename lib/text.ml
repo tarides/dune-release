@@ -128,6 +128,17 @@ let change_log_file_last_entry file =
   | None -> R.error_msgf "%a: Could not parse change log." Fpath.pp file
   | Some (version, (header, changes)) -> Ok (version, (header, changes))
 
+let github_issue =
+  Re.(
+    compile
+    @@ seq [ group (compl [ alnum ]); group (seq [ char '#'; rep1 digit ]) ])
+
+let rewrite_github_refs ~user ~repo msg =
+  Re.replace github_issue msg ~f:(fun s ->
+      let x = Re.Group.get s 1 in
+      let y = Re.Group.get s 2 in
+      Fmt.strf "%s%s/%s%s" x user repo y)
+
 (* Toy URI parsing *)
 
 let split_uri ?(rel = false) uri =

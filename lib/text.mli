@@ -54,6 +54,10 @@ val change_log_file_last_entry :
 (** [change_log_file_last_entry file] tries to parse the last change log entry
     of the file [file] using {!flavour_of_fpath} and {!change_log_last_entry}. *)
 
+val rewrite_github_refs : user:string -> repo:string -> string -> string
+(** [rewrite_github_refs ~user ~repo s] replaces references like [#yyy] with
+    [user/repo#yyy]. *)
+
 (** {1 Toy URI parsing} *)
 
 val split_uri : ?rel:bool -> string -> (string * string * string) option
