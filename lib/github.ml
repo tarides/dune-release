@@ -33,6 +33,8 @@ module Parse = struct
     match uri with
     | _ when Bos_setup.String.is_prefix uri ~affix:"git@" ->
         user_from_regexp_opt uri "git@github\\.com:\\(.+\\)/.+\\(\\.git\\)?"
+    | _ when Bos_setup.String.is_prefix uri ~affix:"git://" ->
+        user_from_regexp_opt uri "git://github\\.com/\\(.+\\)/.+\\(\\.git\\)?"
     | _ when Bos_setup.String.is_prefix uri ~affix:"https://" ->
         user_from_regexp_opt uri "https://github\\.com/\\(.+\\)/.+\\(\\.git\\)?"
     | _ -> None
@@ -48,6 +50,8 @@ module Parse = struct
     match uri with
     | _ when Bos_setup.String.is_prefix uri ~affix:"git@" ->
         path_from_regexp_opt uri "git@github\\.com:\\(.+\\)"
+    | _ when Bos_setup.String.is_prefix uri ~affix:"git://" ->
+        path_from_regexp_opt uri "git://github\\.com/\\(.+\\)"
     | _ when Bos_setup.String.is_prefix uri ~affix:"https://" ->
         path_from_regexp_opt uri "https://github\\.com/\\(.+\\)"
     | _ -> None
