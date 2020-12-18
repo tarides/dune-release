@@ -34,14 +34,14 @@ Try dune-release distrib with no project name.
 
     $ dune-release distrib --skip-lint
     [-] Building source archive
-    dune-release: [ERROR] cannot determine name automatically: use `--name <name>` or add (name <name>) to dune-project
+    dune-release: [ERROR] cannot determine distribution name automatically: add (name <name>) to dune-project
     [1]
 
 dune-release distrib --dry-run with no project name.
 
     $ dune-release distrib --skip-lint --dry-run
     [-] Building source archive
-    dune-release: [ERROR] cannot determine name automatically: use `--name <name>` or add (name <name>) to dune-project
+    dune-release: [ERROR] cannot determine distribution name automatically: add (name <name>) to dune-project
     [1]
 
 Add an uncommitted name to dune-project. (Because of a dune limitation
