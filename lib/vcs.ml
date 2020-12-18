@@ -97,12 +97,12 @@ let dirtify_if ~dirty r id =
 
 let git_commit_id ~dirty r commit_ish =
   let dirty = dirty && commit_ish = "HEAD" in
-  let id = Cmd.(v "rev-parse" % "--verify" % (commit_ish ^ "^{commit}")) in
+  let id = Cmd.(v "rev-parse" % "--verify" % (commit_ish ^ "^0")) in
   run_git_string ~dry_run:false r id ~default:Default.string >>= fun id ->
   dirtify_if ~dirty r id
 
 let git_commit_ptime_s ~dry_run r commit_ish =
-  let commit_ish = commit_ish ^ "^{commit}" in
+  let commit_ish = commit_ish ^ "^0" in
   let time = Cmd.(v "show" % "-s" % "--format=%ct" % commit_ish) in
   run_git_string ~dry_run ~force:true r time ~default:Default.string
   >>= fun ptime ->

@@ -47,7 +47,7 @@ We make a dry-run release:
     [-] Building source archive
     => rmdir _build/whatever-0.1.0.build
     -: exec: git --git-dir .git rev-parse --verify 0.1.0
-    => exec: git --git-dir .git show -s --format=%ct 0.1.0^{commit}
+    => exec: git --git-dir .git show -s --format=%ct 0.1.0^0
     => exec: git --git-dir .git clone --local .git _build/whatever-0.1.0.build
     => exec:
          git --git-dir _build/whatever-0.1.0.build/.git --work-tree   _build/whatever-0.1.0.build/ checkout --quiet -b dune-release-dist-0.1.0   0.1.0
