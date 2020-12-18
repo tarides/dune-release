@@ -24,8 +24,15 @@ We need a basic opam project skeleton
 
 We need to set up a git project for dune-release to work properly
 
+    $ cat > .gitignore << EOF \
+    > _build\
+    > .formatted\
+    > .mdx\
+    > /dune\
+    > run.t\
+    > EOF
     $ git init > /dev/null
-    $ git add CHANGES.md whatever.opam dune-project README LICENSE
+    $ git add CHANGES.md whatever.opam dune-project README LICENSE .gitignore
     $ git commit -m "Initial commit" > /dev/null
     $ dune-release tag -y
     [-] Extracting tag from first entry in CHANGES.md

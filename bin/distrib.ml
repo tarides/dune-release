@@ -58,7 +58,10 @@ let check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar
   | _ -> Ok 1
 
 let warn_if_vcs_dirty () =
-  Cli.warn_if_vcs_dirty "The distribution archive may be inconsistent."
+  Cli.warn_if_vcs_dirty
+    ( "The distribution archive may be inconsistent."
+    ^ " Uncommitted changes to files (including dune-project) will be ignored."
+    )
 
 let log_footprint pkg archive =
   Pkg.name pkg >>= fun name ->
@@ -79,14 +82,14 @@ let log_wrote_archive ar =
 let distrib ?build_dir ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir
     ~skip_lint ~skip_build ~skip_tests ~include_submodules () =
   App_log.status (fun l -> l "Building source archive");
+  warn_if_vcs_dirty () >>= fun () ->
   Config.keep_v keep_v >>= fun keep_v ->
   let pkg = Pkg.v ~dry_run ?version ~keep_v ?build_dir ?tag () in
   Pkg.distrib_archive ~dry_run ~keep_dir ~include_submodules pkg >>= fun ar ->
   log_wrote_archive ar >>= fun () ->
   check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar
   >>= fun errs ->
-  log_footprint pkg ar >>= fun () ->
-  (if dry_run then Ok () else warn_if_vcs_dirty ()) >>= fun () -> Ok errs
+  log_footprint pkg ar >>= fun () -> Ok errs
 
 let distrib_cli () (`Dry_run dry_run) (`Build_dir build_dir)
     (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)

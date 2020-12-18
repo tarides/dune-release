@@ -18,7 +18,8 @@ We need a basic opam project skeleton
     > _build\
     > .formatted\
     > dune\
-    > run.t*\
+    > .mdx\
+    > run.t\
     > EOF
 
 We also need a dotfile that we will properly version

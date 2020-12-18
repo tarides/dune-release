@@ -24,8 +24,15 @@ We need a basic opam project skeleton
 
 We need to set up a git project for dune-release to work properly
 
+    $ cat > .gitignore << EOF \
+    > _build\
+    > .formatted\
+    > .mdx\
+    > /dune\
+    > run.t\
+    > EOF
     $ git init > /dev/null
-    $ git add CHANGES.md whatever.opam dune-project README LICENSE
+    $ git add CHANGES.md whatever.opam dune-project README LICENSE .gitignore
     $ git commit -m "Initial commit" > /dev/null
     $ dune-release tag -y
     [-] Extracting tag from first entry in CHANGES.md
@@ -120,8 +127,6 @@ We make a dry-run release:
     $ dune-release opam pkg
     [-] Creating opam package description for whatever
     [+] Wrote opam package description _build/whatever.0.1.0/opam
-    dune-release: [WARNING] The repo is dirty. The opam package may be
-                            inconsistent with the distribution.
 
     $ cat _build/whatever.0.1.0/opam
     opam-version: "2.0"
