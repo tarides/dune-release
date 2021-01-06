@@ -1,3 +1,2 @@
-(mdx
- (files run.t)
- (packages dune-release))
+(cram
+ (deps ../sanitize.sh))
