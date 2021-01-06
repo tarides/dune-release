@@ -23,6 +23,7 @@
   This change allows users to push the tag manually to avoid using that code. (#219, @Julow)
 - Recursively exclude all `.git`/`.hg` files and folders from the distrib
   tarball (#300, @NathanReb)
+- Make the automatic dune-release workflow to stop if a step exits with a non-zero code (#332, @gpetiot)
 
 ### Deprecated
 

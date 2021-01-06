@@ -6,6 +6,9 @@
 
 open Bos_setup.R.Infix
 
+(* Only carry on when the first operation returns 0 *)
+let ( >! ) x y = match x with Ok 0 -> y | _ -> x
+
 let bistro () (`Dry_run dry_run) (`Package_names pkg_names)
     (`Package_version version) (`Dist_tag tag) (`Keep_v keep_v) (`Token token)
     (`Include_submodules include_submodules) =
@@ -14,15 +17,13 @@ let bistro () (`Dry_run dry_run) (`Package_names pkg_names)
       Distrib.distrib ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir:false
         ~skip_lint:false ~skip_build:false ~skip_tests:false ~include_submodules
         ()
-      >>= fun _distrib_ret ->
-      Publish.publish ?token ~pkg_names ~version ~tag ~keep_v ~dry_run
-        ~publish_artefacts:[] ~yes:false ()
-      >>= fun _publish_ret ->
-      Opam.get_pkgs ~dry_run ~keep_v ~tag ~pkg_names ~version () >>= fun pkgs ->
-      Opam.pkg ~dry_run ~pkgs () >>= fun _opam_pkg_ret ->
-      Opam.submit ?token ~dry_run ~pkgs ~pkg_names ~no_auto_open:false
-        ~yes:false ()
-      >>= fun _opam_submit_ret -> Ok 0 )
+      >! Publish.publish ?token ~pkg_names ~version ~tag ~keep_v ~dry_run
+           ~publish_artefacts:[] ~yes:false ()
+      >! ( Opam.get_pkgs ~dry_run ~keep_v ~tag ~pkg_names ~version ()
+         >>= fun pkgs ->
+           Opam.pkg ~dry_run ~pkgs ()
+           >! Opam.submit ?token ~dry_run ~pkgs ~pkg_names ~no_auto_open:false
+                ~yes:false () ) )
 
 (* Command line interface *)
 
