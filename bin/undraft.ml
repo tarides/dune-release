@@ -26,7 +26,7 @@ let update_opam_file ~dry_run ~url pkg =
   let url = OpamFile.URL.create ~checksum url in
   OS.File.read opam_f >>= fun opam ->
   let opam_t = OpamFile.OPAM.read_from_string opam in
-  ( match OpamVersion.to_string (OpamFile.OPAM.opam_version opam_t) with
+  (match OpamVersion.to_string (OpamFile.OPAM.opam_version opam_t) with
   | "2.0" ->
       let file x = OpamFile.make (OpamFilename.of_string (Fpath.to_string x)) in
       let opam_t = OpamFile.OPAM.with_url url opam_t in
@@ -42,7 +42,7 @@ let update_opam_file ~dry_run ~url pkg =
         OpamFile.OPAM.with_url url opam_t |> OpamFile.OPAM.write_to_string
       in
       Sos.write_file ~dry_run dest_opam_file opam
-  | s -> Fmt.kstrf (fun x -> Error (`Msg x)) "invalid opam version: %s" s )
+  | s -> Fmt.kstrf (fun x -> Error (`Msg x)) "invalid opam version: %s" s)
   >>| fun () ->
   App_log.success (fun m ->
       m "Wrote opam package description %a" Text.Pp.path dest_opam_file)
@@ -59,23 +59,23 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
   Config.v ~user ~local_repo ~remote_repo [ pkg ] >>= fun config ->
-  ( match local_repo with
+  (match local_repo with
   | Some r -> Ok Fpath.(v r)
   | None -> (
       match config.local with
       | Some r -> Ok r
-      | None -> R.error_msg "Unknown local repository." ) )
+      | None -> R.error_msg "Unknown local repository."))
   >>= fun local_repo ->
-  ( match remote_repo with
+  (match remote_repo with
   | Some r -> Ok r
   | None -> (
       match config.remote with
       | Some r -> Ok r
-      | None -> R.error_msg "Unknown remote repository." ) )
+      | None -> R.error_msg "Unknown remote repository."))
   >>= fun remote_repo ->
-  ( match distrib_uri with
+  (match distrib_uri with
   | Some uri -> Ok uri
-  | None -> Pkg.infer_distrib_uri pkg )
+  | None -> Pkg.infer_distrib_uri pkg)
   >>= Pkg.distrib_user_and_repo
   >>= fun (distrib_user, repo) ->
   let user =
@@ -84,7 +84,7 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
     | None -> (
         match Github.Parse.user_from_remote remote_repo with
         | Some user -> user (* trying to infer it from the remote repo URI *)
-        | None -> distrib_user )
+        | None -> distrib_user)
   in
   (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
   >>= fun token ->
