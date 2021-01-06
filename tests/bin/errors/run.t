@@ -46,7 +46,7 @@ Let's make `dune-release` run a `git`-command that's doomed to fail. After the c
     [-] Using tag "0.1.0"
     dune-release: [ERROR] Due to invalid commit-ish `1`:
       Exit code 128 from command
-        `git --git-dir .git rev-parse --verify 1^{commit}`:
+        `git --git-dir .git rev-parse --verify 1^0`:
       fatal: Needed a single revision
     
     [3]
