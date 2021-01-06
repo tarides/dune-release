@@ -46,7 +46,7 @@ let rec find_markdown_header before = function
           | None -> (
               match underline_header 2 '-' l before ls with
               | Some _ as h -> h
-              | None -> find_markdown_header (l :: before) ls ) ) )
+              | None -> find_markdown_header (l :: before) ls)))
 
 let rec find_asciidoc_header before = function
   | [] -> None
@@ -65,7 +65,7 @@ let rec find_asciidoc_header before = function
                   | None -> (
                       match underline_header 4 '+' l before ls with
                       | Some _ as h -> h
-                      | None -> find_asciidoc_header (l :: before) ls ) ) ) ) )
+                      | None -> find_asciidoc_header (l :: before) ls)))))
 
 let head find_header text =
   let lines = String.cuts ~sep:"\n" text in
@@ -94,7 +94,7 @@ let header_title ?(flavour = `Markdown) h =
   | [ h ] -> (
       match flavour with
       | `Markdown -> String.(trim @@ drop ~sat:(Char.equal '#') h)
-      | `Asciidoc -> String.(trim @@ drop ~sat:(Char.equal '=') h) )
+      | `Asciidoc -> String.(trim @@ drop ~sat:(Char.equal '=') h))
   | h :: _ -> h (* underline headers *)
   | [] -> assert false
 
@@ -119,7 +119,7 @@ let change_log_last_entry ?flavour text =
             | "" :: lines -> String.concat ~sep:"\n" lines
             | lines -> String.concat ~sep:"\n" lines
           in
-          Some (version, (h, changes)) )
+          Some (version, (h, changes)))
 
 let change_log_file_last_entry file =
   let flavour = flavour_of_fpath file in
@@ -149,7 +149,7 @@ let split_uri ?(rel = false) uri =
       | None -> Some (scheme, rest, "")
       | Some (host, path) ->
           let path = if rel then path else "/" ^ path in
-          Some (scheme, host, path) )
+          Some (scheme, host, path))
 
 (* Pretty-printers. *)
 

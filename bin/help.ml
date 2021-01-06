@@ -428,7 +428,7 @@ let help man_format topic commands =
       | `Ok t ->
           let man = try List.assoc t pages with Not_found -> assert false in
           Fmt.pr "%a" (Cmdliner.Manpage.print man_format) man;
-          `Ok 0 )
+          `Ok 0)
 
 (* Command line interface *)
 

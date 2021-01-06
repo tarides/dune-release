@@ -46,7 +46,7 @@ let find_git () =
       let git_dir = Cmd.(git % "rev-parse" % "--git-dir") in
       OS.Cmd.(run_out ~err:err_null git_dir |> out_string) >>= function
       | dir, (_, `Exited 0) -> Ok (Some (v `Git git ~dir:Fpath.(v dir)))
-      | _ -> Ok None )
+      | _ -> Ok None)
 
 module Default = struct
   let string = Sos.out ""
@@ -93,7 +93,8 @@ let dirtify_if ~dirty r id =
   match dirty with
   | false -> Ok id
   | true ->
-      git_is_dirty r >>= fun is_dirty -> Ok (if is_dirty then dirtify id else id)
+      git_is_dirty r >>= fun is_dirty ->
+      Ok (if is_dirty then dirtify id else id)
 
 let git_commit_id ~dirty r commit_ish =
   let dirty = dirty && commit_ish = "HEAD" in
@@ -164,7 +165,7 @@ let git_ls_remote ~dry_run r ~kind ~filter upstream =
     | line :: tl -> (
         match String.fields ~empty:false line with
         | [ rev; ref ] -> parse_ls_remote ((rev, ref) :: acc) tl
-        | _ -> R.error_msgf "Could not parse output of git ls-remote" )
+        | _ -> R.error_msgf "Could not parse output of git ls-remote")
   in
   let kind_arg =
     match kind with
@@ -193,7 +194,7 @@ let find_hg () =
       let hg_root = Cmd.(hg % "root") in
       OS.Cmd.(run_out ~err:err_null hg_root |> out_string) >>= function
       | dir, (_, `Exited 0) -> Ok (Some (v `Hg hg ~dir:Fpath.(v dir)))
-      | _ -> Ok None )
+      | _ -> Ok None)
 
 let run_hg r args out =
   let hg = Cmd.(cmd r %% args) in
@@ -272,20 +273,20 @@ let hg_delete_tag r tag =
 let find ?dir () =
   match dir with
   | None -> (
-      find_git () >>= function Some _ as v -> Ok v | None -> find_hg () )
+      find_git () >>= function Some _ as v -> Ok v | None -> find_hg ())
   | Some dir -> (
       let git_dir = Fpath.(dir / ".git") in
       OS.Dir.exists git_dir >>= function
       | true -> (
           Lazy.force git >>= function
-          | _, cmd -> Ok (Some (v `Git cmd ~dir:git_dir)) )
+          | _, cmd -> Ok (Some (v `Git cmd ~dir:git_dir)))
       | false -> (
           let hg_dir = Fpath.(dir / ".hg") in
           OS.Dir.exists hg_dir >>= function
           | false -> Ok None
           | true -> (
               Lazy.force hg >>= function
-              | _, cmd -> Ok (Some (v `Hg cmd ~dir:hg_dir)) ) ) )
+              | _, cmd -> Ok (Some (v `Hg cmd ~dir:hg_dir)))))
 
 let get ?dir () =
   find ?dir () >>= function
@@ -295,7 +296,7 @@ let get ?dir () =
         match dir with None -> OS.Dir.current () | Some dir -> Ok dir
       in
       dir >>= function
-      | dir -> R.error_msgf "%a: No VCS repository found" Fpath.pp dir )
+      | dir -> R.error_msgf "%a: No VCS repository found" Fpath.pp dir)
 
 (* Repository state *)
 

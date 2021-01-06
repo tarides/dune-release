@@ -88,7 +88,7 @@ let lint_res ~msgf = function
 let pp_field = Fmt.(styled `Bold string)
 
 let lint_opam_doc pkg =
-  ( match Pkg.doc_uri pkg with
+  (match Pkg.doc_uri pkg with
   | Error _ | Ok "" ->
       report_status `Ok (fun l ->
           l "Skipping doc field linting, no doc field found")
@@ -97,8 +97,7 @@ let lint_opam_doc pkg =
       let status = if pass then `Ok else `Fail in
       let verdict = if pass then "can" else "cannot" in
       report_status status (fun l ->
-          l "opam field %a %s be parsed by dune-release" pp_field "doc" verdict)
-  );
+          l "opam field %a %s be parsed by dune-release" pp_field "doc" verdict));
   0
 
 let lint_opam_home_and_dev pkg =
@@ -132,7 +131,7 @@ let handle_opam_lint_exit ~dry_run ~verbose_lint_cmd ~opam_file status output =
         Sos.run_out ~dry_run ~err ~default cmd OS.Cmd.out_string
       in
       match verbose_lint_output with
-      | Ok (out, _) | Error (`Msg out) -> `Fail out )
+      | Ok (out, _) | Error (`Msg out) -> `Fail out)
 
 let check_has_description ~opam_file pkg =
   Pkg.opam_field_hd pkg "description" >>= function

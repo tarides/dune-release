@@ -42,7 +42,7 @@ let handle_errors json ~try_ ~on_ok ~default_msg ~handled_errors =
             default_msg message
             (pp_break_then_string ~pre:"See the documentation "
                ~post:" that might help you resolve this error.")
-            documentation_url pp_errors errors )
+            documentation_url pp_errors errors)
 
 module Upload_response = struct
   let browser_download_url json =

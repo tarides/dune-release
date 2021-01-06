@@ -59,11 +59,11 @@ let vcs_tag pkg tag ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes =
               commit_ish)
           ~default_answer:Yes)
       >>= fun () ->
-      ( match msg with
+      (match msg with
       | Some msg -> Ok msg
       | None ->
           Pkg.publish_msg pkg >>| fun msg ->
-          strf "Distribution %s\n\n%s" tag msg )
+          strf "Distribution %s\n\n%s" tag msg)
       >>= fun msg ->
       Vcs.tag repo ~dry_run ~force ~sign ~msg ~commit_ish tag >>| fun () ->
       App_log.success (fun m ->

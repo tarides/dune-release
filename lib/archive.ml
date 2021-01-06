@@ -39,7 +39,7 @@ module Tar = struct
             else
               blit n 0 h 0 (String.length n) >>= fun () ->
               blit p 0 h 345 (String.length p)
-        | None -> R.error_msg error )
+        | None -> R.error_msg error)
 
   let set_string off h s =
     R.reword_error

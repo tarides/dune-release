@@ -42,8 +42,8 @@ module Parse = struct
   let path_from_regexp_opt uri regexp =
     try
       Some
-        ( "git@github.com:"
-        ^ Re.(Group.get (exec (Emacs.compile_pat regexp) uri) 1) )
+        ("git@github.com:"
+        ^ Re.(Group.get (exec (Emacs.compile_pat regexp) uri) 1))
     with Not_found -> None
 
   let ssh_uri_from_http uri =
@@ -158,15 +158,14 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
       ()
     |> R.join
   in
-  ( match
-      Vcs.run_git_quiet vcs ~dry_run ~force
-        Cmd.(v "fetch" % remote % "gh-pages")
-    with
+  (match
+     Vcs.run_git_quiet vcs ~dry_run ~force Cmd.(v "fetch" % remote % "gh-pages")
+   with
   | Ok () -> Ok ()
   | Error _ ->
       App_log.status (fun l ->
           l "Creating new gh-pages branch with inital commit on %s/%s" user repo);
-      create_empty_gh_pages () )
+      create_empty_gh_pages ())
   >>= fun () ->
   Vcs.run_git_string vcs ~dry_run ~force
     Cmd.(v "rev-parse" % "FETCH_HEAD")
@@ -289,7 +288,7 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
                   "The tag %a is present on the remote but points to a \
                    different commit (%a)."
                   Text.Pp.version tag pp_r r);
-            Ok false )
+            Ok false)
   in
   remote_has_tag_uptodate () >>= function
   | true ->
@@ -327,14 +326,16 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
             "%s\n\
              Pushing the tag failed, please push it manually and run the \
              command again"
-            e )
+            e)
 
 let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
-  (match distrib_uri with Some uri -> Ok uri | None -> Pkg.infer_distrib_uri p)
+  (match distrib_uri with
+  | Some uri -> Ok uri
+  | None -> Pkg.infer_distrib_uri p)
   >>= fun uri ->
-  ( match Pkg.distrib_user_and_repo uri with
+  (match Pkg.distrib_user_and_repo uri with
   | Error _ as e -> if dry_run then Ok (D.user, D.repo) else e
-  | r -> r )
+  | r -> r)
   >>= fun (user, repo) ->
   Pkg.tag p >>= fun tag ->
   assert_tag_exists ~dry_run tag >>= fun () ->
