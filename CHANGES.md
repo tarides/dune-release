@@ -10,6 +10,7 @@
 - Allow including git submodules to the distrib tarball by passing the
   `--include-submodules` flag to `dune-release`, `dune-release bistro` or
   `dune-release distrib` (#300, @NathanReb)
+- Support 'git://' scheme for dev-repo uri (#331, @gpetiot)
 
 ### Changed
 

@@ -20,6 +20,8 @@ let test_user_from_remote =
     make_test "git@github.com:123/repo" (Some "123");
     make_test "wrong" None;
     make_test "https://github.com/username/repo.git" (Some "username");
+    make_test "git://github.com/user/repo.git" (Some "user");
+    make_test "git+https://github.com/user/repo.git" None;
   ]
 
 let test_ssh_uri_from_http =
@@ -39,6 +41,8 @@ let test_ssh_uri_from_http =
        otherwise *)
     check "https://not-github.com/dune-release" None;
     check "git@not-github.com:dune-release" None;
+    check "git://github.com/user/repo.git" (Some "git@github.com:user/repo.git");
+    check "git+https://github.com/user/repo.git" None;
   ]
 
 let suite = ("Github", test_user_from_remote @ test_ssh_uri_from_http)
