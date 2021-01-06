@@ -110,13 +110,13 @@ We do the whole dune-release process
     [-] Pushing tag 0.1.0 to git@github.com:foo/whatever.git
     -: exec: git --git-dir .git push --force git@github.com:foo/whatever.git 0.1.0
     ...
-    [?] Create release 0.1.0 on https://github.com/foo/whatever.git? [Y/n]
-    [-] Creating release 0.1.0 on https://github.com/foo/whatever.git via github's API
+    [?] Create draft release 0.1.0 on https://github.com/foo/whatever.git? [Y/n]
+    [-] Creating draft release 0.1.0 on https://github.com/foo/whatever.git via github's API
     -: exec: curl --user foo:${token} --location --silent --show-error --config -
          --dump-header - --data
          { "tag_name" : "0.1.0", "name" : "0.1.0", "body" : "CHANGES:\n\n- Some other feature\n", "draft" : true }
     -: write _build/whatever-0.1.0.draft_release
-    [+] Succesfully created release with id 1
+    [+] Succesfully created draft release with id 1
     [?] Upload _build/whatever-0.1.0.tbz as release asset? [Y/n]
     [-] Uploading _build/whatever-0.1.0.tbz as a release asset for 0.1.0 via github's API
     -: exec: curl --user foo:${token} --location --silent --show-error --config -

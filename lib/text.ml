@@ -169,6 +169,10 @@ module Pp = struct
   let status ppf = function
     | `Ok -> Fmt.(brackets @@ styled_unit `Green " OK ") ppf ()
     | `Fail -> Fmt.(brackets @@ styled_unit `Red "FAIL") ppf ()
+
+  let maybe_draft ppf (draft, s) =
+    if draft then Fmt.(styled `Bold string) ppf "draft ";
+    Fmt.string ppf s
 end
 
 (*---------------------------------------------------------------------------

@@ -232,11 +232,11 @@ let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo ~draft
   let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
   run_with_auth ~dry_run ~default_body ~auth curl_t >>= fun json ->
   (if draft then
-    Pkg.build_dir pkg >>= fun build_dir ->
-    Pkg.name pkg >>= fun name ->
-    Pkg.version pkg >>= fun version ->
-    Github_v3_api.Pull_request_response.number json
-    >>= Config.Draft_pr.set ~dry_run ~build_dir ~name ~version
+   Pkg.build_dir pkg >>= fun build_dir ->
+   Pkg.name pkg >>= fun name ->
+   Pkg.version pkg >>= fun version ->
+   Github_v3_api.Pull_request_response.number json
+   >>= Config.Draft_pr.set ~dry_run ~build_dir ~name ~version
   else Ok ())
   >>= fun () -> Github_v3_api.Pull_request_response.html_url json
 
@@ -368,16 +368,18 @@ let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
       Prompt.(
         confirm_or_abort ~yes
           ~question:(fun l ->
-            l "Create release %a on %a?" Text.Pp.version version Text.Pp.url
-              dev_repo)
+            l "Create %a %a on %a?" Text.Pp.maybe_draft (draft, "release")
+              Text.Pp.version version Text.Pp.url dev_repo)
           ~default_answer:Yes)
       >>= fun () ->
       App_log.status (fun l ->
-          l "Creating release %a on %a via github's API" Text.Pp.version version
-            Text.Pp.url dev_repo);
+          l "Creating %a %a on %a via github's API" Text.Pp.maybe_draft
+            (draft, "release") Text.Pp.version version Text.Pp.url dev_repo);
       curl_create_release ~token ~dry_run ~version ~tag msg user repo ~draft
       >>= fun id ->
-      App_log.success (fun l -> l "Succesfully created release with id %d" id);
+      App_log.success (fun l ->
+          l "Succesfully created %a with id %d" Text.Pp.maybe_draft
+            (draft, "release") id);
       Ok id
   | Ok id ->
       App_log.status (fun l -> l "Release with id %d already exists" id);
@@ -408,7 +410,9 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes ~draft p =
   (if draft then Config.Draft_release.set ~dry_run ~build_dir ~name ~version id
   else Config.Draft_release.unset ~dry_run ~build_dir ~name ~version)
   >>= fun () ->
-  App_log.success (fun l -> l "Succesfully created release with id %d" id);
+  App_log.success (fun l ->
+      l "Succesfully created %a with id %d" Text.Pp.maybe_draft
+        (draft, "release") id);
   Prompt.(
     confirm_or_abort ~yes
       ~question:(fun l -> l "Upload %a as release asset?" Text.Pp.path archive)

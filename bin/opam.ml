@@ -128,12 +128,15 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
   in
   Prompt.(
     confirm_or_abort ~yes
-      ~question:(fun l -> l "Open PR to %a?" pp_opam_repo opam_repo)
+      ~question:(fun l ->
+        l "Open %a to %a?" Text.Pp.maybe_draft (draft, "PR") pp_opam_repo
+          opam_repo)
       ~default_answer:Yes)
   >>= fun () ->
   App_log.status (fun l ->
-      l "Opening pull request to merge branch %a of %a into %a" Text.Pp.commit
-        branch Text.Pp.url remote_repo pp_opam_repo opam_repo);
+      l "Opening %a to merge branch %a of %a into %a" Text.Pp.maybe_draft
+        (draft, "pull request") Text.Pp.commit branch Text.Pp.url remote_repo
+        pp_opam_repo opam_repo);
   Github.open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo
     ~draft msg pkg
   >>= function
@@ -147,7 +150,8 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
   | `Url url -> (
       let msg () =
         App_log.success (fun m ->
-            m "A new pull-request has been created at %s\n" url);
+            m "A new %a has been created at %s\n" Text.Pp.maybe_draft
+              (draft, "pull-request") url);
         Ok 0
       in
       if not auto_open then msg ()
@@ -204,7 +208,8 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
   let changes = Text.rewrite_github_refs ~user:distrib_user ~repo changes in
   let msg = strf "%s\n\n%s\n" title changes in
   App_log.status (fun l ->
-      l "Preparing pull request to %a" pp_opam_repo opam_repo);
+      l "Preparing %a to %a" Text.Pp.maybe_draft (draft, "pull request")
+        pp_opam_repo opam_repo);
   Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
     names
   >>= fun branch ->
