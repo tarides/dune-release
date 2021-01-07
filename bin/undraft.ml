@@ -88,21 +88,26 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
   in
   (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
   >>= fun token ->
-  App_log.status (fun l -> l "Undrafting release");
   Config.Draft_release.get ~dry_run ~build_dir ~name:pkg_name ~version
   >>= fun release_id ->
+  App_log.status (fun l ->
+      l "Undrafting release of package %a %a with id %i" Text.Pp.name pkg_name
+        Text.Pp.version version release_id);
   Pkg.distrib_filename pkg >>= fun b ->
   Ok Fpath.(b + ".tbz") >>= fun archive ->
   Github.undraft_release ~token ~dry_run ~user ~repo ~release_id ~name:archive
   >>= fun url ->
   App_log.success (fun m ->
-      m "The release has been undrafted and is available at %s\n" url);
-  App_log.status (fun l -> l "Undrafting pull request");
+      m "The release #%i has been undrafted and is available at %s\n" release_id
+        url);
   Config.Draft_pr.get ~dry_run ~build_dir ~name:pkg_name ~version
   >>= fun pr_id ->
+  App_log.status (fun l ->
+      l "Undrafting pull request of package %a %a with id %i" Text.Pp.name
+        pkg_name Text.Pp.version version pr_id);
   update_opam_file ~dry_run ~url pkg >>= fun () ->
   App_log.status (fun l ->
-      l "Preparing pull request to %a" pp_opam_repo opam_repo);
+      l "Preparing pull request #%i to %a" pr_id pp_opam_repo opam_repo);
   let branch = Fmt.strf "release-%s-%s" pkg_name version in
   Sos.with_dir ~dry_run local_repo
     (fun () ->
@@ -148,7 +153,9 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
   >>= fun () ->
   Config.Draft_pr.unset ~dry_run ~build_dir ~name:pkg_name ~version
   >>= fun () ->
-  App_log.success (fun m -> m "The pull-request has been undrafted at %s\n" url);
+  App_log.success (fun m ->
+      m "The pull-request #%i of package %a %a has been undrafted at %s\n" pr_id
+        Text.Pp.name pkg_name Text.Pp.version version url);
   Ok 0
 
 let undraft_cli () (`Dist_uri distrib_uri) (`Dist_opam opam)
