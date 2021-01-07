@@ -24,7 +24,7 @@ let pp_errors fs errors =
 let handle_errors json ~try_ ~on_ok ~default_msg ~handled_errors =
   match try_ json with
   | Ok x -> Ok (on_ok x)
-  | Error _ -> (
+  | Error err -> (
       let errors =
         match Json.list_field ~field:"errors" json with
         | Ok errors -> errors
@@ -32,17 +32,19 @@ let handle_errors json ~try_ ~on_ok ~default_msg ~handled_errors =
       in
       match List.find_opt (is_handled errors) handled_errors with
       | Some (_, ret) -> Ok ret
-      | None ->
-          Json.string_field ~field:"message" json >>= fun message ->
-          let documentation_url =
-            Json.string_field ~field:"documentation_url" json
-          in
-          R.error_msgf
-            "@[<v 2>Github API error:@ %s@;Github API returned: %S%a%a@]"
-            default_msg message
-            (pp_break_then_string ~pre:"See the documentation "
-               ~post:" that might help you resolve this error.")
-            documentation_url pp_errors errors)
+      | None -> (
+          match Json.string_field ~field:"message" json with
+          | Ok message ->
+              let documentation_url =
+                Json.string_field ~field:"documentation_url" json
+              in
+              R.error_msgf
+                "@[<v 2>Github API error:@ %s@;Github API returned: %S%a%a@]"
+                default_msg message
+                (pp_break_then_string ~pre:"See the documentation "
+                   ~post:" that might help you resolve this error.")
+                documentation_url pp_errors errors
+          | Error _ -> Error err))
 
 module Undraft_release_response = struct
   let same_name name json =
