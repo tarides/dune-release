@@ -9,10 +9,6 @@ let pp_opam_repo fmt opam_repo =
   let user, repo = opam_repo in
   Format.fprintf fmt "%s/%s" user repo
 
-module D = struct
-  let fetch_head = "${fetch_head}"
-end
-
 let update_opam_file ~dry_run ~url pkg =
   get_pkg_dir pkg >>= fun dir ->
   Pkg.opam pkg >>= fun opam_f ->
@@ -122,12 +118,7 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
       Vcs.run_git_quiet vcs ~dry_run ~force:true
         Cmd.(v "fetch" % upstream % remote_branch)
       >>= fun () ->
-      Vcs.run_git_string vcs ~dry_run ~force:true
-        ~default:(Sos.out D.fetch_head)
-        Cmd.(v "rev-parse" % "FETCH_HEAD")
-      >>= fun id ->
-      Vcs.checkout vcs ~create:false ~dry_run:false ~branch ~commit_ish:id
-      >>= fun () ->
+      Vcs.change_branch vcs ~dry_run:false ~branch >>= fun () ->
       let prepare_package name =
         let dir = name ^ "." ^ version in
         let dst = Fpath.(v "packages" / name / dir) in
