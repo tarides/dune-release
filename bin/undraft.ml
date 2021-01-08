@@ -105,6 +105,46 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
   App_log.status (fun l ->
       l "Preparing pull request #%i to %a" pr_id pp_opam_repo opam_repo);
   let branch = Fmt.strf "release-%s-%s" pkg_name version in
+  Vcs.get () >>= fun vcs ->
+  OS.Dir.current () >>= fun cwd ->
+  let prepare_package name =
+    (* copy opam, descr and url files *)
+    let dir = name ^ "." ^ version in
+    let src = Fpath.(cwd / "_build" / dir) in
+    let dst = Fpath.(v "packages" / name / dir) in
+    let cp f =
+      OS.File.exists Fpath.(src / f) >>= function
+      | true ->
+          Sos.run_quiet ~sandbox:false ~dry_run ~force:true
+            Cmd.(v "cp" % p Fpath.(src / f) % p Fpath.(dst / f))
+      | _ -> Ok ()
+    in
+    OS.Dir.exists src >>= fun exists ->
+    (if exists then Ok ()
+    else
+      R.error_msgf
+        "%a does not exist, did you run:\n  dune-release opam pkg -p %s\n"
+        Fpath.pp src name)
+    >>= fun () ->
+    OS.Dir.create ~path:true dst >>= fun _ ->
+    cp "opam" >>= fun () ->
+    cp "url" >>= fun () ->
+    cp "descr" >>= fun () ->
+    (* git add *)
+    Vcs.run_git_quiet vcs ~dry_run ~force:true Cmd.(v "add" % p dst)
+  in
+  let rec prepare_packages = function
+    | [] -> Ok ()
+    | h :: t -> prepare_package h >>= fun () -> prepare_packages t
+  in
+  let commit_and_push () =
+    let msg = "Undraft pull-request" in
+    Vcs.run_git_quiet vcs ~dry_run Cmd.(v "commit" % "-m" % msg) >>= fun () ->
+    App_log.status (fun l ->
+        l "Pushing %a to %a" Text.Pp.commit branch Text.Pp.url remote_repo);
+    Vcs.run_git_quiet vcs ~dry_run
+      Cmd.(v "push" % "--force" % remote_repo % branch)
+  in
   Sos.with_dir ~dry_run local_repo
     (fun () ->
       let upstream =
@@ -112,29 +152,13 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
         Printf.sprintf "https://github.com/%s/%s.git" user repo
       in
       let remote_branch = "master" in
-      Vcs.get () >>= fun vcs ->
       App_log.status (fun l ->
           l "Fetching %a" Text.Pp.url (upstream ^ "#" ^ remote_branch));
       Vcs.run_git_quiet vcs ~dry_run ~force:true
         Cmd.(v "fetch" % upstream % remote_branch)
       >>= fun () ->
       Vcs.change_branch vcs ~dry_run:false ~branch >>= fun () ->
-      let prepare_package name =
-        let dir = name ^ "." ^ version in
-        let dst = Fpath.(v "packages" / name / dir) in
-        Vcs.run_git_quiet vcs ~dry_run ~force:true Cmd.(v "add" % p dst)
-      in
-      let rec prepare_packages = function
-        | [] -> Ok ()
-        | h :: t -> prepare_package h >>= fun () -> prepare_packages t
-      in
-      prepare_packages pkg_names >>= fun () ->
-      let msg = "Undraft pull-request" in
-      Vcs.run_git_quiet vcs ~dry_run Cmd.(v "commit" % "-m" % msg) >>= fun () ->
-      App_log.status (fun l ->
-          l "Pushing %a to %a" Text.Pp.commit branch Text.Pp.url remote_repo);
-      Vcs.run_git_quiet vcs ~dry_run
-        Cmd.(v "push" % "--force" % remote_repo % branch))
+      prepare_packages pkg_names >>= fun () -> commit_and_push ())
     ()
   |> R.join
   >>= fun () ->
