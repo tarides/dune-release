@@ -26,6 +26,7 @@
 - Recursively exclude all `.git`/`.hg` files and folders from the distrib
   tarball (#300, @NathanReb)
 - Make the automatic dune-release workflow to stop if a step exits with a non-zero code (#332, @gpetiot)
+- Make git-related mdx tests more robust in unusual environments (#334, @sternenseemann)
 
 ### Deprecated
 
