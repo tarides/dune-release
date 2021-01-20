@@ -168,7 +168,7 @@ let release =
 let delegate =
   ( ("DUNE-RELEASE-DELEGATE", 7, "", version, dune_release_manual),
     [
-      `I ("$(b,Warning)", Dune_release.Deprecate_delegates.warning);
+      `I ("$(b,Warning)", Dune_release.Deprecate.Delegates.warning);
       `S Manpage.s_name;
       `P "dune-release-delegate - The dune-release publish delegate";
       `S Manpage.s_description;
