@@ -54,8 +54,6 @@ module Pull_request : sig
       opam_repo:string * string ->
       draft:bool ->
       Curl.t
-
-    val undraft : opam_repo:string * string -> pr_id:int -> Curl.t
   end
 
   module Response : sig

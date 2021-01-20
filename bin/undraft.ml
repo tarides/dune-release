@@ -162,8 +162,7 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
     ()
   |> R.join
   >>= fun () ->
-  Github.undraft_pr ~token ~dry_run ~distrib_user ~opam_repo ~pr_id
-  >>= fun url ->
+  Github.undraft_pr ~token ~dry_run ~opam_repo ~pr_id >>= fun url ->
   Config.Draft_release.unset ~dry_run ~build_dir ~name:pkg_name ~version
   >>= fun () ->
   Config.Draft_pr.unset ~dry_run ~build_dir ~name:pkg_name ~version

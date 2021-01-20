@@ -143,31 +143,6 @@ let test_undraft_release =
         };
   ]
 
-let test_undraft_pr =
-  let make_test ~test_name ~opam_repo ~pr_id ~expected =
-    let test_fun () =
-      let actual = Pull_request.Request.undraft ~opam_repo ~pr_id in
-      Alcotest.check Alcotest_ext.curl test_name expected actual
-    in
-    (test_name, `Quick, test_fun)
-  in
-  [
-    make_test ~test_name:"basic" ~opam_repo:("x", "y") ~pr_id:42
-      ~expected:
-        {
-          url = "https://api.github.com/repos/x/y/pulls/42";
-          meth = `PATCH;
-          args =
-            [
-              Silent;
-              Show_error;
-              Config `Stdin;
-              Dump_header `Ignore;
-              Data (`Data {|{ "draft": false }|});
-            ];
-        };
-  ]
-
 let test_archive_upload_url =
   let make_test json expected =
     let test_name = "archive_upload_url" in
@@ -242,5 +217,5 @@ let test_number =
 let suite =
   ( "Github_v3_api",
     test_create_release @ test_upload_archive @ test_open_pr @ test_with_auth
-    @ test_undraft_release @ test_undraft_pr @ test_archive_upload_url
-    @ test_release_id @ test_html_url @ test_number )
+    @ test_undraft_release @ test_archive_upload_url @ test_release_id
+    @ test_html_url @ test_number )

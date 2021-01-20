@@ -73,7 +73,6 @@ val open_pr :
 val undraft_pr :
   token:Fpath.t ->
   dry_run:bool ->
-  distrib_user:string ->
   opam_repo:string * string ->
   pr_id:int ->
   (string, R.msg) result

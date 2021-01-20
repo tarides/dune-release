@@ -197,24 +197,6 @@ module Pull_request = struct
         ]
       in
       Curl.{ url; meth = `POST; args }
-
-    let undraft ~opam_repo ~pr_id =
-      let base, repo = opam_repo in
-      let url =
-        strf "https://api.github.com/repos/%s/%s/pulls/%i" base repo pr_id
-      in
-      let json = Yojson.Basic.to_string (`Assoc [ ("draft", `Bool false) ]) in
-      let args =
-        let open Curl_option in
-        [
-          Silent;
-          Show_error;
-          Config `Stdin;
-          Dump_header `Ignore;
-          Data (`Data json);
-        ]
-      in
-      Curl.{ url; meth = `PATCH; args }
   end
 
   module Response = struct
