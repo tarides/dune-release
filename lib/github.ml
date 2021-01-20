@@ -184,7 +184,7 @@ let github_auth ~dry_run ~user token =
   else Sos.read_file ~dry_run token >>| fun token -> Curl_option.{ user; token }
 
 let run_with_auth ?(default_body = `Null) ~dry_run ~auth curl_t =
-  let Curl.{ url; args; meth } = Curl.with_auth ~auth curl_t in
+  let Curl.{ url; args; meth } = Github_v3_api.with_auth ~auth curl_t in
   let args = Curl_option.to_string_list args in
   if dry_run then
     Sos.show "exec:@[@ curl %a@]"
@@ -207,13 +207,17 @@ let run_with_auth ?(default_body = `Null) ~dry_run ~auth curl_t =
 
 let curl_create_release ~token ~dry_run ~version ~tag ~draft msg user repo =
   github_auth ~dry_run ~user token >>= fun auth ->
-  let curl_t = Curl.create_release ~version ~tag ~msg ~user ~repo ~draft in
+  let curl_t =
+    Github_v3_api.Release.Request.create ~version ~tag ~msg ~user ~repo ~draft
+  in
   let default_body = `Assoc [ ("id", `Int D.release_id) ] in
   run_with_auth ~dry_run ~default_body ~auth curl_t
-  >>= Github_v3_api.Release_response.release_id
+  >>= Github_v3_api.Release.Response.release_id
 
 let curl_upload_archive ~token ~dry_run ~yes archive user repo release_id =
-  let curl_t = Curl.upload_archive ~archive ~user ~repo ~release_id in
+  let curl_t =
+    Github_v3_api.Archive.Request.upload ~archive ~user ~repo ~release_id
+  in
   github_auth ~dry_run ~user token >>= fun auth ->
   let default_body =
     `Assoc [ ("browser_download_url", `String D.download_url) ]
@@ -223,11 +227,14 @@ let curl_upload_archive ~token ~dry_run ~yes archive user repo release_id =
       l "Uploading %a as release asset failed. Try again?" Text.Pp.path archive)
     (fun () ->
       run_with_auth ~dry_run ~default_body ~auth curl_t
-      >>= Github_v3_api.Upload_response.browser_download_url)
+      >>= Github_v3_api.Archive.Response.browser_download_url)
 
 let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo ~draft
     body pkg =
-  let curl_t = Curl.open_pr ~title ~user ~branch ~body ~opam_repo ~draft in
+  let curl_t =
+    Github_v3_api.Pull_request.Request.open_ ~title ~user ~branch ~body
+      ~opam_repo ~draft
+  in
   github_auth ~dry_run ~user:distrib_user token >>= fun auth ->
   let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
   run_with_auth ~dry_run ~default_body ~auth curl_t >>= fun json ->
@@ -235,26 +242,26 @@ let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo ~draft
    Pkg.build_dir pkg >>= fun build_dir ->
    Pkg.name pkg >>= fun name ->
    Pkg.version pkg >>= fun version ->
-   Github_v3_api.Pull_request_response.number json
+   Github_v3_api.Pull_request.Response.number json
    >>= Config.Draft_pr.set ~dry_run ~build_dir ~name ~version
   else Ok ())
-  >>= fun () -> Github_v3_api.Pull_request_response.html_url json
+  >>= fun () -> Github_v3_api.Pull_request.Response.html_url json
 
 let undraft_release ~token ~dry_run ~user ~repo ~release_id ~name =
-  let curl_t = Curl.undraft_release ~user ~repo ~release_id in
+  let curl_t = Github_v3_api.Release.Request.undraft ~user ~repo ~release_id in
   github_auth ~dry_run ~user token >>= fun auth ->
   let default_body =
     `Assoc [ ("browser_download_url", `String D.download_url) ]
   in
   run_with_auth ~dry_run ~default_body ~auth curl_t
-  >>= Github_v3_api.Undraft_release_response.browser_download_url ~name
+  >>= Github_v3_api.Release.Response.browser_download_url ~name
 
 let undraft_pr ~token ~dry_run ~distrib_user ~opam_repo ~pr_id =
-  let curl_t = Curl.undraft_pr ~opam_repo ~pr_id in
+  let curl_t = Github_v3_api.Pull_request.Request.undraft ~opam_repo ~pr_id in
   github_auth ~dry_run ~user:distrib_user token >>= fun auth ->
   let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
   run_with_auth ~dry_run ~default_body ~auth curl_t
-  >>= Github_v3_api.Pull_request_response.html_url
+  >>= Github_v3_api.Pull_request.Response.html_url
   >>= function
   | `Url url -> Ok url
   | `Already_exists -> R.error_msgf "impossible"
