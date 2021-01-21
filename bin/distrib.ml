@@ -10,53 +10,16 @@ open Dune_release
 let lint_distrib ~dry_run ~dir ~pkg_names pkg =
   App_log.blank_line ();
   App_log.status (fun m -> m "Linting distrib in %a" Fpath.pp dir);
-  List.fold_left
-    (fun acc name ->
-      acc >>= fun acc ->
-      let pkg = Pkg.with_name pkg name in
-      Lint.lint_pkg ~dry_run ~dir ~pkg_name:name pkg Lint.all >>= fun x ->
-      Ok (acc + x))
-    (Ok 0) pkg_names
-
-let build_distrib ~dry_run ~dir pkg =
-  App_log.blank_line ();
-  App_log.status (fun m -> m "Building package in %a" Fpath.pp dir);
-  let args = Cmd.empty (* XXX(samoht): Cmd.(v "--dev") *) in
-  let out = OS.Cmd.out_string in
-  Pkg.build ~dry_run pkg ~dir ~args ~out >>= function
-  | _, (_, `Exited 0) ->
-      Logs.app (fun m -> m "%a package(s) build" Text.Pp.status `Ok);
-      Ok 0
-  | stdout, _ ->
-      Logs.app (fun m ->
-          m "%s@\n%a package(s) build" stdout Text.Pp.status `Fail);
-      Ok 1
-
-let test_distrib ~dry_run ~dir pkg =
-  App_log.blank_line ();
-  App_log.status (fun m -> m "Running package tests in %a" Fpath.pp dir);
-  let out = OS.Cmd.out_string in
-  Pkg.test ~dry_run ~dir ~args:Cmd.empty ~out pkg >>= function
-  | _, (_, `Exited 0) ->
-      Logs.app (fun m -> m "%a package(s) pass the tests" Text.Pp.status `Ok);
-      Ok 0
-  | stdout, _ ->
-      Logs.app (fun m ->
-          m "%s@\n%a package(s) pass the tests" stdout Text.Pp.status `Fail);
-      Ok 1
+  Lint.lint_packages ~dry_run ~dir ~todo:Lint.all pkg pkg_names
 
 let check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar
     =
   Archive.untbz ~dry_run ~clean:true ar >>= fun dir ->
-  Pkg.infer_pkg_names dir pkg_names >>= fun pkg_names ->
   (if skip_lint then Ok 0 else lint_distrib ~dry_run ~dir ~pkg_names pkg)
   >>= fun c0 ->
-  (if skip_build then Ok 0 else build_distrib ~dry_run ~dir pkg_names)
+  Check.dune_checks ~dry_run ~skip_build ~skip_tests ~pkg_names dir
   >>= fun c1 ->
-  (if skip_tests || skip_build then Ok 0
-  else test_distrib ~dry_run ~dir pkg_names)
-  >>= fun c2 ->
-  match c0 + c1 + c2 with
+  match c0 + c1 with
   | 0 -> Sos.delete_dir ~dry_run dir >>= fun () -> Ok 0
   | _ -> Ok 1
 
@@ -113,27 +76,6 @@ let keep_build_dir =
   Cli.named
     (fun x -> `Keep_dir x)
     Arg.(value & flag & info [ "keep-build-dir" ] ~doc)
-
-let skip_lint =
-  let doc = "Do not lint the archive distribution." in
-  Cli.named
-    (fun x -> `Skip_lint x)
-    Arg.(value & flag & info [ "skip-lint" ] ~doc)
-
-let skip_build =
-  let doc = "Do not try to build the package from the archive." in
-  Cli.named
-    (fun x -> `Skip_build x)
-    Arg.(value & flag & info [ "skip-build" ] ~doc)
-
-let skip_tests =
-  let doc =
-    "Do not try to build and run the package tests from the archive. Implied \
-     by $(b,--skip-build)."
-  in
-  Cli.named
-    (fun x -> `Skip_tests x)
-    Arg.(value & flag & info [ "skip-tests" ] ~doc)
 
 let doc = "Create a package distribution archive"
 
@@ -211,8 +153,8 @@ let man =
 let cmd =
   ( Term.(
       pure distrib_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.pkg_names
-      $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ keep_build_dir $ skip_lint
-      $ skip_build $ skip_tests $ Cli.include_submodules),
+      $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ keep_build_dir
+      $ Cli.skip_lint $ Cli.skip_build $ Cli.skip_tests $ Cli.include_submodules),
     Term.info "distrib" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )
 
 (*---------------------------------------------------------------------------

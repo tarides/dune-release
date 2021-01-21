@@ -2,11 +2,6 @@ open Bos_setup
 
 type t = [ `Std_files | `Opam ]
 
-let report_status status f =
-  Logs.app (fun l ->
-      f (fun ?header ?tags fmt ->
-          l ?header ?tags ("%a " ^^ fmt) Text.Pp.status status))
-
 type std_file = {
   generic_name : string;
   get_path : Pkg.t -> (Fpath.t list, R.msg) result;
@@ -37,7 +32,7 @@ let lint_exists_file ~dry_run { generic_name; get_path } pkg =
   in
   status >>= fun status ->
   let presence = status_to_presence status in
-  report_status status (fun m ->
+  App_log.report_status status (fun m ->
       m "@[File %a@ is@ %s.@]" Text.Pp.path (Fpath.v generic_name) presence);
   let err_count = match status with `Ok -> 0 | `Fail -> 1 in
   Ok err_count
@@ -79,10 +74,10 @@ let lint_file_with_cmd ~dry_run ~file_kind ~cmd ~handle_exit file errs =
 
 let lint_res ~msgf = function
   | Ok _ ->
-      report_status `Ok msgf;
+      App_log.report_status `Ok msgf;
       0
   | Error _ as err ->
-      report_status `Fail msgf;
+      App_log.report_status `Fail msgf;
       Logs.on_error_msg ~use:(fun () -> 1) err
 
 let pp_field = Fmt.(styled `Bold string)
@@ -90,13 +85,13 @@ let pp_field = Fmt.(styled `Bold string)
 let lint_opam_doc pkg =
   (match Pkg.doc_uri pkg with
   | Error _ | Ok "" ->
-      report_status `Ok (fun l ->
+      App_log.report_status `Ok (fun l ->
           l "Skipping doc field linting, no doc field found")
   | Ok _ ->
       let pass = R.is_ok (Pkg.doc_user_repo_and_path pkg) in
       let status = if pass then `Ok else `Fail in
       let verdict = if pass then "can" else "cannot" in
-      report_status status (fun l ->
+      App_log.report_status status (fun l ->
           l "opam field %a %s be parsed by dune-release" pp_field "doc" verdict));
   0
 
@@ -215,3 +210,12 @@ let lint_pkg ~dry_run ~dir ~pkg_name pkg todo =
         1
   in
   Sos.with_dir ~dry_run dir lint pkg
+
+let lint_packages ~dry_run ~dir ~todo pkg pkg_names =
+  Pkg.infer_pkg_names dir pkg_names >>= fun pkg_names ->
+  List.fold_left
+    (fun acc name ->
+      acc >>= fun acc ->
+      let pkg = Pkg.with_name pkg name in
+      lint_pkg ~dry_run ~dir ~pkg_name:name pkg todo >>= fun n -> Ok (acc + n))
+    (Ok 0) pkg_names
