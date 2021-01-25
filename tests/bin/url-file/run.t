@@ -80,7 +80,7 @@ We make a dry-run release:
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
-    [ OK ] lint _build/whatever-0.1.0 success
+    [ OK ] lint of _build/whatever-0.1.0 and package whatever success
     
     [-] Building package in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0

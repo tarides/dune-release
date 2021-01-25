@@ -18,7 +18,8 @@ let lint () (`Dry_run dry_run) (`Package_names pkg_names)
         (fun acc name ->
           acc >>= fun acc ->
           let pkg = Pkg.with_name pkg name in
-          Lint.lint_pkg ~dry_run ~dir pkg lints >>= fun n -> Ok (acc + n))
+          Lint.lint_pkg ~dry_run ~dir ~pkg_name:name pkg lints >>= fun n ->
+          Ok (acc + n))
         (Ok 0) pkg_names )
 
 (* Command line interface *)

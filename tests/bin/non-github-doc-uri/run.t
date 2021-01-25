@@ -83,7 +83,7 @@ We do the whole dune-release process
                           "https://whatever.io"; expected the pattern
                           $SCHEME://$HOST/$USER/$REPO[.$EXT][/$DIR]
     [FAIL] opam field doc cannot be parsed by dune-release
-    [FAIL] lint _build/whatever-0.1.0 failure: 1 errors.
+    [FAIL] lint of _build/whatever-0.1.0 and package whatever failure: 1 errors.
     
     [-] Building package in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0

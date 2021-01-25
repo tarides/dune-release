@@ -14,7 +14,8 @@ let lint_distrib ~dry_run ~dir ~pkg_names pkg =
     (fun acc name ->
       acc >>= fun acc ->
       let pkg = Pkg.with_name pkg name in
-      Lint.lint_pkg ~dry_run ~dir pkg Lint.all >>= fun x -> Ok (acc + x))
+      Lint.lint_pkg ~dry_run ~dir ~pkg_name:name pkg Lint.all >>= fun x ->
+      Ok (acc + x))
     (Ok 0) pkg_names
 
 let build_distrib ~dry_run ~dir pkg =

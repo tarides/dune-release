@@ -189,7 +189,9 @@ let apply_lint ~dry_run t pkg =
   let f = List.assoc t t_to_fun in
   f ~dry_run pkg
 
-let lint_pkg ~dry_run ~dir pkg todo =
+let pp_pkg_name = Fmt.(styled `Bold string)
+
+let lint_pkg ~dry_run ~dir ~pkg_name pkg todo =
   let lint pkg =
     let do_lint acc t =
       let errs = apply_lint t ~dry_run pkg in
@@ -199,13 +201,15 @@ let lint_pkg ~dry_run ~dir pkg todo =
     match total_errs with
     | 0 ->
         Logs.app (fun m ->
-            m "%a lint %a %a" Text.Pp.status `Ok Text.Pp.path dir
+            m "%a lint of %a and package %a %a " Text.Pp.status `Ok Text.Pp.path
+              dir pp_pkg_name pkg_name
               (Fmt.styled_unit `Green "success")
               ());
         0
     | n ->
         Logs.app (fun m ->
-            m "%a lint %a %a: %d errors." Text.Pp.status `Fail Text.Pp.path dir
+            m "%a lint of %a and package %a %a: %d errors." Text.Pp.status `Fail
+              Text.Pp.path dir pp_pkg_name pkg_name
               (Fmt.styled_unit `Red "failure")
               () n);
         1
