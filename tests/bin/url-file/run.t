@@ -110,7 +110,7 @@ We make a dry-run release:
     [-] Creating release 0.1.0 on https://github.com/foo/whatever.git via github's API
     -: exec: curl --user foo:${token} --location --silent --show-error --config -
          --dump-header - --data
-         { "tag_name" : "0.1.0", "body" : "CHANGES:\n\n- Some other feature\n" }
+         {"tag_name":"0.1.0","body":"CHANGES:\n\n- Some other feature\n"}
     [+] Succesfully created release with id 1
     [?] Upload _build/whatever-0.1.0.tbz as release asset? [Y/n]
     [-] Uploading _build/whatever-0.1.0.tbz as a release asset for 0.1.0 via github's API
