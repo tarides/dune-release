@@ -5,7 +5,12 @@ type t = { url : string; args : Curl_option.t list }
 let create_release ~version ~msg ~user ~repo =
   let json : string =
     Yojson.Basic.to_string
-      (`Assoc [ ("tag_name", `String version); ("body", `String msg) ])
+      (`Assoc
+        [
+          ("tag_name", `String version);
+          ("name", `String version);
+          ("body", `String msg);
+        ])
   in
   let url = strf "https://api.github.com/repos/%s/%s/releases" user repo in
   let args =

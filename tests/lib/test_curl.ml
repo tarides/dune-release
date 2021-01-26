@@ -19,7 +19,9 @@ let test_create_release =
               Show_error;
               Config `Stdin;
               Dump_header `Ignore;
-              Data (`Data {|{"tag_name":"1.1.0","body":"this is a message"}|});
+              Data
+                (`Data
+                  {|{"tag_name":"1.1.0","name":"1.1.0","body":"this is a message"}|});
             ];
         };
   ]
