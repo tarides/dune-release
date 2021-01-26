@@ -21,7 +21,7 @@ let test_create_release =
               Dump_header `Ignore;
               Data
                 (`Data
-                  {|{ "tag_name" : "1.1.0", "body" : "this is a message" }|});
+                  {|{"tag_name":"1.1.0","name":"1.1.0","body":"this is a message"}|});
             ];
         };
   ]
@@ -83,7 +83,7 @@ let test_open_pr =
               Dump_header `Ignore;
               Data
                 (`Data
-                  {|{"title": "This is a PR","base": "master", "body": "This PR fixes everything.\nThis is the best PR.\n", "head": "you:my-best-pr"}|});
+                  {|{"title":"This is a PR","base":"master","body":"This PR fixes everything.\nThis is the best PR.\n","head":"you:my-best-pr"}|});
             ];
         };
   ]
