@@ -187,6 +187,7 @@ let unallowed_substrings = Re.(compile (alt [ str "@{"; str ".." ]))
 
 (* See the reference here: https://git-scm.com/docs/git-check-ref-format *)
 let git_sanitize_tag t =
+  let last = String.length t - 1 in
   if String.equal t "@" then "_AT_"
   else
     String.fold_left
@@ -194,8 +195,8 @@ let git_sanitize_tag t =
         let s =
           match (i, c) with
           | 0, '/' -> "_SLASH_"
-          | i, '/' when i = String.length t - 1 -> "_SLASH_"
-          | i, '.' when i = String.length t - 1 -> "_DOT_"
+          | i, '/' when i = last -> "_SLASH_"
+          | i, '.' when i = last -> "_DOT_"
           | _, ' ' -> "_SPACE_"
           | _, '~' -> "_TILDE_"
           | _, '^' -> "_CARET_"
