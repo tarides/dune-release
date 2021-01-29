@@ -7,8 +7,10 @@
 open Bos_setup
 open Dune_release
 
-let vcs_tag repo pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete ~msg
-    ~yes =
+let vcs_tag repo pkg version ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes
+    =
+  let tag = Vcs.sanitize_tag repo version in
+  App_log.status (fun l -> l "Using tag %S" tag);
   Vcs.commit_id ~dirty:false ~commit_ish repo
   |> R.reword_error (fun (`Msg msg) ->
          R.msgf "Due to invalid commit-ish `%s`:\n%s" commit_ish msg)
@@ -75,24 +77,15 @@ let tag () (`Dry_run dry_run) (`Change_log change_log) (`Version version)
     (`Msg msg) (`Yes yes) =
   (let pkg = Pkg.v ~dry_run ?change_log () in
    Vcs.get () >>= fun vcs ->
-   let tag =
-     match version with
-     | Some v ->
-         let t = Vcs.sanitize_tag vcs v in
-         App_log.status (fun l -> l "Using provided tag %S" t);
-         Ok (t, v)
-     | None ->
-         Pkg.change_log pkg >>= fun changelog ->
-         App_log.status (fun l ->
-             l "Extracting tag from first entry in %a" Text.Pp.path changelog);
-         Pkg.extract_version pkg >>| fun v ->
-         let t = Vcs.sanitize_tag vcs v in
-         App_log.status (fun l -> l "Using tag %S" t);
-         (t, v)
-   in
-   tag >>= fun (tag, version) ->
-   vcs_tag vcs pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete ~msg
-     ~yes
+   (match version with
+   | Some v -> Ok v
+   | None ->
+       Pkg.change_log pkg >>= fun changelog ->
+       App_log.status (fun l ->
+           l "Extracting tag from first entry in %a" Text.Pp.path changelog);
+       Pkg.extract_version pkg)
+   >>= fun version ->
+   vcs_tag vcs pkg version ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes
    >>= fun () -> Ok 0)
   |> Cli.handle_error
 
