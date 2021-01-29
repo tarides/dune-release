@@ -85,7 +85,7 @@ let tag () (`Dry_run dry_run) (`Change_log change_log) (`Version version)
          Pkg.change_log pkg >>= fun changelog ->
          App_log.status (fun l ->
              l "Extracting tag from first entry in %a" Text.Pp.path changelog);
-         Pkg.extract_tag pkg >>| fun v ->
+         Pkg.extract_version pkg >>| fun v ->
          let t = Vcs.sanitize_tag vcs v in
          App_log.status (fun l -> l "Using tag %S" t);
          (t, v)

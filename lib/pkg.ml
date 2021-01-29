@@ -97,10 +97,10 @@ let change_log p =
   | [] -> R.error_msgf "No change log specified in the package description."
   | l :: _ -> Ok l
 
-let extract_tag pkg = change_log pkg >>= fun cl -> extract_version cl
+let extract_version pkg = change_log pkg >>= fun cl -> extract_version cl
 
-let infer_tag pkg =
-  match extract_tag pkg with Ok t -> Ok t | Error _ -> tag pkg
+let infer_version pkg =
+  match extract_version pkg with Ok t -> Ok t | Error _ -> tag pkg
 
 let drop_initial_v version =
   match String.head version with
@@ -110,7 +110,8 @@ let drop_initial_v version =
 let version p =
   match p.version with
   | Some v -> Ok v
-  | None -> infer_tag p >>| fun t -> if p.drop_v then drop_initial_v t else t
+  | None ->
+      infer_version p >>| fun t -> if p.drop_v then drop_initial_v t else t
 
 let delegate p =
   let not_found = function
@@ -280,14 +281,14 @@ let infer_distrib_uri p =
   | _ -> Ok uri)
   >>= fun uri ->
   name p >>= fun name ->
-  infer_tag p >>= fun tag ->
+  infer_version p >>= fun tag ->
   let defs = String.Map.(empty |> add "NAME" name |> add "TAG" tag) in
   Pat.of_string uri >>| Pat.format defs
 
 let distrib_filename ?(opam = false) p =
   let sep = if opam then '.' else '-' in
   name p >>= fun name ->
-  (if opam then version p else infer_tag p) >>= fun version ->
+  (if opam then version p else infer_version p) >>= fun version ->
   Fpath.of_string (strf "%s%c%s" name sep version)
 
 let distrib_archive_path p =

@@ -137,9 +137,11 @@ val test : f
 
 val build : f
 
-(** {1 Tag} *)
+(** {1 Version} *)
 
-val extract_tag : t -> (string, Sos.error) result
+val extract_version : t -> (string, Sos.error) result
+(** [extract_version p] extracts the version identifier from the changelog of
+    [p]. *)
 
 (** {1 Dev repo} *)
 
