@@ -14,6 +14,7 @@
 - Support creation of draft releases and draft PRs. Define a new option
   `--draft` for 'dune-release publish' and 'dune-release opam submit' commands.
   (#248, @gpetiot)
+- Add tracking reference to the release branch (#350, @gpetiot)
 
 ### Changed
 

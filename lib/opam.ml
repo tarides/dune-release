@@ -144,7 +144,7 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
     App_log.status (fun l ->
         l "Pushing %a to %a" Text.Pp.commit branch Text.Pp.url remote_repo);
     Vcs.run_git_quiet repo ~dry_run
-      Cmd.(v "push" % "--force" % remote_repo % branch)
+      Cmd.(v "push" % "--force" % remote_repo % branch % "--set-upstream")
   in
   Sos.with_dir ~dry_run local_repo
     (fun () ->
