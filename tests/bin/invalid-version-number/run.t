@@ -98,7 +98,7 @@ We do the whole dune-release process
 
 (2) publish distrib
 
-    $ yes | dune-release publish distrib --dry-run
+    $ dune-release publish distrib --dry-run --yes
     [-] Publishing distribution
     => must exists _build/whatever-3.3.4~4.10preview1.tbz
     [-] Publishing to github
@@ -106,18 +106,15 @@ We do the whole dune-release process
     -: exec: git --git-dir .git rev-parse --verify 3.3.4_TILDE_4.10preview1
     -: exec:
          git --git-dir .git ls-remote --quiet --tags https://github.com/user/repo.git   3.3.4_TILDE_4.10preview1
-    [?] Push tag 3.3.4_TILDE_4.10preview1 to git@github.com:user/repo.git? [Y/n]
     [-] Pushing tag 3.3.4_TILDE_4.10preview1 to git@github.com:user/repo.git
     -: exec:
          git --git-dir .git push --force git@github.com:user/repo.git   3.3.4_TILDE_4.10preview1
     ...
-    [?] Create release 3.3.4~4.10preview1 on https://github.com/user/repo.git? [Y/n]
     [-] Creating release 3.3.4~4.10preview1 on https://github.com/user/repo.git via github's API
     -: exec: curl --user user:${token} --location --silent --show-error --config -
          --dump-header - --data
          {"tag_name":"3.3.4_TILDE_4.10preview1","name":"3.3.4~4.10preview1","body":"CHANGES:\n\n- Some other feature\n"}
     [+] Succesfully created release with id 1
-    [?] Upload _build/whatever-3.3.4~4.10preview1.tbz as release asset? [Y/n]
     [-] Uploading _build/whatever-3.3.4~4.10preview1.tbz as a release asset for 3.3.4~4.10preview1 via github's API
     -: exec: curl --user user:${token} --location --silent --show-error --config -
          --dump-header - --header Content-Type:application/x-tar --data-binary
