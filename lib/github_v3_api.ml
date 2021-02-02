@@ -114,7 +114,6 @@ module Release = struct
       | Error _ -> false
 
     let browser_download_url ~name json =
-      let name = Fpath.to_string name in
       handle_errors json
         ~try_:(fun json ->
           Json.list_field ~field:"assets" json >>= fun assets ->
@@ -166,6 +165,13 @@ module Archive = struct
         ~try_:(Json.string_field ~field:"browser_download_url")
         ~on_ok:(fun x -> x)
         ~default_msg:"Could not retrieve archive download URL from response"
+        ~handled_errors:[]
+
+    let name json =
+      handle_errors json
+        ~try_:(Json.string_field ~field:"name")
+        ~on_ok:(fun x -> x)
+        ~default_msg:"Could not retrieve asset name from response"
         ~handled_errors:[]
   end
 end

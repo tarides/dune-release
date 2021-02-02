@@ -263,7 +263,7 @@ module type S = sig
     build_dir:Fpath.t ->
     name:string ->
     version:string ->
-    int ->
+    string ->
     (unit, R.msg) result
 
   val is_set :
@@ -278,7 +278,7 @@ module type S = sig
     build_dir:Fpath.t ->
     name:string ->
     version:string ->
-    (int, R.msg) result
+    (string, R.msg) result
 
   val unset :
     dry_run:bool ->
@@ -290,25 +290,19 @@ end
 
 module Make (X : sig
   val ext : string
-
-  val data : string
 end) =
 struct
   let path ~build_dir ~name ~version =
     Fpath.(build_dir / strf "%s-%s.%s" name version X.ext)
 
   let set ~dry_run ~build_dir ~name ~version id =
-    Sos.write_file ~dry_run (path ~build_dir ~name ~version) (String.of_int id)
+    Sos.write_file ~dry_run (path ~build_dir ~name ~version) id
 
   let is_set ~dry_run ~build_dir ~name ~version =
     Sos.file_exists ~dry_run (path ~build_dir ~name ~version)
 
   let get ~dry_run ~build_dir ~name ~version =
     Sos.read_file ~dry_run (path ~build_dir ~name ~version)
-    >>= fun release_id ->
-    match String.to_int release_id with
-    | Some i -> Ok i
-    | None -> R.error_msgf "Could not retrieve id of %s." X.data
 
   let unset ~dry_run ~build_dir ~name ~version =
     let path = path ~build_dir ~name ~version in
@@ -318,12 +312,12 @@ end
 
 module Draft_release = Make (struct
   let ext = "draft_release"
-
-  let data = "draft release"
 end)
 
 module Draft_pr = Make (struct
   let ext = "draft_pr"
+end)
 
-  let data = "draft pull request"
+module Release_asset_name = Make (struct
+  let ext = "release_asset_name"
 end)

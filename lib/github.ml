@@ -232,8 +232,10 @@ let curl_upload_archive ~token ~dry_run ~yes archive user repo release_id =
     ~question:(fun l ->
       l "Uploading %a as release asset failed. Try again?" Text.Pp.path archive)
     (fun () ->
-      run_with_auth ~dry_run ~default_body curl_t
-      >>= Github_v3_api.Archive.Response.browser_download_url)
+      run_with_auth ~dry_run ~default_body curl_t >>= fun response ->
+      Github_v3_api.Archive.Response.browser_download_url response
+      >>= fun url ->
+      Github_v3_api.Archive.Response.name response >>= fun name -> Ok (url, name))
 
 let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo ~draft
     body pkg =
@@ -249,12 +251,17 @@ let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo ~draft
    Pkg.build_dir pkg >>= fun build_dir ->
    Pkg.name pkg >>= fun name ->
    Pkg.version pkg >>= fun version ->
-   Github_v3_api.Pull_request.Response.number json
-   >>= Config.Draft_pr.set ~dry_run ~build_dir ~name ~version
+   Github_v3_api.Pull_request.Response.number json >>= fun pr_number ->
+   Config.Draft_pr.set ~dry_run ~build_dir ~name ~version
+     (string_of_int pr_number)
   else Ok ())
   >>= fun () -> Github_v3_api.Pull_request.Response.html_url json
 
 let undraft_release ~token ~dry_run ~user ~repo ~release_id ~name =
+  (match int_of_string_opt release_id with
+  | Some id -> Ok id
+  | None -> R.error_msgf "Invalid Github Release id: %s" release_id)
+  >>= fun release_id ->
   let curl_t = Github_v3_api.Release.Request.undraft ~user ~repo ~release_id in
   github_v3_auth ~dry_run ~user token >>= fun auth ->
   let default_body =
@@ -265,6 +272,10 @@ let undraft_release ~token ~dry_run ~user ~repo ~release_id ~name =
   >>= Github_v3_api.Release.Response.browser_download_url ~name
 
 let undraft_pr ~token ~dry_run ~opam_repo:(user, repo) ~pr_id =
+  (match int_of_string_opt pr_id with
+  | Some id -> Ok id
+  | None -> R.error_msgf "Invalid Github PR number: %s" pr_id)
+  >>= fun pr_id ->
   github_v4_auth ~dry_run token >>= fun auth ->
   let curl_t =
     Github_v4_api.Pull_request.Request.node_id ~user ~repo ~id:pr_id
@@ -451,7 +462,9 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes ~draft p =
   create_release ~dry_run ~yes ~dev_repo ~token ~version ~msg ~tag ~user ~repo
     ~draft
   >>= fun id ->
-  (if draft then Config.Draft_release.set ~dry_run ~build_dir ~name ~version id
+  (if draft then
+   Config.Draft_release.set ~dry_run ~build_dir ~name ~version
+     (string_of_int id)
   else Config.Draft_release.unset ~dry_run ~build_dir ~name ~version)
   >>= fun () ->
   App_log.success (fun l ->
@@ -466,6 +479,11 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes ~draft p =
       l "Uploading %a as a release asset for %a via github's API" Text.Pp.path
         archive Text.Pp.version version);
   curl_upload_archive ~token ~dry_run ~yes archive user repo id
+  >>= fun (url, asset_name) ->
+  (if draft then
+   Config.Release_asset_name.set ~dry_run ~build_dir ~name ~version asset_name
+  else Config.Release_asset_name.unset ~dry_run ~build_dir ~name ~version)
+  >>= fun () -> Ok url
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

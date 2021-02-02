@@ -51,7 +51,7 @@ module type S = sig
     build_dir:Fpath.t ->
     name:string ->
     version:string ->
-    int ->
+    string ->
     (unit, Bos_setup.R.msg) result
 
   val is_set :
@@ -66,7 +66,7 @@ module type S = sig
     build_dir:Fpath.t ->
     name:string ->
     version:string ->
-    (int, Bos_setup.R.msg) result
+    (string, Bos_setup.R.msg) result
 
   val unset :
     dry_run:bool ->
@@ -79,3 +79,5 @@ end
 module Draft_release : S
 
 module Draft_pr : S
+
+module Release_asset_name : S

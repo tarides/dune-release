@@ -20,7 +20,7 @@ module Release : sig
 
   module Response : sig
     val browser_download_url :
-      name:Fpath.t -> Yojson.Basic.t -> (string, R.msg) result
+      name:string -> Yojson.Basic.t -> (string, R.msg) result
     (** [browser_download_url ~release_id response] extracts the
         browser_download_url field from a github release asset upload response
         named [name], or error messages. *)
@@ -41,6 +41,10 @@ module Archive : sig
     val browser_download_url : Yojson.Basic.t -> (string, R.msg) result
     (** [browser_download_url response] extracts the browser_download_url field
         from a github release asset upload response, or error messages. *)
+
+    val name : Yojson.Basic.t -> (string, R.msg) result
+    (** [name response] extracts the github name for the asset, which might
+        differ from the filename for the archive we uploaded. *)
   end
 end
 

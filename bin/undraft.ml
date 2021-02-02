@@ -87,23 +87,24 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
   Config.Draft_release.get ~dry_run ~build_dir ~name:pkg_name ~version
   >>= fun release_id ->
   App_log.status (fun l ->
-      l "Undrafting release of package %a %a with id %i" Text.Pp.name pkg_name
+      l "Undrafting release of package %a %a with id %s" Text.Pp.name pkg_name
         Text.Pp.version version release_id);
-  Pkg.distrib_filename pkg >>= fun b ->
-  Ok Fpath.(b + ".tbz") >>= fun archive ->
-  Github.undraft_release ~token ~dry_run ~user ~repo ~release_id ~name:archive
+  Config.Release_asset_name.get ~dry_run ~build_dir ~name:pkg_name ~version
+  >>= fun asset_name ->
+  Github.undraft_release ~token ~dry_run ~user ~repo ~release_id
+    ~name:asset_name
   >>= fun url ->
   App_log.success (fun m ->
-      m "The release #%i has been undrafted and is available at %s\n" release_id
+      m "The release #%s has been undrafted and is available at %s\n" release_id
         url);
   Config.Draft_pr.get ~dry_run ~build_dir ~name:pkg_name ~version
   >>= fun pr_id ->
   App_log.status (fun l ->
-      l "Undrafting pull request of package %a %a with id %i" Text.Pp.name
+      l "Undrafting pull request of package %a %a with id %s" Text.Pp.name
         pkg_name Text.Pp.version version pr_id);
   update_opam_file ~dry_run ~url pkg >>= fun () ->
   App_log.status (fun l ->
-      l "Preparing pull request #%i to %a" pr_id pp_opam_repo opam_repo);
+      l "Preparing pull request #%s to %a" pr_id pp_opam_repo opam_repo);
   let branch = Fmt.strf "release-%s-%s" pkg_name version in
   Vcs.get () >>= fun vcs ->
   OS.Dir.current () >>= fun cwd ->
@@ -168,7 +169,7 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
   Config.Draft_pr.unset ~dry_run ~build_dir ~name:pkg_name ~version
   >>= fun () ->
   App_log.success (fun m ->
-      m "The pull-request #%i of package %a %a has been undrafted at %s\n" pr_id
+      m "The pull-request #%s of package %a %a has been undrafted at %s\n" pr_id
         Text.Pp.name pkg_name Text.Pp.version version url);
   Ok 0
 

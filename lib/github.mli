@@ -51,8 +51,8 @@ val undraft_release :
   dry_run:bool ->
   user:string ->
   repo:string ->
-  release_id:int ->
-  name:Fpath.t ->
+  release_id:string ->
+  name:string ->
   (string, R.msg) Result.result
 (** [undraft_release] updates an existing release to undraft it and returns the
     release archive download URL. *)
@@ -74,7 +74,7 @@ val undraft_pr :
   token:Fpath.t ->
   dry_run:bool ->
   opam_repo:string * string ->
-  pr_id:int ->
+  pr_id:string ->
   (string, R.msg) result
 (** [undraft_pr] updates an existing pull request to undraft it and returns the
     pull request URL. *)
