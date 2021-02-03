@@ -188,7 +188,9 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
   else
     match Config.Draft_release.is_set ~dry_run ~build_dir ~name ~version with
     | Ok true ->
-        R.error_msg "Cannot open a non-draft pull request for a draft release."
+        R.error_msg
+          "Cannot open a non-draft pull request for a draft release. Please \
+           use option '--draft' for 'dune-release opam submit'."
     | _ -> Ok ())
   >>= fun () ->
   list_map Pkg.name pkgs >>= fun names ->
