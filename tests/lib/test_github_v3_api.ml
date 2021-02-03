@@ -11,24 +11,36 @@ let test_create_release =
     (test_name, `Quick, test_fun)
   in
   [
-    make_test ~test_name:"simple" ~version:"1.1.0" ~tag:"1.1.0"
-      ~msg:"this is a message" ~user:"you" ~repo:"some-repo" ~draft:false
-      ~expected:
-        {
-          url = "https://api.github.com/repos/you/some-repo/releases";
-          meth = `POST;
-          args =
-            [
-              Location;
-              Silent;
-              Show_error;
-              Config `Stdin;
-              Dump_header `Ignore;
-              Data
-                (`Data
-                  {|{"tag_name":"1.1.0","name":"1.1.0","body":"this is a message","draft":false}|});
-            ];
-        };
+    (let version = "1.1.0"
+     and tag = "1.1.0"
+     and msg = "this is a message"
+     and user = "you"
+     and repo = "some-repo"
+     and draft = false in
+     make_test ~test_name:"simple" ~version ~tag ~msg ~user ~repo ~draft
+       ~expected:
+         {
+           url = "https://api.github.com/repos/you/some-repo/releases";
+           meth = `POST;
+           args =
+             [
+               Location;
+               Silent;
+               Show_error;
+               Config `Stdin;
+               Dump_header `Ignore;
+               Data
+                 (`Data
+                   (Yojson.Basic.to_string
+                      (`Assoc
+                        [
+                          ("tag_name", `String tag);
+                          ("name", `String version);
+                          ("body", `String msg);
+                          ("draft", `Bool draft);
+                        ])));
+             ];
+         });
   ]
 
 let test_upload_archive =
@@ -73,25 +85,36 @@ let test_open_pr =
     (test_name, `Quick, test_fun)
   in
   [
-    make_test ~test_name:"simple" ~title:"This is a PR" ~user:"you"
-      ~branch:"my-best-pr"
-      ~body:"This PR fixes everything.\nThis is the best PR.\n"
-      ~opam_repo:("base", "repo") ~draft:false
-      ~expected:
-        {
-          url = "https://api.github.com/repos/base/repo/pulls";
-          meth = `POST;
-          args =
-            [
-              Silent;
-              Show_error;
-              Config `Stdin;
-              Dump_header `Ignore;
-              Data
-                (`Data
-                  {|{"title":"This is a PR","base":"master","body":"This PR fixes everything.\nThis is the best PR.\n","head":"you:my-best-pr","draft":false}|});
-            ];
-        };
+    (let title = "This is a PR"
+     and user = "you"
+     and branch = "my-best-pr"
+     and body = "This PR fixes everything.\nThis is the best PR.\n"
+     and opam_repo = ("base", "repo")
+     and draft = false in
+     make_test ~test_name:"simple" ~title ~user ~branch ~body ~opam_repo ~draft
+       ~expected:
+         {
+           url = "https://api.github.com/repos/base/repo/pulls";
+           meth = `POST;
+           args =
+             [
+               Silent;
+               Show_error;
+               Config `Stdin;
+               Dump_header `Ignore;
+               Data
+                 (`Data
+                   (Yojson.Basic.to_string
+                      (`Assoc
+                        [
+                          ("title", `String title);
+                          ("base", `String "master");
+                          ("body", `String body);
+                          ("head", `String (Bos_setup.strf "%s:%s" user branch));
+                          ("draft", `Bool draft);
+                        ])));
+             ];
+         });
   ]
 
 let test_with_auth =
@@ -140,7 +163,9 @@ let test_undraft_release =
               Show_error;
               Config `Stdin;
               Dump_header `Ignore;
-              Data (`Data {|{"draft":false}|});
+              Data
+                (`Data
+                  (Yojson.Basic.to_string (`Assoc [ ("draft", `Bool false) ])));
             ];
         };
   ]
