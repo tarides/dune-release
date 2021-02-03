@@ -51,7 +51,7 @@ val open_pr :
   title:string ->
   distrib_user:string ->
   user:string ->
-  branch:string ->
+  branch:Vcs.commit_ish ->
   opam_repo:string * string ->
   string ->
   ([ `Url of string | `Already_exists ], R.msg) result

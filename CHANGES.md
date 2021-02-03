@@ -60,6 +60,7 @@
 - Fix rewriting of github references in changelog (#330, @gpetiot)
 - Fixes a bug under cygwin where dune-release was unable to find the commit hash corresponding to the release tag (#329, @gpetiot)
 - Fixes release names by explicitly setting it to match the released version (#338, @NathanReb)
+- Fix a bug that prevented release of a package whose version number contains invalid characters for a git branch. The git branch names are now sanitized. (#271, @gpetiot)
 
 ### Security
 

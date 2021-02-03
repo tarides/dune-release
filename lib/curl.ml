@@ -2,12 +2,12 @@ open Bos_setup
 
 type t = { url : string; args : Curl_option.t list }
 
-let create_release ~version ~msg ~user ~repo =
+let create_release ~version ~tag ~msg ~user ~repo =
   let json : string =
     Yojson.Basic.to_string
       (`Assoc
         [
-          ("tag_name", `String version);
+          ("tag_name", `String tag);
           ("name", `String version);
           ("body", `String msg);
         ])

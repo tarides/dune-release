@@ -46,7 +46,7 @@ val is_dirty : t -> (bool, R.msg) result
     changes. *)
 
 val commit_id :
-  ?dirty:bool -> ?commit_ish:commit_ish -> t -> (string, R.msg) result
+  ?dirty:bool -> ?commit_ish:string -> t -> (commit_ish, R.msg) result
 (** [commit_id ~dirty ~commit_ish r] is the object name (identifier) of
     [commit_ish] (defaults to ["HEAD"]). If [commit_ish] is ["HEAD"] and [dirty]
     is [true] (default) and indicator is appended to the identifier if the
@@ -64,11 +64,11 @@ val describe :
     and [dirty] is [true] (default) an indicator is appended to the identifier
     if the working tree is dirty. *)
 
-val tag_exists : dry_run:bool -> t -> string -> bool
+val tag_exists : dry_run:bool -> t -> commit_ish -> bool
 
-val tag_points_to : t -> tag:string -> string option
+val tag_points_to : t -> tag:commit_ish -> string option
 
-val branch_exists : dry_run:bool -> t -> string -> bool
+val branch_exists : dry_run:bool -> t -> commit_ish -> bool
 
 (** {1:ops Repository operations} *)
 
@@ -83,7 +83,7 @@ val clone :
 
 val checkout :
   dry_run:bool ->
-  ?branch:string ->
+  ?branch:commit_ish ->
   t ->
   commit_ish:commit_ish ->
   (unit, R.msg) result
@@ -97,14 +97,14 @@ val tag :
   ?msg:string ->
   ?commit_ish:string ->
   t ->
-  string ->
+  commit_ish ->
   (unit, R.msg) result
 (** [tag r ~force ~sign ~msg ~commit_ish t] tags [commit_ish] with [t] and
     message [msg] (if unspecified the VCS should prompt). if [sign] is [true]
     (defaults to [false]) signs the tag ([`Git] repos only). If [force] is
     [true] (default to [false]) doesn't fail if the tag already exists. *)
 
-val delete_tag : dry_run:bool -> t -> string -> (unit, R.msg) result
+val delete_tag : dry_run:bool -> t -> commit_ish -> (unit, R.msg) result
 (** [delete_tag r t] deletes tag [t] in repo [r]. *)
 
 val ls_remote :
@@ -123,6 +123,11 @@ val ls_remote :
 val submodule_update : dry_run:bool -> t -> (unit, R.msg) result
 (** [submodule r] pulls in all submodules in [r]. Only works for git
     repositories *)
+
+val git_sanitize_tag : commit_ish -> commit_ish
+(** Exposed for tests. *)
+
+val sanitize_tag : t -> commit_ish -> commit_ish
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

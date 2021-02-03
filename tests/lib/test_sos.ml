@@ -33,4 +33,4 @@ let cmd_error () =
        fatal: This is all made up\n"
     ()
 
-let suite = ("Vcs", [ ("cmd_error", `Quick, cmd_error) ])
+let suite = ("Sos", [ ("cmd_error", `Quick, cmd_error) ])
