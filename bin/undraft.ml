@@ -49,6 +49,7 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
   Pkg.name pkg >>= fun pkg_name ->
   Pkg.build_dir pkg >>= fun build_dir ->
   Pkg.version pkg >>= fun version ->
+  Pkg.tag pkg >>= fun tag ->
   let pkg_names = match pkg_names with Some x -> x | None -> [] in
   let pkg_names = pkg_name :: pkg_names in
   let opam_repo =
@@ -105,7 +106,7 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
   update_opam_file ~dry_run ~url pkg >>= fun () ->
   App_log.status (fun l ->
       l "Preparing pull request #%s to %a" pr_id pp_opam_repo opam_repo);
-  let branch = Fmt.strf "release-%s-%s" pkg_name version in
+  let branch = Fmt.strf "release-%s-%s" pkg_name tag in
   Vcs.get () >>= fun vcs ->
   OS.Dir.current () >>= fun cwd ->
   let prepare_package name =
