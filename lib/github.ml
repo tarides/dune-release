@@ -24,6 +24,8 @@ module D = struct
   let download_url = "${download_url}"
 
   let release_id = 1
+
+  let asset_name = "${asset_name}"
 end
 
 module Parse = struct
@@ -226,7 +228,11 @@ let curl_upload_archive ~token ~dry_run ~yes archive user repo release_id =
   github_v3_auth ~dry_run ~user token >>= fun auth ->
   let curl_t = Github_v3_api.with_auth ~auth curl_t in
   let default_body =
-    `Assoc [ ("browser_download_url", `String D.download_url) ]
+    `Assoc
+      [
+        ("browser_download_url", `String D.download_url);
+        ("name", `String D.asset_name);
+      ]
   in
   Prompt.try_again ~yes ~default_answer:Prompt.Yes
     ~question:(fun l ->

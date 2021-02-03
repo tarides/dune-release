@@ -122,4 +122,5 @@ We do the whole dune-release process
     -: exec: curl --user foo:${token} --location --silent --show-error --config -
          --dump-header - --header Content-Type:application/x-tar --data-binary
          @_build/whatever-0.1.0.tbz
+    -: write _build/whatever-0.1.0.release_asset_name
     -: write _build/whatever-0.1.0.url
