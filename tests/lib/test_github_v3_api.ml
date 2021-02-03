@@ -3,7 +3,9 @@ open Dune_release.Github_v3_api
 let test_create_release =
   let make_test ~test_name ~version ~tag ~msg ~user ~repo ~draft ~expected =
     let test_fun () =
-      let actual = Release.Request.create ~version ~tag ~msg ~user ~repo ~draft in
+      let actual =
+        Release.Request.create ~version ~tag ~msg ~user ~repo ~draft
+      in
       Alcotest.check Alcotest_ext.curl test_name expected actual
     in
     (test_name, `Quick, test_fun)
