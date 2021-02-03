@@ -448,7 +448,6 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes ~draft p =
   | r -> r)
   >>= fun (user, repo) ->
   Pkg.tag p >>= fun tag ->
-  Pkg.version p >>= fun version ->
   assert_tag_exists ~dry_run tag >>= fun () ->
   Vcs.get () >>= fun vcs ->
   check_tag ~dry_run vcs tag >>= fun () ->
