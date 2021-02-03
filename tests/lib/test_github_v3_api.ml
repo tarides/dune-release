@@ -1,16 +1,16 @@
 open Dune_release.Github_v3_api
 
 let test_create_release =
-  let make_test ~test_name ~version ~msg ~user ~repo ~draft ~expected =
+  let make_test ~test_name ~version ~tag ~msg ~user ~repo ~draft ~expected =
     let test_fun () =
-      let actual = Release.Request.create ~version ~msg ~user ~repo ~draft in
+      let actual = Release.Request.create ~version ~tag ~msg ~user ~repo ~draft in
       Alcotest.check Alcotest_ext.curl test_name expected actual
     in
     (test_name, `Quick, test_fun)
   in
   [
-    make_test ~test_name:"simple" ~version:"1.1.0" ~msg:"this is a message"
-      ~user:"you" ~repo:"some-repo" ~draft:false
+    make_test ~test_name:"simple" ~version:"1.1.0" ~tag:"1.1.0"
+      ~msg:"this is a message" ~user:"you" ~repo:"some-repo" ~draft:false
       ~expected:
         {
           url = "https://api.github.com/repos/you/some-repo/releases";
@@ -24,7 +24,7 @@ let test_create_release =
               Dump_header `Ignore;
               Data
                 (`Data
-                  {|{ "tag_name" : "1.1.0", "name" : "1.1.0", "body" : "this is a message", "draft" : false }|});
+                  {|{"tag_name":"1.1.0","name":"1.1.0","body":"this is a message","draft":false}|});
             ];
         };
   ]
@@ -87,7 +87,7 @@ let test_open_pr =
               Dump_header `Ignore;
               Data
                 (`Data
-                  {|{"title": "This is a PR","base": "master", "body": "This PR fixes everything.\nThis is the best PR.\n", "head": "you:my-best-pr", "draft": false}|});
+                  {|{"title":"This is a PR","base":"master","body":"This PR fixes everything.\nThis is the best PR.\n","head":"you:my-best-pr","draft":false}|});
             ];
         };
   ]
@@ -138,7 +138,7 @@ let test_undraft_release =
               Show_error;
               Config `Stdin;
               Dump_header `Ignore;
-              Data (`Data {|{ "draft" : false }|});
+              Data (`Data {|{"draft":false}|});
             ];
         };
   ]

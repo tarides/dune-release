@@ -114,7 +114,7 @@ We do the whole dune-release process
     [-] Creating draft release 0.1.0 on https://github.com/foo/whatever.git via github's API
     -: exec: curl --user foo:${token} --location --silent --show-error --config -
          --dump-header - --data
-         { "tag_name" : "0.1.0", "name" : "0.1.0", "body" : "CHANGES:\n\n- Some other feature\n", "draft" : true }
+         {"tag_name":"0.1.0","name":"0.1.0","body":"CHANGES:\n\n- Some other feature\n","draft":true}
     -: write _build/whatever-0.1.0.draft_release
     [+] Succesfully created draft release with id 1
     [?] Upload _build/whatever-0.1.0.tbz as release asset? [Y/n]
