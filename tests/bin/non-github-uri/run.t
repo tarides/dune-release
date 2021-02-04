@@ -88,12 +88,12 @@ We do the whole dune-release process
     [-] Building package in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
     -: exec: dune build -p whatever
-    [ OK ] package builds
+    [ OK ] package(s) build
     
     [-] Running package tests in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
     -: exec: dune runtest -p whatever
-    [ OK ] package tests
+    [ OK ] package(s) pass the tests
     
     [+] Distribution for whatever 0.1.0
     [+] Commit ...

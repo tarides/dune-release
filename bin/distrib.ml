@@ -25,10 +25,11 @@ let build_distrib ~dry_run ~dir pkg =
   let out = OS.Cmd.out_string in
   Pkg.build ~dry_run pkg ~dir ~args ~out >>= function
   | _, (_, `Exited 0) ->
-      Logs.app (fun m -> m "%a package builds" Text.Pp.status `Ok);
+      Logs.app (fun m -> m "%a package(s) build" Text.Pp.status `Ok);
       Ok 0
   | stdout, _ ->
-      Logs.app (fun m -> m "%s@\n%a package builds" stdout Text.Pp.status `Fail);
+      Logs.app (fun m ->
+          m "%s@\n%a package(s) build" stdout Text.Pp.status `Fail);
       Ok 1
 
 let test_distrib ~dry_run ~dir pkg =
@@ -37,10 +38,11 @@ let test_distrib ~dry_run ~dir pkg =
   let out = OS.Cmd.out_string in
   Pkg.test ~dry_run ~dir ~args:Cmd.empty ~out pkg >>= function
   | _, (_, `Exited 0) ->
-      Logs.app (fun m -> m "%a package tests" Text.Pp.status `Ok);
+      Logs.app (fun m -> m "%a package(s) pass the tests" Text.Pp.status `Ok);
       Ok 0
   | stdout, _ ->
-      Logs.app (fun m -> m "%s@\n%a package tests" stdout Text.Pp.status `Fail);
+      Logs.app (fun m ->
+          m "%s@\n%a package(s) pass the tests" stdout Text.Pp.status `Fail);
       Ok 1
 
 let check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar
