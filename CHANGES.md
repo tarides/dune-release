@@ -22,6 +22,7 @@
 - Don't try to push the tag if it is already present and point to the same ref on the remote.
   `dune-release` must guess which URI to pass to `git push` and may guess it wrong.
   This change allows users to push the tag manually to avoid using that code. (#219, @Julow)
+- Don't try to create the release if it is already present and points to the same tag (#277, @kit-ty-kate)
 - Recursively exclude all `.git`/`.hg` files and folders from the distrib
   tarball (#300, @NathanReb)
 - Make the automatic dune-release workflow to stop if a step exits with a non-zero code (#332, @gpetiot)
