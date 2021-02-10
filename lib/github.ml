@@ -417,10 +417,10 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
             e)
 
 let curl_get_release ~dry_run ~token ~version ~user ~repo =
-  github_auth ~dry_run ~user token >>= fun auth ->
-  let curl_t = Curl.get_release ~version ~user ~repo in
-  run_with_auth ~dry_run ~auth curl_t
-  >>= Github_v3_api.Release_response.release_id
+  github_v3_auth ~dry_run ~user token >>= fun auth ->
+  let curl_t = Github_v3_api.Release.Request.get ~version ~user ~repo in
+  let curl_t = Github_v3_api.with_auth ~auth curl_t in
+  run_with_auth ~dry_run curl_t >>= Github_v3_api.Release.Response.release_id
 
 let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
     ~draft =
@@ -439,7 +439,7 @@ let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
       curl_create_release ~token ~dry_run ~version ~tag msg user repo ~draft
       >>= fun id ->
       App_log.success (fun l ->
-          l "Succesfully created %a with id %d" Text.Pp.maybe_draft
+          l "Successfully created %a with id %d" Text.Pp.maybe_draft
             (draft, "release") id);
       Ok id
   | Ok id ->
@@ -472,9 +472,6 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes ~draft p =
      (string_of_int id)
   else Config.Draft_release.unset ~dry_run ~build_dir ~name ~version)
   >>= fun () ->
-  App_log.success (fun l ->
-      l "Succesfully created %a with id %d" Text.Pp.maybe_draft
-        (draft, "release") id);
   Prompt.(
     confirm_or_abort ~yes
       ~question:(fun l -> l "Upload %a as release asset?" Text.Pp.path archive)

@@ -31,7 +31,9 @@ We need to set up a git project for dune-release to work properly
     > /dune\
     > run.t\
     > EOF
-    $ git init > /dev/null
+    $ git init 2> /dev/null > /dev/null
+    $ git config user.name "dune-release-test"
+    $ git config user.email "pseudo@pseudo.invalid"
     $ git add CHANGES.md whatever.opam dune-project README LICENSE .gitignore
     $ git commit -m "Initial commit" > /dev/null
     $ dune-release tag -y
@@ -115,8 +117,8 @@ We do the whole dune-release process
     -: exec: curl --user foo:${token} --location --silent --show-error --config -
          --dump-header - --data
          {"tag_name":"0.1.0","name":"0.1.0","body":"CHANGES:\n\n- Some other feature\n","draft":true}
+    [+] Successfully created draft release with id 1
     -: write _build/whatever-0.1.0.draft_release
-    [+] Succesfully created draft release with id 1
     [?] Upload _build/whatever-0.1.0.tbz as release asset? [Y/n]
     [-] Uploading _build/whatever-0.1.0.tbz as a release asset for 0.1.0 via github's API
     -: exec: curl --user foo:${token} --location --silent --show-error --config -

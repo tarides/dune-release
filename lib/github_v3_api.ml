@@ -60,7 +60,7 @@ module Release = struct
         let open Curl_option in
         [ Location; Silent; Show_error; Config `Stdin; Dump_header `Ignore ]
       in
-      { url; meth = `GET; args }
+      Curl.{ url; meth = `GET; args }
 
     let create ~version ~tag ~msg ~user ~repo ~draft =
       let json =
