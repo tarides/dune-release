@@ -183,7 +183,8 @@ let github_auth ~dry_run ~user token =
   if dry_run then Ok Curl_option.{ user; token = D.token }
   else Sos.read_file ~dry_run token >>| fun token -> Curl_option.{ user; token }
 
-let run_with_auth ?(default_body = `Null) ~dry_run ~auth curl_t =
+let run_with_auth ?(meth = `POST) ?(default_body = `Null) ~dry_run ~auth curl_t
+    =
   let Curl.{ url; args } = Curl.with_auth ~auth curl_t in
   let args = Curl_option.to_string_list args in
   if dry_run then
@@ -193,7 +194,7 @@ let run_with_auth ?(default_body = `Null) ~dry_run ~auth curl_t =
     >>| fun () -> default_body
   else
     OS.Cmd.must_exist (Cmd.v "curl") >>= fun _ ->
-    let req = Curly.Request.make ~url ~meth:`POST () in
+    let req = Curly.Request.make ~url ~meth () in
     Logs.debug (fun l ->
         l "[curl] executing request:@;<1 2>%a" Curly.Request.pp req);
     Logs.debug (fun l ->
@@ -328,6 +329,34 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
              command again"
             e)
 
+let curl_get_release ~dry_run ~token ~version ~user ~repo =
+  github_auth ~dry_run ~user token >>= fun auth ->
+  let curl_t = Curl.get_release ~version ~user ~repo in
+  run_with_auth ~meth:`GET ~dry_run ~auth curl_t
+  >>= Github_v3_api.Release_response.release_id
+
+let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
+    =
+  match curl_get_release ~dry_run ~token ~version ~user ~repo with
+  | Error _ ->
+      Prompt.(
+        confirm_or_abort ~yes
+          ~question:(fun l ->
+            l "Create release %a on %a?" Text.Pp.version version Text.Pp.url
+              dev_repo)
+          ~default_answer:Yes)
+      >>= fun () ->
+      App_log.status (fun l ->
+          l "Creating release %a on %a via github's API" Text.Pp.version version
+            Text.Pp.url dev_repo);
+      curl_create_release ~token ~dry_run ~version ~tag msg user repo
+      >>= fun id ->
+      App_log.success (fun l -> l "Succesfully created release with id %d" id);
+      Ok id
+  | Ok id ->
+      App_log.status (fun l -> l "Release with id %d already exists" id);
+      Ok id
+
 let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   (match distrib_uri with
   | Some uri -> Ok uri
@@ -346,18 +375,8 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   push_tag ~dry_run ~yes ~dev_repo vcs tag >>= fun () ->
   (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
   >>= fun token ->
-  Prompt.(
-    confirm_or_abort ~yes
-      ~question:(fun l ->
-        l "Create release %a on %a?" Text.Pp.version version Text.Pp.url
-          dev_repo)
-      ~default_answer:Yes)
-  >>= fun () ->
-  App_log.status (fun l ->
-      l "Creating release %a on %a via github's API" Text.Pp.version version
-        Text.Pp.url dev_repo);
-  curl_create_release ~token ~dry_run ~version ~tag msg user repo >>= fun id ->
-  App_log.success (fun l -> l "Succesfully created release with id %d" id);
+  create_release ~dry_run ~yes ~dev_repo ~token ~version ~msg ~tag ~user ~repo
+  >>= fun id ->
   Prompt.(
     confirm_or_abort ~yes
       ~question:(fun l -> l "Upload %a as release asset?" Text.Pp.path archive)
