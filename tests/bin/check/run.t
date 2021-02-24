@@ -33,6 +33,8 @@ If the condition described above is fulfilled, there are 3 checks to be performe
     
     [-] Running package tests in <test_directory>
     [ OK ] package(s) pass the tests
+    
+    [-] Performing lint for package my_pkg in <test_directory>
     [FAIL] File README is missing.
     [FAIL] File LICENSE is missing.
     [FAIL] File CHANGES is missing.
@@ -67,6 +69,8 @@ In multi package projects, the whole lint process (including the file lints, eve
     
     [-] Running package tests in <test_directory>
     [ OK ] package(s) pass the tests
+    
+    [-] Performing lint for package my_pkg in <test_directory>
     [FAIL] File README is missing.
     [FAIL] File LICENSE is missing.
     [FAIL] File CHANGES is missing.
@@ -76,6 +80,8 @@ In multi package projects, the whole lint process (including the file lints, eve
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
     [FAIL] lint of <project_dir> and package my_pkg failure: 3 errors.
+    
+    [-] Performing lint for package my_pkg-sub in <test_directory>
     [FAIL] File README is missing.
     [FAIL] File LICENSE is missing.
     [FAIL] File CHANGES is missing.

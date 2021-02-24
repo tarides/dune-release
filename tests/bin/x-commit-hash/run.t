@@ -63,7 +63,7 @@ We make a dry-run release
        [in _build]
     => exec: tar -xjf whatever-0.1.0.tbz
     
-    [-] Linting distrib in _build/whatever-0.1.0
+    [-] Performing lint for package whatever in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
        [in _build/whatever-0.1.0]
     => exists ./README

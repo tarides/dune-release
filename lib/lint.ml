@@ -217,5 +217,9 @@ let lint_packages ~dry_run ~dir ~todo pkg pkg_names =
     (fun acc name ->
       acc >>= fun acc ->
       let pkg = Pkg.with_name pkg name in
+      App_log.blank_line ();
+      App_log.status (fun m ->
+          m "Performing lint for package %a in %a" pp_pkg_name name Text.Pp.path
+            dir);
       lint_pkg ~dry_run ~dir ~pkg_name:name pkg todo >>= fun n -> Ok (acc + n))
     (Ok 0) pkg_names
