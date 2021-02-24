@@ -16,11 +16,11 @@ let uri_domain uri =
 let uri_sld uri =
   match uri_domain uri with _ :: sld :: _ -> Some sld | _ -> None
 
-let uri_append u s =
-  match String.head ~rev:true u with
-  | None -> s
-  | Some '/' -> strf "%s%s" u s
-  | Some _ -> strf "%s/%s" u s
+let uri_append_to_base ~appendix base =
+  match String.head ~rev:true base with
+  | None -> appendix
+  | Some '/' -> strf "%s%s" base appendix
+  | Some _ -> strf "%s/%s" base appendix
 
 let chop_ext u =
   match String.cut ~rev:true ~sep:"." u with None -> u | Some (u, _) -> u
@@ -216,9 +216,6 @@ let dev_repo p =
   | None -> Ok None
   | Some r -> Ok (Some (chop_git_prefix r))
 
-let err_not_found () =
-  R.error_msg "no distribution URI found, see dune-release's API documentation."
-
 let dev_repo_is_on_github p =
   opam_field_hd p "dev-repo" >>| function
   | None -> false
@@ -242,48 +239,59 @@ let path_of_distrib p =
     | None -> "$(NAME)-$(TAG).tbz"
   in
   dev_repo_is_on_github p >>= fun a ->
-  homepage_is_on_github p >>| fun b ->
-  (if a || b then "releases/download/$(TAG)/" else "releases/") ^ basename
+  homepage_is_on_github p >>= fun b ->
+  let uri =
+    (if a || b then "releases/download/$(TAG)/" else "releases/") ^ basename
+  in
+  name p >>= fun name ->
+  tag p >>= fun tag ->
+  let defs = String.Map.(empty |> add "NAME" name |> add "TAG" tag) in
+  Pat.of_string uri >>| Pat.format defs
 
-let distrib_uri_of_dev_repo p =
-  opam_field_hd p "dev-repo" >>= function
-  | None -> Ok None
-  | Some dev_repo ->
-      let dev_repo =
-        match String.cut ~sep:"git@github.com:" dev_repo with
-        | Some ("", path) -> "https://github.com/" ^ chop_ext path
-        | _ -> (
-            match String.cut ~sep:"git+ssh://git@github.com/" dev_repo with
-            | Some ("", path) -> "https://github.com/" ^ chop_ext path
-            | _ -> chop_git_prefix (chop_ext dev_repo))
-      in
-      path_of_distrib p >>| fun path -> Some (uri_append dev_repo path)
+let uri_of_dev_repo p =
+  opam_field_hd p "dev-repo"
+  >>| Stdext.Option.map ~f:(fun dev_repo ->
+          match String.cut ~sep:"git@github.com:" dev_repo with
+          | Some ("", path) -> "https://github.com/" ^ chop_ext path
+          | _ -> (
+              match String.cut ~sep:"git+ssh://git@github.com/" dev_repo with
+              | Some ("", path) -> "https://github.com/" ^ chop_ext path
+              | _ -> chop_git_prefix (chop_ext dev_repo)))
 
-let distrib_uri_of_homepage p =
-  opam_homepage_sld p >>= function
-  | None -> Ok None
-  | Some (uri, _) ->
-      path_of_distrib p >>| fun path -> Some (uri_append uri path)
+let uri_of_homepage p =
+  opam_homepage_sld p >>| Stdext.Option.map ~f:(fun (uri, _) -> uri)
 
-let infer_distrib_uri p =
-  (distrib_uri_of_homepage p >>= function
+let distrib_uri ~get_base_uri pkg =
+  path_of_distrib pkg >>= fun path ->
+  get_base_uri pkg >>| Stdext.Option.map ~f:(uri_append_to_base ~appendix:path)
+
+let distrib_uri_of_dev_repo pkg = distrib_uri ~get_base_uri:uri_of_dev_repo pkg
+
+let distrib_uri_of_homepage pkg = distrib_uri ~get_base_uri:uri_of_homepage pkg
+
+let infer_uri_from_functions f g pkg ~err =
+  (f pkg >>= function
    | Some u -> Ok u
-   | None -> (
-       distrib_uri_of_dev_repo p >>= function
-       | Some u -> Ok u
-       | None -> err_not_found ()))
+   | None -> ( g pkg >>= function Some u -> Ok u | None -> err))
   >>= fun uri ->
-  (match uri_domain uri with
+  match uri_domain uri with
   | [ "io"; "github"; user ] -> (
       match Text.split_uri ~rel:true uri with
       | None -> R.error_msgf "invalid uri: %s" uri
       | Some (_, _, path) -> Ok ("https://github.com/" ^ user ^ "/" ^ path))
-  | _ -> Ok uri)
-  >>= fun uri ->
-  name p >>= fun name ->
-  infer_version p >>= fun tag ->
-  let defs = String.Map.(empty |> add "NAME" name |> add "TAG" tag) in
-  Pat.of_string uri >>| Pat.format defs
+  | _ -> Ok uri
+
+let infer_distrib_uri =
+  let err =
+    R.error_msg
+      "Distribution URL could not be inferred. You can use the `--dist-uri` \
+       cli option to provide it. Otherwise, you can fix your main opam-file."
+  in
+  infer_uri_from_functions distrib_uri_of_homepage distrib_uri_of_dev_repo ~err
+
+let infer_repo_uri =
+  let err = R.error_msg "Development repository URL could not be inferred." in
+  infer_uri_from_functions uri_of_homepage uri_of_dev_repo ~err
 
 let distrib_filename ?(opam = false) p =
   let sep = if opam then '.' else '-' in
@@ -308,20 +316,25 @@ let distrib_file ~dry_run p =
       |> R.reword_error_msg (fun _ ->
              R.msgf "Did you forget to call 'dune-release distrib' ?")
 
-let distrib_user_and_repo uri =
-  let uri_error uri =
+let user_and_repo_from_uri uri =
+  let uri_format_error =
     R.msgf
-      "Could not derive user and repo from opam dev-repo field value %a; \
-       expected the pattern $SCHEME://$HOST/$USER/$REPO[.$EXT][/$DIR]"
+      "Could not derive user and repo from uri %a; expected the pattern \
+       $SCHEME://$HOST/$USER/$REPO[.$EXT][/$DIR]"
       String.dump uri
   in
+  let uri_scheme_error =
+    R.msgf "The following uri is expected to be a web address: %a" String.dump
+      uri
+  in
   match Text.split_uri ~rel:true uri with
-  | None -> Error (uri_error uri)
+  | None -> Error uri_format_error
+  | Some ("file:", _, _) -> Error uri_scheme_error
   | Some (_, _, path) -> (
-      if path = "" then Error (uri_error uri)
+      if path = "" then Error uri_format_error
       else
         match String.cut ~sep:"/" path with
-        | None -> Error (uri_error uri)
+        | None -> Error uri_format_error
         | Some (user, path) ->
             let repo =
               match String.cut ~sep:"/" path with
@@ -330,7 +343,7 @@ let distrib_user_and_repo uri =
             in
             Fpath.of_string repo
             >>= (fun repo -> Ok (user, Fpath.(to_string @@ rem_ext repo)))
-            |> R.reword_error_msg (fun _ -> uri_error uri))
+            |> R.reword_error_msg (fun _ -> uri_format_error))
 
 let doc_uri p =
   opam_field_hd p "doc" >>| function None -> "" | Some uri -> uri

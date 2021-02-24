@@ -83,6 +83,10 @@ val infer_distrib_uri : t -> (string, R.msg) result
 (** [infer_distrib_uri p] infers [p]'s distribution URI from the homepage and
     dev-repo fields. *)
 
+val infer_repo_uri : t -> (string, R.msg) result
+(** [infer_repo_uri p] infers [p]'s remote repository URI from the homepage and
+    dev-repo fields. *)
+
 val distrib_file : dry_run:bool -> t -> (Fpath.t, R.msg) result
 (** [distrib_file p] is [p]'s distribution archive. *)
 
@@ -119,7 +123,7 @@ val doc_dir : Fpath.t
 
 val doc_user_repo_and_path : t -> (string * string * Fpath.t, R.msg) result
 
-val distrib_user_and_repo : string -> (string * string, R.msg) result
+val user_and_repo_from_uri : string -> (string * string, R.msg) result
 
 type f =
   dry_run:bool ->

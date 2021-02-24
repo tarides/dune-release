@@ -181,10 +181,8 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
   list_map Pkg.name pkgs >>= fun names ->
   let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
   Pkg.publish_msg pkg >>= fun changes ->
-  (match distrib_uri with
-  | Some uri -> Ok uri
-  | None -> Pkg.infer_distrib_uri pkg)
-  >>= Pkg.distrib_user_and_repo
+  (match distrib_uri with Some uri -> Ok uri | None -> Pkg.infer_repo_uri pkg)
+  >>= Pkg.user_and_repo_from_uri
   >>= fun (distrib_user, repo) ->
   let user =
     match user with
