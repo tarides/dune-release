@@ -123,8 +123,6 @@ val doc_dir : Fpath.t
 
 val doc_user_repo_and_path : t -> (string * string * Fpath.t, R.msg) result
 
-val user_and_repo_from_uri : string -> (string * string, R.msg) result
-
 type f =
   dry_run:bool ->
   dir:Fpath.t ->

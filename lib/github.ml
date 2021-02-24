@@ -360,7 +360,7 @@ let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
 let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   (match distrib_uri with Some uri -> Ok uri | None -> Pkg.infer_repo_uri p)
   >>= fun uri ->
-  (match Pkg.user_and_repo_from_uri uri with
+  (match Uri.Github.get_user_and_repo uri with
   | Error _ as e -> if dry_run then Ok (D.user, D.repo) else e
   | r -> r)
   >>= fun (user, repo) ->
