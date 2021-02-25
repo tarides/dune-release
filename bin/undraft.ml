@@ -70,10 +70,8 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
       | Some r -> Ok r
       | None -> R.error_msg "Unknown remote repository."))
   >>= fun remote_repo ->
-  (match distrib_uri with
-  | Some uri -> Ok uri
-  | None -> Pkg.infer_distrib_uri pkg)
-  >>= Pkg.distrib_user_and_repo
+  (match distrib_uri with Some uri -> Ok uri | None -> Pkg.infer_repo_uri pkg)
+  >>= Uri.Github.get_user_and_repo
   >>= fun (distrib_user, repo) ->
   let user =
     match config.user with
