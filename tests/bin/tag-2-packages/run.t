@@ -13,7 +13,9 @@ Set up a project with two packaged libraries, no name in dune-project.
     $ echo "(library (public_name libb))" > libb/dune
     $ touch liba.opam libb.opam
     $ echo "(lang dune 2.7)" > dune-project
-    $ git init . > /dev/null
+    $ git init 2> /dev/null . > /dev/null
+    $ git config user.name "dune-release-test"
+    $ git config user.email "pseudo@pseudo.invalid"
     $ git add liba/* libb*/ CHANGES.md *.opam dune-project
     $ git commit -m 'Commit.' > /dev/null
 

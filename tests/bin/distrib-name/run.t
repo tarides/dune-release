@@ -26,7 +26,9 @@ should set a name.
     > /dune\
     > run.t\
     > EOF
-    $ git init . > /dev/null
+    $ git init 2> /dev/null . > /dev/null
+    $ git config user.name "dune-release-test"
+    $ git config user.email "pseudo@pseudo.invalid"
     $ git add liba/* libb*/ CHANGES.md README LICENSE *.opam dune-project .gitignore
     $ git commit -m 'Commit.' > /dev/null
 

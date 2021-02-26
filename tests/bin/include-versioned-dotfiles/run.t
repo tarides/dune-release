@@ -28,7 +28,9 @@ We also need a dotfile that we will properly version
 
 We need to set up a git project for dune-release to work properly
 
-    $ git init > /dev/null
+    $ git init 2> /dev/null > /dev/null
+    $ git config user.name "dune-release-test"
+    $ git config user.email "pseudo@pseudo.invalid"
     $ git add CHANGES.md whatever.opam dune-project .somedotfile .gitignore
     $ git commit -m "Initial commit" > /dev/null
     $ dune-release tag -y
