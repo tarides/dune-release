@@ -182,7 +182,7 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
   let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
   Pkg.publish_msg pkg >>= fun changes ->
   (match distrib_uri with Some uri -> Ok uri | None -> Pkg.infer_repo_uri pkg)
-  >>= Pkg.user_and_repo_from_uri
+  >>= Uri.Github.get_user_and_repo
   >>= fun (distrib_user, repo) ->
   let user =
     match user with
