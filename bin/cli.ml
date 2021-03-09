@@ -252,10 +252,29 @@ let skip_tests =
 
 (* Terms *)
 
+let strip_exe_extension s =
+  if Sys.win32 then
+    match Filename.chop_suffix_opt ~suffix:".exe" s with
+    | Some r -> r
+    | None -> s
+  else
+    s
+
+let pp_exec_header =
+  let x = match Array.length Sys.argv with
+  | 0 -> Filename.basename Sys.executable_name
+  | _ -> Filename.basename Sys.argv.(0)
+  in
+  let x = strip_exe_extension x in
+  fun ppf (l, so) ->
+    match l with
+    | Logs.App -> Logs_fmt.pp_header ppf (l, so)
+    | _ -> Fmt.pf ppf "%s: %a " x Logs_fmt.pp_header (l, so)
+
 let setup style_renderer log_level cwd =
   Fmt_tty.setup_std_outputs ?style_renderer ();
   Logs.set_level log_level;
-  Logs.set_reporter (Logs_fmt.reporter ~app:Fmt.stdout ());
+  Logs.set_reporter (Logs_fmt.reporter ~pp_header:pp_exec_header ~app:Fmt.stdout ());
   Logs.info (fun m -> m "dune-release %%VERSION%% running");
   match cwd with
   | None -> `Ok ()
