@@ -117,8 +117,9 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
     let cp f =
       OS.File.exists Fpath.(src / f) >>= function
       | true ->
-          Sos.run_quiet ~sandbox:false ~dry_run ~force:true
-            Cmd.(v "cp" % p Fpath.(src / f) % p Fpath.(dst / f))
+          Sos.cp ~dry_run ~rec_:false ~force:true
+            ~src:Fpath.(src / f)
+            ~dst:Fpath.(dst / f)
       | _ -> Ok ()
     in
     OS.Dir.exists src >>= fun exists ->
