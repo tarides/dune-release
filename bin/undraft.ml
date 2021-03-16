@@ -15,11 +15,7 @@ let update_opam_file ~dry_run ~url pkg =
   OS.Dir.create dir >>= fun _ ->
   let dest_opam_file = Fpath.(dir / "opam") in
   let url = OpamUrl.parse url in
-  Pkg.distrib_file ~dry_run pkg >>= fun distrib_file ->
-  let file = Fpath.to_string distrib_file in
-  let hash algo = OpamHash.compute ~kind:algo file in
-  let checksum = List.map hash [ `SHA256; `SHA512 ] in
-  let url = OpamFile.URL.create ~checksum url in
+  let url = OpamFile.URL.create url in
   OS.File.read opam_f >>= fun opam ->
   let opam_t = OpamFile.OPAM.read_from_string opam in
   (match OpamVersion.to_string (OpamFile.OPAM.opam_version opam_t) with
