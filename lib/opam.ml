@@ -136,10 +136,7 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
     (* git add *)
     Vcs.run_git_quiet repo ~dry_run ~force:true Cmd.(v "add" % p dst)
   in
-  let rec prepare_packages = function
-    | [] -> Ok ()
-    | h :: t -> prepare_package h >>= fun () -> prepare_packages t
-  in
+  let prepare_packages = Stdext.Result.List.iter ~f:prepare_package in
   let commit_and_push () =
     Vcs.run_git_quiet repo ~dry_run Cmd.(v "commit" %% msg) >>= fun () ->
     App_log.status (fun l ->
