@@ -151,7 +151,8 @@ let dry_run =
 let draft =
   let doc =
     "Produce a draft release that cannot be merged accidentally and has to be \
-     undrafted before proceeding with the actual release."
+     undrafted before proceeding with the actual release. $(b,Warning:) This \
+     feature is experimental."
   in
   named (fun x -> `Draft x) Arg.(value & flag & info [ "draft" ] ~doc)
 

@@ -184,7 +184,9 @@ let undraft_cli () (`Dist_uri distrib_uri) (`Dist_opam opam)
 
 open Cmdliner
 
-let doc = "Publish package distribution archives and derived artefacts"
+let doc =
+  "Publish package distribution archives and derived artefacts. $(b,Warning:) \
+   This command is experimental."
 
 let sdocs = Manpage.s_common_options
 
