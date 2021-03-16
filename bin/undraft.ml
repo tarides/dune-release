@@ -102,35 +102,9 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
       l "Preparing pull request #%s to %a" pr_id pp_opam_repo opam_repo);
   let branch = Fmt.strf "release-%s-%s" pkg_name tag in
   Vcs.get () >>= fun vcs ->
-  OS.Dir.current () >>= fun cwd ->
-  let prepare_package name =
-    (* copy opam, descr and url files *)
-    let dir = name ^ "." ^ version in
-    let src = Fpath.(cwd / "_build" / dir) in
-    let dst = Fpath.(v "packages" / name / dir) in
-    let cp f =
-      OS.File.exists Fpath.(src / f) >>= function
-      | true ->
-          Sos.cp ~dry_run ~rec_:false ~force:true
-            ~src:Fpath.(src / f)
-            ~dst:Fpath.(dst / f)
-      | _ -> Ok ()
-    in
-    OS.Dir.exists src >>= fun exists ->
-    (if exists then Ok ()
-    else
-      R.error_msgf
-        "%a does not exist, did you run:\n  dune-release opam pkg -p %s\n"
-        Fpath.pp src name)
-    >>= fun () ->
-    OS.Dir.create ~path:true dst >>= fun _ ->
-    cp "opam" >>= fun () ->
-    cp "url" >>= fun () ->
-    cp "descr" >>= fun () ->
-    (* git add *)
-    Vcs.run_git_quiet vcs ~dry_run ~force:true Cmd.(v "add" % p dst)
+  let prepare_packages =
+    Stdext.Result.List.iter ~f:(Opam.prepare_package ~dry_run ~version vcs)
   in
-  let prepare_packages = Stdext.Result.List.iter ~f:prepare_package in
   let commit_and_push () =
     let msg = "Undraft pull-request" in
     Vcs.run_git_quiet vcs ~dry_run Cmd.(v "commit" % "-m" % msg) >>= fun () ->

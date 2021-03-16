@@ -51,6 +51,34 @@ let cmd = Cmd.of_list @@ Cmd.to_list @@ tool "opam" `Host_os
 let shortest x =
   List.hd (List.sort (fun x y -> compare (String.length x) (String.length y)) x)
 
+let prepare_package ~dry_run ~version vcs name =
+  OS.Dir.current () >>= fun cwd ->
+  (* copy opam, descr and url files *)
+  let dir = name ^ "." ^ version in
+  let src = Fpath.(cwd / "_build" / dir) in
+  let dst = Fpath.(v "packages" / name / dir) in
+  let cp f =
+    OS.File.exists Fpath.(src / f) >>= function
+    | true ->
+        Sos.cp ~dry_run ~rec_:false ~force:true
+          ~src:Fpath.(src / f)
+          ~dst:Fpath.(dst / f)
+    | _ -> Ok ()
+  in
+  OS.Dir.exists src >>= fun exists ->
+  (if exists then Ok ()
+  else
+    R.error_msgf
+      "%a does not exist, did you run:\n  dune-release opam pkg -p %s\n"
+      Fpath.pp src name)
+  >>= fun () ->
+  OS.Dir.create ~path:true dst >>= fun _ ->
+  cp "opam" >>= fun () ->
+  cp "url" >>= fun () ->
+  cp "descr" >>= fun () ->
+  (* git add *)
+  Vcs.run_git_quiet vcs ~dry_run ~force:true Cmd.(v "add" % p dst)
+
 let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
     names =
   let msg =
@@ -108,35 +136,9 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
         l "Checking out a local %a branch" Text.Pp.commit branch);
     Vcs.checkout repo ~dry_run:false ~branch ~commit_ish:id
   in
-  OS.Dir.current () >>= fun cwd ->
-  let prepare_package name =
-    (* copy opam, descr and url files *)
-    let dir = name ^ "." ^ version in
-    let src = Fpath.(cwd / "_build" / dir) in
-    let dst = Fpath.(v "packages" / name / dir) in
-    let cp f =
-      OS.File.exists Fpath.(src / f) >>= function
-      | true ->
-          Sos.cp ~dry_run ~rec_:false ~force:true
-            ~src:Fpath.(src / f)
-            ~dst:Fpath.(dst / f)
-      | _ -> Ok ()
-    in
-    OS.Dir.exists src >>= fun exists ->
-    (if exists then Ok ()
-    else
-      R.error_msgf
-        "%a does not exist, did you run:\n  dune-release opam pkg -p %s\n"
-        Fpath.pp src name)
-    >>= fun () ->
-    OS.Dir.create ~path:true dst >>= fun _ ->
-    cp "opam" >>= fun () ->
-    cp "url" >>= fun () ->
-    cp "descr" >>= fun () ->
-    (* git add *)
-    Vcs.run_git_quiet repo ~dry_run ~force:true Cmd.(v "add" % p dst)
+  let prepare_packages =
+    Stdext.Result.List.iter ~f:(prepare_package ~dry_run ~version repo)
   in
-  let prepare_packages = Stdext.Result.List.iter ~f:prepare_package in
   let commit_and_push () =
     Vcs.run_git_quiet repo ~dry_run Cmd.(v "commit" %% msg) >>= fun () ->
     App_log.status (fun l ->
