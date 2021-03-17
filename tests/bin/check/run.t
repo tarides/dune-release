@@ -20,13 +20,17 @@ Make a minimal project set up
     > bug-reports : "https://github.com/fu/fa/issues"\
     > synopsis : "Dope project"\
     > EOF
-    $ echo "(lang dune 2.7)" > dune-project
+    $ cat > dune-project << EOF \
+    > (lang dune 2.7)\
+    > (name my_pkg)\
+    > EOF
 
-If the condition described above is fulfilled, there are 3 checks to be performed
+If the condition described above is fulfilled, there are 4 checks to be performed
 
     $ dune-release check --working-tree | ./make_check_deterministic.exe
     [-] Checking dune-release compatibility.
-    [ OK ] main package my_pkg.opam is dune-release compatible.
+    [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
+    [ OK ] The dune project contains a name stanza.
     
     [-] Building package in <test_directory>
     [ OK ] package(s) build
@@ -62,7 +66,8 @@ In multi package projects, the whole lint process (including the file lints, eve
 
     $ dune-release check --working-tree | ./make_check_deterministic.exe
     [-] Checking dune-release compatibility.
-    [ OK ] main package my_pkg.opam is dune-release compatible.
+    [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
+    [ OK ] The dune project contains a name stanza.
     
     [-] Building package in <test_directory>
     [ OK ] package(s) build
@@ -96,7 +101,8 @@ In the same way in which the user can skip the lint check when releasing the tar
 
     $ dune-release check --working-tree --skip-lint | ./make_check_deterministic.exe
     [-] Checking dune-release compatibility.
-    [ OK ] main package my_pkg.opam is dune-release compatible.
+    [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
+    [ OK ] The dune project contains a name stanza.
     
     [-] Building package in <test_directory>
     [ OK ] package(s) build
@@ -108,7 +114,8 @@ Same for skipping the tests
 
     $ dune-release check --working-tree --skip-lint --skip-test | ./make_check_deterministic.exe
     [-] Checking dune-release compatibility.
-    [ OK ] main package my_pkg.opam is dune-release compatible.
+    [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
+    [ OK ] The dune project contains a name stanza.
     
     [-] Building package in <test_directory>
     [ OK ] package(s) build
@@ -117,7 +124,8 @@ Same for skipping the build (which implies skipping the tests)
 
     $ dune-release check --working-tree --skip-lint --skip-build
     [-] Checking dune-release compatibility.
-    [ OK ] main package my_pkg.opam is dune-release compatible.
+    [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
+    [ OK ] The dune project contains a name stanza.
 
 Create a project with an opam file without dev-repo field
 
@@ -130,6 +138,7 @@ If the main opam file doesn't contain a dev-repo field, the first check fails
     [-] Checking dune-release compatibility.
     [FAIL] main package my_pkg.opam is not dune-release compatible. Development repository URL could not be inferred.
     Have you provided a github uri in the dev-repo field of your main opam file? If you don't use github, you can still use dune-release for everything but for publishing your release on the web. In that case, have a look at `dune-release delegate-info`.
+    [FAIL] The dune project doesn't contain a name stanza. Please, add one.
 
 Add an invalid dev-repo field to the opam file
 
@@ -144,6 +153,7 @@ The first check also fails, if the opam file does contain a dev-repo field, but 
     [-] Checking dune-release compatibility.
     [FAIL] main package my_pkg.opam is not dune-release compatible. Could not derive user and repo from uri "https://my_homepage"; expected the pattern $SCHEME://$HOST/$USER/$REPO[.$EXT][/$DIR]
     Have you provided a github uri in the dev-repo field of your main opam file? If you don't use github, you can still use dune-release for everything but for publishing your release on the web. In that case, have a look at `dune-release delegate-info`.
+    [FAIL] The dune project doesn't contain a name stanza. Please, add one.
 
 Create a sub-opam file with a valid dev-repo field
 
@@ -158,6 +168,7 @@ The first check only depends on the main package; all subpackages are irrelevant
     [-] Checking dune-release compatibility.
     [FAIL] main package my_pkg.opam is not dune-release compatible. Could not derive user and repo from uri "https://my_homepage"; expected the pattern $SCHEME://$HOST/$USER/$REPO[.$EXT][/$DIR]
     Have you provided a github uri in the dev-repo field of your main opam file? If you don't use github, you can still use dune-release for everything but for publishing your release on the web. In that case, have a look at `dune-release delegate-info`.
+    [FAIL] The dune project doesn't contain a name stanza. Please, add one.
 
 Add a name stanza to the dune-project
 
@@ -166,14 +177,16 @@ Add a name stanza to the dune-project
     > (name my_pkg-ppx) \
     > EOF
 
-Which package the main package is can be made clear in the dune-project
+Which package the main package is can be made clear in the dune-project.
+With that, also the second compatibility test passes.
 
     $ dune-release check --skip-lint --skip-build --working-tree
     [-] Checking dune-release compatibility.
-    [ OK ] main package my_pkg-ppx.opam is dune-release compatible.
+    [ OK ] The dev-repo field of my_pkg-ppx.opam contains a github uri.
+    [ OK ] The dune project contains a name stanza.
 
-Make a project with a dune-releasable opam file on the working tree,
-but a non-dune-releasable opam file on the last git tag.
+Make a project which is dune-release compatible on the working tree,
+but not dune-release compatible on the last git tag.
 
     $ rm my_pkg.opam my_pkg-ppx.opam dune-project
     $ echo "opam-version: \"2.0\"" > my_pkg.opam
@@ -186,12 +199,17 @@ but a non-dune-releasable opam file on the last git tag.
     $ git tag -a 0.1.0 HEAD -m "release 0.1.0"
 
     $ echo "dev-repo: \"git+https://github.com/fu/fa.git\"" >> my_pkg.opam
+    $ cat > dune-project << EOF \
+    > (lang dune 2.7)\
+    > (name my_pkg)\
+    > EOF
 
 The [--working-tree] option used so far, makes `check` be run on the working tree.
 
     $ dune-release check --skip-lint --skip-build --working-tree
     [-] Checking dune-release compatibility.
-    [ OK ] main package my_pkg.opam is dune-release compatible.
+    [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
+    [ OK ] The dune project contains a name stanza.
 
  By default, `check` runs on a tag - either the one provided by [--tag] or [--version],
  or the last tag on HEAD.
@@ -200,3 +218,4 @@ The [--working-tree] option used so far, makes `check` be run on the working tre
     [-] Checking dune-release compatibility.
     [FAIL] main package my_pkg.opam is not dune-release compatible. Development repository URL could not be inferred.
     Have you provided a github uri in the dev-repo field of your main opam file? If you don't use github, you can still use dune-release for everything but for publishing your release on the web. In that case, have a look at `dune-release delegate-info`.
+    [FAIL] The dune project doesn't contain a name stanza. Please, add one.

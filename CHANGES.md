@@ -15,7 +15,7 @@
   `--draft` for 'dune-release publish' and 'dune-release opam submit' commands.
   (#248, @gpetiot)
 - Add a new command `check` to check the prerequisites of dune-release and
-  avoid starting a release process that couldn't be finished (#318, @pitag-ha)
+  avoid starting a release process that couldn't be finished (#318, #351, @pitag-ha)
 
 ### Changed
 
