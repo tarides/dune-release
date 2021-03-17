@@ -11,9 +11,10 @@ let opam_version =
   testable Dune_release.Opam.Version.pp Dune_release.Opam.Version.equal
 
 let curl =
-  let pp fs Dune_release.Curl.{ url; args } =
+  let pp fs Dune_release.Curl.{ url; meth; args } =
     let args = Dune_release.Curl_option.to_string_list args in
     Format.fprintf fs "url = %S;@ " url;
+    Format.fprintf fs "meth = %a@ " Curly.Meth.pp meth;
     Format.fprintf fs "args = %a@\n" (Fmt.list ~sep:Fmt.sp Fmt.string) args
   in
   testable pp ( = )

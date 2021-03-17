@@ -52,10 +52,11 @@ val submit :
   pkg_names:string list ->
   no_auto_open:bool ->
   yes:bool ->
+  draft:bool ->
   unit ->
   (int, Bos_setup.R.msg) result
 (** [submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ~dry_run
-    ~pkgs ~pkg_names ~no_auto_open ~yes ()]
+    ~pkgs ~pkg_names ~no_auto_open ~yes ~draft ()]
     opens a pull request on the opam repository for the packages [pkgs]. Returns
     the exit code (0 for success, 1 for failure) or error messages. *)
 

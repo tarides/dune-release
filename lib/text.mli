@@ -88,6 +88,8 @@ module Pp : sig
 
   val status : [ `Ok | `Fail ] Fmt.t
   (** [status] formats a result status. *)
+
+  val maybe_draft : (bool * string) Fmt.t
 end
 
 (*---------------------------------------------------------------------------

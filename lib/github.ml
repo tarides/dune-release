@@ -19,9 +19,13 @@ module D = struct
 
   let pr_url = "${pr_url}"
 
+  let pr_node_id = "${pr_node_id}"
+
   let download_url = "${download_url}"
 
   let release_id = 1
+
+  let asset_name = "${asset_name}"
 end
 
 module Parse = struct
@@ -179,13 +183,14 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
 
 (* Publish releases *)
 
-let github_auth ~dry_run ~user token =
+let github_v3_auth ~dry_run ~user token =
   if dry_run then Ok Curl_option.{ user; token = D.token }
   else Sos.read_file ~dry_run token >>| fun token -> Curl_option.{ user; token }
 
-let run_with_auth ?(meth = `POST) ?(default_body = `Null) ~dry_run ~auth curl_t
-    =
-  let Curl.{ url; args } = Curl.with_auth ~auth curl_t in
+let github_v4_auth ~dry_run token =
+  if dry_run then Ok D.token else Sos.read_file ~dry_run token
+
+let run_with_auth ?(default_body = `Null) ~dry_run Curl.{ url; args; meth } =
   let args = Curl_option.to_string_list args in
   if dry_run then
     Sos.show "exec:@[@ curl %a@]"
@@ -206,32 +211,114 @@ let run_with_auth ?(meth = `POST) ?(default_body = `Null) ~dry_run ~auth curl_t
         Json.from_string resp.body
     | Error e -> R.error_msgf "curl execution failed: %a" Curly.Error.pp e
 
-let curl_create_release ~token ~dry_run ~version ~tag msg user repo =
-  github_auth ~dry_run ~user token >>= fun auth ->
-  let curl_t = Curl.create_release ~version ~tag ~msg ~user ~repo in
+let curl_create_release ~token ~dry_run ~version ~tag ~draft msg user repo =
+  github_v3_auth ~dry_run ~user token >>= fun auth ->
+  let curl_t =
+    Github_v3_api.Release.Request.create ~version ~tag ~msg ~user ~repo ~draft
+  in
+  let curl_t = Github_v3_api.with_auth ~auth curl_t in
   let default_body = `Assoc [ ("id", `Int D.release_id) ] in
-  run_with_auth ~dry_run ~default_body ~auth curl_t
-  >>= Github_v3_api.Release_response.release_id
+  run_with_auth ~dry_run ~default_body curl_t
+  >>= Github_v3_api.Release.Response.release_id
 
 let curl_upload_archive ~token ~dry_run ~yes archive user repo release_id =
-  let curl_t = Curl.upload_archive ~archive ~user ~repo ~release_id in
-  github_auth ~dry_run ~user token >>= fun auth ->
+  let curl_t =
+    Github_v3_api.Archive.Request.upload ~archive ~user ~repo ~release_id
+  in
+  github_v3_auth ~dry_run ~user token >>= fun auth ->
+  let curl_t = Github_v3_api.with_auth ~auth curl_t in
   let default_body =
-    `Assoc [ ("browser_download_url", `String D.download_url) ]
+    `Assoc
+      [
+        ("browser_download_url", `String D.download_url);
+        ("name", `String D.asset_name);
+      ]
   in
   Prompt.try_again ~yes ~default_answer:Prompt.Yes
     ~question:(fun l ->
       l "Uploading %a as release asset failed. Try again?" Text.Pp.path archive)
     (fun () ->
-      run_with_auth ~dry_run ~default_body ~auth curl_t
-      >>= Github_v3_api.Upload_response.browser_download_url)
+      run_with_auth ~dry_run ~default_body curl_t >>= fun response ->
+      Github_v3_api.Archive.Response.browser_download_url response
+      >>= fun url ->
+      Github_v3_api.Archive.Response.name response >>= fun name -> Ok (url, name))
 
-let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo body =
-  let curl_t = Curl.open_pr ~title ~user ~branch ~body ~opam_repo in
-  github_auth ~dry_run ~user:distrib_user token >>= fun auth ->
+let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo ~draft
+    body pkg =
+  let curl_t =
+    Github_v3_api.Pull_request.Request.open_ ~title ~user ~branch ~body
+      ~opam_repo ~draft
+  in
+  github_v3_auth ~dry_run ~user:distrib_user token >>= fun auth ->
+  let curl_t = Github_v3_api.with_auth ~auth curl_t in
   let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
-  run_with_auth ~dry_run ~default_body ~auth curl_t
-  >>= Github_v3_api.Pull_request_response.html_url
+  run_with_auth ~dry_run ~default_body curl_t >>= fun json ->
+  (if draft then
+   Pkg.build_dir pkg >>= fun build_dir ->
+   Pkg.name pkg >>= fun name ->
+   Pkg.version pkg >>= fun version ->
+   Github_v3_api.Pull_request.Response.number json >>= fun pr_number ->
+   Config.Draft_pr.set ~dry_run ~build_dir ~name ~version
+     (string_of_int pr_number)
+  else Ok ())
+  >>= fun () -> Github_v3_api.Pull_request.Response.html_url json
+
+let undraft_release ~token ~dry_run ~user ~repo ~release_id ~name =
+  (match int_of_string_opt release_id with
+  | Some id -> Ok id
+  | None -> R.error_msgf "Invalid Github Release id: %s" release_id)
+  >>= fun release_id ->
+  let curl_t = Github_v3_api.Release.Request.undraft ~user ~repo ~release_id in
+  github_v3_auth ~dry_run ~user token >>= fun auth ->
+  let default_body =
+    `Assoc [ ("browser_download_url", `String D.download_url) ]
+  in
+  let curl_t = Github_v3_api.with_auth ~auth curl_t in
+  run_with_auth ~dry_run ~default_body curl_t
+  >>= Github_v3_api.Release.Response.browser_download_url ~name
+
+let undraft_pr ~token ~dry_run ~opam_repo:(user, repo) ~pr_id =
+  (match int_of_string_opt pr_id with
+  | Some id -> Ok id
+  | None -> R.error_msgf "Invalid Github PR number: %s" pr_id)
+  >>= fun pr_id ->
+  github_v4_auth ~dry_run token >>= fun auth ->
+  let curl_t =
+    Github_v4_api.Pull_request.Request.node_id ~user ~repo ~id:pr_id
+  in
+  let curl_t = Github_v4_api.with_auth ~token:auth curl_t in
+  let default_body =
+    `Assoc
+      [
+        ( "data",
+          `Assoc
+            [
+              ( "repository",
+                `Assoc
+                  [ ("pullRequest", `Assoc [ ("id", `String D.pr_node_id) ]) ]
+              );
+            ] );
+      ]
+  in
+  run_with_auth ~dry_run ~default_body curl_t
+  >>= Github_v4_api.Pull_request.Response.node_id
+  >>= fun node_id ->
+  let curl_t = Github_v4_api.Pull_request.Request.ready_for_review ~node_id in
+  let curl_t = Github_v4_api.with_auth ~token:auth curl_t in
+  let default_body =
+    `Assoc
+      [
+        ( "data",
+          `Assoc
+            [
+              ( "markPullRequestReadyForReview",
+                `Assoc [ ("pullRequest", `Assoc [ ("url", `String D.pr_url) ]) ]
+              );
+            ] );
+      ]
+  in
+  run_with_auth ~dry_run ~default_body curl_t
+  >>= Github_v4_api.Pull_request.Response.url
 
 let dev_repo p =
   Pkg.dev_repo p >>= function
@@ -330,34 +417,36 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
             e)
 
 let curl_get_release ~dry_run ~token ~version ~user ~repo =
-  github_auth ~dry_run ~user token >>= fun auth ->
-  let curl_t = Curl.get_release ~version ~user ~repo in
-  run_with_auth ~meth:`GET ~dry_run ~auth curl_t
-  >>= Github_v3_api.Release_response.release_id
+  github_v3_auth ~dry_run ~user token >>= fun auth ->
+  let curl_t = Github_v3_api.Release.Request.get ~version ~user ~repo in
+  let curl_t = Github_v3_api.with_auth ~auth curl_t in
+  run_with_auth ~dry_run curl_t >>= Github_v3_api.Release.Response.release_id
 
 let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
-    =
+    ~draft =
   match curl_get_release ~dry_run ~token ~version ~user ~repo with
   | Error _ ->
       Prompt.(
         confirm_or_abort ~yes
           ~question:(fun l ->
-            l "Create release %a on %a?" Text.Pp.version version Text.Pp.url
-              dev_repo)
+            l "Create %a %a on %a?" Text.Pp.maybe_draft (draft, "release")
+              Text.Pp.version version Text.Pp.url dev_repo)
           ~default_answer:Yes)
       >>= fun () ->
       App_log.status (fun l ->
-          l "Creating release %a on %a via github's API" Text.Pp.version version
-            Text.Pp.url dev_repo);
-      curl_create_release ~token ~dry_run ~version ~tag msg user repo
+          l "Creating %a %a on %a via github's API" Text.Pp.maybe_draft
+            (draft, "release") Text.Pp.version version Text.Pp.url dev_repo);
+      curl_create_release ~token ~dry_run ~version ~tag msg user repo ~draft
       >>= fun id ->
-      App_log.success (fun l -> l "Succesfully created release with id %d" id);
+      App_log.success (fun l ->
+          l "Successfully created %a with id %d" Text.Pp.maybe_draft
+            (draft, "release") id);
       Ok id
   | Ok id ->
       App_log.status (fun l -> l "Release with id %d already exists" id);
       Ok id
 
-let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
+let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes ~draft p =
   (match distrib_uri with Some uri -> Ok uri | None -> Pkg.infer_repo_uri p)
   >>= fun uri ->
   (match Uri.Github.get_user_and_repo uri with
@@ -365,16 +454,24 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
   | r -> r)
   >>= fun (user, repo) ->
   Pkg.tag p >>= fun tag ->
-  Pkg.version p >>= fun version ->
   assert_tag_exists ~dry_run tag >>= fun () ->
   Vcs.get () >>= fun vcs ->
   check_tag ~dry_run vcs tag >>= fun () ->
   dev_repo p >>= fun dev_repo ->
+  Pkg.build_dir p >>= fun build_dir ->
+  Pkg.name p >>= fun name ->
+  Pkg.version p >>= fun version ->
   push_tag ~dry_run ~yes ~dev_repo vcs tag >>= fun () ->
   (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
   >>= fun token ->
   create_release ~dry_run ~yes ~dev_repo ~token ~version ~msg ~tag ~user ~repo
+    ~draft
   >>= fun id ->
+  (if draft then
+   Config.Draft_release.set ~dry_run ~build_dir ~name ~version
+     (string_of_int id)
+  else Config.Draft_release.unset ~dry_run ~build_dir ~name ~version)
+  >>= fun () ->
   Prompt.(
     confirm_or_abort ~yes
       ~question:(fun l -> l "Upload %a as release asset?" Text.Pp.path archive)
@@ -384,6 +481,11 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes p =
       l "Uploading %a as a release asset for %a via github's API" Text.Pp.path
         archive Text.Pp.version version);
   curl_upload_archive ~token ~dry_run ~yes archive user repo id
+  >>= fun (url, asset_name) ->
+  (if draft then
+   Config.Release_asset_name.set ~dry_run ~build_dir ~name ~version asset_name
+  else Config.Release_asset_name.unset ~dry_run ~build_dir ~name ~version)
+  >>= fun () -> Ok url
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

@@ -32,6 +32,7 @@ val publish_distrib :
   msg:string ->
   archive:Fpath.t ->
   yes:bool ->
+  draft:bool ->
   Pkg.t ->
   (string, R.msg) Result.result
 (** Push the tag, create a Github release, upload the distribution archive and
@@ -45,6 +46,17 @@ val publish_doc :
   Pkg.t ->
   (unit, R.msg) Result.result
 
+val undraft_release :
+  token:Fpath.t ->
+  dry_run:bool ->
+  user:string ->
+  repo:string ->
+  release_id:string ->
+  name:string ->
+  (string, R.msg) Result.result
+(** [undraft_release] updates an existing release to undraft it and returns the
+    release archive download URL. *)
+
 val open_pr :
   token:Fpath.t ->
   dry_run:bool ->
@@ -53,8 +65,19 @@ val open_pr :
   user:string ->
   branch:Vcs.commit_ish ->
   opam_repo:string * string ->
+  draft:bool ->
   string ->
+  Pkg.t ->
   ([ `Url of string | `Already_exists ], R.msg) result
+
+val undraft_pr :
+  token:Fpath.t ->
+  dry_run:bool ->
+  opam_repo:string * string ->
+  pr_id:string ->
+  (string, R.msg) result
+(** [undraft_pr] updates an existing pull request to undraft it and returns the
+    pull request URL. *)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

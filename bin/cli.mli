@@ -61,11 +61,30 @@ val token : [ `Token of Fpath.t option ] Term.t
 val dry_run : [ `Dry_run of bool ] Term.t
 (** A [--dry-run] option to do not perform any action. *)
 
+val draft : [ `Draft of bool ] Term.t
+(** A [--draft] option to produce a draft release. *)
+
 val yes : [ `Yes of bool ] Term.t
 (** A [--yes] option to skip confirmation prompts. *)
 
 val include_submodules : [ `Include_submodules of bool ] Term.t
 (** A [--include-submodules] flag to include submodules in the distrib tarball *)
+
+val user : [ `User of string option ] Term.t
+(** A [--user] option to define the name of the GitHub account where to push new
+    opam-repository branches. *)
+
+val local_repo : [ `Local_repo of string option ] Term.t
+(** A [--local-repo] option to define the location of the local fork of
+    opam-repository. *)
+
+val remote_repo : [ `Remote_repo of string option ] Term.t
+(** A [--remote-repo] option to define the location of the remote fork of
+    opam-repository. *)
+
+val opam_repo : [ `Opam_repo of (string * string) option ] Term.t
+(** A [--opam_repo] option to define the Github opam-repository to which
+    packages should be released. *)
 
 (** {1 Terms} *)
 

@@ -22,11 +22,12 @@ val publish :
   dry_run:bool ->
   publish_artefacts:[ `Alt of string | `Distrib | `Doc ] list ->
   yes:bool ->
+  draft:bool ->
   unit ->
   (int, Bos_setup.R.msg) result
 (** [publish ~build_dir ~opam ~delegate ~change_log ~distrib_uri ~distrib_file
     ~publish_msg ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
-    ~publish_artefacts ~yes ()]
+    ~publish_artefacts ~yes ~draft ()]
     publishes the artefacts [publish_artefacts] of the package built with
     [name], [version] and [tag]. Returns the exit code (0 for success, 1 for
     failure) or error messages.

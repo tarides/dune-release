@@ -19,6 +19,7 @@ val publish_distrib :
   msg:string ->
   archive:Fpath.t ->
   yes:bool ->
+  draft:bool ->
   Pkg.t ->
   (unit, R.msg) result
 

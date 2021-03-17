@@ -42,3 +42,42 @@ val save : t -> (unit, Bos_setup.R.msg) result
 val pretty_fields : t -> (string * string option) list
 (** [pretty_fields t] returns the list of pretty-printed key-value pairs for the
     config [t]. *)
+
+module type S = sig
+  val path : build_dir:Fpath.t -> name:string -> version:string -> Fpath.t
+
+  val set :
+    dry_run:bool ->
+    build_dir:Fpath.t ->
+    name:string ->
+    version:string ->
+    string ->
+    (unit, Bos_setup.R.msg) result
+
+  val is_set :
+    dry_run:bool ->
+    build_dir:Fpath.t ->
+    name:string ->
+    version:string ->
+    (bool, Bos_setup.R.msg) result
+
+  val get :
+    dry_run:bool ->
+    build_dir:Fpath.t ->
+    name:string ->
+    version:string ->
+    (string, Bos_setup.R.msg) result
+
+  val unset :
+    dry_run:bool ->
+    build_dir:Fpath.t ->
+    name:string ->
+    version:string ->
+    (unit, Bos_setup.R.msg) result
+end
+
+module Draft_release : S
+
+module Draft_pr : S
+
+module Release_asset_name : S

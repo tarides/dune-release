@@ -111,7 +111,7 @@ let pp_opam_repo fmt opam_repo =
   Format.fprintf fmt "%s/%s" user repo
 
 let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
-    ~title ~opam_repo ~auto_open ~yes pkg =
+    ~title ~opam_repo ~auto_open ~yes ~draft pkg =
   Pkg.opam_descr pkg >>= fun (syn, _) ->
   Pkg.opam_homepage pkg >>= fun homepage ->
   Pkg.opam_doc pkg >>= fun doc ->
@@ -128,14 +128,17 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
   in
   Prompt.(
     confirm_or_abort ~yes
-      ~question:(fun l -> l "Open PR to %a?" pp_opam_repo opam_repo)
+      ~question:(fun l ->
+        l "Open %a to %a?" Text.Pp.maybe_draft (draft, "PR") pp_opam_repo
+          opam_repo)
       ~default_answer:Yes)
   >>= fun () ->
   App_log.status (fun l ->
-      l "Opening pull request to merge branch %a of %a into %a" Text.Pp.commit
-        branch Text.Pp.url remote_repo pp_opam_repo opam_repo);
+      l "Opening %a to merge branch %a of %a into %a" Text.Pp.maybe_draft
+        (draft, "pull request") Text.Pp.commit branch Text.Pp.url remote_repo
+        pp_opam_repo opam_repo);
   Github.open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo
-    msg
+    ~draft msg pkg
   >>= function
   | `Already_exists ->
       App_log.blank_line ();
@@ -147,7 +150,8 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
   | `Url url -> (
       let msg () =
         App_log.success (fun m ->
-            m "A new pull-request has been created at %s\n" url);
+            m "A new %a has been created at %s\n" Text.Pp.maybe_draft
+              (draft, "pull-request") url);
         Ok 0
       in
       if not auto_open then msg ()
@@ -160,7 +164,7 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
         | Error _ -> msg ())
 
 let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
-    remote_repo pkgs auto_open =
+    remote_repo pkgs auto_open ~draft =
   List.fold_left
     (fun acc pkg ->
       get_pkg_dir pkg >>= fun pkg_dir ->
@@ -178,6 +182,17 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
   let pkg = List.hd pkgs in
   Pkg.version pkg >>= fun version ->
   Pkg.tag pkg >>= fun tag ->
+  Pkg.build_dir pkg >>= fun build_dir ->
+  Pkg.name pkg >>= fun name ->
+  (if draft then Ok ()
+  else
+    match Config.Draft_release.is_set ~dry_run ~build_dir ~name ~version with
+    | Ok true ->
+        R.error_msg
+          "Cannot open a non-draft pull request for a draft release. Please \
+           use option '--draft' for 'dune-release opam submit'."
+    | _ -> Ok ())
+  >>= fun () ->
   list_map Pkg.name pkgs >>= fun names ->
   let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
   Pkg.publish_msg pkg >>= fun changes ->
@@ -195,12 +210,13 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
   let changes = Text.rewrite_github_refs ~user:distrib_user ~repo changes in
   let msg = strf "%s\n\n%s\n" title changes in
   App_log.status (fun l ->
-      l "Preparing pull request to %a" pp_opam_repo opam_repo);
+      l "Preparing %a to %a" Text.Pp.maybe_draft (draft, "pull request")
+        pp_opam_repo opam_repo);
   Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
     names
   >>= fun branch ->
   open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
-    ~title ~opam_repo ~auto_open ~yes pkg
+    ~title ~opam_repo ~auto_open ~yes ~draft pkg
 
 let field pkgs field =
   match field with
@@ -254,7 +270,7 @@ let pkg ?distrib_uri ~dry_run ~pkgs () =
     (Ok 0) pkgs
 
 let submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ?token
-    ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes () =
+    ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes ~draft () =
   let opam_repo =
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
@@ -279,7 +295,7 @@ let submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ?token
   App_log.status (fun m ->
       m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
   submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user:config.user
-    local_repo remote_repo pkgs auto_open
+    local_repo remote_repo pkgs auto_open ~draft
 
 let field ~pkgs ~field_name = field pkgs field_name
 
@@ -290,7 +306,7 @@ let opam_cli () (`Dry_run dry_run) (`Build_dir build_dir)
     (`Package_version version) (`Pkg_descr pkg_descr) (`Readme readme)
     (`Change_log change_log) (`Publish_msg publish_msg) (`Action action)
     (`Field_name field_name) (`No_auto_open no_auto_open) (`Yes yes)
-    (`Token token) =
+    (`Token token) (`Draft draft) =
   get_pkgs ?build_dir ?opam ?distrib_file ?pkg_descr ?readme ?change_log
     ?publish_msg ~dry_run ~keep_v ~tag ~pkg_names ~version ()
   >>= (fun pkgs ->
@@ -299,7 +315,7 @@ let opam_cli () (`Dry_run dry_run) (`Build_dir build_dir)
         | `Pkg -> pkg ~dry_run ?distrib_uri ~pkgs ()
         | `Submit ->
             submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ?token
-              ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes ()
+              ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes ~draft ()
         | `Field -> field ~pkgs ~field_name)
   |> Cli.handle_error
 
@@ -331,49 +347,6 @@ let no_auto_open =
   Cli.named
     (fun x -> `No_auto_open x)
     Arg.(value & flag & info [ "no-auto-open" ] ~doc)
-
-let user =
-  let doc =
-    "the name of the GitHub account where to push new opam-repository branches."
-  in
-  Cli.named
-    (fun x -> `User x)
-    Arg.(
-      value & opt (some string) None & info [ "u"; "user" ] ~doc ~docv:"USER")
-
-let local_repo =
-  let doc = "Location of the local fork of opam-repository" in
-  let env = Arg.env_var "DUNE_RELEASE_LOCAL_REPO" in
-  Cli.named
-    (fun x -> `Local_repo x)
-    Arg.(
-      value
-      & opt (some string) None
-      & info ~env [ "l"; "--local-repo" ] ~doc ~docv:"PATH")
-
-let remote_repo =
-  let doc = "Location of the remote fork of opam-repository" in
-  let env = Arg.env_var "DUNE_RELEASE_REMOTE_REPO" in
-  Cli.named
-    (fun x -> `Remote_repo x)
-    Arg.(
-      value
-      & opt (some string) None
-      & info ~env [ "r"; "--remote-repo" ] ~doc ~docv:"URI")
-
-let opam_repo =
-  let doc =
-    "The Github opam-repository to which packages should be released. Use this \
-     to release to a custom repo. Useful for testing purposes."
-  in
-  let docv = "GITHUB_USER_OR_ORG/REPO_NAME" in
-  let env = Arg.env_var "DUNE_RELEASE_OPAM_REPO" in
-  Cli.named
-    (fun x -> `Opam_repo x)
-    Arg.(
-      value
-      & opt (some (pair ~sep:'/' string string)) None
-      & info ~env [ "opam-repo" ] ~doc ~docv)
 
 let pkg_descr =
   let doc =
@@ -433,12 +406,12 @@ let cmd =
   let info = Term.info "opam" ~doc ~sdocs ~envs ~man ~man_xrefs in
   let t =
     Term.(
-      pure opam_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ local_repo
-      $ remote_repo $ opam_repo $ user $ Cli.keep_v $ Cli.dist_opam
+      pure opam_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.local_repo
+      $ Cli.remote_repo $ Cli.opam_repo $ Cli.user $ Cli.keep_v $ Cli.dist_opam
       $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $ Cli.pkg_names
       $ Cli.pkg_version $ pkg_descr $ Cli.readme $ Cli.change_log
       $ Cli.publish_msg $ action $ field_arg $ no_auto_open $ Cli.yes
-      $ Cli.token)
+      $ Cli.token $ Cli.draft)
   in
   (t, info)
 

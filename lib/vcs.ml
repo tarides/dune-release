@@ -149,6 +149,12 @@ let git_checkout ~dry_run r ~branch ~commit_ish =
     ~default:Default.string
   >>= fun _ -> Ok ()
 
+let git_change_branch ~dry_run r ~branch =
+  run_git_string ~dry_run ~force:true r
+    Cmd.(git_work_tree r % "checkout" % branch)
+    ~default:Default.string
+  >>= fun _ -> Ok ()
+
 let git_tag ~dry_run r ~force ~sign ~msg ~commit_ish tag =
   let msg = match msg with None -> Cmd.empty | Some m -> Cmd.(v "-m" % m) in
   let flags = Cmd.(on force (v "-f") %% on sign (v "-s")) in
@@ -286,6 +292,9 @@ let hg_checkout r ~branch ~rev =
   | Some branch ->
       run_hg r Cmd.(v "branch" % branch) OS.Cmd.out_string >>= fun _ -> Ok ()
 
+let hg_change_branch r ~branch =
+  run_hg r Cmd.(v "update" % branch) OS.Cmd.out_string >>= fun _ -> Ok ()
+
 let hg_tag r ~force ~sign ~msg ~rev tag =
   if sign then R.error_msgf "Tag signing is not supported by hg"
   else
@@ -371,6 +380,11 @@ let checkout ~dry_run ?branch r ~commit_ish =
   match r with
   | (`Git, _, _) as r -> git_checkout ~dry_run r ~branch ~commit_ish
   | (`Hg, _, _) as r -> hg_checkout r ~branch ~rev:(hg_rev commit_ish)
+
+let change_branch ~dry_run ~branch r =
+  match r with
+  | (`Git, _, _) as r -> git_change_branch ~dry_run r ~branch
+  | (`Hg, _, _) as r -> hg_change_branch r ~branch
 
 let tag ~dry_run ?(force = false) ?(sign = false) ?msg ?(commit_ish = "HEAD") r
     tag =

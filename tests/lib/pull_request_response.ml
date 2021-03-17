@@ -549,3 +549,23 @@ let gh_v3_api_unhandled_failure =
   "documentation_url": "https://docs.github.com/rest/reference/pulls#create-a-pull-request"
 }
 |}
+
+let gh_v4_api_node_id_example =
+  {|
+{"data":{"repository":{"pullRequest":{"id":"MDExOlB1bGxSZXF1ZXN0NTUxODAxMTU2"}}}}
+|}
+
+let gh_v4_api_node_id_unhandled_failure =
+  {|
+{"data":{"repository":null},"errors":[{"type":"NOT_FOUND","path":["repository"],"locations":[{"line":1,"column":9}],"message":"Could not resolve to a Repository with the name 'user/foo'."}]}
+|}
+
+let gh_v4_api_url_example =
+  {|
+{"data":{"markPullRequestReadyForReview":{"pullRequest":{"url":"https://github.com/user/opam-repository/pull/8"}}}}
+|}
+
+let gh_v4_api_url_unhandled_failure =
+  {|
+{"data":{"markPullRequestReadyForReview":null},"errors":[{"type":"NOT_FOUND","path":["markPullRequestReadyForReview"],"locations":[{"line":1,"column":12}],"message":"Could not resolve to a node with the global id of 'foo'"}]}
+|}

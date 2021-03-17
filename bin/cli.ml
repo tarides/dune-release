@@ -148,6 +148,14 @@ let dry_run =
   in
   named (fun x -> `Dry_run x) Arg.(value & flag & info [ "dry-run" ] ~doc)
 
+let draft =
+  let doc =
+    "Produce a draft release that cannot be merged accidentally and has to be \
+     undrafted before proceeding with the actual release. $(b,Warning:) This \
+     feature is experimental."
+  in
+  named (fun x -> `Draft x) Arg.(value & flag & info [ "draft" ] ~doc)
+
 let yes =
   let doc = "Do not prompt for confirmation and keep going instead" in
   named (fun x -> `Yes x) Arg.(value & flag & info [ "y"; "yes" ] ~doc)
@@ -157,6 +165,49 @@ let include_submodules =
   named
     (fun x -> `Include_submodules x)
     Arg.(value & flag & info [ "include-submodules" ] ~doc)
+
+let user =
+  let doc =
+    "the name of the GitHub account where to push new opam-repository branches."
+  in
+  named
+    (fun x -> `User x)
+    Arg.(
+      value & opt (some string) None & info [ "u"; "user" ] ~doc ~docv:"USER")
+
+let local_repo =
+  let doc = "Location of the local fork of opam-repository" in
+  let env = Arg.env_var "DUNE_RELEASE_LOCAL_REPO" in
+  named
+    (fun x -> `Local_repo x)
+    Arg.(
+      value
+      & opt (some string) None
+      & info ~env [ "l"; "--local-repo" ] ~doc ~docv:"PATH")
+
+let remote_repo =
+  let doc = "Location of the remote fork of opam-repository" in
+  let env = Arg.env_var "DUNE_RELEASE_REMOTE_REPO" in
+  named
+    (fun x -> `Remote_repo x)
+    Arg.(
+      value
+      & opt (some string) None
+      & info ~env [ "r"; "--remote-repo" ] ~doc ~docv:"URI")
+
+let opam_repo =
+  let doc =
+    "The Github opam-repository to which packages should be released. Use this \
+     to release to a custom repo. Useful for testing purposes."
+  in
+  let docv = "GITHUB_USER_OR_ORG/REPO_NAME" in
+  let env = Arg.env_var "DUNE_RELEASE_OPAM_REPO" in
+  named
+    (fun x -> `Opam_repo x)
+    Arg.(
+      value
+      & opt (some (pair ~sep:'/' string string)) None
+      & info ~env [ "opam-repo" ] ~doc ~docv)
 
 (* Terms *)
 

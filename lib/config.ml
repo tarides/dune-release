@@ -254,3 +254,70 @@ let read f default =
 let keep_v v = if v then Ok true else read (fun t -> t.keep_v) false
 
 let auto_open v = if not v then Ok false else read (fun t -> t.auto_open) true
+
+module type S = sig
+  val path : build_dir:Fpath.t -> name:string -> version:string -> Fpath.t
+
+  val set :
+    dry_run:bool ->
+    build_dir:Fpath.t ->
+    name:string ->
+    version:string ->
+    string ->
+    (unit, R.msg) result
+
+  val is_set :
+    dry_run:bool ->
+    build_dir:Fpath.t ->
+    name:string ->
+    version:string ->
+    (bool, R.msg) result
+
+  val get :
+    dry_run:bool ->
+    build_dir:Fpath.t ->
+    name:string ->
+    version:string ->
+    (string, R.msg) result
+
+  val unset :
+    dry_run:bool ->
+    build_dir:Fpath.t ->
+    name:string ->
+    version:string ->
+    (unit, R.msg) result
+end
+
+module Make (X : sig
+  val ext : string
+end) =
+struct
+  let path ~build_dir ~name ~version =
+    Fpath.(build_dir / strf "%s-%s.%s" name version X.ext)
+
+  let set ~dry_run ~build_dir ~name ~version id =
+    Sos.write_file ~dry_run (path ~build_dir ~name ~version) id
+
+  let is_set ~dry_run ~build_dir ~name ~version =
+    Sos.file_exists ~dry_run (path ~build_dir ~name ~version)
+
+  let get ~dry_run ~build_dir ~name ~version =
+    Sos.read_file ~dry_run (path ~build_dir ~name ~version)
+
+  let unset ~dry_run ~build_dir ~name ~version =
+    let path = path ~build_dir ~name ~version in
+    Sos.file_exists ~dry_run path >>= fun exists ->
+    if exists then Sos.delete_path ~dry_run path else Ok ()
+end
+
+module Draft_release = Make (struct
+  let ext = "draft_release"
+end)
+
+module Draft_pr = Make (struct
+  let ext = "draft_pr"
+end)
+
+module Release_asset_name = Make (struct
+  let ext = "release_asset_name"
+end)

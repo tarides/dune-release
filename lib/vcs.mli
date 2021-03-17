@@ -90,6 +90,9 @@ val checkout :
 (** [checkout r ~branch commit_ish] checks out [commit_ish]. Checks out in a new
     branch [branch] if provided. *)
 
+val change_branch : dry_run:bool -> branch:string -> t -> (unit, R.msg) result
+(** [change_branch ~branch r] moves the head to an existing branch [branch]. *)
+
 val tag :
   dry_run:bool ->
   ?force:bool ->
