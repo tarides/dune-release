@@ -6,7 +6,13 @@ type t = [ `Std_files | `Opam ]
 val all : t list
 (** [all] is a list with all lint values. *)
 
-val lint_pkg :
-  dry_run:bool -> dir:Fpath.t -> Pkg.t -> t list -> (int, R.msg) result
-(** [lint_pkg ~dry_run ~dir pkg lints] performs the lint checks in [lints] on
-    [pkg] located in [dir]. *)
+val lint_packages :
+  dry_run:bool ->
+  dir:Fpath.t ->
+  todo:[ `Opam | `Std_files ] list ->
+  Pkg.t ->
+  string list ->
+  (int, [ `Msg of string ]) result
+(** [lint_packages ~dry_run ~dir ~todo pkg pkg_names] performs the lint checks
+    in [todo] on [pkg] located in [dir] for all opam files whose name is in
+    [pkg_names], or - if [pkg_names] is empty - for all packages in [dir]. *)

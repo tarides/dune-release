@@ -1,0 +1,3 @@
+(executable
+ (name make_check_deterministic)
+ (libraries re))

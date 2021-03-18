@@ -44,11 +44,13 @@ let name p = Ok p.name
 
 let with_name p name = { p with name }
 
-let tag p =
-  match (p.tag, p.version) with
+let tag_from_repo ?tag ?version () =
+  match (tag, version) with
   | Some v, _ -> Ok v
   | None, None -> Vcs.get () >>= fun r -> Vcs.describe ~dirty:false r
   | None, Some v -> Ok v
+
+let tag p = tag_from_repo ?tag:p.tag ?version:p.version ()
 
 let extract_version change_log =
   Text.change_log_file_last_entry change_log >>= fun (version, _) -> Ok version
@@ -344,21 +346,27 @@ let infer_from_readme dir =
           | false -> None
           | true -> Some name))
 
-let infer_name dir =
+let try_infer_name dir =
   infer_from_dune_project dir >>= function
-  | Some n -> Ok n
+  | Some n -> Ok (Some n)
   | None -> (
       infer_from_opam_files dir >>= function
-      | Some n -> Ok n
+      | Some n -> Ok (Some n)
       | None -> (
           infer_from_readme dir >>= function
-          | Some n -> Ok n
-          | None ->
-              Logs.err (fun m ->
-                  m
-                    "cannot determine distribution name automatically: add \
-                     (name <name>) to dune-project");
-              exit 1))
+          | Some n -> Ok (Some n)
+          | None -> Ok None))
+
+let infer_name_err : ('a, Format.formatter, unit, unit, unit, 'a) format6 =
+  "cannot determine distribution name automatically: add (name <name>) to \
+   dune-project"
+
+let infer_name dir =
+  try_infer_name dir >>| function
+  | Some name -> name
+  | None ->
+      Logs.err (fun m -> m infer_name_err);
+      exit 1
 
 let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
     ?opam:opam_file ?opam_descr ?readme ?change_log ?license ?distrib_file
@@ -474,20 +482,21 @@ type f =
   dir:Fpath.t ->
   args:Cmd.t ->
   out:(OS.Cmd.run_out -> (string * OS.Cmd.run_status, Sos.error) result) ->
+  ?err:Bos.OS.Cmd.run_err ->
   string list ->
   (string * OS.Cmd.run_status, Sos.error) result
 
-let run ~dry_run ~dir ~args ~out ~default pkg_names cmd =
+let run ~dry_run ~dir ~args ~out ~default ?err pkg_names cmd =
   let pkgs = String.concat ~sep:"," pkg_names in
   let cmd = Cmd.(v "dune" % cmd % "-p" % pkgs %% args) in
-  let run () = Sos.run_out ~dry_run cmd ~default out in
+  let run () = Sos.run_out ~dry_run ?err cmd ~default out in
   R.join @@ Sos.with_dir ~dry_run dir run ()
 
-let test ~dry_run ~dir ~args ~out pkg_names =
-  run ~dry_run ~dir ~args ~out ~default:(Sos.out "") pkg_names "runtest"
+let test ~dry_run ~dir ~args ~out ?err pkg_names =
+  run ~dry_run ~dir ~args ~out ~default:(Sos.out "") ?err pkg_names "runtest"
 
-let build ~dry_run ~dir ~args ~out pkg_names =
-  run ~dry_run ~dir ~args ~out ~default:(Sos.out "") pkg_names "build"
+let build ~dry_run ~dir ~args ~out ?err pkg_names =
+  run ~dry_run ~dir ~args ~out ~default:(Sos.out "") ?err pkg_names "build"
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

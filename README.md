@@ -102,9 +102,7 @@ errors early. Hence test that your source repository lints and that it builds in
 environment and that the package tests pass.
 
 ```
-dune-release lint
-dune build # Check out the generated opam install file too
-dune runtest
+dune-release check
 ```
 
 The full documentation of this command is available with

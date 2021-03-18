@@ -11,15 +11,9 @@ let lint () (`Dry_run dry_run) (`Package_names pkg_names)
     (`Package_version version) (`Dist_tag tag) (`Keep_v keep_v) (`Lints lints) =
   Cli.handle_error
     ( Config.keep_v keep_v >>= fun keep_v ->
-      Pkg.infer_pkg_names Fpath.(v ".") pkg_names >>= fun pkg_names ->
       let pkg = Pkg.v ~dry_run ?version ~keep_v ?tag () in
       OS.Dir.current () >>= fun dir ->
-      List.fold_left
-        (fun acc name ->
-          acc >>= fun acc ->
-          let pkg = Pkg.with_name pkg name in
-          Lint.lint_pkg ~dry_run ~dir pkg lints >>= fun n -> Ok (acc + n))
-        (Ok 0) pkg_names )
+      Lint.lint_packages ~dry_run ~dir ~todo:lints pkg pkg_names )
 
 (* Command line interface *)
 

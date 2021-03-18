@@ -1,0 +1,9 @@
+(copy_files ../helpers/make_check_deterministic.exe)
+
+(alias
+ (name runtest)
+ (deps make_check_deterministic.exe))
+
+(mdx
+ (files run.t)
+ (packages dune-release))

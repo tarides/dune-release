@@ -16,3 +16,8 @@ let success ?src f = app_log ?src (header `Green '+') f
 let unhappy ?src f = app_log ?src (header `Red '!') f
 
 let blank_line () = Logs.app (fun l -> l "")
+
+let report_status status f =
+  Logs.app (fun l ->
+      f (fun ?header ?tags fmt ->
+          l ?header ?tags ("%a " ^^ fmt) Text.Pp.status status))

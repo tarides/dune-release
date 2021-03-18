@@ -45,10 +45,7 @@ let release =
         \        your source repository lints and that it builds in the \
          current build\n\
         \        environment and that the package tests pass.";
-      `Pre
-        "dune-release lint\n\
-         dune build # Check out the generated opam install file too\n\
-         dune runtest";
+      `Pre "dune-release check";
       `S "WRITE THE RELEASE NOTES";
       `P
         "Carefully write the release notes in the package's change log, these\n\

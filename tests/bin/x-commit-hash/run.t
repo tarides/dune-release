@@ -63,7 +63,7 @@ We make a dry-run release
        [in _build]
     => exec: tar -xjf whatever-0.1.0.tbz
     
-    [-] Linting distrib in _build/whatever-0.1.0
+    [-] Performing lint for package whatever in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
        [in _build/whatever-0.1.0]
     => exists ./README
@@ -79,17 +79,17 @@ We make a dry-run release
     [ OK ] opam field description is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] opam field doc can be parsed by dune-release
-    [ OK ] lint _build/whatever-0.1.0 success
+    [ OK ] lint of _build/whatever-0.1.0 and package whatever success
     
     [-] Building package in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
     -: exec: dune build -p whatever
-    [ OK ] package builds
+    [ OK ] package(s) build
     
     [-] Running package tests in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
     -: exec: dune runtest -p whatever
-    [ OK ] package tests
+    [ OK ] package(s) pass the tests
     -: rmdir _build/whatever-0.1.0
     
     [+] Distribution for whatever 0.1.0

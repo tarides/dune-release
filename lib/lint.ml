@@ -2,11 +2,6 @@ open Bos_setup
 
 type t = [ `Std_files | `Opam ]
 
-let report_status status f =
-  Logs.app (fun l ->
-      f (fun ?header ?tags fmt ->
-          l ?header ?tags ("%a " ^^ fmt) Text.Pp.status status))
-
 type std_file = {
   generic_name : string;
   get_path : Pkg.t -> (Fpath.t list, R.msg) result;
@@ -37,7 +32,7 @@ let lint_exists_file ~dry_run { generic_name; get_path } pkg =
   in
   status >>= fun status ->
   let presence = status_to_presence status in
-  report_status status (fun m ->
+  App_log.report_status status (fun m ->
       m "@[File %a@ is@ %s.@]" Text.Pp.path (Fpath.v generic_name) presence);
   let err_count = match status with `Ok -> 0 | `Fail -> 1 in
   Ok err_count
@@ -79,10 +74,10 @@ let lint_file_with_cmd ~dry_run ~file_kind ~cmd ~handle_exit file errs =
 
 let lint_res ~msgf = function
   | Ok _ ->
-      report_status `Ok msgf;
+      App_log.report_status `Ok msgf;
       0
   | Error _ as err ->
-      report_status `Fail msgf;
+      App_log.report_status `Fail msgf;
       Logs.on_error_msg ~use:(fun () -> 1) err
 
 let pp_field = Fmt.(styled `Bold string)
@@ -90,13 +85,13 @@ let pp_field = Fmt.(styled `Bold string)
 let lint_opam_doc pkg =
   (match Pkg.doc_uri pkg with
   | Error _ | Ok "" ->
-      report_status `Ok (fun l ->
+      App_log.report_status `Ok (fun l ->
           l "Skipping doc field linting, no doc field found")
   | Ok _ ->
       let pass = R.is_ok (Pkg.doc_user_repo_and_path pkg) in
       let status = if pass then `Ok else `Fail in
       let verdict = if pass then "can" else "cannot" in
-      report_status status (fun l ->
+      App_log.report_status status (fun l ->
           l "opam field %a %s be parsed by dune-release" pp_field "doc" verdict));
   0
 
@@ -189,7 +184,9 @@ let apply_lint ~dry_run t pkg =
   let f = List.assoc t t_to_fun in
   f ~dry_run pkg
 
-let lint_pkg ~dry_run ~dir pkg todo =
+let pp_pkg_name = Fmt.(styled `Bold string)
+
+let lint_pkg ~dry_run ~dir ~pkg_name pkg todo =
   let lint pkg =
     let do_lint acc t =
       let errs = apply_lint t ~dry_run pkg in
@@ -199,15 +196,30 @@ let lint_pkg ~dry_run ~dir pkg todo =
     match total_errs with
     | 0 ->
         Logs.app (fun m ->
-            m "%a lint %a %a" Text.Pp.status `Ok Text.Pp.path dir
+            m "%a lint of %a and package %a %a " Text.Pp.status `Ok Text.Pp.path
+              dir pp_pkg_name pkg_name
               (Fmt.styled_unit `Green "success")
               ());
         0
     | n ->
         Logs.app (fun m ->
-            m "%a lint %a %a: %d errors." Text.Pp.status `Fail Text.Pp.path dir
+            m "%a lint of %a and package %a %a: %d errors." Text.Pp.status `Fail
+              Text.Pp.path dir pp_pkg_name pkg_name
               (Fmt.styled_unit `Red "failure")
               () n);
         1
   in
   Sos.with_dir ~dry_run dir lint pkg
+
+let lint_packages ~dry_run ~dir ~todo pkg pkg_names =
+  Pkg.infer_pkg_names dir pkg_names >>= fun pkg_names ->
+  List.fold_left
+    (fun acc name ->
+      acc >>= fun acc ->
+      let pkg = Pkg.with_name pkg name in
+      App_log.blank_line ();
+      App_log.status (fun m ->
+          m "Performing lint for package %a in %a" pp_pkg_name name Text.Pp.path
+            dir);
+      lint_pkg ~dry_run ~dir ~pkg_name:name pkg todo >>= fun n -> Ok (acc + n))
+    (Ok 0) pkg_names
