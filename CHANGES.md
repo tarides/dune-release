@@ -20,7 +20,6 @@
 ### Changed
 
 - Attach the changelog to the annotated tag message (#283, @gpetiot)
-- Deprecate the use of delegates in `dune-release publish` (#276, #302, @pitag-ha)
 - Do not remove versioned files from the tarball anymore. We used to exclude
   `.gitignore`, `.gitattributes` and other such files from the archive.
   (#299, @NathanReb)
@@ -34,6 +33,9 @@
 - Make git-related mdx tests more robust in unusual environments (#334, @sternenseemann)
 
 ### Deprecated
+
+- Deprecate the use of delegates in `dune-release publish` (#276, #302, @pitag-ha)
+- Deprecate the use of opam file format 1.x (#352, @NathanReb)
 
 ### Removed
 

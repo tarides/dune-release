@@ -36,6 +36,7 @@ let write_opam_file ~dry_run ~id ~url ~opam_f pkg dest_opam_file =
           (file dest_opam_file) opam_t;
       Ok ()
   | ("1.0" | "1.1" | "1.2") as v ->
+      App_log.unhappy (fun l -> l "%s" Deprecate.Opam_1_x.file_format_warning);
       App_log.status (fun l ->
           l "Upgrading opam file %a from opam format %s to 2.0" Text.Pp.path
             opam_f v);
