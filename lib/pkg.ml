@@ -285,7 +285,7 @@ let publish_msg p =
       change_log p >>= Text.change_log_file_last_entry >>| fun (_, (_, txt)) ->
       strf "CHANGES:\n\n%s\n" txt
 
-let infer_from_dune_project dir =
+let dune_project_name dir =
   let file = Fpath.(dir / "dune-project") in
   Bos.OS.File.exists file >>= function
   | false -> Ok None
@@ -347,7 +347,7 @@ let infer_from_readme dir =
           | true -> Some name))
 
 let try_infer_name dir =
-  infer_from_dune_project dir >>= function
+  dune_project_name dir >>= function
   | Some n -> Ok (Some n)
   | None -> (
       infer_from_opam_files dir >>= function

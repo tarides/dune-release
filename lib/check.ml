@@ -49,7 +49,7 @@ let pkg_creation_check ?tag ?version ~keep_v ?build_dir dir =
   in
   R.join @@ Sos.with_dir ~dry_run:false dir check_creation ()
 
-let compat_check ~dir pkg =
+let opam_file_check ~dir pkg =
   let check () =
     let ok_needed = Pkg.infer_repo_uri pkg >>= Uri.Github.get_user_and_repo in
     Pkg.opam pkg >>| fun main_opam ->
@@ -57,7 +57,7 @@ let compat_check ~dir pkg =
     match ok_needed with
     | Ok _ ->
         App_log.report_status `Ok (fun m ->
-            m "main package %a is dune-release compatible." Text.Pp.path
+            m "The dev-repo field of %a contains a github uri." Text.Pp.path
               main_opam);
         0
     | Error (`Msg err) ->
@@ -74,6 +74,20 @@ let compat_check ~dir pkg =
   in
   R.join @@ Sos.with_dir ~dry_run:false dir check ()
 
+let dune_project_check dir =
+  let check () =
+    Pkg.dune_project_name (Fpath.v ".") >>| function
+    | Some _ ->
+        App_log.report_status `Ok (fun m ->
+            m "The dune project contains a name stanza.");
+        0
+    | None ->
+        App_log.report_status `Fail (fun m ->
+            m "The dune project doesn't contain a name stanza. Please, add one.");
+        1
+  in
+  R.join @@ Sos.with_dir ~dry_run:false dir check ()
+
 let check_project ~pkg_names ~skip_lint ~skip_build ~skip_tests ?tag ?version
     ~keep_v ?build_dir ~dir () =
   match pkg_creation_check ?tag ?version ~keep_v ?build_dir dir with
@@ -82,10 +96,12 @@ let check_project ~pkg_names ~skip_lint ~skip_build ~skip_tests ?tag ?version
       Ok 1
   | Ok pkg ->
       App_log.status (fun m -> m "Checking dune-release compatibility.");
-      compat_check ~dir pkg >>= fun compat_exit ->
+      opam_file_check ~dir pkg >>= fun opam_file_exit ->
+      dune_project_check dir >>= fun dune_project_exit ->
       dune_checks ~dry_run:false ~skip_build ~skip_tests ~pkg_names dir
       >>= fun dune_exit ->
       if skip_lint then Ok 0
       else
         Lint.lint_packages ~dry_run:false ~dir ~todo:Lint.all pkg pkg_names
-        >>| fun lint_exit -> compat_exit + dune_exit + lint_exit
+        >>| fun lint_exit ->
+        opam_file_exit + dune_project_exit + dune_exit + lint_exit
