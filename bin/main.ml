@@ -15,6 +15,7 @@ let cmds =
     Help.cmd;
     Bistro.cmd;
     Lint.cmd;
+    Check.cmd;
     Delegate_info.cmd;
     Config.cmd;
     Undraft.cmd;

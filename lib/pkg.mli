@@ -13,6 +13,12 @@ open Bos_setup
 type t
 (** The type for package descriptions. *)
 
+val infer_name_err : ('a, Format.formatter, unit, unit, unit, 'a) format6
+
+val try_infer_name : Fpath.t -> (string option, [> Rresult.R.msg ]) result
+(** [try_infer_name dir] tries to infer the name of the main package in [dir].
+    If you already have a package [p], use [name p] instead. *)
+
 val v :
   dry_run:bool ->
   ?name:string ->
@@ -43,6 +49,11 @@ val with_name : t -> string -> t
 
 val version : t -> (string, R.msg) result
 (** [version p] is [p]'s version string.*)
+
+val tag_from_repo :
+  ?tag:string -> ?version:string -> unit -> (string, [ `Msg of string ]) result
+(** Returns the commit-ish [tag] or [version] (in that order), if any of them is
+    provided. If not, returns the commit-ish of the latest tag pointing to HEAD. *)
 
 val tag : t -> (string, R.msg) result
 
@@ -128,6 +139,7 @@ type f =
   dir:Fpath.t ->
   args:Cmd.t ->
   out:(OS.Cmd.run_out -> (string * OS.Cmd.run_status, Sos.error) result) ->
+  ?err:Bos.OS.Cmd.run_err ->
   string list ->
   (string * OS.Cmd.run_status, Sos.error) result
 
@@ -156,6 +168,12 @@ val version_line_re : Re.t
 
 val prepare_opam_for_distrib :
   version:string -> content:string list -> string list
+
+(** {1 Dune project} *)
+
+val dune_project_name : Fpath.t -> (string option, [> Rresult.R.msg ]) result
+(** Returns the name stanza entry of the dune project, if any; else, returns
+    `None`. Returns an error, if one of the system calls fails. *)
 
 (**/**)
 

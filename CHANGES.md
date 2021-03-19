@@ -14,12 +14,15 @@
 - Support creation of draft releases and draft PRs. Define a new option
   `--draft` for 'dune-release publish' and 'dune-release opam submit' commands.
   (#248, @gpetiot)
-- Add tracking reference to the release branch (#350, @gpetiot)
+- Add a new command `check` to check the prerequisites of dune-release and
+  avoid starting a release process that couldn't be finished (#318, #351, @pitag-ha)
+- When preparing the opam-repository PR and pushing the local branch to 
+  the user's remote opam-repository fork, use `--set-upstream` to ease any further
+  update of the PR (#350, @gpetiot)
 
 ### Changed
 
 - Attach the changelog to the annotated tag message (#283, @gpetiot)
-- Deprecate the use of delegates in `dune-release publish` (#276, #302, @pitag-ha)
 - Do not remove versioned files from the tarball anymore. We used to exclude
   `.gitignore`, `.gitattributes` and other such files from the archive.
   (#299, @NathanReb)
@@ -33,6 +36,9 @@
 - Make git-related mdx tests more robust in unusual environments (#334, @sternenseemann)
 
 ### Deprecated
+
+- Deprecate the use of delegates in `dune-release publish` (#276, #302, @pitag-ha)
+- Deprecate the use of opam file format 1.x (#352, @NathanReb)
 
 ### Removed
 

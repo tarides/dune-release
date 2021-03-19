@@ -56,10 +56,10 @@ We do the whole dune-release process
     -: rmdir _build/whatever-3.3.4~4.10preview1.build
     [+] Wrote archive _build/whatever-3.3.4~4.10preview1.tbz
     => exec: tar -xjf whatever-3.3.4~4.10preview1.tbz
-    [-] Linting distrib in _build/whatever-3.3.4~4.10preview1
+    [-] Performing lint for package whatever in _build/whatever-3.3.4~4.10preview1
     => chdir _build/whatever-3.3.4~4.10preview1
        [in _build/whatever-3.3.4~4.10preview1]
-    [ OK ] lint _build/whatever-3.3.4~4.10preview1 success
+    [ OK ] lint of _build/whatever-3.3.4~4.10preview1 and package whatever success
     [-] Building package in _build/whatever-3.3.4~4.10preview1
     => chdir _build/whatever-3.3.4~4.10preview1
     [-] Running package tests in _build/whatever-3.3.4~4.10preview1

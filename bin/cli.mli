@@ -29,7 +29,8 @@ val keep_v : [ `Keep_v of bool ] Term.t
 (** A [--keep-v] option to not drop the 'v' at the beginning of version strings. *)
 
 val dist_tag : [ `Dist_tag of string option ] Term.t
-(** A [--tag] option to define the tag to build the distribution from. *)
+(** A [--tag] option to define the tag from which the distribution is or will be
+    built. *)
 
 val dist_file : [ `Dist_file of Fpath.t option ] Term.t
 (** A [--dist-file] option to define the distribution archive file. *)
@@ -85,6 +86,15 @@ val remote_repo : [ `Remote_repo of string option ] Term.t
 val opam_repo : [ `Opam_repo of (string * string) option ] Term.t
 (** A [--opam_repo] option to define the Github opam-repository to which
     packages should be released. *)
+
+val skip_lint : [> `Skip_lint of bool ] Term.t
+(** a [--skip-lint] option to skip the linting *)
+
+val skip_build : [> `Skip_build of bool ] Term.t
+(** a [--skip-build] option to skip checking the build *)
+
+val skip_tests : [> `Skip_tests of bool ] Term.t
+(** a [--skip-test] option to skip checking the tests *)
 
 (** {1 Terms} *)
 

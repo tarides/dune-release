@@ -323,11 +323,7 @@ module Version = struct
     | Ok (s, (_, `Exited 0)) ->
         of_string s >>= fun v ->
         if equal v V1_2_2 then
-          Logs.warn (fun l ->
-              l
-                "opam %s is deprecated, and its support will be dropped in \
-                 dune-release 2.0.0, please switch to opam 2.0"
-                s);
+          App_log.unhappy (fun l -> l "%s" Deprecate.Opam_1_x.client_warning);
         Ok v
     | Ok (_, (_, s)) -> R.error_msgf "opam: %a" OS.Cmd.pp_status s
     | Error (`Msg e) -> R.error_msgf "opam: %s" e

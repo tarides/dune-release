@@ -64,7 +64,7 @@ We do the whole dune-release process
        [in _build]
     => exec: tar -xjf whatever-0.1.0.tbz
     
-    [-] Linting distrib in _build/whatever-0.1.0
+    [-] Performing lint for package whatever in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
        [in _build/whatever-0.1.0]
     => exists ./README
@@ -83,17 +83,17 @@ We do the whole dune-release process
                           "https://whatever.io"; expected the pattern
                           $SCHEME://$HOST/$USER/$REPO[.$EXT][/$DIR]
     [ OK ] Skipping doc field linting, no doc field found
-    [FAIL] lint _build/whatever-0.1.0 failure: 1 errors.
+    [FAIL] lint of _build/whatever-0.1.0 and package whatever failure: 1 errors.
     
     [-] Building package in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
     -: exec: dune build -p whatever
-    [ OK ] package builds
+    [ OK ] package(s) build
     
     [-] Running package tests in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
     -: exec: dune runtest -p whatever
-    [ OK ] package tests
+    [ OK ] package(s) pass the tests
     
     [+] Distribution for whatever 0.1.0
     [+] Commit ...
