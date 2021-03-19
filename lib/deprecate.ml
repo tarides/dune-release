@@ -26,3 +26,15 @@ module Delegates = struct
     "Warning: You are using alternative artefacts. The use of alternative \
      artefacts is deprecated. It will be removed in version 2.0.0. %s"
 end
+
+module Opam_1_x = struct
+  let client_warning =
+    "The opam client 1.x is deprecated and its support will be dropped in \
+     dune-release 2.0.0, please switch to opam 2"
+
+  let file_format_warning =
+    "The opam file format 1.x is deprecated and its support will be dropped in \
+     dune-release 2.0.0, please switch to opam 2"
+
+  let remove_me : _ = Obj.magic ()
+end

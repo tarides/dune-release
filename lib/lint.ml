@@ -107,7 +107,9 @@ let lint_opam_github_fields pkg = lint_opam_doc pkg + lint_opam_home_and_dev pkg
 let opam_lint_cmd ~opam_file_version ~opam_tool_version =
   let lint_older_format =
     match (opam_file_version, opam_tool_version) with
-    | Some "1.2", Opam.Version.V2 -> true
+    | Some "1.2", Opam.Version.V2 ->
+        let _ = Deprecate.Opam_1_x.remove_me in
+        true
     | _ -> false
   in
   Cmd.(Opam.cmd % "lint" %% on lint_older_format (v "--warn=-21-32-48"))
@@ -149,15 +151,28 @@ let opam_lint ~dry_run ~opam_file_version ~opam_tool_version opam_file =
 
 let extra_opam_lint ~opam_file_version ~opam_file pkg =
   let is_2_0_format =
-    match opam_file_version with Some "2.0" -> true | _ -> false
+    match opam_file_version with
+    | Some "2.0" -> true
+    | _ ->
+        let _ = Deprecate.Opam_1_x.remove_me in
+        false
   in
   let descr_err = if is_2_0_format then lint_descr ~opam_file pkg else 0 in
   let github_field_errs = lint_opam_github_fields pkg in
   descr_err + github_field_errs
 
+let opam_file_format_major opam_file_version =
+  match String.cut ~sep:"." opam_file_version with
+  | Some (major, _) -> int_of_string_opt major
+  | _ -> None
+
 let lint_opam ~dry_run pkg =
   Lazy.force Opam.Version.cli >>= fun opam_tool_version ->
   Pkg.opam_field_hd pkg "opam-version" >>= fun opam_file_version ->
+  (match Stdext.Option.bind ~f:opam_file_format_major opam_file_version with
+  | Some 1 ->
+      App_log.unhappy (fun l -> l "%s" Deprecate.Opam_1_x.file_format_warning)
+  | _ -> ());
   match (opam_file_version, opam_tool_version) with
   | Some "2.0", Opam.Version.V1_2_2 ->
       App_log.status (fun l ->
