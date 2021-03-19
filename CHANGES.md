@@ -16,6 +16,9 @@
   (#248, @gpetiot)
 - Add a new command `check` to check the prerequisites of dune-release and
   avoid starting a release process that couldn't be finished (#318, #351, @pitag-ha)
+- When preparing the opam-repository PR and pushing the local branch to 
+  the user's remote opam-repository fork, use `--set-upstream` to ease any further
+  update of the PR (#350, @gpetiot)
 
 ### Changed
 
