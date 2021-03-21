@@ -39,9 +39,7 @@ val load : unit -> (t, Bos_setup.R.msg) result
 
 val save : t -> (unit, Bos_setup.R.msg) result
 
-val pretty_fields : t -> (string * string option) list
-(** [pretty_fields t] returns the list of pretty-printed key-value pairs for the
-    config [t]. *)
+val pp : Format.formatter -> t -> unit
 
 module type S = sig
   val path : build_dir:Fpath.t -> name:string -> version:string -> Fpath.t

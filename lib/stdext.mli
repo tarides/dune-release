@@ -43,6 +43,8 @@ module Option : sig
   val map : f:('a -> 'b) -> 'a option -> 'b option
 
   val bind : f:('a -> 'b option) -> 'a option -> 'b option
+
+  val value : default:'a -> 'a option -> 'a
 end
 
 module List : sig

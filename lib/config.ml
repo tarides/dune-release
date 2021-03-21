@@ -27,43 +27,25 @@ type t = {
 let empty =
   { user = None; remote = None; local = None; keep_v = None; auto_open = None }
 
-let of_yaml_exn str =
-  (* ouch *)
-  let lines = String.cuts ~empty:false ~sep:"\n" str in
-  let dict () =
-    List.map
-      (fun line ->
-        match String.cut ~sep:":" line with
-        | Some (k, v) -> (String.trim k, String.trim v)
-        | _ -> failwith "invalid format")
-      lines
-  in
-  let dict = dict () in
-  let find k = try Some (List.assoc k dict) with Not_found -> None in
-  let find_b k =
-    match find k with None -> None | Some s -> Some (bool_of_string s)
-  in
-  let valid = [ "user"; "remote"; "local"; "auto-open"; "keep-v" ] in
-  List.iter
-    (fun (k, _) ->
-      if not (List.mem k valid) then
-        Fmt.failwith "%S is not a valid configuration key." k)
-    dict;
-  let local =
-    match find "local" with
-    | None -> None
-    | Some v -> (
-        match Fpath.of_string v with Ok x -> Some x | Error _ -> None)
-  in
-  {
-    user = find "user";
-    remote = find "remote";
-    local;
-    auto_open = find_b "auto-open";
-    keep_v = find_b "keep-v";
-  }
-
-let of_yaml str = try Ok (of_yaml_exn str) with Failure s -> R.error_msg s
+let of_yaml str =
+  Yaml.of_string str >>= function
+  | `O dict ->
+      let rec aux acc = function
+        | [] -> Ok acc
+        | ("user", `String s) :: t -> aux { acc with user = Some s } t
+        | ("remote", `String s) :: t -> aux { acc with remote = Some s } t
+        | ("local", `String s) :: t ->
+            let local =
+              match Fpath.of_string s with Ok x -> Some x | Error _ -> None
+            in
+            aux { acc with local } t
+        | ("auto-open", `Bool b) :: t -> aux { acc with auto_open = Some b } t
+        | ("keep-v", `Bool b) :: t -> aux { acc with keep_v = Some b } t
+        | (key, _) :: _ ->
+            R.error_msgf "%S is not a valid configuration key." key
+      in
+      aux empty dict
+  | _ -> R.error_msg "invalid format"
 
 let read_string default ~descr =
   let read () =
@@ -99,16 +81,13 @@ let create_config ~user ~remote_repo ~local_repo pkgs file =
   >>= fun default_user ->
   let user = read_string default_user ~descr:"What is your GitHub ID?" in
   let default_remote =
-    match remote_repo with
-    | Some r -> r
-    | None -> strf "git@github.com:%s/opam-repository" user
+    Stdext.Option.value remote_repo
+      ~default:(strf "git@github.com:%s/opam-repository" user)
   in
   let default_local =
-    match local_repo with
-    | Some r -> Ok r
-    | None -> Ok Fpath.(v Xdg.home / "git" / "opam-repository" |> to_string)
+    Stdext.Option.value local_repo
+      ~default:Fpath.(v Xdg.home / "git" / "opam-repository" |> to_string)
   in
-  default_local >>= fun default_local ->
   let remote =
     read_string default_remote
       ~descr:
@@ -119,18 +98,18 @@ let create_config ~user ~remote_repo ~local_repo pkgs file =
     read_string default_local
       ~descr:"Where on your filesystem did you clone that repository?"
   in
-  Fpath.of_string local >>= fun local ->
-  let v = strf "user: %s\nremote: %s\nlocal: %a\n" user remote Fpath.pp local in
+  Fpath.of_string local >>= fun local_path ->
+  Yaml.to_string
+    (`O
+      [
+        ("user", `String user);
+        ("remote", `String remote);
+        ("local", `String local);
+      ])
+  >>= fun v ->
   OS.Dir.create Fpath.(parent file) >>= fun _ ->
-  OS.File.write file v >>= fun () ->
-  Ok
-    {
-      user = Some user;
-      remote = Some remote;
-      local = Some local;
-      auto_open = None;
-      keep_v = None;
-    }
+  OS.File.write file v >>| fun () ->
+  { empty with user = Some user; remote = Some remote; local = Some local_path }
 
 let config_dir () =
   let cfg = Fpath.(v Xdg.config_dir / "dune") in
@@ -219,30 +198,41 @@ let token ~dry_run () =
         OS.Dir.create Fpath.(parent file) >>= fun _ ->
         OS.File.write ~mode:0o600 file token >>= fun () -> Ok file
 
-let load () =
-  file () >>= fun file ->
-  OS.File.exists file >>= fun exists ->
-  if exists then OS.File.read file >>= of_yaml >>| fun x -> x else Ok empty
+let load () = find () >>| Stdext.Option.value ~default:empty
 
 let pretty_fields { user; remote; local; keep_v; auto_open } =
   [
-    ("user", user);
-    ("remote", remote);
-    ("local", Stdext.Option.map ~f:Fpath.to_string local);
-    ("keep-v", Stdext.Option.map ~f:string_of_bool keep_v);
-    ("auto-open", Stdext.Option.map ~f:string_of_bool auto_open);
+    ("user", Stdext.Option.map ~f:(fun x -> `String x) user);
+    ("remote", Stdext.Option.map ~f:(fun x -> `String x) remote);
+    ("local", Stdext.Option.map ~f:(fun x -> `String (Fpath.to_string x)) local);
+    ("keep-v", Stdext.Option.map ~f:(fun x -> `Bool x) keep_v);
+    ("auto-open", Stdext.Option.map ~f:(fun x -> `Bool x) auto_open);
   ]
 
 let save t =
   file () >>= fun file ->
   let fields = pretty_fields t in
   let content =
-    let open Stdext in
-    List.filter_map fields ~f:(function
+    Stdext.List.filter_map fields ~f:(function
       | _, None -> None
-      | f, Some v -> Some (Printf.sprintf "%s: %s" f v))
+      | key, Some value -> Some (key, value))
   in
-  OS.File.write_lines file content
+  Yaml.to_string (`O content) >>= fun v -> OS.File.write file v
+
+let pp fmt t =
+  let fields = pretty_fields t in
+  let fields =
+    List.map
+      (function
+        | key, None -> (key, "<unset>")
+        | key, Some (`Bool b) -> (key, string_of_bool b)
+        | key, Some (`String s) -> (key, s))
+      fields
+  in
+  Format.pp_print_list
+    ~pp_sep:(fun fs () -> Format.fprintf fs "\n")
+    (fun fs (k, v) -> Format.fprintf fs "%s: %s" k v)
+    fmt fields
 
 let file = lazy (find ())
 

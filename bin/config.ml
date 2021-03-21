@@ -14,9 +14,7 @@ let show key =
   Config.load () >>= fun config ->
   match key with
   | None ->
-      let pretty_fields = Config.pretty_fields config in
-      StdLabels.List.iter pretty_fields ~f:(fun (key, value) ->
-          Logs.app (fun l -> l "%s: %s" key (show_val value)));
+      Logs.app (fun l -> l "%a" Config.pp config);
       Ok ()
   | Some "user" -> log_val config.user
   | Some "remote" -> log_val config.remote
