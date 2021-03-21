@@ -1,3 +1,7 @@
 (executable
  (name make_check_deterministic)
  (libraries re))
+
+(install
+ (section bin)
+ (files make_check_deterministic.exe))
