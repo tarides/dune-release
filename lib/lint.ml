@@ -88,7 +88,7 @@ let lint_opam_doc pkg =
       App_log.report_status `Ok (fun l ->
           l "Skipping doc field linting, no doc field found")
   | Ok _ ->
-      let pass = R.is_ok (Pkg.doc_user_repo_and_path pkg) in
+      let pass = R.is_ok (Pkg.github_doc_owner_repo_and_path pkg) in
       let status = if pass then `Ok else `Fail in
       let verdict = if pass then "can" else "cannot" in
       App_log.report_status status (fun l ->
@@ -100,7 +100,7 @@ let lint_opam_home_and_dev pkg =
     ~msgf:(fun l ->
       l "opam fields %a and %a can be parsed by dune-release" pp_field
         "homepage" pp_field "dev-repo")
-    (Pkg.infer_repo_uri pkg >>= Github_uri.get_user_and_repo)
+    (Pkg.infer_github_repo_uri pkg)
 
 let lint_opam_github_fields pkg = lint_opam_doc pkg + lint_opam_home_and_dev pkg
 

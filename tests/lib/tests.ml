@@ -12,5 +12,6 @@ let () =
       Test_text.suite;
       Test_sos.suite;
       Test_vcs.suite;
+      Test_uri_helpers.suite;
       Test_github_uri.suite;
     ]

@@ -1,8 +1,20 @@
 (** Helper functions to manipulate URIs as OCaml strings *)
 
-val get_domain : string -> string list
-(** Get the domain for the given URI, as a list.
-    [get_domain "https://github.com/org"] is [["com"; "github"]]. *)
+type uri = { scheme : string option; domain : string list; path : string list }
+(** Helper type describing the content of an URI to facilitate parsing. Scheme
+    is None if no explicit scheme was specified. The domain is a non empty list
+    in hierarchical order, e.g. [\["io"; "github"; "me"\]] for ["me.github.io"].
+    The path is [\[\]] if there was no path and a list of the path components,
+    e.g. [\["some"; "path"\]] for ["domain.com/some/path"]. *)
+
+val pp_uri : Format.formatter -> uri -> unit
+
+val equal_uri : uri -> uri -> bool
+
+val parse : string -> uri option
+(** Parses an URI as a string. Returns [None] if the URI can't be properly
+    parsed. The domain and path are determined based on the first ['/'] or [':']
+    separator to support either regular URIs or ["github.com:owner/..."] URIs. *)
 
 val get_sld : string -> string option
 (** Get the URI's second level domain, if it has one. *)
@@ -12,6 +24,3 @@ val append_to_base : rel_path:string -> string -> string
 
 val chop_git_prefix : string -> string
 (** Chop the prefix [git+] from a URI, if any. *)
-
-val to_https : string -> string
-(** Convert [git@] and [git+ssh://] into https URI's. Leave other URI's as is. *)

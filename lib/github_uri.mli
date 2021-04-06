@@ -1,13 +1,21 @@
-val to_github_standard : string -> (string, [> Bos_setup.R.msg ]) result
-(** Convert a github pages URI into its correspondent repo URI. Leave other
-      URI's as is. *)
+type t = { owner : string; repo : string }
 
-val get_user_and_repo :
-  string -> (string * string, [> Bos_setup.R.msg ]) result
-(** Retrieve user name and repository name from a standard github URI. *)
+val equal : t -> t -> bool
 
-val split_doc_uri :
-  string -> (string * string * Fpath.t, [> Bos_setup.R.msg ]) result
-(** Parse a github pages URI of the form $SCHEME://$USER.github.io/$REPO/$PATH
-    into (user, repo, dir), where user=$USER and repo and dir are deduced from
-    $PATH *)
+val pp : Format.formatter -> t -> unit
+
+val from_string : string -> t option
+(** Parse a github URI into owner and repo. Return [None] if the given URI isn't
+    a github one. *)
+
+val from_gh_pages : string -> (t * Fpath.t) option
+(** Parse a github pages URI of the form <owner>.github.io/<repo>/<extra_path>
+    into [({owner; repo}, extra_path)]. [extra_path] is [Fpath.v "."] if there
+    is no such component in the URI. Return [None] if the URI isn't a gh-pages
+    one. *)
+
+val to_https : t -> string
+(** Returns the given github URI as HTTPS URI, in string form *)
+
+val to_ssh : t -> string
+(** Returns the given github URI as ["git@github"] SSH URI, in string form *)

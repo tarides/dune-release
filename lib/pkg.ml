@@ -36,7 +36,8 @@ let opam_homepage p = opam_field_hd p "homepage"
 
 let opam_doc p = opam_field_hd p "doc"
 
-let opam_homepage_sld p = opam_homepage p >>| Stdext.Option.bind ~f:Uri_helpers.get_sld
+let opam_homepage_sld p =
+  opam_homepage p >>| Stdext.Option.bind ~f:Uri_helpers.get_sld
 
 let opam_doc_sld p = opam_doc p >>| Stdext.Option.bind ~f:Uri_helpers.get_sld
 
@@ -218,35 +219,23 @@ let path_of_distrib p =
   let defs = String.Map.(empty |> add "NAME" name |> add "TAG" tag) in
   Pat.of_string uri >>| Pat.format defs
 
-let uri_of_dev_repo p =
-  opam_field_hd p "dev-repo" >>| Stdext.Option.map ~f:Uri_helpers.to_https
+let infer_github_repo_uri pkg =
+  opam_homepage pkg >>= fun homepage ->
+  match Stdext.Option.O.(homepage >>= Github_uri.from_string) with
+  | Some gh_uri -> Ok gh_uri
+  | None -> (
+      opam_field_hd pkg "dev-repo" >>= fun dev_repo ->
+      match Stdext.Option.O.(dev_repo >>= Github_uri.from_string) with
+      | Some gh_uri -> Ok gh_uri
+      | None ->
+          R.error_msg "Github development repository URL could not be inferred."
+      )
 
-let distrib_uri ~get_base_uri pkg =
+let infer_github_distrib_uri pkg =
+  infer_github_repo_uri pkg >>= fun gh_uri ->
+  let base_uri = Github_uri.to_https gh_uri in
   path_of_distrib pkg >>= fun rel_path ->
-  get_base_uri pkg >>| Stdext.Option.map ~f:(Uri_helpers.append_to_base ~rel_path)
-
-let distrib_uri_of_dev_repo pkg = distrib_uri ~get_base_uri:uri_of_dev_repo pkg
-
-let distrib_uri_of_homepage pkg = distrib_uri ~get_base_uri:opam_homepage pkg
-
-let infer_uri_from_functions f g pkg ~err =
-  f pkg
-  >>= (function
-        | Some u -> Ok u
-        | None -> ( g pkg >>= function Some u -> Ok u | None -> err))
-  >>= Github_uri.to_github_standard
-
-let infer_distrib_uri =
-  let err =
-    R.error_msg
-      "Distribution URL could not be inferred. You can use the `--dist-uri` \
-       cli option to provide it. Otherwise, you can fix your main opam-file."
-  in
-  infer_uri_from_functions distrib_uri_of_homepage distrib_uri_of_dev_repo ~err
-
-let infer_repo_uri =
-  let err = R.error_msg "Development repository URL could not be inferred." in
-  infer_uri_from_functions opam_homepage uri_of_dev_repo ~err
+  Ok (Uri_helpers.append_to_base ~rel_path base_uri)
 
 let distrib_filename ?(opam = false) p =
   let sep = if opam then '.' else '-' in
@@ -276,7 +265,15 @@ let doc_uri p =
 
 let doc_dir = Fpath.(v "_build" / "default" / "_doc" / "_html")
 
-let doc_user_repo_and_path p = doc_uri p >>= Github_uri.split_doc_uri
+let github_doc_owner_repo_and_path p =
+  doc_uri p >>= fun doc_uri ->
+  match Github_uri.from_gh_pages doc_uri with
+  | Some ({ owner; repo }, path) -> Ok (owner, repo, path)
+  | None ->
+      R.error_msgf
+        "Could not derive publication directory $PATH from opam doc field \
+         value %a; expected the pattern $SCHEME://$USER.github.io/$REPO/$PATH"
+        String.dump doc_uri
 
 let publish_msg p =
   match p.publish_msg with

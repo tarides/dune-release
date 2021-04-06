@@ -1,62 +1,67 @@
 open Bos_setup
 
-let to_github_standard uri =
-  match Uri_helpers.get_domain uri with
-  | [ "io"; "github"; user ] -> (
-      match Text.split_uri ~rel:true uri with
-      | None -> R.error_msgf "invalid uri: %s" uri
-      | Some (_, _, path) -> Ok ("https://github.com/" ^ user ^ "/" ^ path))
-  | _ -> Ok uri
+type t = { owner : string; repo : string }
 
-let get_user_and_repo uri =
-  let uri_format_error =
-    R.msgf
-      "Could not derive user and repo from uri %a; expected the pattern \
-       $SCHEME://$HOST/$USER/$REPO[.$EXT][/$DIR]"
-      String.dump uri
-  in
-  let uri_scheme_error =
-    R.msgf "The following uri is expected to be a web address: %a" String.dump
-      uri
-  in
-  match Text.split_uri ~rel:true uri with
-  | None -> Error uri_format_error
-  | Some ("file:", _, _) -> Error uri_scheme_error
-  | Some (_, _, path) -> (
-      if path = "" then Error uri_format_error
-      else
-      match String.cut ~sep:"/" path with
-      | None -> Error uri_format_error
-      | Some (user, path) ->
-          let repo =
-            match String.cut ~sep:"/" path with
-            | None -> path
-            | Some (repo, _) -> repo
-          in
-          Fpath.of_string repo
-          >>= (fun repo -> Ok (user, Fpath.(to_string @@ rem_ext repo)))
-          |> R.reword_error_msg (fun _ -> uri_format_error))
+let equal t t' =
+  let { owner; repo } = t in
+  let { owner = owner'; repo = repo' } = t' in
+  String.equal owner owner' && String.equal repo repo'
 
-let split_doc_uri uri =
-  let uri_error uri =
-    R.msgf
-      "Could not derive publication directory $PATH from opam doc field \
-       value %a; expected the pattern $SCHEME://$USER.github.io/$REPO/$PATH"
-      String.dump uri
+let pp fmt { owner; repo } =
+  Format.fprintf fmt "@[<hov 2>{ owner = %S;@ repo = %S }@]" owner repo
+
+let drop_git_ext repo =
+  let affix = ".git" in
+  if String.is_suffix ~affix repo then
+    let len = String.length repo - String.length affix in
+    StringLabels.sub ~pos:0 ~len repo
+  else repo
+
+let from_string uri =
+  let uri = Uri_helpers.parse uri in
+  match uri with
+  | Some
+      {
+        scheme = Some ("git+https" | "https") | None;
+        domain = [ "com"; "github" ];
+        path = [ owner; repo ];
+      }
+  | Some
+      {
+        scheme = Some "https" | None;
+        domain = [ "io"; "github"; owner ];
+        path = repo :: _;
+      }
+  | Some
+      {
+        scheme = Some ("git+ssh" | "ssh") | None;
+        domain = [ "com"; "git@github" ];
+        path = [ owner; repo ];
+      } ->
+      let repo = drop_git_ext repo in
+      Some { owner; repo }
+  | _ -> None
+
+let fpath_of_list l =
+  let rec aux acc l =
+    match l with [] | [ "" ] -> acc | hd :: tl -> aux Fpath.(acc / hd) tl
   in
-  match Text.split_uri ~rel:true uri with
-  | None -> Error (uri_error uri)
-  | Some (_, host, path) -> (
-      if path = "" then Error (uri_error uri)
-      else
-      (match String.cut ~sep:"." host with
-      | Some (user, g) when String.equal g "github.io" -> Ok user
-      | _ -> Error (uri_error uri))
-      >>= fun user ->
-      match String.cut ~sep:"/" path with
-      | None -> Ok (user, path, Fpath.v ".")
-      | Some (repo, "") -> Ok (user, repo, Fpath.v ".")
-      | Some (repo, path) ->
-          Fpath.of_string path
-          >>| (fun p -> (user, repo, Fpath.rem_empty_seg p))
-          |> R.reword_error_msg (fun _ -> uri_error uri))
+  match l with [] | [ "" ] -> Fpath.v "." | hd :: tl -> aux (Fpath.v hd) tl
+
+let from_gh_pages uri =
+  let uri = Uri_helpers.parse uri in
+  match uri with
+  | Some
+      {
+        scheme = Some "https" | None;
+        domain = [ "io"; "github"; owner ];
+        path = repo :: rest;
+      } ->
+      Some ({ owner; repo }, fpath_of_list rest)
+  | _ -> None
+
+let to_https { owner; repo } =
+  Printf.sprintf "https://github.com/%s/%s" owner repo
+
+let to_ssh { owner; repo } =
+  Printf.sprintf "git@github.com:%s/%s.git" owner repo

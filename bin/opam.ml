@@ -59,7 +59,7 @@ let archive_url ~dry_run ~opam_file pkg =
   else if dry_run && not opam_file_exists then Ok D.distrib_uri
   else (
     Logs.warn (fun l -> l "Could not find %a." Text.Pp.path url_file);
-    Pkg.infer_distrib_uri pkg >>= fun uri ->
+    Pkg.infer_github_distrib_uri pkg >>= fun uri ->
     Logs.warn (fun l ->
         l
           "using %s for as url.src. Note that it might differ from the one \
@@ -164,8 +164,8 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
         | Ok () -> Ok 0
         | Error _ -> msg ())
 
-let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
-    remote_repo pkgs auto_open ~draft =
+let submit ~token ~dry_run ~yes ~opam_repo ~user local_repo remote_repo pkgs
+    auto_open ~draft =
   List.fold_left
     (fun acc pkg ->
       get_pkg_dir pkg >>= fun pkg_dir ->
@@ -197,18 +197,16 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
   list_map Pkg.name pkgs >>= fun names ->
   let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
   Pkg.publish_msg pkg >>= fun changes ->
-  (match distrib_uri with Some uri -> Ok uri | None -> Pkg.infer_repo_uri pkg)
-  >>= Github_uri.get_user_and_repo
-  >>= fun (distrib_user, repo) ->
+  Pkg.infer_github_repo_uri pkg >>= fun { owner; repo } ->
   let user =
     match user with
     | Some user -> user (* from the .yaml configuration file *)
     | None -> (
         match Github.Parse.user_from_remote remote_repo with
         | Some user -> user (* trying to infer it from the remote repo URI *)
-        | None -> distrib_user)
+        | None -> owner)
   in
-  let changes = Text.rewrite_github_refs ~user:distrib_user ~repo changes in
+  let changes = Text.rewrite_github_refs ~user:owner ~repo changes in
   let msg = strf "%s\n\n%s\n" title changes in
   App_log.status (fun l ->
       l "Preparing %a to %a" Text.Pp.maybe_draft (draft, "pull request")
@@ -216,8 +214,8 @@ let submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user local_repo
   Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
     names
   >>= fun branch ->
-  open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
-    ~title ~opam_repo ~auto_open ~yes ~draft pkg
+  open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user:owner ~branch
+    ~token ~title ~opam_repo ~auto_open ~yes ~draft pkg
 
 let field pkgs field =
   match field with
@@ -270,8 +268,8 @@ let pkg ?distrib_uri ~dry_run ~pkgs () =
       | (Error _ as e), _ | _, (Error _ as e) -> e)
     (Ok 0) pkgs
 
-let submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ?token
-    ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes ~draft () =
+let submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run ~pkgs
+    ~pkg_names ~no_auto_open ~yes ~draft () =
   let opam_repo =
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
@@ -295,8 +293,8 @@ let submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ?token
   >>= fun token ->
   App_log.status (fun m ->
       m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
-  submit ?distrib_uri ~token ~dry_run ~yes ~opam_repo ~user:config.user
-    local_repo remote_repo pkgs auto_open ~draft
+  submit ~token ~dry_run ~yes ~opam_repo ~user:config.user local_repo
+    remote_repo pkgs auto_open ~draft
 
 let field ~pkgs ~field_name = field pkgs field_name
 
@@ -315,8 +313,8 @@ let opam_cli () (`Dry_run dry_run) (`Build_dir build_dir)
         | `Descr -> descr ~pkgs
         | `Pkg -> pkg ~dry_run ?distrib_uri ~pkgs ()
         | `Submit ->
-            submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ?token
-              ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes ~draft ()
+            submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run
+              ~pkgs ~pkg_names ~no_auto_open ~yes ~draft ()
         | `Field -> field ~pkgs ~field_name)
   |> Cli.handle_error
 

@@ -58,7 +58,7 @@ let distrib_filename =
 let distrib_uri =
   let cat = "distrib_uri" in
   let check =
-    check ~cat ~name:"yo" (fun x -> Pkg.infer_distrib_uri x >>| Fpath.v)
+    check ~cat ~name:"yo" (fun x -> Pkg.infer_github_distrib_uri x >>| Fpath.v)
   in
   let dev_repo = [ ("dev-repo", "git@github.com:foo/bar.git") ] in
   let homepage = [ ("homepage", "https://github.com/foo/bar") ] in

@@ -1,19 +1,44 @@
-let test_to_https =
+let uri =
+  let open Dune_release.Uri_helpers in
+  Alcotest.testable pp_uri equal_uri
+
+let test_parse =
   let make_test ~input ~expected =
-    let name = "to_https " ^ input in
-    let actual = Dune_release.Uri_helpers.to_https input in
-    let test_fun () = Alcotest.(check string) name expected actual in
+    let name = Printf.sprintf "parse: %s" input in
+    let test_fun () =
+      let actual = Dune_release.Uri_helpers.parse input in
+      Alcotest.(check (option uri)) name expected actual
+    in
     (name, `Quick, test_fun)
   in
   [
-    make_test ~input:"git@github.com:user/repo.git"
-      ~expected:"https://github.com/user/repo";
-    make_test ~input:"git+ssh://git@github.com/user/repo"
-      ~expected:"https://github.com/user/repo";
-    make_test ~input:"git+https://gitlab.com/user/repo"
-      ~expected:"https://gitlab";
-    make_test ~input:"my_homepage.com" ~expected:"my_homepage";
+    make_test ~input:"scheme://domain.com/some/path"
+      ~expected:
+        (Some
+           {
+             scheme = Some "scheme";
+             domain = [ "com"; "domain" ];
+             path = [ "some"; "path" ];
+           });
+    make_test ~input:"noscheme.com/some/path"
+      ~expected:
+        (Some
+           {
+             scheme = None;
+             domain = [ "com"; "noscheme" ];
+             path = [ "some"; "path" ];
+           });
+    make_test ~input:"nopath.com"
+      ~expected:
+        (Some { scheme = None; domain = [ "com"; "nopath" ]; path = [] });
+    make_test ~input:"git@github.com:some/path"
+      ~expected:
+        (Some
+           {
+             scheme = None;
+             domain = [ "com"; "git@github" ];
+             path = [ "some"; "path" ];
+           });
   ]
 
-let suite =
-  ( "Uri_helpers", test_to_https )
+let suite = ("Uri_helpers", test_parse)

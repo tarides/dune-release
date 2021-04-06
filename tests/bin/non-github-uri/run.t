@@ -79,9 +79,8 @@ We do the whole dune-release process
     [ OK ] lint opam file whatever.opam.
     [ OK ] opam field description is present
     [FAIL] opam fields homepage and dev-repo can be parsed by dune-release
-    dune-release: [ERROR] Could not derive user and repo from uri
-                          "https://whatever.io"; expected the pattern
-                          $SCHEME://$HOST/$USER/$REPO[.$EXT][/$DIR]
+    dune-release: [ERROR] Github development repository URL could not be
+                          inferred.
     [ OK ] Skipping doc field linting, no doc field found
     [FAIL] lint of _build/whatever-0.1.0 and package whatever failure: 1 errors.
     

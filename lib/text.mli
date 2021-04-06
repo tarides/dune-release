@@ -58,12 +58,6 @@ val rewrite_github_refs : user:string -> repo:string -> string -> string
 (** [rewrite_github_refs ~user ~repo s] replaces references like [#yyy] with
     [user/repo#yyy]. *)
 
-(** {1 Toy URI parsing} *)
-
-val split_uri : ?rel:bool -> string -> (string * string * string) option
-(** [split_uri uri] splits [uri] into a triple [(scheme, host, path)]. If [rel]
-    is [true] (defaults to [false]), a leading ["/"] in [path] is removed. *)
-
 (** Pretty printers. *)
 module Pp : sig
   (** {1 Pretty printers} *)
