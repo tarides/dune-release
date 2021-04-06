@@ -448,7 +448,7 @@ let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
 
 let publish_distrib ?token ~dry_run ~msg ~archive ~yes ~draft p =
   Pkg.infer_repo_uri p >>= fun uri ->
-  (match Uri.Github.get_user_and_repo uri with
+  (match Github_uri.get_user_and_repo uri with
   | Error _ as e -> if dry_run then Ok (D.user, D.repo) else e
   | r -> r)
   >>= fun (user, repo) ->

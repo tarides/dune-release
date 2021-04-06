@@ -36,9 +36,9 @@ let opam_homepage p = opam_field_hd p "homepage"
 
 let opam_doc p = opam_field_hd p "doc"
 
-let opam_homepage_sld p = opam_homepage p >>| Stdext.Option.bind ~f:Uri.get_sld
+let opam_homepage_sld p = opam_homepage p >>| Stdext.Option.bind ~f:Uri_helpers.get_sld
 
-let opam_doc_sld p = opam_doc p >>| Stdext.Option.bind ~f:Uri.get_sld
+let opam_doc_sld p = opam_doc p >>| Stdext.Option.bind ~f:Uri_helpers.get_sld
 
 let name p = Ok p.name
 
@@ -186,7 +186,7 @@ let licenses p =
 let dev_repo p =
   opam_field_hd p "dev-repo" >>= function
   | None -> Ok None
-  | Some r -> Ok (Some (Uri.chop_git_prefix r))
+  | Some r -> Ok (Some (Uri_helpers.chop_git_prefix r))
 
 let dev_repo_is_on_github p =
   opam_field_hd p "dev-repo" >>| function
@@ -219,11 +219,11 @@ let path_of_distrib p =
   Pat.of_string uri >>| Pat.format defs
 
 let uri_of_dev_repo p =
-  opam_field_hd p "dev-repo" >>| Stdext.Option.map ~f:Uri.to_https
+  opam_field_hd p "dev-repo" >>| Stdext.Option.map ~f:Uri_helpers.to_https
 
 let distrib_uri ~get_base_uri pkg =
   path_of_distrib pkg >>= fun rel_path ->
-  get_base_uri pkg >>| Stdext.Option.map ~f:(Uri.append_to_base ~rel_path)
+  get_base_uri pkg >>| Stdext.Option.map ~f:(Uri_helpers.append_to_base ~rel_path)
 
 let distrib_uri_of_dev_repo pkg = distrib_uri ~get_base_uri:uri_of_dev_repo pkg
 
@@ -234,7 +234,7 @@ let infer_uri_from_functions f g pkg ~err =
   >>= (function
         | Some u -> Ok u
         | None -> ( g pkg >>= function Some u -> Ok u | None -> err))
-  >>= Uri.Github.to_github_standard
+  >>= Github_uri.to_github_standard
 
 let infer_distrib_uri =
   let err =
@@ -276,7 +276,7 @@ let doc_uri p =
 
 let doc_dir = Fpath.(v "_build" / "default" / "_doc" / "_html")
 
-let doc_user_repo_and_path p = doc_uri p >>= Uri.Github.split_doc_uri
+let doc_user_repo_and_path p = doc_uri p >>= Github_uri.split_doc_uri
 
 let publish_msg p =
   match p.publish_msg with

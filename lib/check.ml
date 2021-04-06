@@ -51,7 +51,7 @@ let pkg_creation_check ?tag ?version ~keep_v ?build_dir dir =
 
 let opam_file_check ~dir pkg =
   let check () =
-    let ok_needed = Pkg.infer_repo_uri pkg >>= Uri.Github.get_user_and_repo in
+    let ok_needed = Pkg.infer_repo_uri pkg >>= Github_uri.get_user_and_repo in
     Pkg.opam pkg >>| fun main_opam ->
     (* Pkg.opam only returns an error if something is wrong internally *)
     match ok_needed with

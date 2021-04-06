@@ -1,24 +1,7 @@
-let test_to_https =
-  let make_test ~input ~expected =
-    let name = "Uri.Github.to_https " ^ input in
-    let actual = Dune_release.Uri.to_https input in
-    let test_fun () = Alcotest.(check string) name expected actual in
-    (name, `Quick, test_fun)
-  in
-  [
-    make_test ~input:"git@github.com:user/repo.git"
-      ~expected:"https://github.com/user/repo";
-    make_test ~input:"git+ssh://git@github.com/user/repo"
-      ~expected:"https://github.com/user/repo";
-    make_test ~input:"git+https://gitlab.com/user/repo"
-      ~expected:"https://gitlab";
-    make_test ~input:"my_homepage.com" ~expected:"my_homepage";
-  ]
-
 let test_to_github_standard =
   let make_test ~input ~expected =
-    let name = "Uri.Github.to_github_standard " ^ input in
-    let actual = Dune_release.Uri.Github.to_github_standard input in
+    let name = "to_github_standard " ^ input in
+    let actual = Dune_release.Github_uri.to_github_standard input in
     let test_fun () =
       Alcotest.(check (Alcotest_ext.result_msg string)) name expected actual
     in
@@ -39,8 +22,8 @@ let test_to_github_standard =
 
 let test_get_user_and_repo =
   let make_test ~input ~expected =
-    let name = "Uri.Github.get_user_and_repo " ^ input in
-    let actual = Dune_release.Uri.Github.get_user_and_repo input in
+    let name = "get_user_and_repo " ^ input in
+    let actual = Dune_release.Github_uri.get_user_and_repo input in
     let test_fun () =
       Alcotest.(check (Alcotest_ext.result_msg (pair string string)))
         name expected actual
@@ -66,8 +49,8 @@ let test_get_user_and_repo =
 
 let test_split_doc_uri =
   let make_test ~input ~expected =
-    let name = "Uri.Github.split_doc_uri " ^ input in
-    let actual = Dune_release.Uri.Github.split_doc_uri input in
+    let name = "split_doc_uri " ^ input in
+    let actual = Dune_release.Github_uri.split_doc_uri input in
     let test_fun () =
       Alcotest.(
         check (Alcotest_ext.result_msg (triple string string Alcotest_ext.path)))
@@ -89,6 +72,6 @@ let test_split_doc_uri =
   ]
 
 let suite =
-  ( "Uri",
-    test_to_https @ test_to_github_standard @ test_get_user_and_repo
+  ( "Github_uri",
+    test_to_github_standard @ test_get_user_and_repo
     @ test_split_doc_uri )
