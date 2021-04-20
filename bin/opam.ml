@@ -197,7 +197,7 @@ let submit ~token ~dry_run ~yes ~opam_repo ~user local_repo remote_repo pkgs
   list_map Pkg.name pkgs >>= fun names ->
   let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
   Pkg.publish_msg pkg >>= fun changes ->
-  Pkg.infer_github_repo_uri pkg >>= fun { owner; repo } ->
+  Pkg.infer_github_repo pkg >>= fun { owner; repo } ->
   let user =
     match user with
     | Some user -> user (* from the .yaml configuration file *)

@@ -17,7 +17,7 @@ let drop_git_ext repo =
     StringLabels.sub ~pos:0 ~len repo
   else repo
 
-let from_string uri =
+let from_uri uri =
   let uri = Uri_helpers.parse uri in
   match uri with
   | Some
@@ -60,8 +60,8 @@ let from_gh_pages uri =
       Some ({ owner; repo }, fpath_of_list rest)
   | _ -> None
 
-let to_https { owner; repo } =
+let https_uri { owner; repo } =
   Printf.sprintf "https://github.com/%s/%s" owner repo
 
-let to_ssh { owner; repo } =
+let ssh_uri { owner; repo } =
   Printf.sprintf "git@github.com:%s/%s.git" owner repo

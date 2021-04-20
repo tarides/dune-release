@@ -66,7 +66,7 @@ let undraft ?opam ?distrib_file ?opam_repo ?user ?token ?local_repo ?remote_repo
       | Some r -> Ok r
       | None -> R.error_msg "Unknown remote repository."))
   >>= fun remote_repo ->
-  Pkg.infer_github_repo_uri pkg >>= fun { owner; repo } ->
+  Pkg.infer_github_repo pkg >>= fun { owner; repo } ->
   let user =
     match config.user with
     | Some user -> user (* from the .yaml configuration file *)

@@ -219,21 +219,21 @@ let path_of_distrib p =
   let defs = String.Map.(empty |> add "NAME" name |> add "TAG" tag) in
   Pat.of_string uri >>| Pat.format defs
 
-let infer_github_repo_uri pkg =
+let infer_github_repo pkg =
   opam_homepage pkg >>= fun homepage ->
-  match Stdext.Option.O.(homepage >>= Github_uri.from_string) with
-  | Some gh_uri -> Ok gh_uri
+  match Stdext.Option.O.(homepage >>= Github_repo.from_uri) with
+  | Some gh_repo -> Ok gh_repo
   | None -> (
       opam_field_hd pkg "dev-repo" >>= fun dev_repo ->
-      match Stdext.Option.O.(dev_repo >>= Github_uri.from_string) with
-      | Some gh_uri -> Ok gh_uri
+      match Stdext.Option.O.(dev_repo >>= Github_repo.from_uri) with
+      | Some gh_repo -> Ok gh_repo
       | None ->
           R.error_msg "Github development repository URL could not be inferred."
       )
 
 let infer_github_distrib_uri pkg =
-  infer_github_repo_uri pkg >>= fun gh_uri ->
-  let base_uri = Github_uri.to_https gh_uri in
+  infer_github_repo pkg >>= fun gh_repo ->
+  let base_uri = Github_repo.https_uri gh_repo in
   path_of_distrib pkg >>= fun rel_path ->
   Ok (Uri_helpers.append_to_base ~rel_path base_uri)
 
@@ -267,7 +267,7 @@ let doc_dir = Fpath.(v "_build" / "default" / "_doc" / "_html")
 
 let github_doc_owner_repo_and_path p =
   doc_uri p >>= fun doc_uri ->
-  match Github_uri.from_gh_pages doc_uri with
+  match Github_repo.from_gh_pages doc_uri with
   | Some ({ owner; repo }, path) -> Ok (owner, repo, path)
   | None ->
       R.error_msgf

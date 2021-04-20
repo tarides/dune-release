@@ -448,7 +448,7 @@ let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
       Ok id
 
 let publish_distrib ?token ~dry_run ~msg ~archive ~yes ~draft p =
-  (match Pkg.infer_github_repo_uri p with
+  (match Pkg.infer_github_repo p with
   | Ok r -> Ok r
   | Error _ as e ->
       (* It probably does not make sense for dry-run to push any further

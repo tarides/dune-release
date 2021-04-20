@@ -1,12 +1,12 @@
 let t =
-  let open Dune_release.Github_uri in
+  let open Dune_release.Github_repo in
   Alcotest.testable pp equal
 
-let test_from_string =
+let test_from_uri =
   let make_test ~input ~expected =
-    let name = Printf.sprintf "from_string %S" input in
+    let name = Printf.sprintf "from_uri %S" input in
     let test_fun () =
-      let actual = Dune_release.Github_uri.from_string input in
+      let actual = Dune_release.Github_repo.from_uri input in
       Alcotest.(check (option t)) name expected actual
     in
     (name, `Quick, test_fun)
@@ -31,11 +31,11 @@ let test_from_string =
     make_test ~input:"https://gitlab.com/owner/repo" ~expected:None;
   ]
 
-let test_to_https =
+let test_https_uri =
   let make_test ~name ~input ~expected =
-    let name = Printf.sprintf "to_https: %S" name in
+    let name = Printf.sprintf "https_uri: %S" name in
     let test_fun () =
-      let actual = Dune_release.Github_uri.to_https input in
+      let actual = Dune_release.Github_repo.https_uri input in
       Alcotest.(check string) name expected actual
     in
     (name, `Quick, test_fun)
@@ -46,11 +46,11 @@ let test_to_https =
       ~expected:"https://github.com/owner/repo";
   ]
 
-let test_to_ssh =
+let test_ssh_uri =
   let make_test ~name ~input ~expected =
-    let name = Printf.sprintf "to_ssh: %S" name in
+    let name = Printf.sprintf "ssh_uri: %S" name in
     let test_fun () =
-      let actual = Dune_release.Github_uri.to_ssh input in
+      let actual = Dune_release.Github_repo.ssh_uri input in
       Alcotest.(check string) name expected actual
     in
     (name, `Quick, test_fun)
@@ -65,7 +65,7 @@ let test_from_gh_pages =
   let make_test ~input ~expected =
     let name = "from_gh_pages: " ^ input in
     let test_fun () =
-      let actual = Dune_release.Github_uri.from_gh_pages input in
+      let actual = Dune_release.Github_repo.from_gh_pages input in
       Alcotest.(check (option (pair t Alcotest_ext.path))) name expected actual
     in
     (name, `Quick, test_fun)
@@ -85,6 +85,5 @@ let test_from_gh_pages =
   ]
 
 let suite =
-  ( "Github_uri",
-    test_from_string @ test_to_https @ test_to_ssh @ test_to_https
-    @ test_from_gh_pages )
+  ( "Github_repo",
+    test_from_uri @ test_https_uri @ test_ssh_uri @ test_from_gh_pages )
