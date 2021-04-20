@@ -49,6 +49,8 @@
 
 ### Fixed
 
+- Fix a bug in `opam submit` preventing non-github users to create the opam-repo PR
+  via dune-release. (#359, @NathanReb)
 - Fix a bug where `opam submit` would try to parse the custom URI provided through
   `--distrib-uri` as a github repo URI instead of using the dev-repo (#358, @NathanReb)
 - Fix the priority of the `--distrib-uri` option in `dune-release opam pkg`.
