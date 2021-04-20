@@ -30,7 +30,6 @@ depends: [
   "alcotest" {with-test}
   "mdx" {with-test & >= "1.6.0"}
   "yojson"
-  "uri"
 ]
 
 synopsis: "Release dune packages in opam"
