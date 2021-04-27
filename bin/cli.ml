@@ -98,8 +98,11 @@ let dist_opam =
 
 let dist_uri =
   let doc =
-    "The distribution archive URI on the WWW. If absent, provided by the \
-     package description."
+    "The distribution archive URI on the WWW. By default, this value is \
+     collected from the result of $(b,dune-release publish) or inferred from \
+     the package description. Use this option to override this behaviour. \
+     Useful if you have a custom release workflow or if your project is not \
+     hosted on Github for example."
   in
   let docv = "URI" in
   named
