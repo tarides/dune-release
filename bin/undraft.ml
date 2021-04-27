@@ -102,8 +102,9 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
       l "Preparing pull request #%s to %a" pr_id pp_opam_repo opam_repo);
   let branch = Fmt.strf "release-%s-%s" pkg_name tag in
   Vcs.get () >>= fun vcs ->
-  let prepare_packages =
-    Stdext.Result.List.iter ~f:(Opam.prepare_package ~dry_run ~version vcs)
+  let prepare_packages ~build_dir =
+    Stdext.Result.List.iter
+      ~f:(Opam.prepare_package ~build_dir ~dry_run ~version vcs)
   in
   let commit_and_push () =
     let msg = "Undraft pull-request" in
@@ -113,6 +114,8 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
     Vcs.run_git_quiet vcs ~dry_run
       Cmd.(v "push" % "--force" % remote_repo % branch)
   in
+  OS.Dir.current () >>= fun cwd ->
+  let build_dir = Fpath.(cwd / "_build") in
   Sos.with_dir ~dry_run local_repo
     (fun () ->
       let upstream =
@@ -126,7 +129,7 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
         Cmd.(v "fetch" % upstream % remote_branch)
       >>= fun () ->
       Vcs.change_branch vcs ~dry_run:false ~branch >>= fun () ->
-      prepare_packages pkg_names >>= fun () -> commit_and_push ())
+      prepare_packages ~build_dir pkg_names >>= fun () -> commit_and_push ())
     ()
   |> R.join
   >>= fun () ->

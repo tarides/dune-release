@@ -51,11 +51,10 @@ let cmd = Cmd.of_list @@ Cmd.to_list @@ tool "opam" `Host_os
 let shortest x =
   List.hd (List.sort (fun x y -> compare (String.length x) (String.length y)) x)
 
-let prepare_package ~dry_run ~version vcs name =
-  OS.Dir.current () >>= fun cwd ->
+let prepare_package ~build_dir ~dry_run ~version vcs name =
   (* copy opam, descr and url files *)
   let dir = name ^ "." ^ version in
-  let src = Fpath.(cwd / "_build" / dir) in
+  let src = Fpath.(build_dir / dir) in
   let dst = Fpath.(v "packages" / name / dir) in
   let cp f =
     OS.File.exists Fpath.(src / f) >>= function
@@ -136,8 +135,9 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
         l "Checking out a local %a branch" Text.Pp.commit branch);
     Vcs.checkout repo ~dry_run:false ~branch ~commit_ish:id
   in
-  let prepare_packages =
-    Stdext.Result.List.iter ~f:(prepare_package ~dry_run ~version repo)
+  let prepare_packages ~build_dir =
+    Stdext.Result.List.iter
+      ~f:(prepare_package ~build_dir ~dry_run ~version repo)
   in
   let commit_and_push () =
     Vcs.run_git_quiet repo ~dry_run Cmd.(v "commit" %% msg) >>= fun () ->
@@ -146,10 +146,12 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
     Vcs.run_git_quiet repo ~dry_run
       Cmd.(v "push" % "--force" % remote_repo % branch % "--set-upstream")
   in
+  OS.Dir.current () >>= fun cwd ->
+  let build_dir = Fpath.(cwd / "_build") in
   Sos.with_dir ~dry_run local_repo
     (fun () ->
       prepare_repo () >>= fun () ->
-      prepare_packages names >>= fun () ->
+      prepare_packages ~build_dir names >>= fun () ->
       commit_and_push () >>= fun () -> Ok branch)
     ()
   |> R.join

@@ -16,7 +16,12 @@ val cmd : Cmd.t
 (** {1:publish Publish} *)
 
 val prepare_package :
-  dry_run:bool -> version:string -> Vcs.t -> string -> (unit, R.msg) result
+  build_dir:Fpath.t ->
+  dry_run:bool ->
+  version:string ->
+  Vcs.t ->
+  string ->
+  (unit, R.msg) result
 
 val prepare :
   dry_run:bool ->
