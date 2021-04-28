@@ -21,6 +21,7 @@ depends: [
   "bos"
   "cmdliner"
   "re"
+  "astring"
   "opam-format" {>= "2.1.0~beta"}
   "opam-state" {>= "2.1.0~beta"}
   "opam-core" {>= "2.1.0~beta"}
