@@ -23,7 +23,6 @@ type t = {
 }
 
 val v :
-  user:string option ->
   remote_repo:string option ->
   local_repo:string option ->
   Pkg.t list ->

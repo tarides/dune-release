@@ -48,7 +48,7 @@ val publish_doc :
 val undraft_release :
   token:string ->
   dry_run:bool ->
-  user:string ->
+  owner:string ->
   repo:string ->
   release_id:string ->
   name:string ->
@@ -60,7 +60,7 @@ val open_pr :
   token:string ->
   dry_run:bool ->
   title:string ->
-  user:string ->
+  fork_owner:string ->
   branch:Vcs.commit_ish ->
   opam_repo:string * string ->
   draft:bool ->

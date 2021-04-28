@@ -15,7 +15,7 @@ module Release : sig
       draft:bool ->
       Curl.t
 
-    val undraft : user:string -> repo:string -> release_id:int -> Curl.t
+    val undraft : owner:string -> repo:string -> release_id:int -> Curl.t
   end
 
   module Response : sig
@@ -52,7 +52,7 @@ module Pull_request : sig
   module Request : sig
     val open_ :
       title:string ->
-      user:string ->
+      fork_owner:string ->
       branch:string ->
       body:string ->
       opam_repo:string * string ->

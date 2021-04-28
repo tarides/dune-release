@@ -29,3 +29,5 @@ val try_again :
     running [f] again if it failed, until [f] eventually succeeds or the user
     aborts the process by answering no or the maximum number of retries [limit]
     is reached (retries only once by default). *)
+
+val user_input : ?default_answer:string -> question:string -> unit -> string
