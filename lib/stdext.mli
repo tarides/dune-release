@@ -40,12 +40,32 @@ module Unix : sig
 end
 
 module Option : sig
+  val pp :
+    (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a option -> unit
+
+  val equal : ('a -> 'a -> bool) -> 'a option -> 'a option -> bool
+
   val map : f:('a -> 'b) -> 'a option -> 'b option
 
   val bind : f:('a -> 'b option) -> 'a option -> 'b option
+
+  module O : sig
+    val ( >>= ) : 'a option -> ('a -> 'b option) -> 'b option
+
+    val ( >|= ) : 'a option -> ('a -> 'b) -> 'b option
+  end
+end
+
+module String : sig
+  val pp : Format.formatter -> string -> unit
 end
 
 module List : sig
+  val pp :
+    (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a list -> unit
+
+  val equal : ('a -> 'a -> bool) -> 'a list -> 'a list -> bool
+
   val filter_map : f:('a -> 'b option) -> 'a list -> 'b list
 end
 

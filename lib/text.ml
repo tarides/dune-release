@@ -139,18 +139,6 @@ let rewrite_github_refs ~user ~repo msg =
       let y = Re.Group.get s 2 in
       Fmt.strf "%s%s/%s%s" x user repo y)
 
-(* Toy URI parsing *)
-
-let split_uri ?(rel = false) uri =
-  match String.(cut ~sep:"//" (trim uri)) with
-  | None -> None
-  | Some (scheme, rest) -> (
-      match String.cut ~sep:"/" rest with
-      | None -> Some (scheme, rest, "")
-      | Some (host, path) ->
-          let path = if rel then path else "/" ^ path in
-          Some (scheme, host, path))
-
 (* Pretty-printers. *)
 
 module Pp = struct

@@ -34,7 +34,10 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes ~draft pkg =
       Pkg.tag pkg >>= fun version ->
       (match distrib_uri with
       | Some uri -> Ok uri
-      | None -> Pkg.infer_distrib_uri pkg)
+      | None ->
+          (* This is an absolute non-sense but we're keeping it to preserve the
+             behaviour until 2.0 and removal of delegates *)
+          Pkg.infer_github_distrib_uri pkg)
       >>= fun distrib_uri ->
       run_delegate ~dry_run del
         Cmd.(
@@ -63,7 +66,7 @@ let publish_alt ?distrib_uri ~dry_run ~kind ~msg ~archive p =
       Pkg.version p >>= fun version ->
       (match distrib_uri with
       | Some uri -> Ok uri
-      | None -> Pkg.infer_distrib_uri p)
+      | None -> Pkg.infer_github_distrib_uri p)
       >>= fun distrib_uri ->
       run_delegate ~dry_run del
         Cmd.(

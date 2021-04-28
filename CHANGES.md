@@ -49,6 +49,8 @@
 
 ### Fixed
 
+- Fix a bug where `opam submit` would try to parse the custom URI provided through
+  `--distrib-uri` as a github repo URI instead of using the dev-repo (#358, @NathanReb)
 - Fix the priority of the `--distrib-uri` option in `dune-release opam pkg`.
   It used to have lower precendence than the url file written by `dune-release publish`
   and therefore made it impossible to overwrite it if needed. (#255, @NathanReb)

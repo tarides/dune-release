@@ -135,7 +135,8 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
         Ok ()
 
 let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
-  (if dry_run then Ok D.(user, repo, dir) else Pkg.doc_user_repo_and_path p)
+  (if dry_run then Ok D.(user, repo, dir)
+  else Pkg.github_doc_owner_repo_and_path p)
   >>= fun (user, repo, dir) ->
   Pkg.name p >>= fun name ->
   Pkg.version p >>= fun version ->
@@ -447,11 +448,13 @@ let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
       Ok id
 
 let publish_distrib ?token ~dry_run ~msg ~archive ~yes ~draft p =
-  Pkg.infer_repo_uri p >>= fun uri ->
-  (match Uri.Github.get_user_and_repo uri with
-  | Error _ as e -> if dry_run then Ok (D.user, D.repo) else e
-  | r -> r)
-  >>= fun (user, repo) ->
+  (match Pkg.infer_github_repo p with
+  | Ok r -> Ok r
+  | Error _ as e ->
+      (* It probably does not make sense for dry-run to push any further
+         if the github repo cannot be infered, we should remove in 2.0. *)
+      if dry_run then Ok { owner = D.user; repo = D.repo } else e)
+  >>= fun { owner; repo } ->
   Pkg.tag p >>= fun tag ->
   assert_tag_exists ~dry_run tag >>= fun () ->
   Vcs.get () >>= fun vcs ->
@@ -463,8 +466,8 @@ let publish_distrib ?token ~dry_run ~msg ~archive ~yes ~draft p =
   push_tag ~dry_run ~yes ~dev_repo vcs tag >>= fun () ->
   (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
   >>= fun token ->
-  create_release ~dry_run ~yes ~dev_repo ~token ~version ~msg ~tag ~user ~repo
-    ~draft
+  create_release ~dry_run ~yes ~dev_repo ~token ~version ~msg ~tag ~user:owner
+    ~repo ~draft
   >>= fun id ->
   (if draft then
    Config.Draft_release.set ~dry_run ~build_dir ~name ~version
@@ -479,7 +482,7 @@ let publish_distrib ?token ~dry_run ~msg ~archive ~yes ~draft p =
   App_log.status (fun l ->
       l "Uploading %a as a release asset for %a via github's API" Text.Pp.path
         archive Text.Pp.version version);
-  curl_upload_archive ~token ~dry_run ~yes archive user repo id
+  curl_upload_archive ~token ~dry_run ~yes archive owner repo id
   >>= fun (url, asset_name) ->
   (if draft then
    Config.Release_asset_name.set ~dry_run ~build_dir ~name ~version asset_name

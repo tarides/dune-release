@@ -41,7 +41,6 @@ val pkg :
     for success, 1 for failure) or error messages. *)
 
 val submit :
-  ?distrib_uri:string ->
   ?local_repo:string ->
   ?remote_repo:string ->
   ?opam_repo:string * string ->

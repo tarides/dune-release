@@ -39,8 +39,8 @@ let update_opam_file ~dry_run ~url pkg =
   App_log.success (fun m ->
       m "Wrote opam package description %a" Text.Pp.path dest_opam_file)
 
-let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
-    ?remote_repo ?build_dir ?pkg_names ~dry_run ~yes:_ () =
+let undraft ?opam ?distrib_file ?opam_repo ?user ?token ?local_repo ?remote_repo
+    ?build_dir ?pkg_names ~dry_run ~yes:_ () =
   let pkg = Pkg.v ?opam ?distrib_file ?build_dir ~dry_run:false () in
   Pkg.name pkg >>= fun pkg_name ->
   Pkg.build_dir pkg >>= fun build_dir ->
@@ -66,16 +66,14 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
       | Some r -> Ok r
       | None -> R.error_msg "Unknown remote repository."))
   >>= fun remote_repo ->
-  (match distrib_uri with Some uri -> Ok uri | None -> Pkg.infer_repo_uri pkg)
-  >>= Uri.Github.get_user_and_repo
-  >>= fun (distrib_user, repo) ->
+  Pkg.infer_github_repo pkg >>= fun { owner; repo } ->
   let user =
     match config.user with
     | Some user -> user (* from the .yaml configuration file *)
     | None -> (
         match Github.Parse.user_from_remote remote_repo with
         | Some user -> user (* trying to infer it from the remote repo URI *)
-        | None -> distrib_user)
+        | None -> owner)
   in
   (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
   >>= fun token ->
@@ -143,12 +141,12 @@ let undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
         Text.Pp.name pkg_name Text.Pp.version version url);
   Ok 0
 
-let undraft_cli () (`Dist_uri distrib_uri) (`Dist_opam opam)
-    (`Dist_file distrib_file) (`Opam_repo opam_repo) (`User user) (`Token token)
-    (`Local_repo local_repo) (`Remote_repo remote_repo) (`Build_dir build_dir)
-    (`Package_names pkg_names) (`Dry_run dry_run) (`Yes yes) =
-  undraft ?opam ?distrib_uri ?distrib_file ?opam_repo ?user ?token ?local_repo
-    ?remote_repo ?build_dir ~pkg_names ~dry_run ~yes ()
+let undraft_cli () (`Dist_opam opam) (`Dist_file distrib_file)
+    (`Opam_repo opam_repo) (`User user) (`Token token) (`Local_repo local_repo)
+    (`Remote_repo remote_repo) (`Build_dir build_dir) (`Package_names pkg_names)
+    (`Dry_run dry_run) (`Yes yes) =
+  undraft ?opam ?distrib_file ?opam_repo ?user ?token ?local_repo ?remote_repo
+    ?build_dir ~pkg_names ~dry_run ~yes ()
   |> Cli.handle_error
 
 (* Command line interface *)
@@ -189,7 +187,7 @@ let man =
 
 let cmd =
   ( Term.(
-      pure undraft_cli $ Cli.setup $ Cli.dist_uri $ Cli.dist_opam
-      $ Cli.dist_file $ Cli.opam_repo $ Cli.user $ Cli.token $ Cli.local_repo
-      $ Cli.remote_repo $ Cli.build_dir $ Cli.pkg_names $ Cli.dry_run $ Cli.yes),
+      pure undraft_cli $ Cli.setup $ Cli.dist_opam $ Cli.dist_file
+      $ Cli.opam_repo $ Cli.user $ Cli.token $ Cli.local_repo $ Cli.remote_repo
+      $ Cli.build_dir $ Cli.pkg_names $ Cli.dry_run $ Cli.yes),
     Term.info "undraft" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )
