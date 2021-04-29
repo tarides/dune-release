@@ -60,7 +60,6 @@ val open_pr :
   token:Fpath.t ->
   dry_run:bool ->
   title:string ->
-  distrib_user:string ->
   user:string ->
   branch:Vcs.commit_ish ->
   opam_repo:string * string ->

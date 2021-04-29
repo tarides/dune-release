@@ -244,13 +244,12 @@ let curl_upload_archive ~token ~dry_run ~yes archive user repo release_id =
       >>= fun url ->
       Github_v3_api.Archive.Response.name response >>= fun name -> Ok (url, name))
 
-let open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo ~draft
-    body pkg =
+let open_pr ~token ~dry_run ~title ~user ~branch ~opam_repo ~draft body pkg =
   let curl_t =
     Github_v3_api.Pull_request.Request.open_ ~title ~user ~branch ~body
       ~opam_repo ~draft
   in
-  github_v3_auth ~dry_run ~user:distrib_user token >>= fun auth ->
+  github_v3_auth ~dry_run ~user token >>= fun auth ->
   let curl_t = Github_v3_api.with_auth ~auth curl_t in
   let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
   run_with_auth ~dry_run ~default_body curl_t >>= fun json ->

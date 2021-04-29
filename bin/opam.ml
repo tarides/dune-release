@@ -111,8 +111,8 @@ let pp_opam_repo fmt opam_repo =
   let user, repo = opam_repo in
   Format.fprintf fmt "%s/%s" user repo
 
-let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
-    ~title ~opam_repo ~auto_open ~yes ~draft pkg =
+let open_pr ~dry_run ~changes ~remote_repo ~user ~branch ~token ~title
+    ~opam_repo ~auto_open ~yes ~draft pkg =
   Pkg.opam_descr pkg >>= fun (syn, _) ->
   Pkg.opam_homepage pkg >>= fun homepage ->
   Pkg.opam_doc pkg >>= fun doc ->
@@ -138,15 +138,14 @@ let open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user ~branch ~token
       l "Opening %a to merge branch %a of %a into %a" Text.Pp.maybe_draft
         (draft, "pull request") Text.Pp.commit branch Text.Pp.url remote_repo
         pp_opam_repo opam_repo);
-  Github.open_pr ~token ~dry_run ~title ~distrib_user ~user ~branch ~opam_repo
-    ~draft msg pkg
+  Github.open_pr ~token ~dry_run ~title ~user ~branch ~opam_repo ~draft msg pkg
   >>= function
   | `Already_exists ->
       App_log.blank_line ();
       App_log.success (fun l ->
           l "The existing pull request for %a has been automatically updated."
             Fmt.(styled `Bold string)
-            (distrib_user ^ ":" ^ branch));
+            (user ^ ":" ^ branch));
       Ok 0
   | `Url url -> (
       let msg () =
@@ -197,16 +196,27 @@ let submit ~token ~dry_run ~yes ~opam_repo ~user local_repo remote_repo pkgs
   list_map Pkg.name pkgs >>= fun names ->
   let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
   Pkg.publish_msg pkg >>= fun changes ->
-  Pkg.infer_github_repo pkg >>= fun { owner; repo } ->
+  let gh_repo = Rresult.R.to_option (Pkg.infer_github_repo pkg) in
+  let changes =
+    match gh_repo with
+    | Some { owner; repo } -> Text.rewrite_github_refs ~user:owner ~repo changes
+    | None -> changes
+  in
   let user =
     match user with
-    | Some user -> user (* from the .yaml configuration file *)
+    | Some user -> Ok user (* from the .yaml configuration file *)
     | None -> (
         match Github.Parse.user_from_remote remote_repo with
-        | Some user -> user (* trying to infer it from the remote repo URI *)
-        | None -> owner)
+        | Some user -> Ok user (* trying to infer it from the remote repo URI *)
+        | None ->
+            Rresult.R.error_msg
+              "Could not determine on the behalf of which github user the \
+               opam-repository PR should be created.\n\
+               Try setting up your config using `dune-release config set user \
+               <username>`\n\
+              \               or passing one explicitly with `--user`.")
   in
-  let changes = Text.rewrite_github_refs ~user:owner ~repo changes in
+  user >>= fun user ->
   let msg = strf "%s\n\n%s\n" title changes in
   App_log.status (fun l ->
       l "Preparing %a to %a" Text.Pp.maybe_draft (draft, "pull request")
@@ -214,8 +224,8 @@ let submit ~token ~dry_run ~yes ~opam_repo ~user local_repo remote_repo pkgs
   Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
     names
   >>= fun branch ->
-  open_pr ~dry_run ~changes ~remote_repo ~user ~distrib_user:owner ~branch
-    ~token ~title ~opam_repo ~auto_open ~yes ~draft pkg
+  open_pr ~dry_run ~changes ~remote_repo ~user ~branch ~token ~title ~opam_repo
+    ~auto_open ~yes ~draft pkg
 
 let field pkgs field =
   match field with
