@@ -11,7 +11,8 @@ let ( >! ) x y = match x with Ok 0 -> y | _ -> x
 
 let bistro () (`Dry_run dry_run) (`Package_names pkg_names)
     (`Package_version version) (`Dist_tag tag) (`Keep_v keep_v) (`Token token)
-    (`Include_submodules include_submodules) (`Draft draft) =
+    (`Include_submodules include_submodules) (`Draft draft)
+    (`Local_repo local_repo) (`Remote_repo remote_repo) (`Opam_repo opam_repo) =
   Cli.handle_error
     ( Dune_release.Config.keep_v keep_v >>= fun keep_v ->
       Distrib.distrib ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir:false
@@ -23,7 +24,7 @@ let bistro () (`Dry_run dry_run) (`Package_names pkg_names)
          >>= fun pkgs ->
            Opam.pkg ~dry_run ~pkgs ()
            >! Opam.submit ?token ~dry_run ~pkgs ~pkg_names ~no_auto_open:false
-                ~yes:false ~draft () ) )
+                ~yes:false ~draft () ?local_repo ?remote_repo ?opam_repo ) )
 
 (* Command line interface *)
 
@@ -53,7 +54,7 @@ let cmd =
   ( Term.(
       pure bistro $ Cli.setup $ Cli.dry_run $ Cli.pkg_names $ Cli.pkg_version
       $ Cli.dist_tag $ Cli.keep_v $ Cli.token $ Cli.include_submodules
-      $ Cli.draft),
+      $ Cli.draft $ Cli.local_repo $ Cli.remote_repo $ Cli.opam_repo),
     Term.info "bistro" ~doc ~sdocs ~exits ~man ~man_xrefs )
 
 (*---------------------------------------------------------------------------
