@@ -185,11 +185,10 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
 (* Publish releases *)
 
 let github_v3_auth ~dry_run ~user token =
-  if dry_run then Ok Curl_option.{ user; token = D.token }
-  else Sos.read_file ~dry_run token >>| fun token -> Curl_option.{ user; token }
+  if dry_run then Curl_option.{ user; token = D.token }
+  else Curl_option.{ user; token }
 
-let github_v4_auth ~dry_run token =
-  if dry_run then Ok D.token else Sos.read_file ~dry_run token
+let github_v4_auth ~dry_run token = if dry_run then D.token else token
 
 let run_with_auth ?(default_body = `Null) ~dry_run Curl.{ url; args; meth } =
   let args = Curl_option.to_string_list args in
@@ -213,7 +212,7 @@ let run_with_auth ?(default_body = `Null) ~dry_run Curl.{ url; args; meth } =
     | Error e -> R.error_msgf "curl execution failed: %a" Curly.Error.pp e
 
 let curl_create_release ~token ~dry_run ~version ~tag ~draft msg user repo =
-  github_v3_auth ~dry_run ~user token >>= fun auth ->
+  let auth = github_v3_auth ~dry_run ~user token in
   let curl_t =
     Github_v3_api.Release.Request.create ~version ~tag ~msg ~user ~repo ~draft
   in
@@ -226,7 +225,7 @@ let curl_upload_archive ~token ~dry_run ~yes archive user repo release_id =
   let curl_t =
     Github_v3_api.Archive.Request.upload ~archive ~user ~repo ~release_id
   in
-  github_v3_auth ~dry_run ~user token >>= fun auth ->
+  let auth = github_v3_auth ~dry_run ~user token in
   let curl_t = Github_v3_api.with_auth ~auth curl_t in
   let default_body =
     `Assoc
@@ -249,7 +248,7 @@ let open_pr ~token ~dry_run ~title ~user ~branch ~opam_repo ~draft body pkg =
     Github_v3_api.Pull_request.Request.open_ ~title ~user ~branch ~body
       ~opam_repo ~draft
   in
-  github_v3_auth ~dry_run ~user token >>= fun auth ->
+  let auth = github_v3_auth ~dry_run ~user token in
   let curl_t = Github_v3_api.with_auth ~auth curl_t in
   let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
   run_with_auth ~dry_run ~default_body curl_t >>= fun json ->
@@ -269,7 +268,7 @@ let undraft_release ~token ~dry_run ~user ~repo ~release_id ~name =
   | None -> R.error_msgf "Invalid Github Release id: %s" release_id)
   >>= fun release_id ->
   let curl_t = Github_v3_api.Release.Request.undraft ~user ~repo ~release_id in
-  github_v3_auth ~dry_run ~user token >>= fun auth ->
+  let auth = github_v3_auth ~dry_run ~user token in
   let default_body =
     `Assoc [ ("browser_download_url", `String D.download_url) ]
   in
@@ -282,7 +281,7 @@ let undraft_pr ~token ~dry_run ~opam_repo:(user, repo) ~pr_id =
   | Some id -> Ok id
   | None -> R.error_msgf "Invalid Github PR number: %s" pr_id)
   >>= fun pr_id ->
-  github_v4_auth ~dry_run token >>= fun auth ->
+  let auth = github_v4_auth ~dry_run token in
   let curl_t =
     Github_v4_api.Pull_request.Request.node_id ~user ~repo ~id:pr_id
   in
@@ -417,7 +416,7 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
             e)
 
 let curl_get_release ~dry_run ~token ~version ~user ~repo =
-  github_v3_auth ~dry_run ~user token >>= fun auth ->
+  let auth = github_v3_auth ~dry_run ~user token in
   let curl_t = Github_v3_api.Release.Request.get ~version ~user ~repo in
   let curl_t = Github_v3_api.with_auth ~auth curl_t in
   run_with_auth ~dry_run curl_t >>= Github_v3_api.Release.Response.release_id
@@ -446,7 +445,7 @@ let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
       App_log.status (fun l -> l "Release with id %d already exists" id);
       Ok id
 
-let publish_distrib ?token ~dry_run ~msg ~archive ~yes ~draft p =
+let publish_distrib ~token ~dry_run ~msg ~archive ~yes ~draft p =
   (match Pkg.infer_github_repo p with
   | Ok r -> Ok r
   | Error _ as e ->
@@ -463,8 +462,6 @@ let publish_distrib ?token ~dry_run ~msg ~archive ~yes ~draft p =
   Pkg.name p >>= fun name ->
   Pkg.version p >>= fun version ->
   push_tag ~dry_run ~yes ~dev_repo vcs tag >>= fun () ->
-  (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
-  >>= fun token ->
   create_release ~dry_run ~yes ~dev_repo ~token ~version ~msg ~tag ~user:owner
     ~repo ~draft
   >>= fun id ->

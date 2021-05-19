@@ -4,7 +4,10 @@
 
 - Add `--local-repo`, `--remote-repo` and `--opam-repo` options to the default command,
   they used to be only available for the `opam` subcommand (#363, @NathanReb)
-- Add a `--token` option to `dune-release publish` and `dune-release opam` commands to specify a github token. This allows dune-release to be called through a Github Actions workflow and use the github token through an environment variable. (#284, @gpetiot)
+- Add a `--token` option to `dune-release publish` and `dune-release opam` commands
+  to specify a github token. This allows dune-release to be called through a Github
+  Actions workflow and use the github token through an environment variable.
+  (#284 #368, @gpetiot @NathanReb)
 - Log curl calls on verbose/debug mode (#281, @gpetiot)
 - Try to publish the release asset again after it failed (#272, @gpetiot)
 - Improve error reporting of failing git comands (#257, @gpetiot)
@@ -24,6 +27,9 @@
 
 ### Changed
 
+- Require tokens earlier in the execution of commands that use the github API. If the token
+  isn't saved to the user's configuration, the prompt for creating one will show up at the
+  command startup rather than on sending the first request (#368, @NathanReb)
 - Attach the changelog to the annotated tag message (#283, @gpetiot)
 - Do not remove versioned files from the tarball anymore. We used to exclude
   `.gitignore`, `.gitattributes` and other such files from the archive.
@@ -51,6 +57,8 @@
 
 ### Fixed
 
+- Fix a bug where subcommands wouldn't properly read the token files, leading to authentication
+  failures on API requests (#368, @NathanReb)
 - Fix a bug in `opam submit` preventing non-github users to create the opam-repo PR
   via dune-release. (#359, @NathanReb)
 - Fix a bug where `opam submit` would try to parse the custom URI provided through

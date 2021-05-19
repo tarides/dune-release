@@ -26,7 +26,7 @@ end
 (** {1 Publish} *)
 
 val publish_distrib :
-  ?token:Fpath.t ->
+  token:string ->
   dry_run:bool ->
   msg:string ->
   archive:Fpath.t ->
@@ -46,7 +46,7 @@ val publish_doc :
   (unit, R.msg) Result.result
 
 val undraft_release :
-  token:Fpath.t ->
+  token:string ->
   dry_run:bool ->
   user:string ->
   repo:string ->
@@ -57,7 +57,7 @@ val undraft_release :
     release archive download URL. *)
 
 val open_pr :
-  token:Fpath.t ->
+  token:string ->
   dry_run:bool ->
   title:string ->
   user:string ->
@@ -69,7 +69,7 @@ val open_pr :
   ([ `Url of string | `Already_exists ], R.msg) result
 
 val undraft_pr :
-  token:Fpath.t ->
+  token:string ->
   dry_run:bool ->
   opam_repo:string * string ->
   pr_id:string ->

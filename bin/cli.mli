@@ -56,7 +56,7 @@ val build_dir : [ `Build_dir of Fpath.t option ] Term.t
 val publish_msg : [ `Publish_msg of string option ] Term.t
 (** A [--msg] option to define a publication message. *)
 
-val token : [ `Token of Fpath.t option ] Term.t
+val token : [ `Token of string option ] Term.t
 (** A [--token] option to define the github token. *)
 
 val dry_run : [ `Dry_run of bool ] Term.t

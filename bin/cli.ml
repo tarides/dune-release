@@ -64,11 +64,11 @@ let token =
      token for example as part of a Github Actions workflow where the github \
      token is provided through an environment variable."
   in
-  let docv = "FILE" in
+  let docv = "TOKEN" in
   let env = Arg.env_var "DUNE_RELEASE_GITHUB_TOKEN" in
   named
     (fun x -> `Token x)
-    Arg.(value & opt (some path_arg) None & info [ "token" ] ~doc ~docv ~env)
+    Arg.(value & opt (some string) None & info [ "token" ] ~doc ~docv ~env)
 
 let keep_v =
   let doc = "Do not drop the initial 'v' in the version string." in

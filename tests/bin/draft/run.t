@@ -54,7 +54,7 @@ We do the whole dune-release process
     [-] Publishing distribution
     => must exists _build/whatever-0.1.0.tbz
     [-] Publishing to github
-    -: exec: git --git-dir .git rev-parse --verify 0.1.0
+    ...
     -: exec: git --git-dir .git rev-parse --verify 0.1.0
     -: exec:
          git --git-dir .git ls-remote --quiet --tags   https://github.com/foo/whatever.git 0.1.0
