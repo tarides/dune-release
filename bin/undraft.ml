@@ -51,6 +51,7 @@ let undraft ?opam ?distrib_file ?opam_repo ?user ?token ?local_repo ?remote_repo
   let opam_repo =
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
+  Config.token ?cli_token:token ~dry_run () >>= fun token ->
   Config.v ~user ~local_repo ~remote_repo [ pkg ] >>= fun config ->
   (match local_repo with
   | Some r -> Ok Fpath.(v r)
@@ -75,8 +76,6 @@ let undraft ?opam ?distrib_file ?opam_repo ?user ?token ?local_repo ?remote_repo
         | Some user -> user (* trying to infer it from the remote repo URI *)
         | None -> owner)
   in
-  (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
-  >>= fun token ->
   Config.Draft_release.get ~dry_run ~build_dir ~name:pkg_name ~version
   >>= fun release_id ->
   App_log.status (fun l ->

@@ -165,6 +165,8 @@ let cleanup () = match !reset_terminal with None -> () | Some f -> f ()
 
 let () = at_exit cleanup
 
+let token_file () = config_dir () >>= fun cfg -> Ok Fpath.(cfg / "github.token")
+
 let get_token () =
   let rec aux () =
     match Stdext.Unix.read_line ~echo_input:false () with
@@ -185,38 +187,50 @@ let validate_token token =
     Error (R.msg "token is malformed")
   else Ok token
 
-let token ~dry_run () =
-  config_dir () >>= fun cfg ->
-  let file = Fpath.(cfg / "github.token") in
+let token_creation_url = "https://github.com/settings/tokens/new"
+
+let prompt_for_token () =
+  let rec get_valid_token () =
+    match validate_token (get_token ()) with
+    | Ok token -> token
+    | Error (`Msg msg) ->
+        App_log.question (fun l -> l "Please try again, %s" msg);
+        get_valid_token ()
+  in
+  App_log.status (fun l ->
+      l
+        "Dune-release needs a Github Personal Access Token to proceed with API \
+         requests.");
+  App_log.status (fun l ->
+      l "To create a new token, please visit:\n    %s" token_creation_url);
+  App_log.status (fun l ->
+      l "and create a token with the %a scope only."
+        Fmt.(styled `Bold string)
+        "public_repo");
+  App_log.question (fun l -> l "Please copy the token here:");
+  get_valid_token ()
+
+let config_token ~dry_run () =
+  token_file () >>= fun file ->
   OS.File.exists file >>= fun exists ->
   let is_valid =
     if exists then Sos.read_file ~dry_run file >>= validate_token
-    else Error (R.msg "does not exist")
+    else Error (R.msg "file does not exist")
   in
   match is_valid with
-  | Ok _ -> Ok file
+  | Ok token -> Ok token
   | Error (`Msg msg) ->
-      if dry_run then Ok Fpath.(v "${token}")
+      if dry_run then Ok "${token}"
       else
-        let error = if exists then ":" ^ msg else " does not exist" in
-        Fmt.pr
-          "%a%s!\n\n\
-           To create a new token, please visit:\n\n\
-          \   https://github.com/settings/tokens/new\n\n\
-           And create a token with a nice name and and the %a scope only.\n\n\
-           Copy the token@ here: %!" Fpath.pp file error
-          Fmt.(styled `Bold string)
-          "public_repo";
-        let rec get_valid_token () =
-          match validate_token (get_token ()) with
-          | Ok token -> token
-          | Error (`Msg msg) ->
-              Fmt.pr "Please try again, %s.%!" msg;
-              get_valid_token ()
-        in
-        let token = get_valid_token () in
+        let () = App_log.unhappy (fun l -> l "%a: %s" Fpath.pp file msg) in
+        let token = prompt_for_token () in
         OS.Dir.create Fpath.(parent file) >>= fun _ ->
-        OS.File.write ~mode:0o600 file token >>= fun () -> Ok file
+        OS.File.write ~mode:0o600 file token >>= fun () -> Ok token
+
+let token ?cli_token ~dry_run () =
+  match cli_token with
+  | Some token -> Ok token
+  | None -> config_token ~dry_run ()
 
 let load () =
   file () >>= fun file ->

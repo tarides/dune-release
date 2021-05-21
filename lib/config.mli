@@ -29,7 +29,12 @@ val v :
   Pkg.t list ->
   (t, Bos_setup.R.msg) result
 
-val token : dry_run:bool -> unit -> (Fpath.t, Bos_setup.R.msg) result
+val token :
+  ?cli_token:string -> dry_run:bool -> unit -> (string, Bos_setup.R.msg) result
+(** Returns the token value that should be used for github API requests. If a
+    [cli_token] was provided, it is returned. Otherwise the token file in the
+    config dir is looked up. If it exists, its content is returned, if it does
+    not, the user is prompted for a token which will be then saved to that file. *)
 
 val keep_v : bool -> (bool, Bos_setup.R.msg) result
 

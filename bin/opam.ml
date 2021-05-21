@@ -283,6 +283,7 @@ let submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run ~pkgs
   let opam_repo =
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
+  Config.token ?cli_token:token ~dry_run () >>= fun token ->
   Config.v ~user ~local_repo ~remote_repo pkgs >>= fun config ->
   (match local_repo with
   | Some r -> Ok Fpath.(v r)
@@ -299,8 +300,6 @@ let submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run ~pkgs
       | None -> R.error_msg "Unknown remote repository."))
   >>= fun remote_repo ->
   Config.auto_open (not no_auto_open) >>= fun auto_open ->
-  (match token with Some t -> Ok t | None -> Config.token ~dry_run ())
-  >>= fun token ->
   App_log.status (fun m ->
       m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
   submit ~token ~dry_run ~yes ~opam_repo ~user:config.user local_repo

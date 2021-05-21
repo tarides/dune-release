@@ -15,16 +15,17 @@ let bistro () (`Dry_run dry_run) (`Package_names pkg_names)
     (`Local_repo local_repo) (`Remote_repo remote_repo) (`Opam_repo opam_repo) =
   Cli.handle_error
     ( Dune_release.Config.keep_v keep_v >>= fun keep_v ->
+      Dune_release.Config.token ?cli_token:token ~dry_run () >>= fun token ->
       Distrib.distrib ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir:false
         ~skip_lint:false ~skip_build:false ~skip_tests:false ~include_submodules
         ()
       >! fun () ->
-      Publish.publish ?token ~pkg_names ~version ~tag ~keep_v ~dry_run
+      Publish.publish ~token ~pkg_names ~version ~tag ~keep_v ~dry_run
         ~publish_artefacts:[] ~yes:false ~draft ()
       >! fun () ->
       Opam.get_pkgs ~dry_run ~keep_v ~tag ~pkg_names ~version () >>= fun pkgs ->
       Opam.pkg ~dry_run ~pkgs () >! fun () ->
-      Opam.submit ?token ~dry_run ~pkgs ~pkg_names ~no_auto_open:false
+      Opam.submit ~token ~dry_run ~pkgs ~pkg_names ~no_auto_open:false
         ~yes:false ~draft () ?local_repo ?remote_repo ?opam_repo )
 
 (* Command line interface *)

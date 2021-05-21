@@ -105,7 +105,7 @@ We make a dry-run release:
     [-] Publishing distribution
     => must exists _build/whatever-0.1.0.tbz
     [-] Publishing to github
-    -: exec: git --git-dir .git rev-parse --verify 0.1.0
+    ...
     -: exec: git --git-dir .git rev-parse --verify 0.1.0
     ...
     [?] Create release 0.1.0 on https://github.com/foo/whatever.git? [Y/n]
