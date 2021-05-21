@@ -1,7 +1,9 @@
 let upgrade ~filename ~url ~id ~version opam_t =
   let commit_hash =
-    { OpamParserTypes.FullPos.pelem = OpamParserTypes.FullPos.String id
-    ; pos = OpamTypesBase.pos_file filename }
+    {
+      OpamParserTypes.FullPos.pelem = OpamParserTypes.FullPos.String id;
+      pos = OpamTypesBase.pos_file filename;
+    }
   in
   match version with
   | `V1 descr ->
