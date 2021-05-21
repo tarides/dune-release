@@ -1,6 +1,6 @@
 open Bos_setup
 
-val with_auth : auth:Curl_option.auth -> Curl.t -> Curl.t
+val with_auth : token:string -> Curl.t -> Curl.t
 
 module Release : sig
   module Request : sig

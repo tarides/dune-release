@@ -16,6 +16,10 @@
 
 open Bos_setup
 
+module Dry_run = struct
+  let token = "${token}"
+end
+
 type t = {
   user : string option;
   remote : string option;
@@ -218,17 +222,17 @@ let config_token ~dry_run () =
     else Error (R.msg "file does not exist")
   in
   match is_valid with
+  | _ when dry_run -> Ok Dry_run.token
   | Ok token -> Ok token
   | Error (`Msg msg) ->
-      if dry_run then Ok "${token}"
-      else
-        let () = App_log.unhappy (fun l -> l "%a: %s" Fpath.pp file msg) in
-        let token = prompt_for_token () in
-        OS.Dir.create Fpath.(parent file) >>= fun _ ->
-        OS.File.write ~mode:0o600 file token >>= fun () -> Ok token
+      let () = App_log.unhappy (fun l -> l "%a: %s" Fpath.pp file msg) in
+      let token = prompt_for_token () in
+      OS.Dir.create Fpath.(parent file) >>= fun _ ->
+      OS.File.write ~mode:0o600 file token >>= fun () -> Ok token
 
 let token ?cli_token ~dry_run () =
   match cli_token with
+  | Some _ when dry_run -> Ok Dry_run.token
   | Some token -> Ok token
   | None -> config_token ~dry_run ()
 
