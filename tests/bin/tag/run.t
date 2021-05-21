@@ -39,7 +39,7 @@ Checking the message attached to the tag.
     Tagger: ...
     Date:   ...
     
-    Distribution 0.1.0
+    Release 0.1.0
     
     CHANGES:
     
