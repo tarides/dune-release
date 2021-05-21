@@ -64,8 +64,7 @@ let vcs_tag repo pkg version ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes
       (match msg with
       | Some msg -> Ok msg
       | None ->
-          Pkg.publish_msg pkg >>| fun msg ->
-          strf "Distribution %s\n\n%s" version msg)
+          Pkg.publish_msg pkg >>| fun msg -> strf "Release %s\n\n%s" version msg)
       >>= fun msg ->
       Vcs.tag repo ~dry_run ~force ~sign ~msg ~commit_ish tag >>| fun () ->
       App_log.success (fun m ->
