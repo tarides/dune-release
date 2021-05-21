@@ -31,22 +31,21 @@ description: "This package is nice"
 |}
   in
   let expected_v1 =
-    {|x-commit-hash: "6814f8b26946358c72b926706f210025f36619b0"
-opam-version: "2.0"
+    {|opam-version: "2.0"
 synopsis: "This package is great"
 maintainer: "Foo"
 authors: ["Foo" "Bar"]
 license: "ISC"
 homepage: "https://github.com/foo/bar"
-depends: ["ocaml" "foo" "bar"]
+depends: ["foo" "bar"]
 dev-repo: "git+https://github.com/foo/bar.git"
 url {
   src: "https://github.com/foo/foo/foo/foo/bar"
-}|}
+}
+x-commit-hash: "6814f8b26946358c72b926706f210025f36619b0"|}
   in
   let expected_v2 =
-    {|x-commit-hash: "6814f8b26946358c72b926706f210025f36619b0"
-opam-version: "2.0"
+    {|opam-version: "2.0"
 synopsis: ""
 description: "This package is nice"
 maintainer: "Foo"
@@ -57,7 +56,8 @@ depends: ["foo" "bar"]
 dev-repo: "git+https://github.com/foo/bar.git"
 url {
   src: "https://github.com/foo/foo/foo/foo/bar"
-}|}
+}
+x-commit-hash: "6814f8b26946358c72b926706f210025f36619b0"|}
   in
   let descr = OpamFile.Descr.create "This package is great" in
   [

@@ -135,10 +135,10 @@ We make a dry-run release:
     homepage: "https://github.com/foo/whatever"
     dev-repo: "git+https://github.com/foo/whatever.git"
     synopsis: "whatever"
-    x-commit-hash: ...
     url {
       src: "https://foo.fr/archive/foo/foo.tbz"
       checksum: [
     ...
       ]
     }
+    x-commit-hash: ...
