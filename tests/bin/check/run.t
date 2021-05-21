@@ -44,7 +44,7 @@ If the condition described above is fulfilled, there are 4 checks to be performe
     [FAIL] File CHANGES is missing.
     [ OK ] File opam is present.
     [ OK ] lint opam file my_pkg.opam.
-    [ OK ] opam field description is present
+    [ OK ] opam field synopsis is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
     [FAIL] lint of <project_dir> and package my_pkg failure: 3 errors.
@@ -81,7 +81,7 @@ In multi package projects, the whole lint process (including the file lints, eve
     [FAIL] File CHANGES is missing.
     [ OK ] File opam is present.
     [ OK ] lint opam file my_pkg.opam.
-    [ OK ] opam field description is present
+    [ OK ] opam field synopsis is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
     [FAIL] lint of <project_dir> and package my_pkg failure: 3 errors.
@@ -92,7 +92,7 @@ In multi package projects, the whole lint process (including the file lints, eve
     [FAIL] File CHANGES is missing.
     [ OK ] File opam is present.
     [ OK ] lint opam file my_pkg-sub.opam.
-    [ OK ] opam field description is present
+    [ OK ] opam field synopsis is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
     [FAIL] lint of <project_dir> and package my_pkg-sub failure: 3 errors.

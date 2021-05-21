@@ -43,6 +43,7 @@
 - Make the automatic dune-release workflow to stop if a step exits with a non-zero code (#332, @gpetiot)
 - Make git-related mdx tests more robust in unusual environments (#334, @sternenseemann)
 - Set the default tag message to "Release <tag>" instead of "Distribution <tag>"
+- Opam file linter: check for `synopsis` instead of `description` (#291, @kit-ty-kate)
 
 ### Deprecated
 
