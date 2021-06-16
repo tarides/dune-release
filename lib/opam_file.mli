@@ -1,5 +1,5 @@
 val upgrade :
-  filename:string ->
+  filename:OpamTypes.filename ->
   url:OpamFile.URL.t ->
   id:string ->
   version:[ `V1 of OpamFile.Descr.t | `V2 ] ->

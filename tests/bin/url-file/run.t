@@ -130,15 +130,15 @@ We make a dry-run release:
     [-] Creating opam package description for whatever
     [+] Wrote opam package description _build/whatever.0.1.0/opam
 
-    $ cat _build/whatever.0.1.0/opam
+    $ cat _build/whatever.0.1.0/opam | sed -e 's/\(x-commit-hash:\) "[0-9a-f]*"/\1/'
     opam-version: "2.0"
     homepage: "https://github.com/foo/whatever"
     dev-repo: "git+https://github.com/foo/whatever.git"
     synopsis: "whatever"
-    x-commit-hash: ...
     url {
       src: "https://foo.fr/archive/foo/foo.tbz"
       checksum: [
     ...
       ]
     }
+    x-commit-hash:

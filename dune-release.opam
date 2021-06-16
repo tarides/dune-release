@@ -8,7 +8,7 @@ bug-reports: "https://github.com/ocamllabs/dune-release/issues"
 doc: "https://ocamllabs.github.io/dune-release/"
 
 build: [
-  ["dune" "subst"] {pinned}
+  ["dune" "subst"] {dev}
   ["dune" "build" "-p" name "-j" jobs]
   ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
@@ -21,9 +21,10 @@ depends: [
   "bos"
   "cmdliner"
   "re"
-  "opam-format" {< "2.1.0~beta"}
-  "opam-state" {< "2.1.0~beta"}
-  "opam-core" {< "2.1.0~beta"}
+  "astring"
+  "opam-format" {>= "2.1.0~beta"}
+  "opam-state" {>= "2.1.0~beta"}
+  "opam-core" {>= "2.1.0~beta"}
   "rresult"
   "logs"
   "odoc"

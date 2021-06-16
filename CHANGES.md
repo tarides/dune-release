@@ -44,6 +44,7 @@
 - Make git-related mdx tests more robust in unusual environments (#334, @sternenseemann)
 - Set the default tag message to "Release <tag>" instead of "Distribution <tag>"
 - Opam file linter: check for `synopsis` instead of `description` (#291, @kit-ty-kate)
+- Upgrade the use of the opam libraries to opam 2.1 (#343, @kit-ty-kate)
 
 ### Deprecated
 
