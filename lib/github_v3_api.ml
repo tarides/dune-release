@@ -46,8 +46,11 @@ let handle_errors json ~try_ ~on_ok ~default_msg ~handled_errors =
                 documentation_url pp_errors errors
           | Error _ -> Error err))
 
-let with_auth ~auth Curl.{ url; meth; args } =
-  Curl.{ url; meth; args = Curl_option.User auth :: args }
+let with_auth ~token Curl.{ url; meth; args } =
+  let auth_header =
+    Curl_option.Header (Printf.sprintf "Authorization: token %s" token)
+  in
+  Curl.{ url; meth; args = auth_header :: args }
 
 module Release = struct
   module Request = struct

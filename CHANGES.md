@@ -27,6 +27,8 @@
 
 ### Changed
 
+- Use pure token authentication for Github API requests rather than "token as passwords"
+  authentication (#369, @NathanReb)
 - Require tokens earlier in the execution of commands that use the github API. If the token
   isn't saved to the user's configuration, the prompt for creating one will show up at the
   command startup rather than on sending the first request (#368, @NathanReb)

@@ -15,8 +15,6 @@ module D = struct
 
   let fetch_head = "${fetch_head}"
 
-  let token = "${token}"
-
   let pr_url = "${pr_url}"
 
   let pr_node_id = "${pr_node_id}"
@@ -184,12 +182,6 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
 
 (* Publish releases *)
 
-let github_v3_auth ~dry_run ~user token =
-  if dry_run then Curl_option.{ user; token = D.token }
-  else Curl_option.{ user; token }
-
-let github_v4_auth ~dry_run token = if dry_run then D.token else token
-
 let run_with_auth ?(default_body = `Null) ~dry_run Curl.{ url; args; meth } =
   let args = Curl_option.to_string_list args in
   if dry_run then
@@ -212,11 +204,10 @@ let run_with_auth ?(default_body = `Null) ~dry_run Curl.{ url; args; meth } =
     | Error e -> R.error_msgf "curl execution failed: %a" Curly.Error.pp e
 
 let curl_create_release ~token ~dry_run ~version ~tag ~draft msg user repo =
-  let auth = github_v3_auth ~dry_run ~user token in
   let curl_t =
     Github_v3_api.Release.Request.create ~version ~tag ~msg ~user ~repo ~draft
   in
-  let curl_t = Github_v3_api.with_auth ~auth curl_t in
+  let curl_t = Github_v3_api.with_auth ~token curl_t in
   let default_body = `Assoc [ ("id", `Int D.release_id) ] in
   run_with_auth ~dry_run ~default_body curl_t
   >>= Github_v3_api.Release.Response.release_id
@@ -225,8 +216,7 @@ let curl_upload_archive ~token ~dry_run ~yes archive user repo release_id =
   let curl_t =
     Github_v3_api.Archive.Request.upload ~archive ~user ~repo ~release_id
   in
-  let auth = github_v3_auth ~dry_run ~user token in
-  let curl_t = Github_v3_api.with_auth ~auth curl_t in
+  let curl_t = Github_v3_api.with_auth ~token curl_t in
   let default_body =
     `Assoc
       [
@@ -248,8 +238,7 @@ let open_pr ~token ~dry_run ~title ~user ~branch ~opam_repo ~draft body pkg =
     Github_v3_api.Pull_request.Request.open_ ~title ~user ~branch ~body
       ~opam_repo ~draft
   in
-  let auth = github_v3_auth ~dry_run ~user token in
-  let curl_t = Github_v3_api.with_auth ~auth curl_t in
+  let curl_t = Github_v3_api.with_auth ~token curl_t in
   let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
   run_with_auth ~dry_run ~default_body curl_t >>= fun json ->
   (if draft then
@@ -268,11 +257,10 @@ let undraft_release ~token ~dry_run ~user ~repo ~release_id ~name =
   | None -> R.error_msgf "Invalid Github Release id: %s" release_id)
   >>= fun release_id ->
   let curl_t = Github_v3_api.Release.Request.undraft ~user ~repo ~release_id in
-  let auth = github_v3_auth ~dry_run ~user token in
   let default_body =
     `Assoc [ ("browser_download_url", `String D.download_url) ]
   in
-  let curl_t = Github_v3_api.with_auth ~auth curl_t in
+  let curl_t = Github_v3_api.with_auth ~token curl_t in
   run_with_auth ~dry_run ~default_body curl_t
   >>= Github_v3_api.Release.Response.browser_download_url ~name
 
@@ -281,11 +269,10 @@ let undraft_pr ~token ~dry_run ~opam_repo:(user, repo) ~pr_id =
   | Some id -> Ok id
   | None -> R.error_msgf "Invalid Github PR number: %s" pr_id)
   >>= fun pr_id ->
-  let auth = github_v4_auth ~dry_run token in
   let curl_t =
     Github_v4_api.Pull_request.Request.node_id ~user ~repo ~id:pr_id
   in
-  let curl_t = Github_v4_api.with_auth ~token:auth curl_t in
+  let curl_t = Github_v4_api.with_auth ~token curl_t in
   let default_body =
     `Assoc
       [
@@ -303,7 +290,7 @@ let undraft_pr ~token ~dry_run ~opam_repo:(user, repo) ~pr_id =
   >>= Github_v4_api.Pull_request.Response.node_id
   >>= fun node_id ->
   let curl_t = Github_v4_api.Pull_request.Request.ready_for_review ~node_id in
-  let curl_t = Github_v4_api.with_auth ~token:auth curl_t in
+  let curl_t = Github_v4_api.with_auth ~token curl_t in
   let default_body =
     `Assoc
       [
@@ -416,9 +403,8 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
             e)
 
 let curl_get_release ~dry_run ~token ~version ~user ~repo =
-  let auth = github_v3_auth ~dry_run ~user token in
   let curl_t = Github_v3_api.Release.Request.get ~version ~user ~repo in
-  let curl_t = Github_v3_api.with_auth ~auth curl_t in
+  let curl_t = Github_v3_api.with_auth ~token curl_t in
   run_with_auth ~dry_run curl_t >>= Github_v3_api.Release.Response.release_id
 
 let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo

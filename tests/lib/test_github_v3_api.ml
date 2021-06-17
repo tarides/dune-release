@@ -118,16 +118,15 @@ let test_open_pr =
   ]
 
 let test_with_auth =
-  let auth = Dune_release.Curl_option.{ user = "foo"; token = "bar" } in
-  let make_test ~test_name ~curl_t ~expected =
+  let make_test ~test_name ~token ~curl_t ~expected =
     let test_fun () =
-      let actual = with_auth ~auth curl_t in
+      let actual = with_auth ~token curl_t in
       Alcotest.check Alcotest_ext.curl test_name expected actual
     in
     (test_name, `Quick, test_fun)
   in
   [
-    make_test ~test_name:"basic"
+    make_test ~test_name:"basic" ~token:"abc"
       ~curl_t:
         {
           url = "https://api.github.com/repos/base/repo/pulls";
@@ -138,7 +137,12 @@ let test_with_auth =
         {
           url = "https://api.github.com/repos/base/repo/pulls";
           meth = `POST;
-          args = [ User auth; Config `Stdin; Dump_header `Ignore ];
+          args =
+            [
+              Header "Authorization: token abc";
+              Config `Stdin;
+              Dump_header `Ignore;
+            ];
         };
   ]
 
