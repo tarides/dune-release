@@ -188,7 +188,7 @@ let local_repo =
     Arg.(
       value
       & opt (some string) None
-      & info ~env [ "l"; "--local-repo" ] ~doc ~docv:"PATH")
+      & info ~env [ "l"; "local-repo" ] ~doc ~docv:"PATH")
 
 let remote_repo =
   let doc = "Location of the remote fork of opam-repository" in
@@ -198,7 +198,7 @@ let remote_repo =
     Arg.(
       value
       & opt (some string) None
-      & info ~env [ "r"; "--remote-repo" ] ~doc ~docv:"URI")
+      & info ~env [ "r"; "remote-repo" ] ~doc ~docv:"URI")
 
 let opam_repo =
   let doc =
