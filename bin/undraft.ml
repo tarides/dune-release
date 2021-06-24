@@ -54,7 +54,7 @@ let undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo ?remote_repo
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
   (match local_repo with
-  | Some r -> Ok Fpath.(v r)
+  | Some r -> Ok r
   | None -> (
       match config.local with
       | Some r -> Ok r

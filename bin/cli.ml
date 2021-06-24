@@ -14,6 +14,11 @@ open Dune_release
 
 let path_arg = Arg.conv Fpath.(of_string, pp)
 
+let dir_path_arg =
+  let dir_parse = Arg.(conv_parser dir) in
+  let parse s = dir_parse s >>= Fpath.of_string in
+  Arg.conv ~docv:"DIR" (parse, Fpath.pp)
+
 let named f = Cmdliner.Term.(app (const f))
 
 let dist_tag =
@@ -188,7 +193,7 @@ let local_repo =
     (fun x -> `Local_repo x)
     Arg.(
       value
-      & opt (some string) None
+      & opt (some dir_path_arg) None
       & info ~env [ "l"; "local-repo" ] ~doc ~docv:"PATH")
 
 let remote_repo =

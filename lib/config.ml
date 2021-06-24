@@ -134,7 +134,7 @@ let create_config ~remote_repo ~local_repo pkgs file =
   in
   let default_local =
     match local_repo with
-    | Some r -> Some r
+    | Some r -> Some (Fpath.to_string r)
     | None -> Some Fpath.(v Xdg.home / "git" / "opam-repository" |> to_string)
   in
   let remote =

@@ -24,7 +24,7 @@ type t = {
 
 val v :
   remote_repo:string option ->
-  local_repo:string option ->
+  local_repo:Fpath.t option ->
   Pkg.t list ->
   (t, Bos_setup.R.msg) result
 

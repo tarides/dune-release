@@ -296,7 +296,7 @@ let submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run ~pkgs
   Config.token ?cli_token:token ~dry_run () >>= fun token ->
   Config.v ~local_repo ~remote_repo pkgs >>= fun config ->
   (match local_repo with
-  | Some r -> Ok Fpath.(v r)
+  | Some r -> Ok r
   | None -> (
       match config.local with
       | Some r -> Ok r
