@@ -16,8 +16,8 @@
 
 type t = {
   user : string option;
-  remote : string option;
-  local : Fpath.t option;
+  remote : string;
+  local : Fpath.t;
   keep_v : bool option;
   auto_open : bool option;
 }
@@ -27,6 +27,8 @@ val v :
   local_repo:Fpath.t option ->
   Pkg.t list ->
   (t, Bos_setup.R.msg) result
+
+val create : ?pkgs:Pkg.t list -> unit -> (unit, Bos_setup.R.msg) result
 
 val token :
   ?cli_token:string -> dry_run:bool -> unit -> (string, Bos_setup.R.msg) result
@@ -41,7 +43,7 @@ val keep_v : bool -> (bool, Bos_setup.R.msg) result
 
 val auto_open : bool -> (bool, Bos_setup.R.msg) result
 
-val load : unit -> (t, Bos_setup.R.msg) result
+val load : unit -> (t option, Bos_setup.R.msg) result
 
 val save : t -> (unit, Bos_setup.R.msg) result
 

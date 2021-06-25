@@ -53,20 +53,10 @@ let undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo ?remote_repo
   let opam_repo =
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
-  (match local_repo with
-  | Some r -> Ok r
-  | None -> (
-      match config.local with
-      | Some r -> Ok r
-      | None -> R.error_msg "Unknown local repository."))
-  >>= fun local_repo ->
-  (match remote_repo with
-  | Some r -> Ok r
-  | None -> (
-      match config.remote with
-      | Some r -> Ok r
-      | None -> R.error_msg "Unknown remote repository."))
-  >>= fun remote_repo ->
+  let local_repo = match local_repo with Some r -> r | None -> config.local in
+  let remote_repo =
+    match remote_repo with Some r -> r | None -> config.remote
+  in
   Pkg.infer_github_repo pkg >>= fun { owner; repo } ->
   Config.Draft_release.get ~dry_run ~build_dir ~name:pkg_name ~version
   >>= fun release_id ->

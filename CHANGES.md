@@ -2,6 +2,8 @@
 
 ### Added
 
+- Add a `config create` subcommand to create a fresh configuration if you don't have one yet
+  (#???, @NathanReb)
 - Add `--local-repo`, `--remote-repo` and `--opam-repo` options to the default command,
   they used to be only available for the `opam` subcommand (#363, @NathanReb)
 - Add a `--token` option to `dune-release publish` and `dune-release opam` commands

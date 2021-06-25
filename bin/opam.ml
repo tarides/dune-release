@@ -295,20 +295,10 @@ let submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run ~pkgs
   report_user_option_use user;
   Config.token ?cli_token:token ~dry_run () >>= fun token ->
   Config.v ~local_repo ~remote_repo pkgs >>= fun config ->
-  (match local_repo with
-  | Some r -> Ok r
-  | None -> (
-      match config.local with
-      | Some r -> Ok r
-      | None -> R.error_msg "Unknown local repository."))
-  >>= fun local_repo ->
-  (match remote_repo with
-  | Some r -> Ok r
-  | None -> (
-      match config.remote with
-      | Some r -> Ok r
-      | None -> R.error_msg "Unknown remote repository."))
-  >>= fun remote_repo ->
+  let local_repo = match local_repo with Some r -> r | None -> config.local in
+  let remote_repo =
+    match remote_repo with Some r -> r | None -> config.remote
+  in
   Config.auto_open (not no_auto_open) >>= fun auto_open ->
   App_log.status (fun m ->
       m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
