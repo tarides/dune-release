@@ -287,23 +287,18 @@ let report_user_option_use user =
   | None -> ()
   | Some _ -> App_log.unhappy (fun l -> l "%s" Deprecate.Config_user.option_use)
 
-let submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run ~pkgs
-    ~pkg_names ~no_auto_open ~yes ~draft () =
+let submit ?local_repo:local ?remote_repo:remote ?opam_repo ?user ?token
+    ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes ~draft () =
   let opam_repo =
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
   report_user_option_use user;
   Config.token ?cli_token:token ~dry_run () >>= fun token ->
-  Config.v ~local_repo ~remote_repo pkgs >>= fun config ->
-  let local_repo = match local_repo with Some r -> r | None -> config.local in
-  let remote_repo =
-    match remote_repo with Some r -> r | None -> config.remote
-  in
+  Config.opam_repo_fork ~pkgs ~local ~remote () >>= fun { remote; local } ->
   Config.auto_open (not no_auto_open) >>= fun auto_open ->
   App_log.status (fun m ->
       m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
-  submit ~token ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open
-    ~draft
+  submit ~token ~dry_run ~yes ~opam_repo local remote pkgs auto_open ~draft
 
 let field ~pkgs ~field_name = field pkgs field_name
 

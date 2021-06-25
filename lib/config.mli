@@ -22,11 +22,9 @@ type t = {
   auto_open : bool option;
 }
 
-val v :
-  remote_repo:string option ->
-  local_repo:Fpath.t option ->
-  Pkg.t list ->
-  (t, Bos_setup.R.msg) result
+module Opam_repo_fork : sig
+  type t = { remote : string; local : Fpath.t }
+end
 
 val create : ?pkgs:Pkg.t list -> unit -> (unit, Bos_setup.R.msg) result
 
@@ -42,6 +40,25 @@ val token :
 val keep_v : bool -> (bool, Bos_setup.R.msg) result
 
 val auto_open : bool -> (bool, Bos_setup.R.msg) result
+
+val opam_repo_fork :
+  ?pkgs:Pkg.t list ->
+  remote:string option ->
+  local:Fpath.t option ->
+  unit ->
+  (Opam_repo_fork.t, Bos_setup.R.msg) result
+(** Returns the opam-repository fork to use, based on the CLI provided values
+    [remote] and [local] and the user's configuration.
+
+    If both [remote] and [local] are provided, they are returned without reading
+    any local configuration.
+
+    If either or both of them are [None], the configuration is looked up. If it
+    doesn't exist, the interactive creation quizz is started. The configuration
+    values are used to fill up the blanks in [remote] and [local].
+
+    [pkgs] is only used to offer suggestions to the user during the creation
+    quizz. *)
 
 val load : unit -> (t option, Bos_setup.R.msg) result
 

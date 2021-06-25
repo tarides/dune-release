@@ -28,6 +28,9 @@ type t = {
   auto_open : bool option;
 }
 
+module Opam_repo_fork = struct
+  type t = { remote : string; local : Fpath.t }
+end
 
 let of_yaml_exn str =
   (* ouch *)
@@ -87,10 +90,10 @@ let config_dir () =
   in
   upgrade () >>= fun () -> Ok cfg
 
-let file () = config_dir () >>| fun cfg -> Fpath.(cfg / "release.yml")
+let get_path () = config_dir () >>| fun cfg -> Fpath.(cfg / "release.yml")
 
 let load () =
-  file () >>= fun file ->
+  get_path () >>= fun file ->
   OS.File.exists file >>= fun exists ->
   if exists then OS.File.read file >>= of_yaml >>| fun x -> Some x else Ok None
 
@@ -104,7 +107,7 @@ let pretty_fields { user; remote; local; keep_v; auto_open } =
   ]
 
 let save t =
-  file () >>= fun file ->
+  get_path () >>= fun file ->
   let fields = pretty_fields t in
   let content =
     let open Stdext in
@@ -114,7 +117,7 @@ let save t =
   in
   OS.File.write_lines file content
 
-let create_config ~remote_repo ~local_repo ?(pkgs = []) file =
+let create_config ?(pkgs = []) file =
   App_log.status (fun l -> l "%a does not exist!" Fpath.pp file);
   App_log.status (fun l ->
       l "Please answer a few question so we can create it for you:");
@@ -128,16 +131,10 @@ let create_config ~remote_repo ~local_repo ?(pkgs = []) file =
   in
   let default_remote =
     let open Stdext.Option.O in
-    match remote_repo with
-    | Some r -> Some r
-    | None ->
-        guessed_user >|= fun user ->
-        strf "git@github.com:%s/opam-repository" user
+    guessed_user >|= fun user -> strf "git@github.com:%s/opam-repository" user
   in
   let default_local =
-    match local_repo with
-    | Some r -> Some (Fpath.to_string r)
-    | None -> Some Fpath.(v Xdg.home / "git" / "opam-repository" |> to_string)
+    Fpath.(v Xdg.home / "git" / "opam-repository" |> to_string)
   in
   let remote =
     Prompt.user_input ?default_answer:default_remote
@@ -147,7 +144,7 @@ let create_config ~remote_repo ~local_repo ?(pkgs = []) file =
       ()
   in
   let local =
-    Prompt.user_input ?default_answer:default_local
+    Prompt.user_input ~default_answer:default_local
       ~question:"Where on your filesystem did you clone that repository?" ()
   in
   Fpath.of_string local >>= fun local ->
@@ -158,18 +155,13 @@ let create_config ~remote_repo ~local_repo ?(pkgs = []) file =
   save config >>= fun () -> Ok config
 
 let create ?pkgs () =
-  file () >>= fun file ->
-  create_config ~remote_repo:None ~local_repo:None ?pkgs file >>= fun _ -> Ok ()
+  get_path () >>= fun file ->
+  create_config ?pkgs file >>= fun _ -> Ok ()
 
 let find () =
-  file () >>= fun file ->
+  get_path () >>= fun file ->
   OS.File.exists file >>= fun exists ->
   if exists then OS.File.read file >>= of_yaml >>| fun x -> Some x else Ok None
-
-let v ~remote_repo ~local_repo pkgs =
-  find () >>= function
-  | Some f -> Ok f
-  | None -> file () >>= create_config ~remote_repo ~local_repo ~pkgs
 
 let reset_terminal : (unit -> unit) option ref = ref None
 
@@ -254,6 +246,20 @@ let read f default =
 let keep_v v = if v then Ok true else read (fun t -> t.keep_v) false
 
 let auto_open v = if not v then Ok false else read (fun t -> t.auto_open) true
+
+let opam_repo_fork ?pkgs ~remote ~local () =
+  match (remote, local) with
+  | Some remote, Some local -> Ok { Opam_repo_fork.remote; local }
+  | _ ->
+      let config =
+        Lazy.force file >>= function
+        | Some x -> Ok x
+        | None -> get_path () >>= create_config ?pkgs
+      in
+      config >>= fun config ->
+      let local = Stdext.Option.value ~default:config.local local in
+      let remote = Stdext.Option.value ~default:config.remote remote in
+      Ok { Opam_repo_fork.remote; local }
 
 module type S = sig
   val path : build_dir:Fpath.t -> name:string -> version:string -> Fpath.t
