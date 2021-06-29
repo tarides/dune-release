@@ -18,7 +18,9 @@ let show key =
       StdLabels.List.iter pretty_fields ~f:(fun (key, value) ->
           Logs.app (fun l -> l "%s: %s" key (show_val value)));
       Ok ()
-  | Some "user" -> log_val config.user
+  | Some "user" ->
+      Logs.warn (fun l -> l "%s" Deprecate.Config_user.config_field_use);
+      log_val config.user
   | Some "remote" -> log_val config.remote
   | Some "local" -> log_val (Stdext.Option.map ~f:Fpath.to_string config.local)
   | Some "keep-v" -> log_val (Stdext.Option.map ~f:string_of_bool config.keep_v)
@@ -37,7 +39,9 @@ let set key value =
   Config.load () >>= fun config ->
   let updated =
     match key with
-    | "user" -> Ok { config with user = Some value }
+    | "user" ->
+        App_log.unhappy (fun l -> l "%s" Deprecate.Config_user.config_field_use);
+        Ok { config with user = Some value }
     | "remote" -> Ok { config with remote = Some value }
     | "local" ->
         Fpath.of_string value >>| fun v -> { config with local = Some v }
@@ -96,8 +100,9 @@ let man =
       "Here are the existing fields of dune-release's global config file. Only \
        those values should be used as $(i,KEY):";
     `P
-      "$(b,user): The Github username of the opam-repository fork. Used to \
-       open the final PR to opam-repository.";
+      ("$(b,user): The Github username of the opam-repository fork. Used to \
+        open the final PR to opam-repository."
+     ^ Deprecate.Config_user.config_field_doc);
     `P
       "$(b,remote): The URL to your remote Github opam-repository fork. Used \
        to open the final PR to opam-repository.";

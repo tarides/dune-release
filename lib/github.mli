@@ -9,16 +9,6 @@
 open Bos_setup
 
 module Parse : sig
-  val user_from_remote : string -> string option
-  (** [user_from_remote remote_uri] is the username in the github URI
-      [remote_uri], ie:
-
-      - [user_from_remote_uri "git@github.com:username/repo.git"] returns
-        [Some "username"]
-      - [user_from_remote_uri "https://github.com/username/repo.git"] returns
-        [Some "username"].
-      - Returns [None] if [remote_uri] isn't in the expected format. *)
-
   val ssh_uri_from_http : string -> string option
   (** [ssh_uri_from_http] Guess an SSH URI from a Github HTTP url. *)
 end
@@ -48,7 +38,7 @@ val publish_doc :
 val undraft_release :
   token:string ->
   dry_run:bool ->
-  user:string ->
+  owner:string ->
   repo:string ->
   release_id:string ->
   name:string ->
@@ -60,7 +50,7 @@ val open_pr :
   token:string ->
   dry_run:bool ->
   title:string ->
-  user:string ->
+  fork_owner:string ->
   branch:Vcs.commit_ish ->
   opam_repo:string * string ->
   draft:bool ->

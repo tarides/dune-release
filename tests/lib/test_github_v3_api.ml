@@ -74,11 +74,12 @@ let test_upload_archive =
   ]
 
 let test_open_pr =
-  let make_test ~test_name ~title ~user ~branch ~body ~opam_repo ~draft
+  let make_test ~test_name ~title ~fork_owner ~branch ~body ~opam_repo ~draft
       ~expected =
     let test_fun () =
       let actual =
-        Pull_request.Request.open_ ~title ~user ~branch ~body ~opam_repo ~draft
+        Pull_request.Request.open_ ~title ~fork_owner ~branch ~body ~opam_repo
+          ~draft
       in
       Alcotest.check Alcotest_ext.curl test_name expected actual
     in
@@ -86,12 +87,13 @@ let test_open_pr =
   in
   [
     (let title = "This is a PR"
-     and user = "you"
+     and fork_owner = "you"
      and branch = "my-best-pr"
      and body = "This PR fixes everything.\nThis is the best PR.\n"
      and opam_repo = ("base", "repo")
      and draft = false in
-     make_test ~test_name:"simple" ~title ~user ~branch ~body ~opam_repo ~draft
+     make_test ~test_name:"simple" ~title ~fork_owner ~branch ~body ~opam_repo
+       ~draft
        ~expected:
          {
            url = "https://api.github.com/repos/base/repo/pulls";
@@ -110,7 +112,9 @@ let test_open_pr =
                           ("title", `String title);
                           ("base", `String "master");
                           ("body", `String body);
-                          ("head", `String (Bos_setup.strf "%s:%s" user branch));
+                          ( "head",
+                            `String (Bos_setup.strf "%s:%s" fork_owner branch)
+                          );
                           ("draft", `Bool draft);
                         ])));
              ];
@@ -147,15 +151,15 @@ let test_with_auth =
   ]
 
 let test_undraft_release =
-  let make_test ~test_name ~user ~repo ~release_id ~expected =
+  let make_test ~test_name ~owner ~repo ~release_id ~expected =
     let test_fun () =
-      let actual = Release.Request.undraft ~user ~repo ~release_id in
+      let actual = Release.Request.undraft ~owner ~repo ~release_id in
       Alcotest.check Alcotest_ext.curl test_name expected actual
     in
     (test_name, `Quick, test_fun)
   in
   [
-    make_test ~test_name:"basic" ~user:"user" ~repo:"some-repo" ~release_id:42
+    make_test ~test_name:"basic" ~owner:"user" ~repo:"some-repo" ~release_id:42
       ~expected:
         {
           url = "https://api.github.com/repos/user/some-repo/releases/42";

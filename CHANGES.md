@@ -27,6 +27,9 @@
 
 ### Changed
 
+- Entirely rely on the remote fork of opam-repository URL in `opam submit` instead of
+  reading the user separately. The information was redundant and could only lead to bugs
+  when unproperly set. (#372, @NathanReb)
 - Use pure token authentication for Github API requests rather than "token as passwords"
   authentication (#369, @NathanReb)
 - Require tokens earlier in the execution of commands that use the github API. If the token
@@ -50,6 +53,8 @@
 
 ### Deprecated
 
+- Deprecate the `--user` CLI options and configuration field, they were redundant with
+  the remote-repo option and field and could be set unproperly, leading to bugs (#372, @NathanReb)
 - Deprecate the use of delegates in `dune-release publish` (#276, #302, @pitag-ha)
 - Deprecate the use of opam file format 1.x (#352, @NathanReb)
 
@@ -62,6 +67,8 @@
 
 ### Fixed
 
+- Fix a bug where `opam submit` would fail on non-github repositories if the user had no
+  configuration file (#372, @NathanReb)
 - Fix a bug where subcommands wouldn't properly read the token files, leading to authentication
   failures on API requests (#368, @NathanReb)
 - Fix a bug in `opam submit` preventing non-github users to create the opam-repo PR

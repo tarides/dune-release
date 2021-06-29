@@ -39,9 +39,11 @@ let update_opam_file ~dry_run ~url pkg =
   App_log.success (fun m ->
       m "Wrote opam package description %a" Text.Pp.path dest_opam_file)
 
-let undraft ?opam ?distrib_file ?opam_repo ?user ?token ?local_repo ?remote_repo
+let undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo ?remote_repo
     ?build_dir ?pkg_names ~dry_run ~yes:_ () =
+  Config.token ?cli_token:token ~dry_run () >>= fun token ->
   let pkg = Pkg.v ?opam ?distrib_file ?build_dir ~dry_run:false () in
+  Config.v ~local_repo ~remote_repo [ pkg ] >>= fun config ->
   Pkg.name pkg >>= fun pkg_name ->
   Pkg.build_dir pkg >>= fun build_dir ->
   Pkg.version pkg >>= fun version ->
@@ -51,8 +53,6 @@ let undraft ?opam ?distrib_file ?opam_repo ?user ?token ?local_repo ?remote_repo
   let opam_repo =
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
-  Config.token ?cli_token:token ~dry_run () >>= fun token ->
-  Config.v ~user ~local_repo ~remote_repo [ pkg ] >>= fun config ->
   (match local_repo with
   | Some r -> Ok Fpath.(v r)
   | None -> (
@@ -68,14 +68,6 @@ let undraft ?opam ?distrib_file ?opam_repo ?user ?token ?local_repo ?remote_repo
       | None -> R.error_msg "Unknown remote repository."))
   >>= fun remote_repo ->
   Pkg.infer_github_repo pkg >>= fun { owner; repo } ->
-  let user =
-    match config.user with
-    | Some user -> user (* from the .yaml configuration file *)
-    | None -> (
-        match Github.Parse.user_from_remote remote_repo with
-        | Some user -> user (* trying to infer it from the remote repo URI *)
-        | None -> owner)
-  in
   Config.Draft_release.get ~dry_run ~build_dir ~name:pkg_name ~version
   >>= fun release_id ->
   App_log.status (fun l ->
@@ -83,7 +75,7 @@ let undraft ?opam ?distrib_file ?opam_repo ?user ?token ?local_repo ?remote_repo
         Text.Pp.version version release_id);
   Config.Release_asset_name.get ~dry_run ~build_dir ~name:pkg_name ~version
   >>= fun asset_name ->
-  Github.undraft_release ~token ~dry_run ~user ~repo ~release_id
+  Github.undraft_release ~token ~dry_run ~owner ~repo ~release_id
     ~name:asset_name
   >>= fun url ->
   App_log.success (fun m ->
@@ -141,10 +133,10 @@ let undraft ?opam ?distrib_file ?opam_repo ?user ?token ?local_repo ?remote_repo
   Ok 0
 
 let undraft_cli () (`Dist_opam opam) (`Dist_file distrib_file)
-    (`Opam_repo opam_repo) (`User user) (`Token token) (`Local_repo local_repo)
+    (`Opam_repo opam_repo) (`Token token) (`Local_repo local_repo)
     (`Remote_repo remote_repo) (`Build_dir build_dir) (`Package_names pkg_names)
     (`Dry_run dry_run) (`Yes yes) =
-  undraft ?opam ?distrib_file ?opam_repo ?user ?token ?local_repo ?remote_repo
+  undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo ?remote_repo
     ?build_dir ~pkg_names ~dry_run ~yes ()
   |> Cli.handle_error
 
@@ -187,6 +179,6 @@ let man =
 let cmd =
   ( Term.(
       pure undraft_cli $ Cli.setup $ Cli.dist_opam $ Cli.dist_file
-      $ Cli.opam_repo $ Cli.user $ Cli.token $ Cli.local_repo $ Cli.remote_repo
+      $ Cli.opam_repo $ Cli.token $ Cli.local_repo $ Cli.remote_repo
       $ Cli.build_dir $ Cli.pkg_names $ Cli.dry_run $ Cli.yes),
     Term.info "undraft" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )

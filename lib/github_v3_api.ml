@@ -90,10 +90,10 @@ module Release = struct
       in
       Curl.{ url; meth = `POST; args }
 
-    let undraft ~user ~repo ~release_id =
+    let undraft ~owner ~repo ~release_id =
       let json = Yojson.Basic.to_string (`Assoc [ ("draft", `Bool false) ]) in
       let url =
-        strf "https://api.github.com/repos/%s/%s/releases/%i" user repo
+        strf "https://api.github.com/repos/%s/%s/releases/%i" owner repo
           release_id
       in
       let args =
@@ -181,7 +181,7 @@ end
 
 module Pull_request = struct
   module Request = struct
-    let open_ ~title ~user ~branch ~body ~opam_repo ~draft =
+    let open_ ~title ~fork_owner ~branch ~body ~opam_repo ~draft =
       let base, repo = opam_repo in
       let url = strf "https://api.github.com/repos/%s/%s/pulls" base repo in
       let json =
@@ -191,7 +191,7 @@ module Pull_request = struct
               ("title", `String title);
               ("base", `String "master");
               ("body", `String body);
-              ("head", `String (strf "%s:%s" user branch));
+              ("head", `String (strf "%s:%s" fork_owner branch));
               ("draft", `Bool draft);
             ])
       in

@@ -27,20 +27,6 @@ module D = struct
 end
 
 module Parse = struct
-  let user_from_regexp_opt uri regexp =
-    try Some Re.(Group.get (exec (Emacs.compile_pat regexp) uri) 1)
-    with Not_found -> None
-
-  let user_from_remote uri =
-    match uri with
-    | _ when Bos_setup.String.is_prefix uri ~affix:"git@" ->
-        user_from_regexp_opt uri "git@github\\.com:\\(.+\\)/.+\\(\\.git\\)?"
-    | _ when Bos_setup.String.is_prefix uri ~affix:"git://" ->
-        user_from_regexp_opt uri "git://github\\.com/\\(.+\\)/.+\\(\\.git\\)?"
-    | _ when Bos_setup.String.is_prefix uri ~affix:"https://" ->
-        user_from_regexp_opt uri "https://github\\.com/\\(.+\\)/.+\\(\\.git\\)?"
-    | _ -> None
-
   let path_from_regexp_opt uri regexp =
     try
       Some
@@ -233,9 +219,10 @@ let curl_upload_archive ~token ~dry_run ~yes archive user repo release_id =
       >>= fun url ->
       Github_v3_api.Archive.Response.name response >>= fun name -> Ok (url, name))
 
-let open_pr ~token ~dry_run ~title ~user ~branch ~opam_repo ~draft body pkg =
+let open_pr ~token ~dry_run ~title ~fork_owner ~branch ~opam_repo ~draft body
+    pkg =
   let curl_t =
-    Github_v3_api.Pull_request.Request.open_ ~title ~user ~branch ~body
+    Github_v3_api.Pull_request.Request.open_ ~title ~fork_owner ~branch ~body
       ~opam_repo ~draft
   in
   let curl_t = Github_v3_api.with_auth ~token curl_t in
@@ -251,12 +238,12 @@ let open_pr ~token ~dry_run ~title ~user ~branch ~opam_repo ~draft body pkg =
   else Ok ())
   >>= fun () -> Github_v3_api.Pull_request.Response.html_url json
 
-let undraft_release ~token ~dry_run ~user ~repo ~release_id ~name =
+let undraft_release ~token ~dry_run ~owner ~repo ~release_id ~name =
   (match int_of_string_opt release_id with
   | Some id -> Ok id
   | None -> R.error_msgf "Invalid Github Release id: %s" release_id)
   >>= fun release_id ->
-  let curl_t = Github_v3_api.Release.Request.undraft ~user ~repo ~release_id in
+  let curl_t = Github_v3_api.Release.Request.undraft ~owner ~repo ~release_id in
   let default_body =
     `Assoc [ ("browser_download_url", `String D.download_url) ]
   in

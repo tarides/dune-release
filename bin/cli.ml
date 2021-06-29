@@ -173,7 +173,8 @@ let include_submodules =
 
 let user =
   let doc =
-    "the name of the GitHub account where to push new opam-repository branches."
+    "the name of the GitHub account where to push new opam-repository \
+     branches. " ^ Deprecate.Config_user.option_doc
   in
   named
     (fun x -> `User x)
