@@ -2,6 +2,8 @@
 
 ### Added
 
+- Add a `config create` subcommand to create a fresh configuration if you don't have one yet
+  (#373, @NathanReb)
 - Add `--local-repo`, `--remote-repo` and `--opam-repo` options to the default command,
   they used to be only available for the `opam` subcommand (#363, @NathanReb)
 - Add a `--token` option to `dune-release publish` and `dune-release opam` commands
@@ -67,6 +69,10 @@
 
 ### Fixed
 
+- Fix a bug where `opam submit` would look up a config file, even though all the required
+  information was provided on the command line. This would lead to starting the interactive
+  config creation quizz if that file did not exist which made it impossible to use it in a CI
+  for instance. (#373, @NathanReb)
 - Fix a bug where `opam submit` would fail on non-github repositories if the user had no
   configuration file (#372, @NathanReb)
 - Fix a bug where subcommands wouldn't properly read the token files, leading to authentication

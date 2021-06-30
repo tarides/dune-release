@@ -64,6 +64,8 @@ module Option = struct
 
   let bind ~f = function None -> None | Some x -> f x
 
+  let value ~default opt = match opt with Some x -> x | None -> default
+
   module O = struct
     let ( >>= ) opt f = bind ~f opt
 

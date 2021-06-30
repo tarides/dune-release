@@ -287,33 +287,18 @@ let report_user_option_use user =
   | None -> ()
   | Some _ -> App_log.unhappy (fun l -> l "%s" Deprecate.Config_user.option_use)
 
-let submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run ~pkgs
-    ~pkg_names ~no_auto_open ~yes ~draft () =
+let submit ?local_repo:local ?remote_repo:remote ?opam_repo ?user ?token
+    ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes ~draft () =
   let opam_repo =
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
   report_user_option_use user;
   Config.token ?cli_token:token ~dry_run () >>= fun token ->
-  Config.v ~local_repo ~remote_repo pkgs >>= fun config ->
-  (match local_repo with
-  | Some r -> Ok Fpath.(v r)
-  | None -> (
-      match config.local with
-      | Some r -> Ok r
-      | None -> R.error_msg "Unknown local repository."))
-  >>= fun local_repo ->
-  (match remote_repo with
-  | Some r -> Ok r
-  | None -> (
-      match config.remote with
-      | Some r -> Ok r
-      | None -> R.error_msg "Unknown remote repository."))
-  >>= fun remote_repo ->
+  Config.opam_repo_fork ~pkgs ~local ~remote () >>= fun { remote; local } ->
   Config.auto_open (not no_auto_open) >>= fun auto_open ->
   App_log.status (fun m ->
       m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
-  submit ~token ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open
-    ~draft
+  submit ~token ~dry_run ~yes ~opam_repo local remote pkgs auto_open ~draft
 
 let field ~pkgs ~field_name = field pkgs field_name
 

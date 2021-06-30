@@ -75,7 +75,7 @@ val user : [ `User of string option ] Term.t
 (** A [--user] option to define the name of the GitHub account where to push new
     opam-repository branches. *)
 
-val local_repo : [ `Local_repo of string option ] Term.t
+val local_repo : [ `Local_repo of Fpath.t option ] Term.t
 (** A [--local-repo] option to define the location of the local fork of
     opam-repository. *)
 

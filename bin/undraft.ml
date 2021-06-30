@@ -39,11 +39,12 @@ let update_opam_file ~dry_run ~url pkg =
   App_log.success (fun m ->
       m "Wrote opam package description %a" Text.Pp.path dest_opam_file)
 
-let undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo ?remote_repo
-    ?build_dir ?pkg_names ~dry_run ~yes:_ () =
+let undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo:local
+    ?remote_repo:remote ?build_dir ?pkg_names ~dry_run ~yes:_ () =
   Config.token ?cli_token:token ~dry_run () >>= fun token ->
   let pkg = Pkg.v ?opam ?distrib_file ?build_dir ~dry_run:false () in
-  Config.v ~local_repo ~remote_repo [ pkg ] >>= fun config ->
+  Config.opam_repo_fork ~pkgs:[ pkg ] ~local ~remote ()
+  >>= fun opam_repo_fork ->
   Pkg.name pkg >>= fun pkg_name ->
   Pkg.build_dir pkg >>= fun build_dir ->
   Pkg.version pkg >>= fun version ->
@@ -53,20 +54,6 @@ let undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo ?remote_repo
   let opam_repo =
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
-  (match local_repo with
-  | Some r -> Ok Fpath.(v r)
-  | None -> (
-      match config.local with
-      | Some r -> Ok r
-      | None -> R.error_msg "Unknown local repository."))
-  >>= fun local_repo ->
-  (match remote_repo with
-  | Some r -> Ok r
-  | None -> (
-      match config.remote with
-      | Some r -> Ok r
-      | None -> R.error_msg "Unknown remote repository."))
-  >>= fun remote_repo ->
   Pkg.infer_github_repo pkg >>= fun { owner; repo } ->
   Config.Draft_release.get ~dry_run ~build_dir ~name:pkg_name ~version
   >>= fun release_id ->
@@ -99,13 +86,14 @@ let undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo ?remote_repo
     let msg = "Undraft pull-request" in
     Vcs.run_git_quiet vcs ~dry_run Cmd.(v "commit" % "-m" % msg) >>= fun () ->
     App_log.status (fun l ->
-        l "Pushing %a to %a" Text.Pp.commit branch Text.Pp.url remote_repo);
+        l "Pushing %a to %a" Text.Pp.commit branch Text.Pp.url
+          opam_repo_fork.remote);
     Vcs.run_git_quiet vcs ~dry_run
-      Cmd.(v "push" % "--force" % remote_repo % branch)
+      Cmd.(v "push" % "--force" % opam_repo_fork.remote % branch)
   in
   OS.Dir.current () >>= fun cwd ->
   let build_dir = Fpath.(cwd / "_build") in
-  Sos.with_dir ~dry_run local_repo
+  Sos.with_dir ~dry_run opam_repo_fork.local
     (fun () ->
       let upstream =
         let user, repo = opam_repo in

@@ -49,6 +49,8 @@ module Option : sig
 
   val bind : f:('a -> 'b option) -> 'a option -> 'b option
 
+  val value : default:'a -> 'a option -> 'a
+
   module O : sig
     val ( >>= ) : 'a option -> ('a -> 'b option) -> 'b option
 
