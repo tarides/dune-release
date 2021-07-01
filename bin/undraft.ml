@@ -41,7 +41,7 @@ let update_opam_file ~dry_run ~url pkg =
 
 let undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo:local
     ?remote_repo:remote ?build_dir ?pkg_names ~dry_run ~yes:_ () =
-  Config.token ?cli_token:token ~dry_run () >>= fun token ->
+  Config.token ~token ~dry_run () >>= fun token ->
   let pkg = Pkg.v ?opam ?distrib_file ?build_dir ~dry_run:false () in
   Config.opam_repo_fork ~pkgs:[ pkg ] ~local ~remote ()
   >>= fun opam_repo_fork ->

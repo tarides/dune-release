@@ -21,6 +21,12 @@ let dir_path_arg =
 
 let named f = Cmdliner.Term.(app (const f))
 
+let config term = Cmdliner.Term.(app (const Dune_release.Config.Cli.make)) term
+
+let config_opt term =
+  let open Cmdliner.Term in
+  app (const (Stdext.Option.map ~f:Dune_release.Config.Cli.make)) term
+
 let dist_tag =
   let doc =
     "The tag from which the distribution archive is or will be built."
@@ -71,13 +77,20 @@ let token =
   in
   let docv = "TOKEN" in
   let env = Arg.env_var "DUNE_RELEASE_GITHUB_TOKEN" in
-  named
-    (fun x -> `Token x)
+  let arg =
     Arg.(value & opt (some string) None & info [ "token" ] ~doc ~docv ~env)
+  in
+  named (fun x -> `Token x) (config_opt arg)
 
 let keep_v =
   let doc = "Do not drop the initial 'v' in the version string." in
-  named (fun x -> `Keep_v x) Arg.(value & flag & info [ "keep-v" ] ~doc)
+  let arg = Arg.(value & flag & info [ "keep-v" ] ~doc) in
+  named (fun x -> `Keep_v x) (config arg)
+
+let no_auto_open =
+  let doc = "Do not open a browser to view the new pull-request." in
+  let arg = Arg.(value & flag & info [ "no-auto-open" ] ~doc) in
+  named (fun x -> `No_auto_open x) (config arg)
 
 let dist_file =
   let doc =
@@ -189,22 +202,24 @@ let user =
 let local_repo =
   let doc = "Location of the local fork of opam-repository" in
   let env = Arg.env_var "DUNE_RELEASE_LOCAL_REPO" in
-  named
-    (fun x -> `Local_repo x)
+  let arg =
     Arg.(
       value
       & opt (some dir_path_arg) None
       & info ~env [ "l"; "local-repo" ] ~doc ~docv:"PATH")
+  in
+  named (fun x -> `Local_repo x) (config_opt arg)
 
 let remote_repo =
   let doc = "Location of the remote fork of opam-repository" in
   let env = Arg.env_var "DUNE_RELEASE_REMOTE_REPO" in
-  named
-    (fun x -> `Remote_repo x)
+  let arg =
     Arg.(
       value
       & opt (some string) None
       & info ~env [ "r"; "remote-repo" ] ~doc ~docv:"URI")
+  in
+  named (fun x -> `Remote_repo x) (config_opt arg)
 
 let opam_repo =
   let doc =

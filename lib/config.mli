@@ -28,23 +28,33 @@ end
 
 val create : ?pkgs:Pkg.t list -> unit -> (unit, Bos_setup.R.msg) result
 
+module Cli : sig
+  type 'a t
+  (** Type for configuration values passed through the CLI. *)
+
+  val make : 'a -> 'a t
+end
+
 val token :
-  ?cli_token:string -> dry_run:bool -> unit -> (string, Bos_setup.R.msg) result
+  token:string Cli.t option ->
+  dry_run:bool ->
+  unit ->
+  (string, Bos_setup.R.msg) result
 (** Returns the token value that should be used for github API requests. If a
-    [cli_token] was provided, it is returned. Otherwise the token file in the
-    config dir is looked up. If it exists, its content is returned, if it does
-    not, the user is prompted for a token which will be then saved to that file.
-    When [dry_run] is [true] it always returns [Ok "${token}"] but still looks
-    up the relevant config file as it would normally have. *)
+    [token] was provided via the CLI, it is returned. Otherwise the token file
+    in the config dir is looked up. If it exists, its content is returned, if it
+    does not, the user is prompted for a token which will be then saved to that
+    file. When [dry_run] is [true] it always returns [Ok "${token}"] but still
+    looks up the relevant config file as it would normally have. *)
 
-val keep_v : bool -> (bool, Bos_setup.R.msg) result
+val keep_v : keep_v:bool Cli.t -> (bool, Bos_setup.R.msg) result
 
-val auto_open : bool -> (bool, Bos_setup.R.msg) result
+val auto_open : no_auto_open:bool Cli.t -> (bool, Bos_setup.R.msg) result
 
 val opam_repo_fork :
   ?pkgs:Pkg.t list ->
-  remote:string option ->
-  local:Fpath.t option ->
+  remote:string Cli.t option ->
+  local:Fpath.t Cli.t option ->
   unit ->
   (Opam_repo_fork.t, Bos_setup.R.msg) result
 (** Returns the opam-repository fork to use, based on the CLI provided values

@@ -10,7 +10,7 @@ open Dune_release
 let lint () (`Dry_run dry_run) (`Package_names pkg_names)
     (`Package_version version) (`Dist_tag tag) (`Keep_v keep_v) (`Lints lints) =
   Cli.handle_error
-    ( Config.keep_v keep_v >>= fun keep_v ->
+    ( Config.keep_v ~keep_v >>= fun keep_v ->
       let pkg = Pkg.v ~dry_run ?version ~keep_v ?tag () in
       OS.Dir.current () >>= fun dir ->
       Lint.lint_packages ~dry_run ~dir ~todo:lints pkg pkg_names )

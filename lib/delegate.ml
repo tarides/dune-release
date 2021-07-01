@@ -22,7 +22,7 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes ~draft pkg =
   Pkg.delegate pkg >>= function
   | None ->
       App_log.status (fun l -> l "Publishing to github");
-      Config.token ?cli_token:token ~dry_run () >>= fun token ->
+      Config.token ~token ~dry_run () >>= fun token ->
       Github.publish_distrib ~token ~dry_run ~yes ~msg ~archive ~draft pkg
       >>= fun url ->
       Pkg.archive_url_path pkg >>= fun url_file ->

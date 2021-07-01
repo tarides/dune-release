@@ -19,13 +19,17 @@ val named : ('a -> 'b) -> 'a Cmdliner.Term.t -> 'b Cmdliner.Term.t
     avoid confusion when they are later passed to your main function. Example:
     [named (fun x -> `My_arg x) Arg.(value ...)] *)
 
+val no_auto_open : [ `No_auto_open of bool Dune_release.Config.Cli.t ] Term.t
+(** A [--no-auto-open] option to disable opening of the opam-repository PR in
+    the browser. *)
+
 val pkg_names : [ `Package_names of string list ] Term.t
 (** A [--pkg-names] option to specify the packages to release. *)
 
 val pkg_version : [ `Package_version of string option ] Term.t
 (** A [--pkg-version] option to specify the packages version. *)
 
-val keep_v : [ `Keep_v of bool ] Term.t
+val keep_v : [ `Keep_v of bool Dune_release.Config.Cli.t ] Term.t
 (** A [--keep-v] option to not drop the 'v' at the beginning of version strings. *)
 
 val dist_tag : [ `Dist_tag of string option ] Term.t
@@ -56,7 +60,7 @@ val build_dir : [ `Build_dir of Fpath.t option ] Term.t
 val publish_msg : [ `Publish_msg of string option ] Term.t
 (** A [--msg] option to define a publication message. *)
 
-val token : [ `Token of string option ] Term.t
+val token : [ `Token of string Dune_release.Config.Cli.t option ] Term.t
 (** A [--token] option to define the github token. *)
 
 val dry_run : [ `Dry_run of bool ] Term.t
@@ -75,11 +79,13 @@ val user : [ `User of string option ] Term.t
 (** A [--user] option to define the name of the GitHub account where to push new
     opam-repository branches. *)
 
-val local_repo : [ `Local_repo of Fpath.t option ] Term.t
+val local_repo :
+  [ `Local_repo of Fpath.t Dune_release.Config.Cli.t option ] Term.t
 (** A [--local-repo] option to define the location of the local fork of
     opam-repository. *)
 
-val remote_repo : [ `Remote_repo of string option ] Term.t
+val remote_repo :
+  [ `Remote_repo of string Dune_release.Config.Cli.t option ] Term.t
 (** A [--remote-repo] option to define the location of the remote fork of
     opam-repository. *)
 

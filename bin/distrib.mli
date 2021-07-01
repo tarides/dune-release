@@ -12,7 +12,7 @@ val distrib :
   pkg_names:string list ->
   version:string option ->
   tag:string option ->
-  keep_v:bool ->
+  keep_v:bool Dune_release.Config.Cli.t ->
   keep_dir:bool ->
   skip_lint:bool ->
   skip_build:bool ->
