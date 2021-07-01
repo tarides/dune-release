@@ -41,6 +41,7 @@ let check (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
        (dir, clean_up)
    in
    dir >>= fun dir ->
+   Config.keep_v ~keep_v >>= fun keep_v ->
    let check_result =
      Check.check_project ~pkg_names ?tag ?version ~keep_v ?build_dir ~skip_lint
        ~skip_build ~skip_tests ~dir ()

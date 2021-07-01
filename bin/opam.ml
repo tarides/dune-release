@@ -256,7 +256,7 @@ let field pkgs field =
 
 let get_pkgs ?build_dir ?opam ?distrib_file ?readme ?change_log ?publish_msg
     ?pkg_descr ~dry_run ~keep_v ~tag ~pkg_names ~version () =
-  Config.keep_v keep_v >>= fun keep_v ->
+  Config.keep_v ~keep_v >>= fun keep_v ->
   let distrib_file =
     let pkg =
       Pkg.v ?opam ?tag ?version ?distrib_file ~dry_run:false ~keep_v ()
@@ -293,9 +293,9 @@ let submit ?local_repo:local ?remote_repo:remote ?opam_repo ?user ?token
     match opam_repo with None -> ("ocaml", "opam-repository") | Some r -> r
   in
   report_user_option_use user;
-  Config.token ?cli_token:token ~dry_run () >>= fun token ->
+  Config.token ~token ~dry_run () >>= fun token ->
   Config.opam_repo_fork ~pkgs ~local ~remote () >>= fun { remote; local } ->
-  Config.auto_open (not no_auto_open) >>= fun auto_open ->
+  Config.auto_open ~no_auto_open >>= fun auto_open ->
   App_log.status (fun m ->
       m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
   submit ~token ~dry_run ~yes ~opam_repo local remote pkgs auto_open ~draft
@@ -344,12 +344,6 @@ let field_arg =
   Cli.named
     (fun x -> `Field_name x)
     Arg.(value & pos 1 (some string) None & info [] ~doc ~docv:"FIELD")
-
-let no_auto_open =
-  let doc = "Do not open a browser to view the new pull-request." in
-  Cli.named
-    (fun x -> `No_auto_open x)
-    Arg.(value & flag & info [ "no-auto-open" ] ~doc)
 
 let pkg_descr =
   let doc =
@@ -413,7 +407,7 @@ let cmd =
       $ Cli.remote_repo $ Cli.opam_repo $ Cli.user $ Cli.keep_v $ Cli.dist_opam
       $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $ Cli.pkg_names
       $ Cli.pkg_version $ pkg_descr $ Cli.readme $ Cli.change_log
-      $ Cli.publish_msg $ action $ field_arg $ no_auto_open $ Cli.yes
+      $ Cli.publish_msg $ action $ field_arg $ Cli.no_auto_open $ Cli.yes
       $ Cli.token $ Cli.draft)
   in
   (t, info)

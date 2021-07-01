@@ -13,7 +13,7 @@ open Bos_setup
 (** {1 Publish} *)
 
 val publish_distrib :
-  ?token:string ->
+  ?token:string Config.Cli.t ->
   ?distrib_uri:string ->
   dry_run:bool ->
   msg:string ->

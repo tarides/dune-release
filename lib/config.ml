@@ -230,22 +230,30 @@ let config_token ~dry_run () =
       OS.Dir.create Fpath.(parent file) >>= fun _ ->
       OS.File.write ~mode:0o600 file token >>= fun () -> Ok token
 
-let token ?cli_token ~dry_run () =
-  match cli_token with
+module Cli = struct
+  type 'a t = 'a
+
+  let make x = x
+end
+
+let token ~token ~dry_run () =
+  match token with
   | Some _ when dry_run -> Ok Dry_run.token
   | Some token -> Ok token
   | None -> config_token ~dry_run ()
 
 let file = lazy (find ())
 
-let read f default =
+let read f ~default =
   Lazy.force file >>| function
   | None -> default
   | Some t -> ( match f t with None -> default | Some b -> b)
 
-let keep_v v = if v then Ok true else read (fun t -> t.keep_v) false
+let keep_v ~keep_v =
+  if keep_v then Ok true else read (fun t -> t.keep_v) ~default:false
 
-let auto_open v = if not v then Ok false else read (fun t -> t.auto_open) true
+let auto_open ~no_auto_open =
+  if no_auto_open then Ok false else read (fun t -> t.auto_open) ~default:true
 
 let opam_repo_fork ?pkgs ~remote ~local () =
   match (remote, local) with

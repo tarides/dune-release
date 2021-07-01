@@ -14,11 +14,11 @@ val publish :
   ?distrib_uri:string ->
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
-  ?token:string ->
+  ?token:string Dune_release.Config.Cli.t ->
   pkg_names:string list ->
   version:string option ->
   tag:string option ->
-  keep_v:bool ->
+  keep_v:bool Dune_release.Config.Cli.t ->
   dry_run:bool ->
   publish_artefacts:[ `Alt of string | `Distrib | `Doc ] list ->
   yes:bool ->

@@ -2,6 +2,8 @@
 
 ### Added
 
+- Add `--no-auto-open` to the default command. It was previously only available for
+  `dune-release opam`. (#374, @NathanReb)
 - Add a `config create` subcommand to create a fresh configuration if you don't have one yet
   (#373, @NathanReb)
 - Add `--local-repo`, `--remote-repo` and `--opam-repo` options to the default command,

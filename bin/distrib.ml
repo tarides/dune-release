@@ -44,7 +44,7 @@ let distrib ?build_dir ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir
     ~skip_lint ~skip_build ~skip_tests ~include_submodules () =
   App_log.status (fun l -> l "Building source archive");
   warn_if_vcs_dirty () >>= fun () ->
-  Config.keep_v keep_v >>= fun keep_v ->
+  Config.keep_v ~keep_v >>= fun keep_v ->
   let pkg = Pkg.v ~dry_run ?version ~keep_v ?build_dir ?tag () in
   Pkg.distrib_archive ~dry_run ~keep_dir ~include_submodules pkg >>= fun ar ->
   log_wrote_archive ar >>= fun () ->

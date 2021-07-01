@@ -15,7 +15,7 @@ val get_pkgs :
   ?publish_msg:string ->
   ?pkg_descr:Fpath.t ->
   dry_run:bool ->
-  keep_v:bool ->
+  keep_v:bool Dune_release.Config.Cli.t ->
   tag:string option ->
   pkg_names:string list ->
   version:string option ->
@@ -41,15 +41,15 @@ val pkg :
     for success, 1 for failure) or error messages. *)
 
 val submit :
-  ?local_repo:Fpath.t ->
-  ?remote_repo:string ->
+  ?local_repo:Fpath.t Dune_release.Config.Cli.t ->
+  ?remote_repo:string Dune_release.Config.Cli.t ->
   ?opam_repo:string * string ->
   ?user:string ->
-  ?token:string ->
+  ?token:string Dune_release.Config.Cli.t ->
   dry_run:bool ->
   pkgs:Dune_release.Pkg.t list ->
   pkg_names:string list ->
-  no_auto_open:bool ->
+  no_auto_open:bool Dune_release.Config.Cli.t ->
   yes:bool ->
   draft:bool ->
   unit ->
