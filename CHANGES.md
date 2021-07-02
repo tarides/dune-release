@@ -1,4 +1,4 @@
-## unreleased
+## 1.5.0 (2021-07-05)
 
 ### Added
 
@@ -21,7 +21,7 @@
   `dune-release distrib` (#300, @NathanReb)
 - Support 'git://' scheme for dev-repo uri (#331, @gpetiot)
 - Support creation of draft releases and draft PRs. Define a new option
-  `--draft` for 'dune-release publish' and 'dune-release opam submit' commands.
+  `--draft` for `dune-release publish` and `dune-release opam submit` commands.
   (#248, @gpetiot)
 - Add a new command `check` to check the prerequisites of dune-release and
   avoid starting a release process that couldn't be finished (#318, #351, @pitag-ha)
@@ -108,8 +108,6 @@
 - Fixes release names by explicitly setting it to match the released version (#338, @NathanReb)
 - Fix a bug that prevented release of a package whose version number contains invalid characters for a git branch. The git branch names are now sanitized. (#271, @gpetiot)
 - `publish`: Fix the process of inferring user name and repo from the dev repo uri (#348, @pitag-ha)
-
-### Security
 
 ## 1.4.0 (2020-07-13)
 
