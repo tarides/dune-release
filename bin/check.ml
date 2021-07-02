@@ -58,7 +58,7 @@ let working_tree =
   let doc = "Perform the check on the current working tree." in
   Cli.named
     (fun x -> `Working_tree x)
-    Arg.(value & flag & info [ "working-tree"; "wt" ] ~doc)
+    Arg.(value & flag & info [ "working-tree" ] ~doc)
 
 let doc = "Check dune-release compatibility"
 
