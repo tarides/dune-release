@@ -13,8 +13,9 @@ let make_test_directory_deterministic line =
 
 let rewrite_windows_paths line =
   if Sys.win32 then
-    (* replace \ by / in words that start with _build, until the end of line *)
-    let re = compile @@ seq [str "_build"; rep any; eol] in
+    (* - Locate paths (from _build or .\ until end of line)
+        - in that, replace \ by / *)
+    let re = compile @@ seq [alt [str "_build";str ".\\"]; rep any; eol] in
     replace re line ~f:(fun group ->
         let matched = Group.get group 0 in
         replace_string (compile (char '\\')) ~by:"/" matched

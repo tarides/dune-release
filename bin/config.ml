@@ -111,7 +111,7 @@ let invalid_usage () =
     "Invalid dune-release config invocation. Usage:\n%s\n%s\n%s"
     (default_usage ~raw:() ()) (show_usage ~raw:() ()) (set_usage ~raw:() ())
 
-let run action key_opt value_opt =
+let run () action key_opt value_opt =
   let open Rresult in
   (let res =
      match (action, key_opt, value_opt) with
@@ -178,6 +178,6 @@ let value =
   let doc = "The new field value" in
   Cmdliner.Arg.(value & pos 2 (some string) None & info ~doc ~docv [])
 
-let term = Cmdliner.Term.(pure run $ action $ key $ value)
+let term = Cmdliner.Term.(pure run $ Cli.setup $ action $ key $ value)
 
 let cmd = (term, info)
