@@ -5,5 +5,6 @@
  (deps make_check_deterministic.exe))
 
 (mdx
+ (enabled_if (<> %{os_type} Win32))
  (files run.t)
  (packages dune-release))
