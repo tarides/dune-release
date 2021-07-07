@@ -7,9 +7,8 @@ let make_lint_directory_deterministic line =
   replace_string re ~by:"lint of <project_dir> and" line
 
 let make_test_directory_deterministic line =
-  (* OCaml implementation of bash's
-     sed 's/\/.*\/tests\/bin\/check/<test_directory>/' *)
-  let re = compile @@ seq [ str "/"; rep any; str "/tests/bin/check" ] in
+  (* Replace Sys.getcwd by <test_directory> *)
+  let re = compile @@ str (Sys.getcwd ()) in
   replace_string re ~by:"<test_directory>" line
 
 let () =
