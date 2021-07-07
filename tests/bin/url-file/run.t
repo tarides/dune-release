@@ -45,7 +45,7 @@ We make a dry-run release:
 
 (1) Creating the distribution archive
 
-    $ dune-release distrib --dry-run
+    $ dune-release distrib --dry-run | determinize
     [-] Building source archive
     => rmdir _build/whatever-0.1.0.build
     -: exec: git --git-dir .git rev-parse --verify 0.1.0

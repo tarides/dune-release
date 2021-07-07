@@ -29,12 +29,12 @@ We need to set up a git project for dune-release to work properly
 
 Dune-release delegate-info tarball should print the path to the tarball:
 
-    $ dune-release delegate-info tarball
+    $ dune-release delegate-info tarball | determinize
     _build/whatever-0.1.0.tbz
 
 Dune-release delegate-info docdir should print the path to the docdir:
 
-    $ dune-release delegate-info docdir
+    $ dune-release delegate-info docdir | determinize
     _build/default/_doc/_html
 
 Dune-release delegate-info publication-message should print the publication-message:

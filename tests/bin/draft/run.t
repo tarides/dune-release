@@ -49,7 +49,7 @@ We do the whole dune-release process
 
 (2) publish
 
-    $ yes | dune-release publish --dry-run --draft
+    $ yes | dune-release publish --dry-run --draft | determinize
     [-] Skipping documentation publication for package whatever: no doc field in whatever.opam
     [-] Publishing distribution
     => must exists _build/whatever-0.1.0.tbz

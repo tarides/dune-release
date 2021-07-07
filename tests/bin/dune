@@ -1,0 +1,10 @@
+
+; Race condition since this can fire after (mdx) - in dune 3 the proper fix is to add this as dep to (mdx) 
+(alias
+ (name runtest)
+ (deps %{bin:determinize}))
+
+ (env
+  (_
+    (binaries (helpers/make_check_deterministic.exe as determinize))
+   ))
