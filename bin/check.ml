@@ -12,7 +12,7 @@ let clone_and_checkout_tag repo ~dir ~tag =
   Vcs.checkout ~dry_run:false clone_vcs ~branch:"dune-release-check"
     ~commit_ish:tag
 
-let check (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
+let check () (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
     (`Keep_v keep_v) (`Build_dir build_dir) (`Skip_lint skip_lint)
     (`Skip_build skip_build) (`Skip_tests skip_tests)
     (`Working_tree on_working_tree) =
@@ -76,7 +76,7 @@ let man =
 
 let cmd =
   ( Term.(
-      const check $ Cli.pkg_names $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v
+      const check $ Cli.setup $ Cli.pkg_names $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v
       $ Cli.build_dir $ Cli.skip_lint $ Cli.skip_build $ Cli.skip_tests
       $ working_tree),
     Term.info "check" ~doc ~man )
