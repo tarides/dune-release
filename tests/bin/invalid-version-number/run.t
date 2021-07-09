@@ -45,7 +45,7 @@ We do the whole dune-release process
 
 (1) distrib
 
-    $ dune-release distrib --dry-run | grep preview1
+    $ dune-release distrib --dry-run | grep preview1 | determinize
     => rmdir _build/whatever-3.3.4~4.10preview1.build
     -: exec: git --git-dir .git rev-parse --verify 3.3.4_TILDE_4.10preview1
     => exec: git --git-dir .git show -s --format=%ct 3.3.4_TILDE_4.10preview1^0
@@ -59,7 +59,7 @@ We do the whole dune-release process
     [-] Performing lint for package whatever in _build/whatever-3.3.4~4.10preview1
     => chdir _build/whatever-3.3.4~4.10preview1
        [in _build/whatever-3.3.4~4.10preview1]
-    [ OK ] lint of _build/whatever-3.3.4~4.10preview1 and package whatever success
+    [ OK ] lint of <project_dir> and package whatever success
     [-] Building package in _build/whatever-3.3.4~4.10preview1
     => chdir _build/whatever-3.3.4~4.10preview1
     [-] Running package tests in _build/whatever-3.3.4~4.10preview1
@@ -70,7 +70,7 @@ We do the whole dune-release process
 
 (2) publish distrib
 
-    $ dune-release publish distrib --dry-run --yes | grep preview1
+    $ dune-release publish distrib --dry-run --yes | grep preview1 | determinize
     => must exists _build/whatever-3.3.4~4.10preview1.tbz
     -: exec: git --git-dir .git rev-parse --verify 3.3.4_TILDE_4.10preview1
     -: exec: git --git-dir .git rev-parse --verify 3.3.4_TILDE_4.10preview1

@@ -122,8 +122,31 @@ let run_status ~dry_run ?(force = false) ?sandbox v =
     let _ = show ?sandbox ~action:`Done "exec:@[@ %a@]" pp_cmd v in
     OS.Cmd.run_status v
 
+(** Apply a function to all paths in a directory, ignoring errors of the
+    traversal itself. *)
+let iter_files f dir =
+  let err _ _ = Ok () in
+  OS.Path.fold ~elements:`Files ~dotfiles:true ~err
+    (fun path r -> r >>= fun () -> f path)
+    (Ok ()) [ dir ]
+  >>= fun x -> x
+
+(** Files reported with a [0o444] mode have the [FILE_ATTRIBUTE_READONLY] and
+    can not be deleted by [Bos.OS.Dir.delete]. Setting mode to [0o666] clears
+    it. *)
+let make_file_writable path =
+  OS.Path.Mode.get path >>= function
+  | 0o444 -> OS.Path.Mode.set path 0o666
+  | _ -> Ok ()
+
+let prepare_for_delete dir =
+  if Sys.win32 then iter_files make_file_writable dir else Ok ()
+
+let os_dir_delete ~recurse dir =
+  prepare_for_delete dir >>= fun () -> OS.Dir.delete ~recurse dir
+
 let delete_dir ~dry_run ?(force = false) dir =
-  if not dry_run then OS.Dir.delete ~recurse:true dir
+  if not dry_run then os_dir_delete ~recurse:true dir
   else
     let dir' =
       match current_dir () with

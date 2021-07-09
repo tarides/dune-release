@@ -44,7 +44,7 @@ We need to set up a git project for dune-release to work properly
 
 Trying to publish the documentation explicitly should fail:
 
-    $ dune-release publish doc -y --dry-run
+    $ set -o pipefail; dune-release publish doc -y --dry-run 2>&1 | determinize
     [-] Publishing documentation
     ...
     dune-release: [ERROR] directory contents _build/whatever-0.1.0: No such file or directory

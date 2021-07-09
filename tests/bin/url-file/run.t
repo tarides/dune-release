@@ -45,7 +45,7 @@ We make a dry-run release:
 
 (1) Creating the distribution archive
 
-    $ dune-release distrib --dry-run
+    $ dune-release distrib --dry-run | determinize
     [-] Building source archive
     => rmdir _build/whatever-0.1.0.build
     -: exec: git --git-dir .git rev-parse --verify 0.1.0
@@ -80,7 +80,7 @@ We make a dry-run release:
     [ OK ] opam field synopsis is present
     [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
     [ OK ] Skipping doc field linting, no doc field found
-    [ OK ] lint of _build/whatever-0.1.0 and package whatever success
+    [ OK ] lint of <project_dir> and package whatever success
     
     [-] Building package in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
@@ -100,7 +100,7 @@ We make a dry-run release:
 
 (2) Publihsing the distribution
 
-    $ yes | dune-release publish --dry-run
+    $ yes | dune-release publish --dry-run | determinize
     [-] Skipping documentation publication for package whatever: no doc field in whatever.opam
     [-] Publishing distribution
     => must exists _build/whatever-0.1.0.tbz
@@ -126,7 +126,7 @@ We make a dry-run release:
 
     $ echo "https://foo.fr/archive/foo/foo.tbz" > _build/whatever-0.1.0.url
 
-    $ dune-release opam pkg
+    $ dune-release opam pkg | determinize
     [-] Creating opam package description for whatever
     [+] Wrote opam package description _build/whatever.0.1.0/opam
 

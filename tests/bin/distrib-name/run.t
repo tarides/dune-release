@@ -53,7 +53,7 @@ this name must be one the .opam file names.)
 
 Run dune-release distrib with the uncomitted name in dune-project.
 
-    $ dune-release distrib --skip-lint
+    $ set -o pipefail; dune-release distrib --skip-lint 2>&1 | determinize
     [-] Building source archive
     dune-release: [WARNING] The repo is dirty. The distribution archive may be
                             inconsistent. Uncommitted changes to files (including

@@ -45,7 +45,7 @@ We do the whole dune-release process
 
 (1) distrib
 
-    $ dune-release distrib --dry-run
+    $ set -o pipefail; dune-release distrib --dry-run 2>&1 | determinize
     [-] Building source archive
     => rmdir _build/whatever-0.1.0.build
     -: exec: git --git-dir .git rev-parse --verify 0.1.0
@@ -82,7 +82,7 @@ We do the whole dune-release process
     dune-release: [ERROR] Github development repository URL could not be
                           inferred.
     [ OK ] Skipping doc field linting, no doc field found
-    [FAIL] lint of _build/whatever-0.1.0 and package whatever failure: 1 errors.
+    [FAIL] lint of <project_dir> and package whatever failure: 1 errors.
     
     [-] Building package in _build/whatever-0.1.0
     => chdir _build/whatever-0.1.0
@@ -101,7 +101,7 @@ We do the whole dune-release process
 
 (2) publish distrib
 
-    $ dune-release publish distrib --dry-run
+    $ set -o pipefail ; dune-release publish distrib --dry-run | determinize
     [-] Publishing distribution
     => must exists _build/whatever-0.1.0.tbz
     dune-release: [ERROR] whatever-dune-release-delegate: package delegate cannot be found. Try `dune-release help delegate` for more information.

@@ -1,7 +1,7 @@
 open Cmdliner
 open Dune_release
 
-let run var =
+let run () var =
   let open Rresult in
   (let pkg = Pkg.v ~dry_run:false () in
    let result =
@@ -21,7 +21,7 @@ let var =
   let doc = "The variable to print." in
   Arg.(required & pos 0 (some string) None & info [] ~doc ~docv:"VAR")
 
-let term = Term.(pure run $ var)
+let term = Term.(pure run $ Cli.setup $ var)
 
 let info =
   Term.info "delegate-info" ~doc:"Prints out the given variable to stdout"
