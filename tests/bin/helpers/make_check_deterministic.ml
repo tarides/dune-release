@@ -23,6 +23,10 @@ let rewrite_windows_paths line =
   else
     line
 
+let rewrite_run_quotes line =
+  let re = compile @@ str {|"dune" "subst"|} in
+  replace_string re ~by:{|'dune' 'subst'|} line
+
 let () =
   try
     while true do
@@ -30,6 +34,7 @@ let () =
       make_lint_directory_deterministic line
       |> make_test_directory_deterministic
       |> rewrite_windows_paths
+      |> rewrite_run_quotes
       |> print_endline
     done
   with End_of_file -> ()
