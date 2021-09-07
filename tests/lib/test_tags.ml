@@ -1,10 +1,9 @@
 open Rresult
 open Dune_release
 
-let make_test f ?version ?tag ?keep_v ?opam ~cat ~name expected =
+let make_test f ?version ?tag ?keep_v ?opam ~test_name ~name expected =
   let open Alcotest_ext in
   let test () =
-    let n = Fmt.strf "check %S" expected in
     let expected = Ok (Fpath.v expected) in
     let actual =
       (match opam with
@@ -18,14 +17,14 @@ let make_test f ?version ?tag ?keep_v ?opam ~cat ~name expected =
       let p = Pkg.v ~dry_run:false ~name ?tag ?version ?keep_v ?opam () in
       f p
     in
-    Alcotest.(check (result_msg path)) n expected actual
+    Alcotest.(check (result_msg path)) test_name expected actual
   in
-  (cat, `Quick, test)
+  (test_name, `Quick, test)
 
 let distrib_file =
   let make_test ~test_name =
-    let cat = "distrib_file: " ^ test_name in
-    make_test ~cat ~name:"foo" Pkg.(distrib_file ~dry_run:true)
+    let test_name = "distrib_file: " ^ test_name in
+    make_test ~test_name ~name:"foo" Pkg.(distrib_file ~dry_run:true)
   in
   [
     make_test ~test_name:"tag" ~tag:"v0" "_build/foo-v0.tbz";
@@ -39,8 +38,8 @@ let distrib_file =
 
 let distrib_filename =
   let make_test ~test_name ~opam =
-    let cat = "distrib_filename: " ^ test_name in
-    make_test ~cat ~name:"foo" (Pkg.distrib_filename ~opam)
+    let test_name = "distrib_filename: " ^ test_name in
+    make_test ~test_name ~name:"foo" (Pkg.distrib_filename ~opam)
   in
   [
     make_test ~test_name:"1" ~opam:false ~tag:"v0" "foo-v0";
@@ -57,8 +56,8 @@ let distrib_filename =
 
 let distrib_uri =
   let make_test ~test_name =
-    let cat = "distrib_uri:" ^ test_name in
-    make_test ~cat ~name:"yo" (fun x ->
+    let test_name = "distrib_uri:" ^ test_name in
+    make_test ~test_name ~name:"yo" (fun x ->
         Pkg.infer_github_distrib_uri x >>| Fpath.v)
   in
   let dev_repo = [ ("dev-repo", "git@github.com:foo/bar.git") ] in
