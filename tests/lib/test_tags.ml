@@ -1,28 +1,24 @@
 open Rresult
 open Dune_release
 
-let fpath = Alcotest.testable Fpath.pp Fpath.equal
-
-let run f =
-  match f with
-  | Error (`Msg e) -> Alcotest.failf "Got an error: %s" e
-  | Ok x -> x
-
 let make_test f ?version ?tag ?keep_v ?opam ~cat ~name expected =
+  let open Alcotest_ext in
   let test () =
-    run
-      ( (match opam with
-        | None -> Ok None
-        | Some lines ->
-            let file = Fpath.(v "opam-tmp") in
-            let lines = ("opam-version", "1.2") :: lines in
-            let lines = List.map (fun (k, v) -> Fmt.strf "%s: %S" k v) lines in
-            Bos.OS.File.write_lines file lines >>| fun () -> Some file)
+    let n = Fmt.strf "check %S" expected in
+    let expected = Ok (Fpath.v expected) in
+    let actual =
+      (match opam with
+      | None -> Ok None
+      | Some lines ->
+          let file = Fpath.(v "opam-tmp") in
+          let lines = ("opam-version", "1.2") :: lines in
+          let lines = List.map (fun (k, v) -> Fmt.strf "%s: %S" k v) lines in
+          Bos.OS.File.write_lines file lines >>| fun () -> Some file)
       >>= fun opam ->
-        let p = Pkg.v ~dry_run:false ~name ?tag ?version ?keep_v ?opam () in
-        let n = Fmt.strf "check %S" expected in
-        f p >>| fun actual -> Alcotest.(check fpath) n Fpath.(v expected) actual
-      )
+      let p = Pkg.v ~dry_run:false ~name ?tag ?version ?keep_v ?opam () in
+      f p
+    in
+    Alcotest.(check (result_msg path)) n expected actual
   in
   (cat, `Quick, test)
 
