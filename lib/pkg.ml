@@ -227,19 +227,28 @@ let infer_github_distrib_uri pkg =
   path_of_distrib pkg >>= fun rel_path ->
   Ok (Uri_helpers.append_to_base ~rel_path base_uri)
 
-let distrib_filename ?(opam = false) p =
-  let sep = if opam then '.' else '-' in
+let distrib_opam_path p =
   name p >>= fun name ->
-  (if opam then version p else infer_version p) >>= fun version ->
-  Fpath.of_string (strf "%s%c%a" name sep Version.pp version)
+  version p >>= fun version ->
+  Fpath.of_string (strf "%s.%a" name Version.pp version)
+
+let distrib_archive_filename p =
+  name p >>= fun name ->
+  infer_version p >>= fun version ->
+  Fpath.of_string (strf "%s-%a" name Version.pp version)
+
+let distrib_filename ?(opam = false) p =
+  match opam with
+  | true -> distrib_opam_path p
+  | false -> distrib_archive_filename p
 
 let distrib_archive_path p =
   build_dir p >>= fun build_dir ->
-  distrib_filename ~opam:false p >>| fun b -> Fpath.((build_dir // b) + ".tbz")
+  distrib_archive_filename p >>| fun b -> Fpath.((build_dir // b) + ".tbz")
 
 let archive_url_path p =
   build_dir p >>= fun build_dir ->
-  distrib_filename ~opam:false p >>| fun b -> Fpath.((build_dir // b) + "url")
+  distrib_archive_filename p >>| fun b -> Fpath.((build_dir // b) + "url")
 
 let distrib_file ~dry_run p =
   match p.distrib_file with
