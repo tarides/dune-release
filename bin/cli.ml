@@ -55,7 +55,7 @@ let pkg_version =
   named
     (fun x -> `Package_version x)
     Arg.(
-      value & opt (some string) None & info [ "-V"; "pkg-version" ] ~doc ~docv)
+      value & opt (some string) None & info [ "V"; "pkg-version" ] ~doc ~docv)
 
 let opam =
   let doc =
