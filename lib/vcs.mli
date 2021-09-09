@@ -18,10 +18,16 @@ module Tag : sig
   val pp : t Fmt.t
 
   val equal : t -> t -> bool
+  (** [equal a b] returns [true] if [a] and [b] are the same tag. No check
+      whether these commits point to the same data is done. *)
 
   val to_string : t -> string
+  (** [to_string v] returns the [string] representation of the tag. *)
 
   val from_string : string -> t
+  (** [from_string v] reads the specified [v] without any validation. This
+      should be done only in rare cases, for most usages it is better to derive
+      a [Tag.t] from a [Version.t] via [Version.to_tag]. *)
 end
 
 type commit_ish = string
