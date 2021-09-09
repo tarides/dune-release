@@ -8,6 +8,8 @@
 
 ### Fixed
 
+- Change the `---V` command option to be `-V` (#388, @Leonidas-from-XIV)
+
 ### Removed
 
 ### Security
