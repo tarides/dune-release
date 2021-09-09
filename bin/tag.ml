@@ -100,7 +100,7 @@ let version =
   in
   Cli.named
     (fun x -> `Version x)
-    Arg.(value & pos 0 (some Args.version) None & info [] ~doc ~docv:"VERSION")
+    Arg.(value & pos 0 (some Cli.version) None & info [] ~doc ~docv:"VERSION")
 
 let commit =
   let doc = "Commit-ish $(docv) to tag." in
