@@ -24,6 +24,7 @@ let test_version_line_re =
 
 let test_prepare_opam_for_distrib =
   let make_test ~name ~version ~content ~expected () =
+    let version = Version.from_string version in
     let test_name = "prepare_opam_for_distrib: " ^ name in
     let test_fun () =
       let actual =
@@ -59,6 +60,8 @@ let test_prepare_opam_for_distrib =
 
 let make_test f ?version ?tag ?keep_v ?opam ~test_name ~name expected =
   let open Alcotest_ext in
+  let tag = Option.map Vcs.Tag.from_string tag in
+  let version = Option.map Version.from_string version in
   let test () =
     let expected = Ok (Fpath.v expected) in
     let actual =

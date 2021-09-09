@@ -22,8 +22,8 @@ val try_infer_name : Fpath.t -> (string option, [> Rresult.R.msg ]) result
 val v :
   dry_run:bool ->
   ?name:string ->
-  ?version:string ->
-  ?tag:string ->
+  ?version:Version.t ->
+  ?tag:Vcs.Tag.t ->
   ?keep_v:bool ->
   ?delegate:Cmd.t ->
   ?build_dir:Fpath.t ->
@@ -47,15 +47,10 @@ val with_name : t -> string -> t
 (** [with_name t n] is [r] such that like [name r] is [n] and [f r] is [f t]
     otherwise. *)
 
-val version : t -> (string, R.msg) result
-(** [version p] is [p]'s version string.*)
+val version : t -> (Version.t, R.msg) result
+(** [version p] is [p]'s version.*)
 
-val tag_from_repo :
-  ?tag:string -> ?version:string -> unit -> (string, [ `Msg of string ]) result
-(** Returns the commit-ish [tag] or [version] (in that order), if any of them is
-    provided. If not, returns the commit-ish of the latest tag pointing to HEAD. *)
-
-val tag : t -> (string, R.msg) result
+val tag : t -> (Vcs.Tag.t, R.msg) result
 
 val delegate : t -> (Cmd.t option, R.msg) result
 (** [delegate p] is [p]'s delegate. *)
@@ -154,7 +149,7 @@ val build : f
 
 (** {1 Version} *)
 
-val extract_version : t -> (string, Sos.error) result
+val extract_version : t -> (Version.t, Sos.error) result
 (** [extract_version p] extracts the version identifier from the changelog of
     [p]. *)
 
@@ -168,7 +163,7 @@ val dev_repo : t -> (string option, Sos.error) result
 val version_line_re : Re.t
 
 val prepare_opam_for_distrib :
-  version:string -> content:string list -> string list
+  version:Version.t -> content:string list -> string list
 
 (** {1 Dune project} *)
 

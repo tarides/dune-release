@@ -79,13 +79,13 @@ val pretty_fields : t -> (string * string option) list
     config [t]. *)
 
 module type S = sig
-  val path : build_dir:Fpath.t -> name:string -> version:string -> Fpath.t
+  val path : build_dir:Fpath.t -> name:string -> version:Version.t -> Fpath.t
 
   val set :
     dry_run:bool ->
     build_dir:Fpath.t ->
     name:string ->
-    version:string ->
+    version:Version.t ->
     string ->
     (unit, Bos_setup.R.msg) result
 
@@ -93,21 +93,21 @@ module type S = sig
     dry_run:bool ->
     build_dir:Fpath.t ->
     name:string ->
-    version:string ->
+    version:Version.t ->
     (bool, Bos_setup.R.msg) result
 
   val get :
     dry_run:bool ->
     build_dir:Fpath.t ->
     name:string ->
-    version:string ->
+    version:Version.t ->
     (string, Bos_setup.R.msg) result
 
   val unset :
     dry_run:bool ->
     build_dir:Fpath.t ->
     name:string ->
-    version:string ->
+    version:Version.t ->
     (unit, Bos_setup.R.msg) result
 end
 

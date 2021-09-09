@@ -8,7 +8,26 @@ open Bos_setup
 
 (* Version control system repositories *)
 
+module Tag = struct
+  type t = string
+
+  let pp = Fmt.string
+
+  let equal = String.equal
+
+  let to_string x = x
+
+  (* no escaping here in case the user wants to force a literal tag *)
+  let from_string x = x
+end
+
 type commit_ish = string
+
+module Tag_or_commit_ish = struct
+  type t = Tag of Tag.t | Commit_ish of commit_ish
+
+  let to_commit_ish = function Tag c | Commit_ish c -> c
+end
 
 type kind = [ `Git | `Hg ]
 
@@ -348,7 +367,10 @@ let commit_id ?(dirty = true) ?(commit_ish = "HEAD") = function
   | (`Git, _, _) as r -> git_commit_id ~dirty r commit_ish
   | (`Hg, _, _) as r -> hg_commit_id ~dirty r ~rev:(hg_rev commit_ish)
 
-let commit_ptime_s ~dry_run ?(commit_ish = "HEAD") = function
+let commit_ptime_s ~dry_run ?(commit_ish = Tag_or_commit_ish.Commit_ish "HEAD")
+    t =
+  let commit_ish = Tag_or_commit_ish.to_commit_ish commit_ish in
+  match t with
   | (`Git, _, _) as r -> git_commit_ptime_s ~dry_run r commit_ish
   | (`Hg, _, _) as r -> hg_commit_ptime_s r ~rev:(hg_rev commit_ish)
 
@@ -356,12 +378,14 @@ let describe ?(dirty = true) ?(commit_ish = "HEAD") = function
   | (`Git, _, _) as r -> git_describe ~dirty r commit_ish
   | (`Hg, _, _) as r -> hg_describe ~dirty r ~rev:(hg_rev commit_ish)
 
+let get_tag vcs = describe ~dirty:false vcs
+
 let tag_exists ~dry_run r tag =
   match r with
   | (`Git, _, _) as r -> git_tag_exists r ~dry_run tag
   | `Hg, _, _ -> failwith "TODO"
 
-let tag_points_to r ~tag =
+let tag_points_to r tag =
   commit_id ~dirty:false ~commit_ish:tag r |> R.to_option
 
 let branch_exists ~dry_run r tag =
@@ -377,6 +401,7 @@ let clone ~dry_run ?force ?branch ~dir r =
   | (`Hg, _, _) as r -> hg_clone r ~dir
 
 let checkout ~dry_run ?branch r ~commit_ish =
+  let commit_ish = Tag_or_commit_ish.to_commit_ish commit_ish in
   match r with
   | (`Git, _, _) as r -> git_checkout ~dry_run r ~branch ~commit_ish
   | (`Hg, _, _) as r -> hg_checkout r ~branch ~rev:(hg_rev commit_ish)

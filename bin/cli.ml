@@ -34,7 +34,9 @@ let dist_tag =
   named
     (fun x -> `Dist_tag x)
     Arg.(
-      value & opt (some string) None & info [ "t"; "tag" ] ~doc ~docv:"DIST_TAG")
+      value
+      & opt (some Args.tag) None
+      & info [ "t"; "tag" ] ~doc ~docv:"DIST_TAG")
 
 let pkg_names =
   let doc =
@@ -55,7 +57,9 @@ let pkg_version =
   named
     (fun x -> `Package_version x)
     Arg.(
-      value & opt (some string) None & info [ "V"; "pkg-version" ] ~doc ~docv)
+      value
+      & opt (some Args.version) None
+      & info [ "V"; "pkg-version" ] ~doc ~docv)
 
 let opam =
   let doc =

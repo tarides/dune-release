@@ -18,7 +18,7 @@ val cmd : Cmd.t
 val prepare_package :
   build_dir:Fpath.t ->
   dry_run:bool ->
-  version:string ->
+  version:Version.t ->
   Vcs.t ->
   string ->
   (unit, R.msg) result
@@ -29,8 +29,8 @@ val prepare :
   local_repo:Fpath.t ->
   remote_repo:string ->
   opam_repo:string * string ->
-  version:string ->
-  tag:Vcs.commit_ish ->
+  version:Version.t ->
+  tag:Vcs.Tag.t ->
   string list ->
   (Vcs.commit_ish, R.msg) result
 (** [prepare ~local_repo ~version pkgs] adds the packages [pkg.version] to a new

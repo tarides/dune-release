@@ -1,10 +1,13 @@
+module Vcs = Dune_release.Vcs
+
+let tag = Alcotest.testable Vcs.Tag.pp Vcs.Tag.equal
+
 let test_git_sanitize_tag =
   let make_test name ~input ~expected =
+    let expected = Vcs.Tag.from_string expected in
     let name = "git_sanitize_tag: " ^ name in
     let test_fun () =
-      Alcotest.(check string)
-        name expected
-        (Dune_release.Vcs.git_sanitize_tag input)
+      Alcotest.(check tag) name expected (Vcs.git_sanitize_tag input)
     in
     (name, `Quick, test_fun)
   in

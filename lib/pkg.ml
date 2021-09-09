@@ -10,9 +10,9 @@ open Bos_setup
 
 type t = {
   name : string;
-  tag : string option;
-  version : string option;
-  drop_v : bool;
+  tag : Vcs.Tag.t option;
+  version : Version.t option;
+  keep_v : bool;
   delegate : Cmd.t option;
   build_dir : Fpath.t option;
   opam : Fpath.t option;
@@ -45,16 +45,9 @@ let name p = Ok p.name
 
 let with_name p name = { p with name }
 
-let tag_from_repo ?tag ?version () =
-  match (tag, version) with
-  | Some v, _ -> Ok v
-  | None, None -> Vcs.get () >>= fun r -> Vcs.describe ~dirty:false r
-  | None, Some v -> Ok v
-
-let tag p = tag_from_repo ?tag:p.tag ?version:p.version ()
-
 let extract_version change_log =
-  Text.change_log_file_last_entry change_log >>= fun (version, _) -> Ok version
+  Text.change_log_file_last_entry change_log >>= fun (version, _) ->
+  Ok (Version.from_string version)
 
 let find_files path ~names_wo_ext =
   OS.Dir.contents path >>| fun files ->
@@ -70,21 +63,17 @@ let change_log p =
   | [] -> R.error_msgf "No change log specified in the package description."
   | l :: _ -> Ok l
 
+let tag p =
+  match p.tag with Some tag -> Ok tag | None -> Vcs.get () >>= Vcs.get_tag
+
 let extract_version pkg = change_log pkg >>= fun cl -> extract_version cl
 
 let infer_version pkg =
-  match extract_version pkg with Ok t -> Ok t | Error _ -> tag pkg
+  match extract_version pkg with
+  | Ok t -> Ok t
+  | Error _ -> tag pkg >>| fun t -> Version.from_tag ~keep_v:pkg.keep_v t
 
-let drop_initial_v version =
-  match String.head version with
-  | Some ('v' | 'V') -> String.with_index_range ~first:1 version
-  | None | Some _ -> version
-
-let version p =
-  match p.version with
-  | Some v -> Ok v
-  | None ->
-      infer_version p >>| fun t -> if p.drop_v then drop_initial_v t else t
+let version p = match p.version with Some v -> Ok v | None -> infer_version p
 
 let delegate p =
   let not_found = function
@@ -204,20 +193,21 @@ let homepage_is_on_github p =
   opam_homepage_sld p >>| function None -> false | Some sld -> sld = "github"
 
 let path_of_distrib p =
+  dev_repo_is_on_github p >>= fun repo_on_gh ->
+  homepage_is_on_github p >>= fun hp_on_gh ->
+  name p >>= fun name ->
+  tag p >>= fun tag ->
   let basename =
     match p.distrib_file with
     | Some f -> Fpath.basename f
-    | None -> "$(NAME)-$(TAG).tbz"
+    | None -> strf "%s-%a.tbz" name Vcs.Tag.pp tag
   in
-  dev_repo_is_on_github p >>= fun a ->
-  homepage_is_on_github p >>= fun b ->
-  let uri =
-    (if a || b then "releases/download/$(TAG)/" else "releases/") ^ basename
+  let filename =
+    if repo_on_gh || hp_on_gh then
+      strf "releases/download/%a/%s" Vcs.Tag.pp tag basename
+    else "releases/" ^ basename
   in
-  name p >>= fun name ->
-  tag p >>= fun tag ->
-  let defs = String.Map.(empty |> add "NAME" name |> add "TAG" tag) in
-  Pat.of_string uri >>| Pat.format defs
+  Ok filename
 
 let infer_github_repo pkg =
   opam_homepage pkg >>= fun homepage ->
@@ -241,7 +231,7 @@ let distrib_filename ?(opam = false) p =
   let sep = if opam then '.' else '-' in
   name p >>= fun name ->
   (if opam then version p else infer_version p) >>= fun version ->
-  Fpath.of_string (strf "%s%c%s" name sep version)
+  Fpath.of_string (strf "%s%c%a" name sep Version.pp version)
 
 let distrib_archive_path p =
   build_dir p >>= fun build_dir ->
@@ -383,7 +373,7 @@ let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
       name;
       version;
       tag;
-      drop_v = not keep_v;
+      keep_v;
       delegate;
       build_dir;
       opam = opam_file;
@@ -418,7 +408,7 @@ let prepare_opam_for_distrib ~version ~content =
   let re = Re.compile version_line_re in
   let is_not_version_field line = not (Re.execp re line) in
   let without_version = List.filter is_not_version_field content in
-  Fmt.strf "version: \"%s\"" version :: without_version
+  Fmt.strf "version: \"%a\"" Version.pp version :: without_version
 
 let distrib_version_opam_files ~dry_run ~version =
   infer_pkg_names Fpath.(v ".") [] >>= fun names ->
@@ -438,7 +428,7 @@ let distrib_prepare ~dry_run ~dist_build_dir ~version =
 
 let assert_tag_exists ~dry_run repo tag =
   if Vcs.tag_exists ~dry_run repo tag then Ok ()
-  else R.error_msgf "%s is not a valid tag" tag
+  else R.error_msgf "%a is not a valid tag" Vcs.Tag.pp tag
 
 let pull_submodules ~dry_run ~dist_build_dir =
   Sos.with_dir ~dry_run dist_build_dir
@@ -456,11 +446,11 @@ let distrib_archive ~dry_run ~keep_dir ~include_submodules p =
   Sos.delete_dir ~dry_run ~force:true dist_build_dir >>= fun () ->
   Vcs.get () >>= fun repo_vcs ->
   assert_tag_exists ~dry_run repo_vcs tag >>= fun () ->
-  Vcs.commit_ptime_s repo_vcs ~dry_run ~commit_ish:tag >>= fun mtime ->
+  Vcs.commit_ptime_s repo_vcs ~dry_run ~commit_ish:(Tag tag) >>= fun mtime ->
   Vcs.clone ~dry_run ~force:true repo_vcs ~dir:dist_build_dir >>= fun () ->
   Vcs.get ~dir:dist_build_dir () >>= fun clone_vcs ->
-  let branch = Fmt.strf "dune-release-dist-%s" tag in
-  Vcs.checkout ~dry_run clone_vcs ~branch ~commit_ish:tag >>= fun () ->
+  let branch = Fmt.strf "dune-release-dist-%a" Vcs.Tag.pp tag in
+  Vcs.checkout ~dry_run clone_vcs ~branch ~commit_ish:(Tag tag) >>= fun () ->
   (if include_submodules then pull_submodules ~dry_run ~dist_build_dir
   else Ok ())
   >>= fun () ->

@@ -16,8 +16,8 @@ val publish :
   ?publish_msg:string ->
   ?token:string Dune_release.Config.Cli.t ->
   pkg_names:string list ->
-  version:string option ->
-  tag:string option ->
+  version:Dune_release.Version.t option ->
+  tag:Dune_release.Vcs.Tag.t option ->
   keep_v:bool Dune_release.Config.Cli.t ->
   dry_run:bool ->
   publish_artefacts:[ `Alt of string | `Distrib | `Doc ] list ->

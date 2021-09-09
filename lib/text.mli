@@ -65,8 +65,11 @@ module Pp : sig
   val name : string Fmt.t
   (** [name] formats a package name. *)
 
-  val version : string Fmt.t
+  val version : Version.t Fmt.t
   (** [version] formats a package version. *)
+
+  val tag : Vcs.Tag.t Fmt.t
+  (** [tag] formats a VCS tag. *)
 
   val commit : Vcs.commit_ish Fmt.t
   (** [commit] formats a commit-ish. *)

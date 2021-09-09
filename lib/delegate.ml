@@ -32,7 +32,7 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes ~draft pkg =
       App_log.unhappy (fun l ->
           l Deprecate.Delegates.warning_usage Deprecate.Delegates.new_workflow);
       Pkg.name pkg >>= fun name ->
-      Pkg.tag pkg >>= fun version ->
+      Pkg.tag pkg >>= fun tag ->
       (match distrib_uri with
       | Some uri -> Ok uri
       | None ->
@@ -40,10 +40,10 @@ let publish_distrib ?token ?distrib_uri ~dry_run ~msg ~archive ~yes ~draft pkg =
              behaviour until 2.0 and removal of delegates *)
           Pkg.infer_github_distrib_uri pkg)
       >>= fun distrib_uri ->
+      let tag = Vcs.Tag.to_string tag in
       run_delegate ~dry_run del
         Cmd.(
-          v "publish" % "distrib" % distrib_uri % name % version % msg
-          % p archive)
+          v "publish" % "distrib" % distrib_uri % name % tag % msg % p archive)
 
 let publish_doc ~dry_run ~msg ~docdir ~yes pkg =
   Pkg.delegate pkg >>= function
@@ -55,6 +55,7 @@ let publish_doc ~dry_run ~msg ~docdir ~yes pkg =
       Pkg.name pkg >>= fun name ->
       Pkg.version pkg >>= fun version ->
       Pkg.doc_uri pkg >>= fun doc_uri ->
+      let version = Version.to_string version in
       run_delegate ~dry_run del
         Cmd.(v "publish" % "doc" % doc_uri % name % version % msg % p docdir)
 
@@ -69,6 +70,7 @@ let publish_alt ?distrib_uri ~dry_run ~kind ~msg ~archive p =
       | Some uri -> Ok uri
       | None -> Pkg.infer_github_distrib_uri p)
       >>= fun distrib_uri ->
+      let version = Version.to_string version in
       run_delegate ~dry_run del
         Cmd.(
           v "publish" % "alt" % distrib_uri % kind % name % version % msg

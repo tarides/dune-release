@@ -144,7 +144,9 @@ let rewrite_github_refs ~user ~repo msg =
 module Pp = struct
   let name = Fmt.(styled `Bold string)
 
-  let version = Fmt.(styled `Cyan string)
+  let version = Fmt.(styled `Cyan Version.pp)
+
+  let tag = Fmt.(styled `Cyan Vcs.Tag.pp)
 
   let commit = Fmt.(styled `Yellow string)
 

@@ -9,20 +9,20 @@ open Dune_release
 
 let vcs_tag repo pkg version ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes
     =
-  let tag = Vcs.sanitize_tag repo version in
-  App_log.status (fun l -> l "Using tag %S" tag);
+  let tag = Version.to_tag version in
+  App_log.status (fun l -> l "Using tag \"%a\"" Vcs.Tag.pp tag);
   Vcs.commit_id ~dirty:false ~commit_ish repo
   |> R.reword_error (fun (`Msg msg) ->
          R.msgf "Due to invalid commit-ish `%s`:\n%s" commit_ish msg)
   >>= fun commit ->
-  let tag_commit_opt = Vcs.tag_points_to ~tag repo in
+  let tag_commit_opt = Vcs.tag_points_to repo tag in
   match (tag_commit_opt, delete) with
   | Some tag_commit, true ->
       let question =
         if tag_commit = commit then
           Prompt.(
             confirm_or_abort ~yes
-              ~question:(fun l -> l "Delete tag %a?" Text.Pp.version tag)
+              ~question:(fun l -> l "Delete tag %a?" Text.Pp.tag tag)
               ~default_answer:Yes)
         else
           Prompt.(
@@ -32,17 +32,17 @@ let vcs_tag repo pkg version ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes
                   "%a Tag %a does not point to the commit you've provided \
                    (default: HEAD). Do you want to delete it anyways?"
                   Fmt.(styled `Red string)
-                  "Warning:" Text.Pp.version tag)
+                  "Warning:" Text.Pp.tag tag)
               ~default_answer:No)
       in
       question >>= fun () ->
       Vcs.delete_tag ~dry_run repo tag >>| fun () ->
-      App_log.success (fun m -> m "Deleted tag %a" Text.Pp.version tag)
+      App_log.success (fun m -> m "Deleted tag %a" Text.Pp.tag tag)
   | None, true ->
       Ok
         (App_log.status (fun apply_log_l ->
              apply_log_l "Nothing to be deleted: there is no tag %a."
-               Text.Pp.version tag))
+               Text.Pp.tag tag))
   | Some tag_commit, false ->
       if tag_commit = commit then
         Ok
@@ -52,24 +52,25 @@ let vcs_tag repo pkg version ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes
         R.error_msgf
           "A tag with name %a already exists, but points to a different \
            commit. You can delete that tag using the `-d` flag."
-          Text.Pp.version tag
+          Text.Pp.tag tag
   | None, false ->
       Prompt.(
         confirm_or_abort ~yes
           ~question:(fun l ->
-            l "Create git tag %a for %a?" Text.Pp.version tag Text.Pp.commit
+            l "Create git tag %a for %a?" Text.Pp.tag tag Text.Pp.commit
               commit_ish)
           ~default_answer:Yes)
       >>= fun () ->
       (match msg with
       | Some msg -> Ok msg
       | None ->
-          Pkg.publish_msg pkg >>| fun msg -> strf "Release %s\n\n%s" version msg)
+          Pkg.publish_msg pkg >>| fun msg ->
+          strf "Release %a\n\n%s" Version.pp version msg)
       >>= fun msg ->
       Vcs.tag repo ~dry_run ~force ~sign ~msg ~commit_ish tag >>| fun () ->
       App_log.success (fun m ->
-          m "Tagged %a with version %a" Text.Pp.commit commit_ish
-            Text.Pp.version tag)
+          m "Tagged %a with version %a" Text.Pp.commit commit_ish Text.Pp.tag
+            tag)
 
 let tag () (`Dry_run dry_run) (`Change_log change_log) (`Version version)
     (`Commit_ish commit_ish) (`Force force) (`Sign sign) (`Delete delete)
@@ -99,7 +100,7 @@ let version =
   in
   Cli.named
     (fun x -> `Version x)
-    Arg.(value & pos 0 (some string) None & info [] ~doc ~docv:"VERSION")
+    Arg.(value & pos 0 (some Args.version) None & info [] ~doc ~docv:"VERSION")
 
 let commit =
   let doc = "Commit-ish $(docv) to tag." in

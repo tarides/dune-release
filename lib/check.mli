@@ -16,8 +16,8 @@ val check_project :
   skip_lint:bool ->
   skip_build:bool ->
   skip_tests:bool ->
-  ?tag:string ->
-  ?version:string ->
+  ?tag:Vcs.Tag.t ->
+  ?version:Version.t ->
   keep_v:bool ->
   ?build_dir:Fpath.t ->
   dir:Fpath.t ->

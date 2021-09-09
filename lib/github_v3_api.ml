@@ -55,9 +55,10 @@ let with_auth ~token Curl.{ url; meth; args } =
 module Release = struct
   module Request = struct
     let get ~version ~user ~repo =
+      (* TODO: this should probably use `tag` and not `version` *)
       let url =
-        strf "https://api.github.com/repos/%s/%s/releases/tags/%s" user repo
-          version
+        strf "https://api.github.com/repos/%s/%s/releases/tags/%a" user repo
+          Version.pp version
       in
       let args =
         let open Curl_option in
@@ -70,8 +71,8 @@ module Release = struct
         Yojson.Basic.to_string
           (`Assoc
             [
-              ("tag_name", `String tag);
-              ("name", `String version);
+              ("tag_name", `String (Vcs.Tag.to_string tag));
+              ("name", `String (Version.to_string version));
               ("body", `String msg);
               ("draft", `Bool draft);
             ])
