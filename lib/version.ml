@@ -11,9 +11,7 @@ let from_tag ~keep_v t =
   let s = Vcs.Tag.to_string t in
   if keep_v then s else drop_initial_v s
 
-let to_tag x =
-  (* TODO: handle v *)
-  Vcs.Tag.from_string x
+let to_tag = Vcs.sanitize_tag
 
 let from_string x = x
 

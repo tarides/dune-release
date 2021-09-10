@@ -9,7 +9,7 @@ open Dune_release
 
 let vcs_tag repo pkg version ~dry_run ~commit_ish ~force ~sign ~delete ~msg ~yes
     =
-  let tag = Version.to_tag version in
+  let tag = Version.to_tag repo version in
   App_log.status (fun l -> l "Using tag \"%a\"" Vcs.Tag.pp tag);
   Vcs.commit_id ~dirty:false ~commit_ish repo
   |> R.reword_error (fun (`Msg msg) ->

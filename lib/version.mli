@@ -2,7 +2,7 @@ type t
 
 val from_tag : keep_v:bool -> Vcs.Tag.t -> t
 
-val to_tag : t -> Vcs.Tag.t
+val to_tag : Vcs.t -> t -> Vcs.Tag.t
 
 val from_string : string -> t
 
