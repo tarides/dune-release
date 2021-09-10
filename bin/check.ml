@@ -20,8 +20,7 @@ let check (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
      if on_working_tree then (OS.Dir.current (), fun _ -> ())
      else
        let dir =
-         (* TODO this is a weird cludge because `Pkg.tag` wants a `Pkg.t` *)
-         let pkg = Pkg.v ~dry_run:true ?tag ?version () in
+         let pkg = Pkg.v ~dry_run:true ?tag ?version ?build_dir () in
          Pkg.tag pkg >>= fun inferred_tag ->
          Vcs.get () >>= fun repo ->
          assert_tag_exists repo inferred_tag >>= fun () ->
