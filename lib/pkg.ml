@@ -81,8 +81,7 @@ let extract_version pkg = change_log pkg >>= fun cl -> extract_version cl
 let infer_version pkg =
   match extract_version pkg with
   | Ok t -> Ok t
-  | Error _ ->
-      version_from_tag pkg
+  | Error _ -> version_from_tag pkg
 
 let version p = match p.version with Some v -> Ok v | None -> infer_version p
 
@@ -243,23 +242,27 @@ let distrib_opam_path p =
   version p >>= fun version ->
   Fpath.of_string (strf "%s.%a" name Version.pp version)
 
-let distrib_archive_filename p =
-  name p >>= fun name ->
-  infer_version p >>= fun version ->
-  Fpath.of_string (strf "%s-%a" name Version.pp version)
+let distrib_archive_filename_prefix pkg =
+  name pkg >>= fun name ->
+  let suffix =
+    match pkg.tag with
+    | Some t -> Ok (strf "%a" Vcs.Tag.pp t)
+    | None -> version pkg >>= fun version -> Ok (strf "%a" Version.pp version)
+  in
+  suffix >>= fun identifier -> Fpath.of_string (strf "%s-%s" name identifier)
 
 let distrib_filename ?(opam = false) p =
   match opam with
   | true -> distrib_opam_path p
-  | false -> distrib_archive_filename p
+  | false -> distrib_archive_filename_prefix p
 
 let distrib_archive_path p =
   build_dir p >>= fun build_dir ->
-  distrib_archive_filename p >>| fun b -> Fpath.((build_dir // b) + ".tbz")
+  distrib_archive_filename_prefix p >>| fun b -> Fpath.((build_dir // b) + ".tbz")
 
 let archive_url_path p =
   build_dir p >>= fun build_dir ->
-  distrib_archive_filename p >>| fun b -> Fpath.((build_dir // b) + "url")
+  distrib_archive_filename_prefix p >>| fun b -> Fpath.((build_dir // b) + "url")
 
 let distrib_file ~dry_run p =
   match p.distrib_file with
