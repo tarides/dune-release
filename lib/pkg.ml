@@ -85,6 +85,11 @@ let infer_version pkg =
 
 let version p = match p.version with Some v -> Ok v | None -> infer_version p
 
+let release_identifier pkg =
+  match pkg.tag with
+  | Some t -> Ok (strf "%a" Vcs.Tag.pp t)
+  | None -> version pkg >>= fun version -> Ok (strf "%a" Version.pp version)
+
 let delegate p =
   let not_found = function
     | None ->
@@ -206,15 +211,15 @@ let path_of_distrib p =
   dev_repo_is_on_github p >>= fun repo_on_gh ->
   homepage_is_on_github p >>= fun hp_on_gh ->
   name p >>= fun name ->
-  tag p >>= fun tag ->
+  release_identifier p >>= fun identifier ->
   let basename =
     match p.distrib_file with
     | Some f -> Fpath.basename f
-    | None -> strf "%s-%a.tbz" name Vcs.Tag.pp tag
+    | None -> strf "%s-%s.tbz" name identifier
   in
   let filename =
     if repo_on_gh || hp_on_gh then
-      strf "releases/download/%a/%s" Vcs.Tag.pp tag basename
+      strf "releases/download/%s/%s" identifier basename
     else "releases/" ^ basename
   in
   Ok filename
@@ -244,12 +249,8 @@ let distrib_opam_path p =
 
 let distrib_archive_filename_prefix pkg =
   name pkg >>= fun name ->
-  let suffix =
-    match pkg.tag with
-    | Some t -> Ok (strf "%a" Vcs.Tag.pp t)
-    | None -> version pkg >>= fun version -> Ok (strf "%a" Version.pp version)
-  in
-  suffix >>= fun identifier -> Fpath.of_string (strf "%s-%s" name identifier)
+  release_identifier pkg >>= fun identifier ->
+  Fpath.of_string (strf "%s-%s" name identifier)
 
 let distrib_filename ?(opam = false) p =
   match opam with
@@ -258,11 +259,13 @@ let distrib_filename ?(opam = false) p =
 
 let distrib_archive_path p =
   build_dir p >>= fun build_dir ->
-  distrib_archive_filename_prefix p >>| fun b -> Fpath.((build_dir // b) + ".tbz")
+  distrib_archive_filename_prefix p >>| fun b ->
+  Fpath.((build_dir // b) + ".tbz")
 
 let archive_url_path p =
   build_dir p >>= fun build_dir ->
-  distrib_archive_filename_prefix p >>| fun b -> Fpath.((build_dir // b) + "url")
+  distrib_archive_filename_prefix p >>| fun b ->
+  Fpath.((build_dir // b) + "url")
 
 let distrib_file ~dry_run p =
   match p.distrib_file with
