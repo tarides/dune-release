@@ -66,12 +66,23 @@ let change_log p =
 let tag p =
   match p.tag with Some tag -> Ok tag | None -> Vcs.get () >>= Vcs.get_tag
 
+let version_from_tag pkg =
+  match pkg.tag with
+  | Some tag ->
+      (* the user specified a tag, don't mess with it *)
+      Ok (Version.from_tag ~keep_v:true tag)
+  | None ->
+      Vcs.get () >>= fun vcs ->
+      Vcs.get_tag vcs >>= fun tag ->
+      Ok (Version.from_tag ~keep_v:pkg.keep_v tag)
+
 let extract_version pkg = change_log pkg >>= fun cl -> extract_version cl
 
 let infer_version pkg =
   match extract_version pkg with
   | Ok t -> Ok t
-  | Error _ -> tag pkg >>| fun t -> Version.from_tag ~keep_v:pkg.keep_v t
+  | Error _ ->
+      version_from_tag pkg
 
 let version p = match p.version with Some v -> Ok v | None -> infer_version p
 
