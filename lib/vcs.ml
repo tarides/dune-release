@@ -141,7 +141,8 @@ let git_describe ~dirty r commit_ish =
   run_git_string ~dry_run:false r git_describe ~default:Default.string
 
 let git_tag_exists ~dry_run r tag =
-  match run_git_quiet ~dry_run r Cmd.(v "rev-parse" % "--verify" % tag) with
+  let tag_rev = "refs/tags/" ^ tag in
+  match run_git_quiet ~dry_run r Cmd.(v "rev-parse" % "--verify" % tag_rev) with
   | Ok () -> true
   | _ -> false
 
