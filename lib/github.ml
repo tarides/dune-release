@@ -323,9 +323,9 @@ let is_annotated_tag vcs remote_rev =
   | Ok local_rev ->
       if local_rev = remote_rev then
         (* if resolving again yields the same tag, then the tag is not annotated *)
-        Ok false
-      else Ok true
-  | Error _ -> Ok false
+        false
+      else true
+  | Error _ -> false
 
 let validate_remote_tag vcs local_rev tag remote_rev_unpeeled =
   let missing_tag pp_r =
@@ -336,13 +336,14 @@ let validate_remote_tag vcs local_rev tag remote_rev_unpeeled =
           Text.Pp.tag tag pp_r ())
   in
   match Vcs.commit_id ~commit_ish:remote_rev_unpeeled vcs with
+  | Ok remote_rev
+    when remote_rev = local_rev && is_annotated_tag vcs remote_rev_unpeeled ->
+      Ok true
   | Ok remote_rev when remote_rev = local_rev ->
-      is_annotated_tag vcs remote_rev_unpeeled >>= fun annotated ->
-      if not annotated then
-        App_log.unhappy (fun l ->
-            l
-              "The tag present on the remote is not annotated (it was not \
-               created by dune-release tag.)");
+      App_log.unhappy (fun l ->
+          l
+            "The tag present on the remote is not annotated (it was not \
+             created by dune-release tag.)");
       Ok true
   | Ok remote_rev ->
       missing_tag (fun fmt () -> Text.Pp.commit fmt remote_rev);
