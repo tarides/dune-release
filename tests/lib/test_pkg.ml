@@ -1,5 +1,6 @@
 open Rresult
 open Dune_release
+module Stdext = Dune_release.Stdext
 
 let test_version_line_re =
   let make_test ~input ~expected =
@@ -59,8 +60,8 @@ let test_prepare_opam_for_distrib =
   ]
 
 let make_test f ?version ?tag ?keep_v ?opam ~test_name ~name expected =
-  let tag = Option.map Vcs.Tag.from_string tag in
-  let version = Option.map Version.from_string version in
+  let tag = Stdext.Option.map ~f:Vcs.Tag.from_string tag in
+  let version = Stdext.Option.map ~f:Version.from_string version in
   let test () =
     let expected = Ok (Fpath.v expected) in
     let actual =
