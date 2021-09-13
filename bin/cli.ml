@@ -29,7 +29,7 @@ let config_opt term =
 
 let tag =
   Arg.conv ~docv:"A tag for VCS"
-    ((fun s -> Ok (Vcs.Tag.from_string s)), Vcs.Tag.pp)
+    ((fun s -> Ok (Vcs.Tag.of_string s)), Vcs.Tag.pp)
 
 let dist_tag =
   let doc =
@@ -52,7 +52,7 @@ let pkg_names =
 
 let version =
   Arg.conv ~docv:"An OPAM compatible version string"
-    ((fun s -> Ok (Version.from_string s)), Version.pp)
+    ((fun s -> Ok (Version.of_string s)), Version.pp)
 
 let pkg_version =
   let doc =

@@ -2,7 +2,7 @@ module Vcs = Dune_release.Vcs
 
 let test_git_sanitize_tag =
   let make_test name ~input ~expected =
-    let expected = Vcs.Tag.from_string expected in
+    let expected = Vcs.Tag.of_string expected in
     let name = "git_sanitize_tag: " ^ name in
     let test_fun () =
       Alcotest.(check Alcotest_ext.tag)

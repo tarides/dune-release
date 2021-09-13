@@ -2,8 +2,8 @@ open Dune_release.Github_v3_api
 
 let test_create_release =
   let make_test ~test_name ~version ~tag ~msg ~user ~repo ~draft ~expected =
-    let version = Dune_release.Version.from_string version in
-    let tag = Dune_release.Vcs.Tag.from_string tag in
+    let version = Dune_release.Version.of_string version in
+    let tag = Dune_release.Vcs.Tag.of_string tag in
     let test_fun () =
       let actual =
         Release.Request.create ~version ~tag ~msg ~user ~repo ~draft

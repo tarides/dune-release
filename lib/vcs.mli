@@ -24,10 +24,10 @@ module Tag : sig
   val to_string : t -> string
   (** [to_string v] returns the [string] representation of the tag. *)
 
-  val from_string : string -> t
-  (** [from_string v] reads the specified [v] without any validation. This
-      should be done only in rare cases, for most usages it is better to derive
-      a [Tag.t] from a [Version.t] via [Version.to_tag]. *)
+  val of_string : string -> t
+  (** [of_string v] reads the specified [v] without any validation. This should
+      be done only in rare cases, for most usages it is better to derive a
+      [Tag.t] from a [Version.t] via [Version.to_tag]. *)
 end
 
 type commit_ish = string

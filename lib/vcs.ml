@@ -18,7 +18,7 @@ module Tag = struct
   let to_string x = x
 
   (* no escaping here in case the user wants to force a literal tag *)
-  let from_string x = x
+  let of_string x = x
 end
 
 type commit_ish = string

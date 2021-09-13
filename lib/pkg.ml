@@ -47,7 +47,7 @@ let with_name p name = { p with name }
 
 let extract_version change_log =
   Text.change_log_file_last_entry change_log >>= fun (version, _) ->
-  Ok (Version.from_string version)
+  Ok (Version.of_string version)
 
 let find_files path ~names_wo_ext =
   OS.Dir.contents path >>| fun files ->

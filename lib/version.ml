@@ -13,7 +13,7 @@ let from_tag ~keep_v t =
 
 let to_tag = Vcs.sanitize_tag
 
-let from_string x = x
+let of_string x = x
 
 let pp = Fmt.string
 
