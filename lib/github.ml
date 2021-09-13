@@ -314,6 +314,55 @@ let assert_tag_exists ~dry_run tag =
   if Vcs.tag_exists ~dry_run repo tag then Ok ()
   else R.error_msgf "%a is not a valid tag" Vcs.Tag.pp tag
 
+let is_annotated_tag vcs remote_rev =
+  (* Resolve again in case of annotated tags (most common case).
+     This is a no-op for non-annotated tags. In case of error, we
+     can assume that the remote is different because we checked that we
+     have the tag locally. *)
+  match Vcs.commit_id ~commit_ish:remote_rev vcs with
+  | Ok local_rev ->
+      if local_rev = remote_rev then
+        (* if resolving again yields the same tag, then the tag is not annotated *)
+        Ok false
+      else Ok true
+  | Error _ -> Ok false
+
+let validate_remote_tag vcs local_rev tag remote_rev_unpeeled =
+  let missing_tag pp_r =
+    App_log.unhappy (fun l ->
+        l
+          "The tag %a is present on the remote but points to a different \
+           commit (%a)."
+          Text.Pp.tag tag pp_r ())
+  in
+  match Vcs.commit_id ~commit_ish:remote_rev_unpeeled vcs with
+  | Ok remote_rev when remote_rev = local_rev ->
+      is_annotated_tag vcs remote_rev_unpeeled >>= fun annotated ->
+      if not annotated then
+        App_log.unhappy (fun l ->
+            l
+              "The tag present on the remote is not annotated (it was not \
+               created by dune-release tag.)");
+      Ok true
+  | Ok remote_rev ->
+      missing_tag (fun fmt () -> Text.Pp.commit fmt remote_rev);
+      Ok false
+  | Error _ ->
+      missing_tag (fun fmt () ->
+          Format.fprintf fmt "that we don't have locally");
+      Ok false
+
+let remote_has_tag_uptodate ~dry_run vcs ~dev_repo tag =
+  match Vcs.tag_points_to vcs tag with
+  | None -> Ok false
+  | Some local_rev -> (
+      Vcs.ls_remote ~dry_run vcs ~kind:`Tag ~filter:(Vcs.Tag.to_string tag)
+        dev_repo
+      >>= function
+      | [] -> Ok false
+      | (remote_commithash, _) :: _ ->
+          validate_remote_tag vcs local_rev tag remote_commithash)
+
 (* Ask the user then push the tag. Guess the ssh URI from the dev-repo.
    This function can abort:
    - The user answered "N" to pushing the tag
@@ -322,40 +371,7 @@ let assert_tag_exists ~dry_run tag =
    This function does nothing if the tag is already present on the remote and
    point to the same ref. *)
 let push_tag ~dry_run ~yes ~dev_repo vcs tag =
-  let remote_has_tag_uptodate () =
-    match Vcs.tag_points_to vcs tag with
-    | None -> Ok false
-    | Some local_rev -> (
-        Vcs.ls_remote ~dry_run vcs ~kind:`Tag ~filter:(Vcs.Tag.to_string tag)
-          dev_repo
-        >>= function
-        | [] -> Ok false
-        | (remote_rev_unpeeled, _) :: _ -> (
-            (* Resolve again in case of annotated tags (most common case).
-               This is a no-op for non-annotated tags. In case of error, we
-               can assume that the remote is different because we checked that we
-               have the tag locally. *)
-            match Vcs.commit_id ~commit_ish:remote_rev_unpeeled vcs with
-            | Ok remote_rev when remote_rev = local_rev ->
-                if remote_rev_unpeeled = remote_rev then
-                  App_log.unhappy (fun l ->
-                      l
-                        "The tag present on the remote is not annotated (it \
-                         was not created by dune-release tag.)");
-                Ok true
-            | r ->
-                let pp_r fmt = function
-                  | Ok remote_rev -> Text.Pp.commit fmt remote_rev
-                  | Error _ -> Format.fprintf fmt "that we don't have locally"
-                in
-                App_log.unhappy (fun l ->
-                    l
-                      "The tag %a is present on the remote but points to a \
-                       different commit (%a)."
-                      Text.Pp.tag tag pp_r r);
-                Ok false))
-  in
-  remote_has_tag_uptodate () >>= function
+  remote_has_tag_uptodate ~dry_run vcs ~dev_repo tag >>= function
   | true ->
       App_log.status (fun l ->
           l
