@@ -28,8 +28,7 @@ let config_opt term =
   app (const (Stdext.Option.map ~f:Dune_release.Config.Cli.make)) term
 
 let tag =
-  Arg.conv ~docv:"A tag for VCS"
-    ((fun s -> Ok (Vcs.Tag.of_string s)), Vcs.Tag.pp)
+  Arg.conv ~docv:"VCS_TAG" ((fun s -> Ok (Vcs.Tag.of_string s)), Vcs.Tag.pp)
 
 let dist_tag =
   let doc =
