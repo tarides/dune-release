@@ -327,7 +327,7 @@ let is_annotated_tag vcs commit_ish =
       else true
   | Error _ -> false
 
-let validate_remote_tag vcs local_rev tag remote_rev_unpeeled =
+let validate_remote_tag vcs ~local_rev ~remote_rev tag =
   let points_to_different_commit pp_r =
     App_log.unhappy (fun l ->
         l
@@ -335,18 +335,18 @@ let validate_remote_tag vcs local_rev tag remote_rev_unpeeled =
            commit (%a)."
           Text.Pp.tag tag pp_r ())
   in
-  match Vcs.commit_id ~commit_ish:remote_rev_unpeeled vcs with
-  | Ok remote_rev
-    when remote_rev = local_rev && is_annotated_tag vcs remote_rev_unpeeled ->
+  match Vcs.commit_id ~commit_ish:remote_rev vcs with
+  | Ok resolved_rev
+    when resolved_rev = local_rev && is_annotated_tag vcs remote_rev ->
       Ok true
-  | Ok remote_rev when remote_rev = local_rev ->
+  | Ok resolved_rev when resolved_rev = local_rev ->
       App_log.unhappy (fun l ->
           l
             "The tag present on the remote is not annotated (it was not \
              created by dune-release tag.)");
       Ok true
-  | Ok remote_rev ->
-      points_to_different_commit (fun fmt () -> Text.Pp.commit fmt remote_rev);
+  | Ok resolved_rev ->
+      points_to_different_commit (fun fmt () -> Text.Pp.commit fmt resolved_rev);
       Ok false
   | Error _ ->
       points_to_different_commit (fun fmt () ->
@@ -361,8 +361,8 @@ let remote_has_tag_uptodate ~dry_run vcs ~dev_repo tag =
         dev_repo
       >>= function
       | [] -> Ok false
-      | (remote_commithash, _) :: _ ->
-          validate_remote_tag vcs local_rev tag remote_commithash)
+      | (remote_rev, _) :: _ ->
+          validate_remote_tag vcs ~local_rev ~remote_rev tag)
 
 (* Ask the user then push the tag. Guess the ssh URI from the dev-repo.
    This function can abort:
