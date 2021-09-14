@@ -314,21 +314,21 @@ let assert_tag_exists ~dry_run tag =
   if Vcs.tag_exists ~dry_run repo tag then Ok ()
   else R.error_msgf "%a is not a valid tag" Vcs.Tag.pp tag
 
-let is_annotated_tag vcs remote_rev =
+let is_annotated_tag vcs commit_ish =
   (* Resolve again in case of annotated tags (most common case).
      This is a no-op for non-annotated tags. In case of error, we
      can assume that the remote is different because we checked that we
      have the tag locally. *)
-  match Vcs.commit_id ~commit_ish:remote_rev vcs with
+  match Vcs.commit_id ~commit_ish vcs with
   | Ok local_rev ->
-      if local_rev = remote_rev then
+      if local_rev = commit_ish then
         (* if resolving again yields the same tag, then the tag is not annotated *)
         false
       else true
   | Error _ -> false
 
 let validate_remote_tag vcs local_rev tag remote_rev_unpeeled =
-  let missing_tag pp_r =
+  let points_to_different_commit pp_r =
     App_log.unhappy (fun l ->
         l
           "The tag %a is present on the remote but points to a different \
@@ -346,10 +346,10 @@ let validate_remote_tag vcs local_rev tag remote_rev_unpeeled =
              created by dune-release tag.)");
       Ok true
   | Ok remote_rev ->
-      missing_tag (fun fmt () -> Text.Pp.commit fmt remote_rev);
+      points_to_different_commit (fun fmt () -> Text.Pp.commit fmt remote_rev);
       Ok false
   | Error _ ->
-      missing_tag (fun fmt () ->
+      points_to_different_commit (fun fmt () ->
           Format.fprintf fmt "that we don't have locally");
       Ok false
 
