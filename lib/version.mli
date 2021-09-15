@@ -17,7 +17,7 @@ val pp : t Fmt.t
 (** Pretty print a [t]. *)
 
 module Changelog : sig
-  type outer := t
+  type t'
 
   type t
   (** [t] represents a project version read from the project changelog. *)
@@ -25,7 +25,7 @@ module Changelog : sig
   val of_string : string -> t
   (** [of_string s] reads the changelog value from a string. *)
 
-  val to_version : keep_v:bool -> t -> outer
+  val to_version : keep_v:bool -> t -> t'
   (** [to_version ~keep_v v] converts the changelog version into the actual
       project version. *)
 
@@ -38,3 +38,4 @@ module Changelog : sig
   val to_tag : Vcs.t -> t -> Vcs.Tag.t
   (** [to_tag vcs v] converts the change log version into a tag for VCS. *)
 end
+with type t' = t
