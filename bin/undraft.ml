@@ -76,7 +76,7 @@ let undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo:local
   update_opam_file ~dry_run ~url pkg >>= fun () ->
   App_log.status (fun l ->
       l "Preparing pull request #%s to %a" pr_id pp_opam_repo opam_repo);
-  let branch = Fmt.strf "release-%s-%s" pkg_name tag in
+  let branch = Fmt.strf "release-%s-%a" pkg_name Vcs.Tag.pp tag in
   Vcs.get () >>= fun vcs ->
   let prepare_packages ~build_dir =
     Stdext.Result.List.iter

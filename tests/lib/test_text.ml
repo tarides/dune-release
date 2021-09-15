@@ -1,8 +1,11 @@
+let ch = Dune_release.Version.Changelog.of_string
+
 let test_change_log_last_entry =
   let make_test ~name ~input ~expected =
     let name = "change_log_last_entry " ^ name in
     let test_fun () =
-      Alcotest.(check (option (pair string (pair string string))))
+      let changelog_version = Alcotest_ext.changelog_version in
+      Alcotest.(check (option (pair changelog_version (pair string string))))
         name expected
         (Dune_release.Text.change_log_last_entry input)
     in
@@ -16,7 +19,7 @@ let test_change_log_last_entry =
   - change A  
   - change B  
 |}
-      ~expected:(Some ("v0.1", ("# v0.1", "  - change A\n  - change B")));
+      ~expected:(Some (ch "v0.1", ("# v0.1", "  - change A\n  - change B")));
     make_test ~name:"change list 1"
       ~input:{|
 # v0.1
@@ -24,7 +27,7 @@ let test_change_log_last_entry =
   - change A
   - change B
 |}
-      ~expected:(Some ("v0.1", ("# v0.1", "  - change A\n  - change B")));
+      ~expected:(Some (ch "v0.1", ("# v0.1", "  - change A\n  - change B")));
     make_test ~name:"change list 2"
       ~input:{|
 # v0.1
@@ -33,7 +36,7 @@ let test_change_log_last_entry =
   - change A
   - change B
 |}
-      ~expected:(Some ("v0.1", ("# v0.1", "\n  - change A\n  - change B")));
+      ~expected:(Some (ch "v0.1", ("# v0.1", "\n  - change A\n  - change B")));
     make_test ~name:"many entries"
       ~input:{|
 # v0.1
@@ -44,7 +47,7 @@ change A
 
 change B
 |}
-      ~expected:(Some ("v0.1", ("# v0.1", "change A")));
+      ~expected:(Some (ch "v0.1", ("# v0.1", "change A")));
   ]
 
 let test_rewrite_github_refs =

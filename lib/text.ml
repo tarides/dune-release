@@ -119,7 +119,7 @@ let change_log_last_entry ?flavour text =
             | "" :: lines -> String.concat ~sep:"\n" lines
             | lines -> String.concat ~sep:"\n" lines
           in
-          Some (version, (h, changes)))
+          Some (Version.Changelog.of_string version, (h, changes)))
 
 let change_log_file_last_entry file =
   let flavour = flavour_of_fpath file in
@@ -144,7 +144,9 @@ let rewrite_github_refs ~user ~repo msg =
 module Pp = struct
   let name = Fmt.(styled `Bold string)
 
-  let version = Fmt.(styled `Cyan string)
+  let version = Fmt.(styled `Cyan Version.pp)
+
+  let tag = Fmt.(styled `Cyan Vcs.Tag.pp)
 
   let commit = Fmt.(styled `Yellow string)
 

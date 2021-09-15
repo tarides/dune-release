@@ -27,6 +27,9 @@ let config_opt term =
   let open Cmdliner.Term in
   app (const (Stdext.Option.map ~f:Dune_release.Config.Cli.make)) term
 
+let tag =
+  Arg.conv ~docv:"VCS_TAG" ((fun s -> Ok (Vcs.Tag.of_string s)), Vcs.Tag.pp)
+
 let dist_tag =
   let doc =
     "The tag from which the distribution archive is or will be built."
@@ -34,7 +37,7 @@ let dist_tag =
   named
     (fun x -> `Dist_tag x)
     Arg.(
-      value & opt (some string) None & info [ "t"; "tag" ] ~doc ~docv:"DIST_TAG")
+      value & opt (some tag) None & info [ "t"; "tag" ] ~doc ~docv:"DIST_TAG")
 
 let pkg_names =
   let doc =
@@ -46,6 +49,10 @@ let pkg_names =
     (fun x -> `Package_names x)
     Arg.(value & opt (list string) [] & info [ "p"; "pkg-names" ] ~doc ~docv)
 
+let version =
+  Arg.conv ~docv:"An OPAM compatible version string"
+    ((fun s -> Ok (Version.of_string s)), Version.pp)
+
 let pkg_version =
   let doc =
     "The version $(docv) of the opam package. If absent it is guessed from the \
@@ -55,7 +62,7 @@ let pkg_version =
   named
     (fun x -> `Package_version x)
     Arg.(
-      value & opt (some string) None & info [ "V"; "pkg-version" ] ~doc ~docv)
+      value & opt (some version) None & info [ "V"; "pkg-version" ] ~doc ~docv)
 
 let opam =
   let doc =

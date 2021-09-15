@@ -10,8 +10,8 @@ val distrib :
   ?build_dir:Fpath.t ->
   dry_run:bool ->
   pkg_names:string list ->
-  version:string option ->
-  tag:string option ->
+  version:Dune_release.Version.t option ->
+  tag:Dune_release.Vcs.Tag.t option ->
   keep_v:bool Dune_release.Config.Cli.t ->
   keep_dir:bool ->
   skip_lint:bool ->

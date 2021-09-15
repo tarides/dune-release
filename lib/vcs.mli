@@ -12,10 +12,32 @@ open Rresult
 
 (** {1:vcsops Version control system repositories} *)
 
+module Tag : sig
+  type t
+
+  val pp : t Fmt.t
+
+  val equal : t -> t -> bool
+  (** [equal a b] returns [true] if [a] and [b] are the same tag. No check
+      whether these commits point to the same data is done. *)
+
+  val to_string : t -> string
+  (** [to_string v] returns the [string] representation of the tag. *)
+
+  val of_string : string -> t
+  (** [of_string v] reads the specified [v] without any validation. This should
+      be done only in rare cases, for most usages it is better to derive a
+      [Tag.t] from a [Version.t] via [Version.to_tag]. *)
+end
+
 type commit_ish = string
 (** The type for symbols resolving to a commit. The module uses ["HEAD"] for
     specifying the current checkout; use this symbol even if the underlying VCS
     is [`Hg]. *)
+
+module Tag_or_commit_ish : sig
+  type t = Tag of Tag.t | Commit_ish of commit_ish
+end
 
 type t
 (** The type for version control systems repositories. *)
@@ -46,14 +68,14 @@ val is_dirty : t -> (bool, R.msg) result
     changes. *)
 
 val commit_id :
-  ?dirty:bool -> ?commit_ish:string -> t -> (commit_ish, R.msg) result
+  ?dirty:bool -> ?commit_ish:commit_ish -> t -> (commit_ish, R.msg) result
 (** [commit_id ~dirty ~commit_ish r] is the object name (identifier) of
     [commit_ish] (defaults to ["HEAD"]). If [commit_ish] is ["HEAD"] and [dirty]
-    is [true] (default) and indicator is appended to the identifier if the
+    is [true] (default) an indicator is appended to the identifier if the
     working tree is dirty. *)
 
 val commit_ptime_s :
-  dry_run:bool -> ?commit_ish:commit_ish -> t -> (int64, R.msg) result
+  dry_run:bool -> ?commit_ish:Tag_or_commit_ish.t -> t -> (int64, R.msg) result
 (** [commit_ptime_s t ~commit_ish] is the POSIX time in seconds of commit
     [commit_ish] (defaults to ["HEAD"]) of repository [r]. *)
 
@@ -64,9 +86,11 @@ val describe :
     and [dirty] is [true] (default) an indicator is appended to the identifier
     if the working tree is dirty. *)
 
-val tag_exists : dry_run:bool -> t -> commit_ish -> bool
+val get_tag : t -> (Tag.t, R.msg) result
 
-val tag_points_to : t -> tag:commit_ish -> string option
+val tag_exists : dry_run:bool -> t -> Tag.t -> bool
+
+val tag_points_to : t -> Tag.t -> string option
 
 val branch_exists : dry_run:bool -> t -> commit_ish -> bool
 
@@ -85,7 +109,7 @@ val checkout :
   dry_run:bool ->
   ?branch:commit_ish ->
   t ->
-  commit_ish:commit_ish ->
+  commit_ish:Tag_or_commit_ish.t ->
   (unit, R.msg) result
 (** [checkout r ~branch commit_ish] checks out [commit_ish]. Checks out in a new
     branch [branch] if provided. *)
@@ -100,14 +124,14 @@ val tag :
   ?msg:string ->
   ?commit_ish:string ->
   t ->
-  commit_ish ->
+  Tag.t ->
   (unit, R.msg) result
 (** [tag r ~force ~sign ~msg ~commit_ish t] tags [commit_ish] with [t] and
     message [msg] (if unspecified the VCS should prompt). if [sign] is [true]
     (defaults to [false]) signs the tag ([`Git] repos only). If [force] is
     [true] (default to [false]) doesn't fail if the tag already exists. *)
 
-val delete_tag : dry_run:bool -> t -> commit_ish -> (unit, R.msg) result
+val delete_tag : dry_run:bool -> t -> Tag.t -> (unit, R.msg) result
 (** [delete_tag r t] deletes tag [t] in repo [r]. *)
 
 val ls_remote :
@@ -127,10 +151,10 @@ val submodule_update : dry_run:bool -> t -> (unit, R.msg) result
 (** [submodule r] pulls in all submodules in [r]. Only works for git
     repositories *)
 
-val git_sanitize_tag : commit_ish -> commit_ish
+val git_sanitize_tag : string -> Tag.t
 (** Exposed for tests. *)
 
-val sanitize_tag : t -> commit_ish -> commit_ish
+val sanitize_tag : t -> string -> Tag.t
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

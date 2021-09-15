@@ -7,6 +7,15 @@ let error_msg =
 
 let result_msg testable = result testable error_msg
 
+module Tag = Dune_release.Vcs.Tag
+
+let tag = Alcotest.testable Tag.pp Tag.equal
+
+module Version = Dune_release.Version
+
+let changelog_version =
+  Alcotest.testable Version.Changelog.pp Version.Changelog.equal
+
 let opam_version =
   testable Dune_release.Opam.Version.pp Dune_release.Opam.Version.equal
 

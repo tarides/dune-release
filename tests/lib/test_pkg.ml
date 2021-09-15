@@ -1,5 +1,6 @@
 open Rresult
 open Dune_release
+module Stdext = Dune_release.Stdext
 
 let test_version_line_re =
   let make_test ~input ~expected =
@@ -24,6 +25,7 @@ let test_version_line_re =
 
 let test_prepare_opam_for_distrib =
   let make_test ~name ~version ~content ~expected () =
+    let version = Version.of_string version in
     let test_name = "prepare_opam_for_distrib: " ^ name in
     let test_fun () =
       let actual =
@@ -58,7 +60,8 @@ let test_prepare_opam_for_distrib =
   ]
 
 let make_test f ?version ?tag ?keep_v ?opam ~test_name ~name expected =
-  let open Alcotest_ext in
+  let tag = Stdext.Option.map ~f:Vcs.Tag.of_string tag in
+  let version = Stdext.Option.map ~f:Version.of_string version in
   let test () =
     let expected = Ok (Fpath.v expected) in
     let actual =
@@ -73,7 +76,7 @@ let make_test f ?version ?tag ?keep_v ?opam ~test_name ~name expected =
       let p = Pkg.v ~dry_run:false ~name ?tag ?version ?keep_v ?opam () in
       f p
     in
-    Alcotest.(check (result_msg path)) test_name expected actual
+    Alcotest.(check Alcotest_ext.(result_msg path)) test_name expected actual
   in
   (test_name, `Quick, test)
 

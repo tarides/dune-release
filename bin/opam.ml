@@ -212,7 +212,10 @@ let submit ~token ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open
     | _ -> Ok ())
   >>= fun () ->
   list_map Pkg.name pkgs >>= fun names ->
-  let title = strf "[new release] %a (%s)" (pp_list Fmt.string) names version in
+  let title =
+    strf "[new release] %a (%a)" (pp_list Fmt.string) names
+      Dune_release.Version.pp version
+  in
   Pkg.publish_msg pkg >>= fun changes ->
   let gh_repo = Rresult.R.to_option (Pkg.infer_github_repo pkg) in
   let changes =

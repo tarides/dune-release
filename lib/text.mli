@@ -45,12 +45,12 @@ val header_title : ?flavour:flavour -> string -> string
 val change_log_last_entry :
   ?flavour:[< `Asciidoc | `Markdown > `Markdown ] ->
   string ->
-  (string * (string * string)) option
+  (Version.Changelog.t * (string * string)) option
 (** [change_log_last_entry ?flavour changes] tries to parse the last change log
     entry of the string [changes] using the [flavour] syntax. *)
 
 val change_log_file_last_entry :
-  Fpath.t -> (string * (string * string), R.msg) result
+  Fpath.t -> (Version.Changelog.t * (string * string), R.msg) result
 (** [change_log_file_last_entry file] tries to parse the last change log entry
     of the file [file] using {!flavour_of_fpath} and {!change_log_last_entry}. *)
 
@@ -65,8 +65,11 @@ module Pp : sig
   val name : string Fmt.t
   (** [name] formats a package name. *)
 
-  val version : string Fmt.t
+  val version : Version.t Fmt.t
   (** [version] formats a package version. *)
+
+  val tag : Vcs.Tag.t Fmt.t
+  (** [tag] formats a VCS tag. *)
 
   val commit : Vcs.commit_ish Fmt.t
   (** [commit] formats a commit-ish. *)

@@ -3,7 +3,7 @@ open Dune_release
 
 let assert_tag_exists repo tag =
   if Vcs.tag_exists ~dry_run:false repo tag then Ok ()
-  else R.error_msgf "%s is not a valid tag" tag
+  else R.error_msgf "%a is not a valid tag" Vcs.Tag.pp tag
 
 let clone_and_checkout_tag repo ~dir ~tag =
   Sos.delete_dir ~dry_run:false ~force:true dir >>= fun () ->
@@ -20,7 +20,8 @@ let check (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
      if on_working_tree then (OS.Dir.current (), fun _ -> ())
      else
        let dir =
-         Pkg.tag_from_repo ?tag ?version () >>= fun inferred_tag ->
+         let pkg = Pkg.v ~dry_run:true ?tag ?version ?build_dir () in
+         Pkg.tag pkg >>= fun inferred_tag ->
          Vcs.get () >>= fun repo ->
          assert_tag_exists repo inferred_tag >>= fun () ->
          (match build_dir with
@@ -28,7 +29,8 @@ let check (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
          | None -> Fpath.of_string "_build")
          >>= fun build_directory ->
          let dir = Fpath.(build_directory // v ".dune-release-check") in
-         clone_and_checkout_tag repo ~dir ~tag:inferred_tag >>| fun () -> dir
+         clone_and_checkout_tag repo ~dir ~tag:(Tag inferred_tag) >>| fun () ->
+         dir
        in
        let clean_up dir =
          match Sos.delete_dir ~dry_run:false ~force:true dir with

@@ -16,9 +16,9 @@ val get_pkgs :
   ?pkg_descr:Fpath.t ->
   dry_run:bool ->
   keep_v:bool Dune_release.Config.Cli.t ->
-  tag:string option ->
+  tag:Dune_release.Vcs.Tag.t option ->
   pkg_names:string list ->
-  version:string option ->
+  version:Dune_release.Version.t option ->
   unit ->
   (Dune_release.Pkg.t list, Bos_setup.R.msg) result
 (** [get_pkgs ~build_dir ~opam ~distrib_uri ~distrib_file ~readme ~change_log

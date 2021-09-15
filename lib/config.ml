@@ -270,13 +270,13 @@ let opam_repo_fork ?pkgs ~remote ~local () =
       Ok { Opam_repo_fork.remote; local }
 
 module type S = sig
-  val path : build_dir:Fpath.t -> name:string -> version:string -> Fpath.t
+  val path : build_dir:Fpath.t -> name:string -> version:Version.t -> Fpath.t
 
   val set :
     dry_run:bool ->
     build_dir:Fpath.t ->
     name:string ->
-    version:string ->
+    version:Version.t ->
     string ->
     (unit, R.msg) result
 
@@ -284,21 +284,21 @@ module type S = sig
     dry_run:bool ->
     build_dir:Fpath.t ->
     name:string ->
-    version:string ->
+    version:Version.t ->
     (bool, R.msg) result
 
   val get :
     dry_run:bool ->
     build_dir:Fpath.t ->
     name:string ->
-    version:string ->
+    version:Version.t ->
     (string, R.msg) result
 
   val unset :
     dry_run:bool ->
     build_dir:Fpath.t ->
     name:string ->
-    version:string ->
+    version:Version.t ->
     (unit, R.msg) result
 end
 
@@ -307,7 +307,7 @@ module Make (X : sig
 end) =
 struct
   let path ~build_dir ~name ~version =
-    Fpath.(build_dir / strf "%s-%s.%s" name version X.ext)
+    Fpath.(build_dir / strf "%s-%a.%s" name Version.pp version X.ext)
 
   let set ~dry_run ~build_dir ~name ~version id =
     Sos.write_file ~dry_run (path ~build_dir ~name ~version) id

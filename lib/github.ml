@@ -67,7 +67,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
       List.fold_left delete (Ok ()) (List.filter not_git files)
   in
   let replace_dir_and_push docdir dir =
-    let msg = strf "Update %s doc to %s." name version in
+    let msg = strf "Update %s doc to %a." name Version.pp version in
     Vcs.get () >>= fun repo ->
     Vcs.run_git_quiet repo ~dry_run ~force:(dir <> D.dir)
       Cmd.(v "checkout" % branch)
@@ -304,15 +304,67 @@ let check_tag ~dry_run vcs tag =
   if Vcs.tag_exists ~dry_run vcs tag then Ok ()
   else
     R.error_msgf
-      "CHANGES.md lists '%s' as the latest release, but no corresponding tag \
+      "CHANGES.md lists '%a' as the latest release, but no corresponding tag \
        has been found in the repository.@.Did you forget to call 'dune-release \
        tag' ?"
-      tag
+      Vcs.Tag.pp tag
 
 let assert_tag_exists ~dry_run tag =
   Vcs.get () >>= fun repo ->
   if Vcs.tag_exists ~dry_run repo tag then Ok ()
-  else R.error_msgf "%s is not a valid tag" tag
+  else R.error_msgf "%a is not a valid tag" Vcs.Tag.pp tag
+
+(* Resolve again in case of annotated tags (most common case).
+   This is a no-op for non-annotated tags. In case of error, we
+   can assume that the remote is different because we checked that we
+   have the tag locally. *)
+let determine_remote_tag_status ~local_rev ~remote_rev vcs =
+  match Vcs.commit_id ~commit_ish:remote_rev vcs with
+  | Ok resolved_rev when resolved_rev = local_rev && resolved_rev = remote_rev
+    ->
+      (* the resolved_rev was the same as remote, thus it is unannotated *)
+      `Up_to_date_unannotated
+  | Ok resolved_rev when resolved_rev = local_rev ->
+      (* the resolved_rev was different than the remote rev, so it must be annotated *)
+      `Up_to_date_annotated
+  | Ok resolved_rev -> `Points_to_different_commit resolved_rev
+  | Error _ -> `Points_to_missing_object
+
+let remote_has_up_to_date_tag vcs ~local_rev ~remote_rev tag =
+  let points_to_different_commit pp_r =
+    App_log.unhappy (fun l ->
+        l
+          "The tag %a is present on the remote but points to a different \
+           commit (%a)."
+          Text.Pp.tag tag pp_r ())
+  in
+  match determine_remote_tag_status ~local_rev ~remote_rev vcs with
+  | `Up_to_date_annotated -> Ok true
+  | `Up_to_date_unannotated ->
+      App_log.unhappy (fun l ->
+          l
+            "The tag present on the remote is not annotated (it was not \
+             created by dune-release tag.)");
+      Ok true
+  | `Points_to_different_commit different_rev ->
+      points_to_different_commit (fun fmt () ->
+          Text.Pp.commit fmt different_rev);
+      Ok false
+  | `Points_to_missing_object ->
+      points_to_different_commit (fun fmt () ->
+          Format.fprintf fmt "that we don't have locally");
+      Ok false
+
+let remote_has_tag_uptodate ~dry_run vcs ~dev_repo tag =
+  match Vcs.tag_points_to vcs tag with
+  | None -> Ok false
+  | Some local_rev -> (
+      Vcs.ls_remote ~dry_run vcs ~kind:`Tag ~filter:(Vcs.Tag.to_string tag)
+        dev_repo
+      >>= function
+      | [] -> Ok false
+      | (remote_rev, _) :: _ ->
+          remote_has_up_to_date_tag vcs ~local_rev ~remote_rev tag)
 
 (* Ask the user then push the tag. Guess the ssh URI from the dev-repo.
    This function can abort:
@@ -322,42 +374,13 @@ let assert_tag_exists ~dry_run tag =
    This function does nothing if the tag is already present on the remote and
    point to the same ref. *)
 let push_tag ~dry_run ~yes ~dev_repo vcs tag =
-  let remote_has_tag_uptodate () =
-    Vcs.commit_id ~dirty:false ~commit_ish:tag vcs >>= fun local_rev ->
-    Vcs.ls_remote ~dry_run vcs ~kind:`Tag ~filter:tag dev_repo >>= function
-    | [] -> Ok false
-    | (remote_rev_unpeeled, _) :: _ -> (
-        (* Resolve again in case of annotated tags (most common case).
-           This is a no-op for non-annotated tags. In case of error, we
-           can assume that the remote is different because we checked that we
-           have the tag locally. *)
-        match Vcs.commit_id ~commit_ish:remote_rev_unpeeled vcs with
-        | Ok remote_rev when remote_rev = local_rev ->
-            if remote_rev_unpeeled = remote_rev then
-              App_log.unhappy (fun l ->
-                  l
-                    "The tag present on the remote is not annotated (it was \
-                     not created by dune-release tag.)");
-            Ok true
-        | r ->
-            let pp_r fmt = function
-              | Ok remote_rev -> Text.Pp.commit fmt remote_rev
-              | Error _ -> Format.fprintf fmt "that we don't have locally"
-            in
-            App_log.unhappy (fun l ->
-                l
-                  "The tag %a is present on the remote but points to a \
-                   different commit (%a)."
-                  Text.Pp.version tag pp_r r);
-            Ok false)
-  in
-  remote_has_tag_uptodate () >>= function
+  remote_has_tag_uptodate ~dry_run vcs ~dev_repo tag >>= function
   | true ->
       App_log.status (fun l ->
           l
             "The tag %a is present and uptodate on the remote: skipping the \
              tag push"
-            Text.Pp.version tag);
+            Text.Pp.tag tag);
       Ok () (* No need to push, avoiding the need to guess the uri. *)
   | false -> (
       let uri =
@@ -373,13 +396,14 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
       in
       Prompt.confirm_or_abort ~yes
         ~question:(fun l ->
-          l "Push tag %a to %a?" Text.Pp.version tag Text.Pp.url uri)
+          l "Push tag %a to %a?" Text.Pp.tag tag Text.Pp.url uri)
         ~default_answer:Yes
       >>= fun () ->
       App_log.status (fun l ->
-          l "Pushing tag %a to %a" Text.Pp.version tag Text.Pp.url uri);
+          l "Pushing tag %a to %a" Text.Pp.tag tag Text.Pp.url uri);
       match
-        Vcs.run_git_quiet vcs ~dry_run Cmd.(v "push" % "--force" % uri % tag)
+        Vcs.run_git_quiet vcs ~dry_run
+          Cmd.(v "push" % "--force" % uri % Vcs.Tag.to_string tag)
       with
       | Ok () as ok -> ok
       | Error (`Msg e) ->

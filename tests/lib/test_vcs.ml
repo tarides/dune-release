@@ -1,10 +1,13 @@
+module Vcs = Dune_release.Vcs
+
 let test_git_sanitize_tag =
   let make_test name ~input ~expected =
+    let expected = Vcs.Tag.of_string expected in
     let name = "git_sanitize_tag: " ^ name in
     let test_fun () =
-      Alcotest.(check string)
+      Alcotest.(check Alcotest_ext.tag)
         name expected
-        (Dune_release.Vcs.git_sanitize_tag input)
+        (Vcs.git_sanitize_tag input)
     in
     (name, `Quick, test_fun)
   in

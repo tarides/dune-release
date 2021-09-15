@@ -23,16 +23,19 @@ val no_auto_open : [ `No_auto_open of bool Dune_release.Config.Cli.t ] Term.t
 (** A [--no-auto-open] option to disable opening of the opam-repository PR in
     the browser. *)
 
+val version : Dune_release.Version.t Arg.conv
+(** [version] is a converter for parsing version specifiers *)
+
 val pkg_names : [ `Package_names of string list ] Term.t
 (** A [--pkg-names] option to specify the packages to release. *)
 
-val pkg_version : [ `Package_version of string option ] Term.t
+val pkg_version : [ `Package_version of Dune_release.Version.t option ] Term.t
 (** A [--pkg-version] option to specify the packages version. *)
 
 val keep_v : [ `Keep_v of bool Dune_release.Config.Cli.t ] Term.t
 (** A [--keep-v] option to not drop the 'v' at the beginning of version strings. *)
 
-val dist_tag : [ `Dist_tag of string option ] Term.t
+val dist_tag : [ `Dist_tag of Dune_release.Vcs.Tag.t option ] Term.t
 (** A [--tag] option to define the tag from which the distribution is or will be
     built. *)
 
