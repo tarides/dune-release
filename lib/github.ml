@@ -330,7 +330,7 @@ let determine_remote_tag_status ~local_rev ~remote_rev vcs =
   | Ok resolved_rev -> `Points_to_different_commit resolved_rev
   | Error _ -> `Points_to_missing_object
 
-let validate_remote_tag vcs ~local_rev ~remote_rev tag =
+let remote_has_up_to_date_tag vcs ~local_rev ~remote_rev tag =
   let points_to_different_commit pp_r =
     App_log.unhappy (fun l ->
         l
@@ -364,7 +364,7 @@ let remote_has_tag_uptodate ~dry_run vcs ~dev_repo tag =
       >>= function
       | [] -> Ok false
       | (remote_rev, _) :: _ ->
-          validate_remote_tag vcs ~local_rev ~remote_rev tag)
+          remote_has_up_to_date_tag vcs ~local_rev ~remote_rev tag)
 
 (* Ask the user then push the tag. Guess the ssh URI from the dev-repo.
    This function can abort:
