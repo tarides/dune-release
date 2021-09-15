@@ -86,12 +86,12 @@ val licenses : t -> (Fpath.t list, R.msg) result
 (** [licenses p] are [p]'s license files. *)
 
 val infer_github_distrib_uri : t -> (string, R.msg) result
-(** [infer_distrib_uri p] infers [p]'s Github distribution URI from the homepage
-    and dev-repo fields. *)
+(** [infer_github_distrib_uri p] infers [p]'s Github distribution URI from the
+    homepage and dev-repo fields. *)
 
 val infer_github_repo : t -> (Github_repo.t, R.msg) result
-(** [infer_repo_uri p] infers [p]'s Github remote repository from the homepage
-    and dev-repo fields. *)
+(** [infer_github_repo p] infers [p]'s Github remote repository from the
+    homepage and dev-repo fields. *)
 
 val distrib_file : dry_run:bool -> t -> (Fpath.t, R.msg) result
 (** [distrib_file p] is [p]'s distribution archive. *)
