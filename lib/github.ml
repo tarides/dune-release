@@ -314,18 +314,21 @@ let assert_tag_exists ~dry_run tag =
   if Vcs.tag_exists ~dry_run repo tag then Ok ()
   else R.error_msgf "%a is not a valid tag" Vcs.Tag.pp tag
 
-let is_annotated_tag vcs commit_ish =
-  (* Resolve again in case of annotated tags (most common case).
-     This is a no-op for non-annotated tags. In case of error, we
-     can assume that the remote is different because we checked that we
-     have the tag locally. *)
-  match Vcs.commit_id ~commit_ish vcs with
-  | Ok local_rev ->
-      if local_rev = commit_ish then
-        (* if resolving again yields the same tag, then the tag is not annotated *)
-        false
-      else true
-  | Error _ -> false
+(* Resolve again in case of annotated tags (most common case).
+   This is a no-op for non-annotated tags. In case of error, we
+   can assume that the remote is different because we checked that we
+   have the tag locally. *)
+let determine_remote_tag_status ~local_rev ~remote_rev vcs =
+  match Vcs.commit_id ~commit_ish:remote_rev vcs with
+  | Ok resolved_rev when resolved_rev = local_rev && resolved_rev = remote_rev
+    ->
+      (* the resolved_rev was the same as remote, thus it is unannotated *)
+      `Up_to_date_unannotated
+  | Ok resolved_rev when resolved_rev = local_rev ->
+      (* the resolved_rev was different than the remote rev, so it must be annotated *)
+      `Up_to_date_annotated
+  | Ok resolved_rev -> `Points_to_different_commit resolved_rev
+  | Error _ -> `Points_to_missing_object
 
 let validate_remote_tag vcs ~local_rev ~remote_rev tag =
   let points_to_different_commit pp_r =
@@ -335,20 +338,19 @@ let validate_remote_tag vcs ~local_rev ~remote_rev tag =
            commit (%a)."
           Text.Pp.tag tag pp_r ())
   in
-  match Vcs.commit_id ~commit_ish:remote_rev vcs with
-  | Ok resolved_rev
-    when resolved_rev = local_rev && is_annotated_tag vcs remote_rev ->
-      Ok true
-  | Ok resolved_rev when resolved_rev = local_rev ->
+  match determine_remote_tag_status ~local_rev ~remote_rev vcs with
+  | `Up_to_date_annotated -> Ok true
+  | `Up_to_date_unannotated ->
       App_log.unhappy (fun l ->
           l
             "The tag present on the remote is not annotated (it was not \
              created by dune-release tag.)");
       Ok true
-  | Ok resolved_rev ->
-      points_to_different_commit (fun fmt () -> Text.Pp.commit fmt resolved_rev);
+  | `Points_to_different_commit different_rev ->
+      points_to_different_commit (fun fmt () ->
+          Text.Pp.commit fmt different_rev);
       Ok false
-  | Error _ ->
+  | `Points_to_missing_object ->
       points_to_different_commit (fun fmt () ->
           Format.fprintf fmt "that we don't have locally");
       Ok false
