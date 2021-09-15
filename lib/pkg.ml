@@ -72,7 +72,7 @@ let extract_version pkg = change_log pkg >>= fun cl -> extract_version cl
 let infer_version pkg =
   match extract_version pkg with
   | Ok changelog_version ->
-      Ok (Version.Changelog.to_version ~keep_v:true changelog_version)
+      Ok (Version.Changelog.to_version ~keep_v:pkg.keep_v changelog_version)
   | Error _ -> version_from_tag pkg
 
 let version p = match p.version with Some v -> Ok v | None -> infer_version p
