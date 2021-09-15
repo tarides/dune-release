@@ -119,7 +119,7 @@ let change_log_last_entry ?flavour text =
             | "" :: lines -> String.concat ~sep:"\n" lines
             | lines -> String.concat ~sep:"\n" lines
           in
-          Some (version, (h, changes)))
+          Some (Version.Changelog.of_string version, (h, changes)))
 
 let change_log_file_last_entry file =
   let flavour = flavour_of_fpath file in

@@ -46,8 +46,7 @@ let name p = Ok p.name
 let with_name p name = { p with name }
 
 let extract_version change_log =
-  Text.change_log_file_last_entry change_log >>= fun (version, _) ->
-  Ok (Version.of_string version)
+  Text.change_log_file_last_entry change_log >>= fun (version, _) -> Ok version
 
 let find_files path ~names_wo_ext =
   OS.Dir.contents path >>| fun files ->
@@ -72,7 +71,8 @@ let extract_version pkg = change_log pkg >>= fun cl -> extract_version cl
 
 let infer_version pkg =
   match extract_version pkg with
-  | Ok t -> Ok t
+  | Ok changelog_version ->
+      Ok (Version.Changelog.to_version ~keep_v:true changelog_version)
   | Error _ -> version_from_tag pkg
 
 let version p = match p.version with Some v -> Ok v | None -> infer_version p
@@ -372,6 +372,8 @@ let infer_name dir =
   | None ->
       Logs.err (fun m -> m infer_name_err);
       exit 1
+
+let version_of_changelog pkg = Version.Changelog.to_version ~keep_v:pkg.keep_v
 
 let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
     ?opam:opam_file ?opam_descr ?readme ?change_log ?license ?distrib_file

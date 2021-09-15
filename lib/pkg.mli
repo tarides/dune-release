@@ -149,9 +149,13 @@ val build : f
 
 (** {1 Version} *)
 
-val extract_version : t -> (Version.t, Sos.error) result
+val extract_version : t -> (Version.Changelog.t, Sos.error) result
 (** [extract_version p] extracts the version identifier from the changelog of
     [p]. *)
+
+val version_of_changelog : t -> Version.Changelog.t -> Version.t
+(** [version_of_changelog p cl] determines the project version from the version
+    supplied in the changelog [cl]. *)
 
 (** {1 Dev repo} *)
 
