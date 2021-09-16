@@ -44,10 +44,10 @@ We need to set up a git project for dune-release to work properly
 
 We make a dry-run release
 
-    $ dune-release distrib --dry-run
+    $ dune-release distrib --dry-run | grep -vE "Commit [a-f0-9]{40}"
     [-] Building source archive
     => rmdir _build/whatever-0.1.0.build
-    -: exec: git --git-dir .git rev-parse --verify 0.1.0
+    -: exec: git --git-dir .git rev-parse --verify refs/tags/0.1.0
     => exec: git --git-dir .git show -s --format=%ct 0.1.0^0
     => exec: git --git-dir .git clone --local .git _build/whatever-0.1.0.build
     => exec:
@@ -93,7 +93,6 @@ We make a dry-run release
     -: rmdir _build/whatever-0.1.0
     
     [+] Distribution for whatever 0.1.0
-    [+] Commit ...
     [+] Archive _build/whatever-0.1.0.tbz
 
 We create an opam package:

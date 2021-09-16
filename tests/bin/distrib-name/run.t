@@ -53,6 +53,10 @@ this name must be one the .opam file names.)
 
 Run dune-release distrib with the uncomitted name in dune-project.
 
+    $ dune-release tag -y
+    [-] Extracting tag from first entry in CHANGES.md
+    [-] Using tag "0.42.0"
+    [+] Tagged HEAD with version 0.42.0
     $ dune-release distrib --skip-lint
     [-] Building source archive
     dune-release: [WARNING] The repo is dirty. The distribution archive may be
@@ -66,7 +70,6 @@ Run dune-release distrib with the uncomitted name in dune-project.
 Commit the change in dune-project and run distrib.
 
     $ git add dune-project && git commit -m 'add name' > /dev/null
-
     $ dune-release distrib --skip-lint
     [-] Building source archive
     [+] Wrote archive ...

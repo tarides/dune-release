@@ -47,7 +47,7 @@ We do the whole dune-release process
 
     $ dune-release distrib --dry-run | grep preview1
     => rmdir _build/whatever-3.3.4~4.10preview1.build
-    -: exec: git --git-dir .git rev-parse --verify 3.3.4_TILDE_4.10preview1
+         git --git-dir .git rev-parse --verify refs/tags/3.3.4_TILDE_4.10preview1
     => exec: git --git-dir .git show -s --format=%ct 3.3.4_TILDE_4.10preview1^0
          git --git-dir .git clone --local .git   _build/whatever-3.3.4~4.10preview1.build
          git --git-dir _build/whatever-3.3.4~4.10preview1.build/.git --work-tree   _build/whatever-3.3.4~4.10preview1.build/ checkout --quiet -b   dune-release-dist-3.3.4_TILDE_4.10preview1 3.3.4_TILDE_4.10preview1
@@ -72,8 +72,8 @@ We do the whole dune-release process
 
     $ dune-release publish distrib --dry-run --yes | grep preview1
     => must exists _build/whatever-3.3.4~4.10preview1.tbz
-    -: exec: git --git-dir .git rev-parse --verify 3.3.4_TILDE_4.10preview1
-    -: exec: git --git-dir .git rev-parse --verify 3.3.4_TILDE_4.10preview1
+         git --git-dir .git rev-parse --verify refs/tags/3.3.4_TILDE_4.10preview1
+         git --git-dir .git rev-parse --verify refs/tags/3.3.4_TILDE_4.10preview1
          git --git-dir .git ls-remote --quiet --tags https://github.com/user/repo.git   3.3.4_TILDE_4.10preview1
     [-] Pushing tag 3.3.4_TILDE_4.10preview1 to git@github.com:user/repo.git
          git --git-dir .git push --force git@github.com:user/repo.git   3.3.4_TILDE_4.10preview1
