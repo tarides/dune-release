@@ -95,22 +95,32 @@ let distrib_file =
       "_build/foo-v0.tbz";
   ]
 
-let distrib_filename =
-  let make_test ~test_name ~opam =
-    let test_name = "distrib_filename: " ^ test_name in
-    make_test ~test_name ~name:"foo" (Pkg.distrib_filename ~opam)
+let distrib_opam_path =
+  let make_test ~test_name =
+    let test_name = "distrib_opam_path: " ^ test_name in
+    make_test ~test_name ~name:"foo" Pkg.distrib_opam_path
   in
   [
-    make_test ~test_name:"1" ~opam:false ~tag:"v0" "foo-v0";
-    make_test ~test_name:"2" ~opam:true ~tag:"v0" "foo.0";
-    make_test ~test_name:"3" ~opam:false ~version:"v0" "foo-v0";
-    make_test ~test_name:"4" ~opam:true ~version:"v0" "foo.v0";
-    make_test ~test_name:"5" ~opam:false ~tag:"v0" ~keep_v:false "foo-v0";
-    make_test ~test_name:"6" ~opam:true ~tag:"v0" ~keep_v:false "foo.0";
-    make_test ~test_name:"7" ~opam:false ~tag:"v0" ~keep_v:true "foo-v0";
-    make_test ~test_name:"8" ~opam:true ~tag:"v0" ~keep_v:true "foo.v0";
-    make_test ~test_name:"9" ~opam:false ~tag:"v0" ~version:"x" "foo-v0";
-    make_test ~test_name:"10" ~opam:true ~tag:"v0" ~version:"x" "foo.x";
+    make_test ~test_name:"2" ~tag:"v0" "foo.0";
+    make_test ~test_name:"4" ~version:"v0" "foo.v0";
+    make_test ~test_name:"6" ~tag:"v0" ~keep_v:false "foo.0";
+    make_test ~test_name:"8" ~tag:"v0" ~keep_v:true "foo.v0";
+    make_test ~test_name:"10" ~tag:"v0" ~version:"x" "foo.x";
+  ]
+
+let distrib_archive_path =
+  let make_test ?version ?tag ?keep_v ?opam ~test_name expected =
+    let test_name = "distrib_archive_path: " ^ test_name in
+    let expected = Fmt.strf "_build/%s.tbz" expected in
+    make_test ?version ?tag ?keep_v ?opam ~test_name ~name:"foo"
+      Pkg.distrib_archive_path expected
+  in
+  [
+    make_test ~test_name:"1" ~tag:"v0" "foo-v0";
+    make_test ~test_name:"3" ~version:"v0" "foo-v0";
+    make_test ~test_name:"5" ~tag:"v0" ~keep_v:false "foo-v0";
+    make_test ~test_name:"7" ~tag:"v0" ~keep_v:true "foo-v0";
+    make_test ~test_name:"9" ~tag:"v0" ~version:"x" "foo-v0";
   ]
 
 let distrib_uri =
@@ -143,6 +153,7 @@ let suite =
         test_version_line_re;
         test_prepare_opam_for_distrib;
         distrib_file;
-        distrib_filename;
+        distrib_opam_path;
+        distrib_archive_path;
         distrib_uri;
       ] )
