@@ -7,7 +7,7 @@ let test_git_sanitize_tag =
     let test_fun () =
       Alcotest.(check Alcotest_ext.tag)
         name expected
-        (Vcs.git_sanitize_tag input)
+        (Vcs.git_escape_tag input)
     in
     (name, `Quick, test_fun)
   in

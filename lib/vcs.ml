@@ -212,7 +212,7 @@ let git_submodule_update ~dry_run r =
 let unallowed_substrings = Re.(compile (alt [ str "@{"; str ".." ]))
 
 (* See the reference here: https://git-scm.com/docs/git-check-ref-format *)
-let git_sanitize_tag t =
+let git_escape_tag t =
   let last = String.length t - 1 in
   if String.equal t "@" then "_AT_"
   else
@@ -326,7 +326,7 @@ let hg_tag r ~force ~sign ~msg ~rev tag =
 let hg_delete_tag r tag =
   run_hg r Cmd.(v "tag" % "--remove" % tag) OS.Cmd.out_stdout
 
-let hg_sanitize_tag t = t
+let hg_escape_tag t = t
 
 (* Generic VCS support *)
 
@@ -433,9 +433,9 @@ let submodule_update ~dry_run r =
   | (`Git, _, _) as r -> git_submodule_update ~dry_run r
   | `Hg, _, _ -> R.error_msgf "submodule update is not supported with mercurial"
 
-let sanitize_tag = function
-  | `Git, _, _ -> git_sanitize_tag
-  | `Hg, _, _ -> hg_sanitize_tag
+let escape_tag = function
+  | `Git, _, _ -> git_escape_tag
+  | `Hg, _, _ -> hg_escape_tag
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

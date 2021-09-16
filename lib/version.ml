@@ -11,7 +11,7 @@ let from_tag ~keep_v t =
   let s = Vcs.Tag.to_string t in
   if keep_v then s else drop_initial_v s
 
-let to_tag = Vcs.sanitize_tag
+let to_tag = Vcs.escape_tag
 
 let of_string x = x
 
@@ -32,5 +32,5 @@ module Changelog = struct
 
   let pp = Fmt.string
 
-  let to_tag = Vcs.sanitize_tag
+  let to_tag = Vcs.escape_tag
 end
