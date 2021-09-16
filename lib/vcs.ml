@@ -209,34 +209,11 @@ let git_ls_remote ~dry_run r ~kind ~filter upstream =
 let git_submodule_update ~dry_run r =
   run_git_quiet ~dry_run r Cmd.(v "submodule" % "update" % "--init")
 
-let unallowed_substrings = Re.(compile (alt [ str "@{"; str ".." ]))
+(* See the reference here: https://git-scm.com/docs/git-check-ref-format
+   * Similar escape as DEP-14: https://dep-team.pages.debian.net/deps/dep14/ *)
+let git_escape_tag t = String.map (function '~' -> '_' | c -> c) t
 
-(* See the reference here: https://git-scm.com/docs/git-check-ref-format *)
-let git_escape_tag t =
-  let last = String.length t - 1 in
-  if String.equal t "@" then "_AT_"
-  else
-    String.fold_left
-      (fun (ret, i) c ->
-        let s =
-          match (i, c) with
-          | 0, '/' -> "_SLASH_"
-          | i, '/' when i = last -> "_SLASH_"
-          | i, '.' when i = last -> "_DOT_"
-          | _, ' ' -> "_SPACE_"
-          | _, '~' -> "_TILDE_"
-          | _, '^' -> "_CARET_"
-          | _, ':' -> "_COLON_"
-          | _, '?' -> "_QUEST_"
-          | _, '*' -> "_TIMES_"
-          | _, '[' -> "_LBRACKET_"
-          | _, '\\' -> "_BSLASH_"
-          | _ -> String.of_char c
-        in
-        (ret ^ s, i + 1))
-      ("", 0) t
-    |> fst
-    |> Re.replace_string ~all:true unallowed_substrings ~by:"__"
+let git_unescape_tag t = String.map (function '_' -> '~' | c -> c) t
 
 (* Hg support *)
 
@@ -436,6 +413,10 @@ let submodule_update ~dry_run r =
 let escape_tag = function
   | `Git, _, _ -> git_escape_tag
   | `Hg, _, _ -> hg_escape_tag
+
+let unescape_tag = function
+  | `Git, _, _ -> git_unescape_tag
+  | `Hg, _, _ -> fun x -> x
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

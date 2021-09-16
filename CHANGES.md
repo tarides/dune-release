@@ -9,6 +9,9 @@
 ### Fixed
 
 - Change the `---V` command option to be `-V` (#388, @Leonidas-from-XIV)
+- Infer release versions are inferred from VCS tags. This change allows using
+  `dune-release` on projects that do not use the changelog or have it in a
+  different format.  (#381, #383 @Leonidas-from-XIV)
 
 ### Removed
 
