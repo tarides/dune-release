@@ -65,17 +65,13 @@ let change_log p =
 let tag p =
   match p.tag with Some tag -> Ok tag | None -> Vcs.get () >>= Vcs.get_tag
 
-let version_from_tag pkg = tag pkg >>| Version.from_tag ~keep_v:pkg.keep_v
+let version_from_tag pkg =
+  tag pkg >>= fun tag ->
+  Vcs.get () >>= fun vcs -> Ok (Version.from_tag ~keep_v:pkg.keep_v vcs tag)
 
 let extract_version pkg = change_log pkg >>= fun cl -> extract_version cl
 
-let infer_version pkg =
-  match extract_version pkg with
-  | Ok changelog_version ->
-      Ok (Version.Changelog.to_version ~keep_v:pkg.keep_v changelog_version)
-  | Error _ -> version_from_tag pkg
-
-let version p = match p.version with Some v -> Ok v | None -> infer_version p
+let version p = match p.version with Some v -> Ok v | None -> version_from_tag p
 
 let release_identifier pkg =
   match pkg.tag with

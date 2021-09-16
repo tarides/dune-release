@@ -7,8 +7,8 @@ let drop_initial_v version =
   | Some ('v' | 'V') -> String.with_index_range ~first:1 version
   | None | Some _ -> version
 
-let from_tag ~keep_v t =
-  let s = Vcs.Tag.to_string t in
+let from_tag ~keep_v vcs t =
+  let s = Vcs.unescape_tag vcs t in
   if keep_v then s else drop_initial_v s
 
 let to_tag = Vcs.escape_tag
