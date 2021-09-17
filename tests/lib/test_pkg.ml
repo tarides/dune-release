@@ -101,26 +101,27 @@ let distrib_opam_path =
     make_test ~test_name ~name:"foo" Pkg.distrib_opam_path
   in
   [
-    make_test ~test_name:"2" ~tag:"v0" "foo.0";
-    make_test ~test_name:"4" ~version:"v0" "foo.v0";
-    make_test ~test_name:"6" ~tag:"v0" ~keep_v:false "foo.0";
-    make_test ~test_name:"8" ~tag:"v0" ~keep_v:true "foo.v0";
-    make_test ~test_name:"10" ~tag:"v0" ~version:"x" "foo.x";
+    make_test ~test_name:"from version while keeping v" ~version:"v0"
+      ~keep_v:true "foo.v0";
+    make_test ~test_name:"from version without keeping v" ~version:"v0"
+      ~keep_v:false "foo.v0";
+    make_test ~test_name:"from version and tag" ~tag:"v0" ~version:"x" "foo.x";
   ]
 
 let distrib_archive_path =
-  let make_test ?version ?tag ?keep_v ?opam ~test_name expected =
+  let make_test ~test_name =
     let test_name = "distrib_archive_path: " ^ test_name in
-    let expected = Fmt.strf "_build/%s.tbz" expected in
-    make_test ?version ?tag ?keep_v ?opam ~test_name ~name:"foo"
-      Pkg.distrib_archive_path expected
+    make_test ~test_name ~name:"foo" Pkg.distrib_archive_path
   in
   [
-    make_test ~test_name:"1" ~tag:"v0" "foo-v0";
-    make_test ~test_name:"3" ~version:"v0" "foo-v0";
-    make_test ~test_name:"5" ~tag:"v0" ~keep_v:false "foo-v0";
-    make_test ~test_name:"7" ~tag:"v0" ~keep_v:true "foo-v0";
-    make_test ~test_name:"9" ~tag:"v0" ~version:"x" "foo-v0";
+    make_test ~test_name:"from tag" ~tag:"v0" "_build/foo-v0.tbz";
+    make_test ~test_name:"from version" ~version:"v0" "_build/foo-v0.tbz";
+    make_test ~test_name:"from tag without keeping v" ~tag:"v0" ~keep_v:false
+      "_build/foo-v0.tbz";
+    make_test ~test_name:"from tag with keeping v" ~tag:"v0" ~keep_v:true
+      "_build/foo-v0.tbz";
+    make_test ~test_name:"from version and tag" ~tag:"v0" ~version:"x"
+      "_build/foo-v0.tbz";
   ]
 
 let distrib_uri =
