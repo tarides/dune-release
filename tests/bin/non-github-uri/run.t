@@ -45,7 +45,7 @@ We do the whole dune-release process
 
 (1) distrib
 
-    $ dune-release distrib --dry-run | grep -vE "Commit [a-f0-9]{40}" | grep -v "Building source archive"
+    $ dune-release distrib --dry-run | grep -vE "Commit [a-f0-9]{40}"
     dune-release: [ERROR] Github development repository URL could not be
                           inferred.
     => rmdir _build/whatever-0.1.0.build
