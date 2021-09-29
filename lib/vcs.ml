@@ -217,6 +217,14 @@ let git_unescape_tag t = String.map (function '_' -> '~' | c -> c) t
 
 (* Hg support *)
 
+(* Mercurial allows everything but :, \r and \n:
+ * See https://www.mercurial-scm.org/wiki/Tag
+ * This is only handling `:` in the same way as Git above
+ *)
+let hg_escape_tag t = String.map (function ':' -> '_' | c -> c) t
+
+let hg_unescape_tag t = String.map (function '_' -> ':' | c -> c) t
+
 let hg_rev commit_ish = match commit_ish with "HEAD" -> "tip" | c -> c
 
 let find_hg () =
@@ -302,8 +310,6 @@ let hg_tag r ~force ~sign ~msg ~rev tag =
 
 let hg_delete_tag r tag =
   run_hg r Cmd.(v "tag" % "--remove" % tag) OS.Cmd.out_stdout
-
-let hg_escape_tag t = t
 
 (* Generic VCS support *)
 
@@ -416,7 +422,7 @@ let escape_tag = function
 
 let unescape_tag = function
   | `Git, _, _ -> git_unescape_tag
-  | `Hg, _, _ -> fun x -> x
+  | `Hg, _, _ -> hg_unescape_tag
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
