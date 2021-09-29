@@ -2,6 +2,10 @@
 
 ### Added
 
+- Added support for creating releases from unannotated Git tags. `dune-release`
+  supported unannotated tags in a few places already, now it supports using
+  them for creating a release. (#383, @Leonidas-from-XIV)
+
 ### Changed
 
 ### Deprecated
