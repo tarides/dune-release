@@ -80,50 +80,6 @@ let make_test f ?version ?tag ?keep_v ?opam ~test_name ~name expected =
   in
   (test_name, `Quick, test)
 
-let distrib_file =
-  let make_test ~test_name =
-    let test_name = "distrib_file: " ^ test_name in
-    make_test ~test_name ~name:"foo" Pkg.(distrib_file ~dry_run:true)
-  in
-  [
-    make_test ~test_name:"tag" ~tag:"v0" "_build/foo-v0.tbz";
-    make_test ~test_name:"version" ~version:"v0" "_build/foo-v0.tbz";
-    make_test ~test_name:"tag without v" ~tag:"v0" ~keep_v:false
-      "_build/foo-v0.tbz";
-    make_test ~test_name:"tag with v" ~tag:"v0" ~keep_v:true "_build/foo-v0.tbz";
-    make_test ~test_name:"tag and version" ~tag:"v0" ~version:"x"
-      "_build/foo-v0.tbz";
-  ]
-
-let distrib_opam_path =
-  let make_test ~test_name =
-    let test_name = "distrib_opam_path: " ^ test_name in
-    make_test ~test_name ~name:"foo" Pkg.distrib_opam_path
-  in
-  [
-    make_test ~test_name:"from version while keeping v" ~version:"v0"
-      ~keep_v:true "foo.v0";
-    make_test ~test_name:"from version without keeping v" ~version:"v0"
-      ~keep_v:false "foo.v0";
-    make_test ~test_name:"from version and tag" ~tag:"v0" ~version:"x" "foo.x";
-  ]
-
-let distrib_archive_path =
-  let make_test ~test_name =
-    let test_name = "distrib_archive_path: " ^ test_name in
-    make_test ~test_name ~name:"foo" Pkg.distrib_archive_path
-  in
-  [
-    make_test ~test_name:"from tag" ~tag:"v0" "_build/foo-v0.tbz";
-    make_test ~test_name:"from version" ~version:"v0" "_build/foo-v0.tbz";
-    make_test ~test_name:"from tag without keeping v" ~tag:"v0" ~keep_v:false
-      "_build/foo-v0.tbz";
-    make_test ~test_name:"from tag with keeping v" ~tag:"v0" ~keep_v:true
-      "_build/foo-v0.tbz";
-    make_test ~test_name:"from version and tag" ~tag:"v0" ~version:"x"
-      "_build/foo-v0.tbz";
-  ]
-
 let distrib_uri =
   let make_test ~test_name =
     let test_name = "distrib_uri:" ^ test_name in
@@ -150,11 +106,4 @@ let distrib_uri =
 let suite =
   ( "Pkg",
     List.concat
-      [
-        test_version_line_re;
-        test_prepare_opam_for_distrib;
-        distrib_file;
-        distrib_opam_path;
-        distrib_archive_path;
-        distrib_uri;
-      ] )
+      [ test_version_line_re; test_prepare_opam_for_distrib; distrib_uri ] )
