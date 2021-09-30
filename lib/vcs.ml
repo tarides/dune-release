@@ -217,13 +217,12 @@ let git_unescape_tag t = String.map (function '_' -> '~' | c -> c) t
 
 (* Hg support *)
 
-(* Mercurial allows everything but :, \r and \n:
- * See https://www.mercurial-scm.org/wiki/Tag
- * This is only handling `:` in the same way as Git above
+(* Mercurial allows everything but :, \r and \n, but all these characters are
+ * unlikely to show up in versions so we just pass things through.
  *)
-let hg_escape_tag t = String.map (function ':' -> '_' | c -> c) t
+let hg_escape_tag t = t
 
-let hg_unescape_tag t = String.map (function '_' -> ':' | c -> c) t
+let hg_unescape_tag t = t
 
 let hg_rev commit_ish = match commit_ish with "HEAD" -> "tip" | c -> c
 
