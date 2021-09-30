@@ -117,9 +117,8 @@ val archive_url_path : t -> (Fpath.t, R.msg) result
 (** [archive_url_path] is the path to the file where the archive download URL is
     saved *)
 
-val distrib_filename : ?opam:bool -> t -> (Fpath.t, R.msg) result
-(** [distrib_filename ~opam p] is a distribution filename for [p]. If [opam] is
-    [true] (defaults to [false]), the name follows opam's naming conventions. *)
+val distrib_opam_path : t -> (Fpath.t, R.msg) result
+(** [distrib_opam_path p] is an opam distribution filename for [p]. *)
 
 (** {1 Uri} *)
 

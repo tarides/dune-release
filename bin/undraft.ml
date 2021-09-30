@@ -3,7 +3,7 @@ open Dune_release
 
 let get_pkg_dir pkg =
   Pkg.build_dir pkg >>= fun bdir ->
-  Pkg.distrib_filename ~opam:true pkg >>= fun fname -> Ok Fpath.(bdir // fname)
+  Pkg.distrib_opam_path pkg >>= fun fname -> Ok Fpath.(bdir // fname)
 
 let pp_opam_repo fmt opam_repo =
   let user, repo = opam_repo in

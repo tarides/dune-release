@@ -151,10 +151,15 @@ val submodule_update : dry_run:bool -> t -> (unit, R.msg) result
 (** [submodule r] pulls in all submodules in [r]. Only works for git
     repositories *)
 
-val git_sanitize_tag : string -> Tag.t
+val git_escape_tag : string -> Tag.t
 (** Exposed for tests. *)
 
-val sanitize_tag : t -> string -> Tag.t
+val escape_tag : t -> string -> Tag.t
+
+val git_unescape_tag : Tag.t -> string
+(** Exposed for tests. *)
+
+val unescape_tag : t -> Tag.t -> string
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

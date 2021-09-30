@@ -80,39 +80,6 @@ let make_test f ?version ?tag ?keep_v ?opam ~test_name ~name expected =
   in
   (test_name, `Quick, test)
 
-let distrib_file =
-  let make_test ~test_name =
-    let test_name = "distrib_file: " ^ test_name in
-    make_test ~test_name ~name:"foo" Pkg.(distrib_file ~dry_run:true)
-  in
-  [
-    make_test ~test_name:"tag" ~tag:"v0" "_build/foo-v0.tbz";
-    make_test ~test_name:"version" ~version:"v0" "_build/foo-v0.tbz";
-    make_test ~test_name:"tag without v" ~tag:"v0" ~keep_v:false
-      "_build/foo-v0.tbz";
-    make_test ~test_name:"tag with v" ~tag:"v0" ~keep_v:true "_build/foo-v0.tbz";
-    make_test ~test_name:"tag and version" ~tag:"v0" ~version:"x"
-      "_build/foo-v0.tbz";
-  ]
-
-let distrib_filename =
-  let make_test ~test_name ~opam =
-    let test_name = "distrib_filename: " ^ test_name in
-    make_test ~test_name ~name:"foo" (Pkg.distrib_filename ~opam)
-  in
-  [
-    make_test ~test_name:"1" ~opam:false ~tag:"v0" "foo-v0";
-    make_test ~test_name:"2" ~opam:true ~tag:"v0" "foo.0";
-    make_test ~test_name:"3" ~opam:false ~version:"v0" "foo-v0";
-    make_test ~test_name:"4" ~opam:true ~version:"v0" "foo.v0";
-    make_test ~test_name:"5" ~opam:false ~tag:"v0" ~keep_v:false "foo-v0";
-    make_test ~test_name:"6" ~opam:true ~tag:"v0" ~keep_v:false "foo.0";
-    make_test ~test_name:"7" ~opam:false ~tag:"v0" ~keep_v:true "foo-v0";
-    make_test ~test_name:"8" ~opam:true ~tag:"v0" ~keep_v:true "foo.v0";
-    make_test ~test_name:"9" ~opam:false ~tag:"v0" ~version:"x" "foo-v0";
-    make_test ~test_name:"10" ~opam:true ~tag:"v0" ~version:"x" "foo.x";
-  ]
-
 let distrib_uri =
   let make_test ~test_name =
     let test_name = "distrib_uri:" ^ test_name in
@@ -139,10 +106,4 @@ let distrib_uri =
 let suite =
   ( "Pkg",
     List.concat
-      [
-        test_version_line_re;
-        test_prepare_opam_for_distrib;
-        distrib_file;
-        distrib_filename;
-        distrib_uri;
-      ] )
+      [ test_version_line_re; test_prepare_opam_for_distrib; distrib_uri ] )

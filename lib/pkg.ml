@@ -65,17 +65,14 @@ let change_log p =
 let tag p =
   match p.tag with Some tag -> Ok tag | None -> Vcs.get () >>= Vcs.get_tag
 
-let version_from_tag pkg = tag pkg >>| Version.from_tag ~keep_v:pkg.keep_v
+let version_from_tag pkg =
+  tag pkg >>= fun tag ->
+  Vcs.get () >>= fun vcs -> Ok (Version.from_tag ~keep_v:pkg.keep_v vcs tag)
 
 let extract_version pkg = change_log pkg >>= fun cl -> extract_version cl
 
-let infer_version pkg =
-  match extract_version pkg with
-  | Ok changelog_version ->
-      Ok (Version.Changelog.to_version ~keep_v:pkg.keep_v changelog_version)
-  | Error _ -> version_from_tag pkg
-
-let version p = match p.version with Some v -> Ok v | None -> infer_version p
+let version p =
+  match p.version with Some v -> Ok v | None -> version_from_tag p
 
 let release_identifier pkg =
   match pkg.tag with
@@ -243,11 +240,6 @@ let distrib_archive_filename_prefix pkg =
   name pkg >>= fun name ->
   release_identifier pkg >>= fun identifier ->
   Fpath.of_string (strf "%s-%s" name identifier)
-
-let distrib_filename ?(opam = false) p =
-  match opam with
-  | true -> distrib_opam_path p
-  | false -> distrib_archive_filename_prefix p
 
 let distrib_archive_path p =
   build_dir p >>= fun build_dir ->
@@ -461,7 +453,7 @@ let distrib_archive ~dry_run ~keep_dir ~include_submodules p =
   build_dir p >>= fun build_dir ->
   tag p >>= fun tag ->
   version p >>= fun version ->
-  distrib_filename p >>= fun root ->
+  distrib_archive_filename_prefix p >>= fun root ->
   Ok Fpath.((build_dir // root) + ".build") >>= fun dist_build_dir ->
   Sos.delete_dir ~dry_run ~force:true dist_build_dir >>= fun () ->
   Vcs.get () >>= fun repo_vcs ->

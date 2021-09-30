@@ -1,7 +1,7 @@
 type t
 (** [t] represents the high-level version of a project *)
 
-val from_tag : keep_v:bool -> Vcs.Tag.t -> t
+val from_tag : keep_v:bool -> Vcs.t -> Vcs.Tag.t -> t
 (** Constructs a [t] from a [Vcs.Tag.t], possibly dropping the leading v. *)
 
 val to_tag : Vcs.t -> t -> Vcs.Tag.t

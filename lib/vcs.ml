@@ -134,7 +134,7 @@ let git_describe ~dirty r commit_ish =
   let dirty = dirty && commit_ish = "HEAD" in
   let git_describe =
     Cmd.(
-      git_work_tree r % "describe" % "--always"
+      git_work_tree r % "describe" % "--always" % "--tags"
       %% on dirty (v "--dirty")
       %% on (not dirty) (v commit_ish))
   in
@@ -209,36 +209,20 @@ let git_ls_remote ~dry_run r ~kind ~filter upstream =
 let git_submodule_update ~dry_run r =
   run_git_quiet ~dry_run r Cmd.(v "submodule" % "update" % "--init")
 
-let unallowed_substrings = Re.(compile (alt [ str "@{"; str ".." ]))
+(* See the reference here: https://git-scm.com/docs/git-check-ref-format
+   * Similar escape as DEP-14: https://dep-team.pages.debian.net/deps/dep14/ *)
+let git_escape_tag t = String.map (function '~' -> '_' | c -> c) t
 
-(* See the reference here: https://git-scm.com/docs/git-check-ref-format *)
-let git_sanitize_tag t =
-  let last = String.length t - 1 in
-  if String.equal t "@" then "_AT_"
-  else
-    String.fold_left
-      (fun (ret, i) c ->
-        let s =
-          match (i, c) with
-          | 0, '/' -> "_SLASH_"
-          | i, '/' when i = last -> "_SLASH_"
-          | i, '.' when i = last -> "_DOT_"
-          | _, ' ' -> "_SPACE_"
-          | _, '~' -> "_TILDE_"
-          | _, '^' -> "_CARET_"
-          | _, ':' -> "_COLON_"
-          | _, '?' -> "_QUEST_"
-          | _, '*' -> "_TIMES_"
-          | _, '[' -> "_LBRACKET_"
-          | _, '\\' -> "_BSLASH_"
-          | _ -> String.of_char c
-        in
-        (ret ^ s, i + 1))
-      ("", 0) t
-    |> fst
-    |> Re.replace_string ~all:true unallowed_substrings ~by:"__"
+let git_unescape_tag t = String.map (function '_' -> '~' | c -> c) t
 
 (* Hg support *)
+
+(* Mercurial allows everything but :, \r and \n, but all these characters are
+ * unlikely to show up in versions so we just pass things through.
+ *)
+let hg_escape_tag t = t
+
+let hg_unescape_tag t = t
 
 let hg_rev commit_ish = match commit_ish with "HEAD" -> "tip" | c -> c
 
@@ -325,8 +309,6 @@ let hg_tag r ~force ~sign ~msg ~rev tag =
 
 let hg_delete_tag r tag =
   run_hg r Cmd.(v "tag" % "--remove" % tag) OS.Cmd.out_stdout
-
-let hg_sanitize_tag t = t
 
 (* Generic VCS support *)
 
@@ -433,9 +415,13 @@ let submodule_update ~dry_run r =
   | (`Git, _, _) as r -> git_submodule_update ~dry_run r
   | `Hg, _, _ -> R.error_msgf "submodule update is not supported with mercurial"
 
-let sanitize_tag = function
-  | `Git, _, _ -> git_sanitize_tag
-  | `Hg, _, _ -> hg_sanitize_tag
+let escape_tag = function
+  | `Git, _, _ -> git_escape_tag
+  | `Hg, _, _ -> hg_escape_tag
+
+let unescape_tag = function
+  | `Git, _, _ -> git_unescape_tag
+  | `Hg, _, _ -> hg_unescape_tag
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

@@ -1,0 +1,3 @@
+(mdx
+ (files run.t)
+ (packages dune-release))
