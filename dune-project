@@ -39,5 +39,4 @@ with [Dune](https://github.com/ocaml/dune) and hosted on
   odoc
   (alcotest :with-test)
   (mdx (and :with-test (>= 1.6.0)))
-  yaml
   yojson))

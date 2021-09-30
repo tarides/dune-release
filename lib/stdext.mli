@@ -51,8 +51,6 @@ module Option : sig
 
   val value : default:'a -> 'a option -> 'a
 
-  val to_result : none:'e -> 'a option -> ('a, 'e) result
-
   module O : sig
     val ( >>= ) : 'a option -> ('a -> 'b option) -> 'b option
 
