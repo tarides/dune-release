@@ -4,7 +4,7 @@ val with_auth : token:string -> Curl.t -> Curl.t
 
 module Release : sig
   module Request : sig
-    val get : version:Version.t -> user:string -> repo:string -> Curl.t
+    val get : tag:Vcs.Tag.t -> user:string -> repo:string -> Curl.t
 
     val create :
       version:Version.t ->

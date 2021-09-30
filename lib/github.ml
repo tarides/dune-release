@@ -413,14 +413,14 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
              command again"
             e)
 
-let curl_get_release ~dry_run ~token ~version ~user ~repo =
-  let curl_t = Github_v3_api.Release.Request.get ~version ~user ~repo in
+let curl_get_release ~dry_run ~token ~tag ~user ~repo =
+  let curl_t = Github_v3_api.Release.Request.get ~tag ~user ~repo in
   let curl_t = Github_v3_api.with_auth ~token curl_t in
   run_with_auth ~dry_run curl_t >>= Github_v3_api.Release.Response.release_id
 
 let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
     ~draft =
-  match curl_get_release ~dry_run ~token ~version ~user ~repo with
+  match curl_get_release ~dry_run ~token ~tag ~user ~repo with
   | Error _ ->
       Prompt.(
         confirm_or_abort ~yes
