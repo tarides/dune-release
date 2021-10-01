@@ -16,6 +16,10 @@
 - Infer release versions are inferred from VCS tags. This change allows using
   `dune-release` on projects that do not use the changelog or have it in a
   different format.  (#381, #383 @Leonidas-from-XIV)
+- Fix a bug where `dune-release` couldn't retrieve a release on GitHub if the
+  tag and project version don't match (e.g. `v1.0` vs `1.0`). `dune-release`
+  would in such case believe the release doesn't exist, attempt to create it
+  and subsequently fail. (#387, #395, @Leonidas-from-XIV)
 
 ### Removed
 

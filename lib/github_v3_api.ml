@@ -54,11 +54,10 @@ let with_auth ~token Curl.{ url; meth; args } =
 
 module Release = struct
   module Request = struct
-    let get ~version ~user ~repo =
-      (* TODO: this should probably use `tag` and not `version` *)
+    let get ~tag ~user ~repo =
       let url =
         strf "https://api.github.com/repos/%s/%s/releases/tags/%a" user repo
-          Version.pp version
+          Vcs.Tag.pp tag
       in
       let args =
         let open Curl_option in
