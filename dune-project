@@ -26,7 +26,7 @@ with [Dune](https://github.com/ocaml/dune) and hosted on
  (depends
   (ocaml (>= 4.06.0))
   curly
-  fmt
+  (fmt (>= 0.8.7))
   bos
   cmdliner
   re
