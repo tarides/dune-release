@@ -70,7 +70,7 @@ let make_test f ?version ?tag ?keep_v ?opam ~test_name ~name expected =
       | Some lines ->
           let file = Fpath.(v "opam-tmp") in
           let lines = ("opam-version", "1.2") :: lines in
-          let lines = List.map (fun (k, v) -> Fmt.strf "%s: %S" k v) lines in
+          let lines = List.map (fun (k, v) -> Fmt.str "%s: %S" k v) lines in
           Bos.OS.File.write_lines file lines >>| fun () -> Some file)
       >>= fun opam ->
       let p = Pkg.v ~dry_run:false ~name ?tag ?version ?keep_v ?opam () in

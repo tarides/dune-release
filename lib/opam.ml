@@ -53,7 +53,7 @@ let shortest x =
 
 let prepare_package ~build_dir ~dry_run ~version vcs name =
   (* copy opam, descr and url files *)
-  let dir = Fmt.strf "%s.%a" name Version.pp version in
+  let dir = Fmt.str "%s.%a" name Version.pp version in
   let src = Fpath.(build_dir / dir) in
   let dst = Fpath.(v "packages" / name / dir) in
   let cp f =
@@ -103,7 +103,7 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
   in
   let remote_branch = "master" in
   let pkg = shortest names in
-  let branch = Fmt.strf "release-%s-%a" pkg Vcs.Tag.pp tag in
+  let branch = Fmt.str "release-%s-%a" pkg Vcs.Tag.pp tag in
   let prepare_repo () =
     App_log.status (fun l ->
         l "Fetching %a" Text.Pp.url (upstream ^ "#" ^ remote_branch));

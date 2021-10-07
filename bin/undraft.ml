@@ -34,7 +34,7 @@ let update_opam_file ~dry_run ~url pkg =
         OpamFile.OPAM.with_url url opam_t |> OpamFile.OPAM.write_to_string
       in
       Sos.write_file ~dry_run dest_opam_file opam
-  | s -> Fmt.kstrf (fun x -> Error (`Msg x)) "invalid opam version: %s" s)
+  | s -> Fmt.kstr (fun x -> Error (`Msg x)) "invalid opam version: %s" s)
   >>| fun () ->
   App_log.success (fun m ->
       m "Wrote opam package description %a" Text.Pp.path dest_opam_file)
@@ -76,7 +76,7 @@ let undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo:local
   update_opam_file ~dry_run ~url pkg >>= fun () ->
   App_log.status (fun l ->
       l "Preparing pull request #%s to %a" pr_id pp_opam_repo opam_repo);
-  let branch = Fmt.strf "release-%s-%a" pkg_name Vcs.Tag.pp tag in
+  let branch = Fmt.str "release-%s-%a" pkg_name Vcs.Tag.pp tag in
   Vcs.get () >>= fun vcs ->
   let prepare_packages ~build_dir =
     Stdext.Result.List.iter

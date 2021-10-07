@@ -420,7 +420,7 @@ let prepare_opam_for_distrib ~version ~content =
   let re = Re.compile version_line_re in
   let is_not_version_field line = not (Re.execp re line) in
   let without_version = List.filter is_not_version_field content in
-  Fmt.strf "version: \"%a\"" Version.pp version :: without_version
+  Fmt.str "version: \"%a\"" Version.pp version :: without_version
 
 let distrib_version_opam_files ~dry_run ~version =
   infer_pkg_names Fpath.(v ".") [] >>= fun names ->
@@ -461,7 +461,7 @@ let distrib_archive ~dry_run ~keep_dir ~include_submodules p =
   Vcs.commit_ptime_s repo_vcs ~dry_run ~commit_ish:(Tag tag) >>= fun mtime ->
   Vcs.clone ~dry_run ~force:true repo_vcs ~dir:dist_build_dir >>= fun () ->
   Vcs.get ~dir:dist_build_dir () >>= fun clone_vcs ->
-  let branch = Fmt.strf "dune-release-dist-%a" Vcs.Tag.pp tag in
+  let branch = Fmt.str "dune-release-dist-%a" Vcs.Tag.pp tag in
   Vcs.checkout ~dry_run clone_vcs ~branch ~commit_ish:(Tag tag) >>= fun () ->
   (if include_submodules then pull_submodules ~dry_run ~dist_build_dir
   else Ok ())

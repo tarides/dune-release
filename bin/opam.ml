@@ -55,7 +55,7 @@ let write_opam_file ~dry_run ~id ~url ~opam_f pkg dest_opam_file =
         |> OpamFile.OPAM.write_to_string
       in
       Sos.write_file ~dry_run dest_opam_file opam
-  | s -> Fmt.kstrf (fun x -> Error (`Msg x)) "invalid opam version: %s" s
+  | s -> Fmt.kstr (fun x -> Error (`Msg x)) "invalid opam version: %s" s
 
 let archive_url ~dry_run ~opam_file pkg =
   Pkg.archive_url_path pkg >>= fun url_file ->

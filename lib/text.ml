@@ -137,7 +137,7 @@ let rewrite_github_refs ~user ~repo msg =
   Re.replace github_issue msg ~f:(fun s ->
       let x = Re.Group.get s 1 in
       let y = Re.Group.get s 2 in
-      Fmt.strf "%s%s/%s%s" x user repo y)
+      Fmt.str "%s%s/%s%s" x user repo y)
 
 (* Pretty-printers. *)
 
@@ -150,15 +150,15 @@ module Pp = struct
 
   let commit = Fmt.(styled `Yellow string)
 
-  let dirty = Fmt.(styled_unit `Red "dirty")
+  let dirty = Fmt.(styled `Red (any "dirty"))
 
   let path fmt path = Fmt.(styled `Bold Fpath.pp) fmt (Fpath.normalize path)
 
   let url = Fmt.(styled `Underline string)
 
   let status ppf = function
-    | `Ok -> Fmt.(brackets @@ styled_unit `Green " OK ") ppf ()
-    | `Fail -> Fmt.(brackets @@ styled_unit `Red "FAIL") ppf ()
+    | `Ok -> Fmt.(brackets @@ styled `Green (any " OK ")) ppf ()
+    | `Fail -> Fmt.(brackets @@ styled `Red (any "FAIL")) ppf ()
 
   let maybe_draft ppf (draft, s) =
     if draft then Fmt.(styled `Bold string) ppf "draft ";
