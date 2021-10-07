@@ -1,7 +1,7 @@
 (env
- (_ (binaries (../helpers/make_check_deterministic.exe as make_check_deterministic))))
+ (_
+  (binaries
+   (../helpers/make_check_deterministic.exe as make_check_deterministic))))
 
 (cram
- (deps
-   %{bin:dune-release}
-   %{bin:make_check_deterministic}))
+ (deps %{bin:dune-release} %{bin:make_check_deterministic}))
