@@ -48,7 +48,9 @@ val cmd : t -> Bos.Cmd.t
     {b Warning} Prefer the functions below to remain VCS independent. *)
 
 val get : ?dir:Fpath.t -> unit -> (t, R.msg) result
-(** [get] is like {!find} but returns an error if no VCS was found. *)
+(** [get ~dir ()] looks for a VCS repository in working directory [dir] (not the
+    repository directory like [.git], default is guessed automatically). Returns
+    an error if no VCS was found. *)
 
 val run_git_quiet :
   dry_run:bool -> ?force:bool -> t -> Bos_setup.Cmd.t -> (unit, R.msg) result

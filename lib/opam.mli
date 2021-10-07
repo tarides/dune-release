@@ -37,7 +37,7 @@ val prepare :
     branch in the local opam repository [local_repo], using the commit message
     [msg] (if any). Return the new branch. *)
 
-(** {1:file Files} *)
+(** {1:files Files} *)
 
 (** opam files *)
 module File : sig
@@ -45,8 +45,8 @@ module File : sig
 
   val fields : dry_run:bool -> Fpath.t -> (string list String.map, R.msg) result
   (** [fields f] returns a simplified model of the fields of the opam file [f].
-      The domain of the result is included in {!field_names}. Note that the
-      [depends:] and [depopts:] fields are returned without version constraints. *)
+      Note that the [depends:] and [depopts:] fields are returned without
+      version constraints. *)
 end
 
 (** [descr] files. *)
@@ -64,7 +64,7 @@ module Descr : sig
 
   val of_readme_file : Fpath.t -> (t, R.msg) result
   (** [of_readme_file f] extracts an opam description file from a readme file
-      [f] using {!Text.flavour_of_fpath} and {!of_readme}. *)
+      [f] using {!Text.flavour_of_fpath}. *)
 end
 
 (** [url] files. *)
