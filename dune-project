@@ -2,6 +2,7 @@
 (name dune-release)
 
 (using mdx 0.1)
+(cram enable)
 
 (generate_opam_files true)
 

@@ -1,9 +1,7 @@
-(copy_files ../helpers/make_check_deterministic.exe)
+(env
+ (_ (binaries (../helpers/make_check_deterministic.exe as make_check_deterministic))))
 
-(alias
- (name runtest)
- (deps make_check_deterministic.exe))
-
-(mdx
- (files run.t)
- (packages dune-release))
+(cram
+ (deps
+   %{bin:dune-release}
+   %{bin:make_check_deterministic}))
