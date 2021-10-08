@@ -213,14 +213,14 @@ let lint_pkg ~dry_run ~dir ~pkg_name pkg todo =
         Logs.app (fun m ->
             m "%a lint of %a and package %a %a " Text.Pp.status `Ok Text.Pp.path
               dir pp_pkg_name pkg_name
-              (Fmt.styled_unit `Green "success")
+              (Fmt.styled `Green Fmt.(any "success"))
               ());
         0
     | n ->
         Logs.app (fun m ->
             m "%a lint of %a and package %a %a: %d errors." Text.Pp.status `Fail
               Text.Pp.path dir pp_pkg_name pkg_name
-              (Fmt.styled_unit `Red "failure")
+              (Fmt.styled `Red Fmt.(any "failure"))
               () n);
         1
   in

@@ -55,7 +55,7 @@ let show ?sandbox ?(action = `Skip) fmt =
           last_dir := d;
           Fmt.pf ppf "   [in %a]\n" Fmt.(styled `Underline Fpath.pp) d)
   in
-  Fmt.kstrf
+  Fmt.kstr
     (fun s ->
       Logs.app (fun m -> m "%a%a %s" pp_cwd () pp_action action s);
       Ok ())

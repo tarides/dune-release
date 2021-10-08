@@ -4,9 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** Package delegate.
-
-    See {!Topkg_care.Delegate} for documentation. *)
+(** Package delegate. *)
 
 open Bos_setup
 
