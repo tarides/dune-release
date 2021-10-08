@@ -1,14 +1,10 @@
-## unreleased
+## 1.5.1
 
 ### Added
 
 - Added support for creating releases from unannotated Git tags. `dune-release`
   supported unannotated tags in a few places already, now it supports using
   them for creating a release. (#383, @Leonidas-from-XIV)
-
-### Changed
-
-### Deprecated
 
 ### Fixed
 
@@ -20,10 +16,6 @@
   tag and project version don't match (e.g. `v1.0` vs `1.0`). `dune-release`
   would in such case believe the release doesn't exist, attempt to create it
   and subsequently fail. (#387, #395, @Leonidas-from-XIV)
-
-### Removed
-
-### Security
 
 ## 1.5.0 (2021-07-05)
 
