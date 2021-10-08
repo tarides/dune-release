@@ -63,7 +63,7 @@ let opam_file_check ~dir pkg =
     | Error (`Msg err) ->
         App_log.report_status `Fail (fun m ->
             m
-              "main package %a is not dune-release compatible. %s \n\
+              "main package %a is not dune-release compatible. %s\n\
                Have you provided a github uri in the dev-repo field of your \
                main opam file? If you don't use github, you can still use \
                dune-release for everything but for publishing your release on \
