@@ -4,82 +4,82 @@ dune-project. This goes with the fix for #320, where:
 - dune distrib ignores this name and fails, complaining that you
 should set a name.
 
-    $ mkdir liba libb
-    $ cat > CHANGES.md << EOF \
-    > ## 0.42.0\
-    > \
-    > - Some other feature\
-    > \
-    > EOF
-    $ echo "(library (public_name liba))" > liba/dune
-    $ echo "(library (public_name libb))" > libb/dune
-    $ cat > liba.opam << EOF \
-    > opam-version: "2.0" \
-    > EOF
-    $ cp liba.opam libb.opam
-    $ touch README LICENSE
-    $ echo "(lang dune 2.7)" > dune-project
-    $ cat > .gitignore << EOF \
-    > _build\
-    > .formatted\
-    > .mdx\
-    > /dune\
-    > run.t\
-    > EOF
-    $ git init 2> /dev/null . > /dev/null
-    $ git config user.name "dune-release-test"
-    $ git config user.email "pseudo@pseudo.invalid"
-    $ git add liba/* libb*/ CHANGES.md README LICENSE *.opam dune-project .gitignore
-    $ git commit -m 'Commit.' > /dev/null
+  $ mkdir liba libb
+  $ cat > CHANGES.md << EOF
+  > ## 0.42.0
+  > 
+  > - Some other feature
+  > 
+  > EOF
+  $ echo "(library (public_name liba))" > liba/dune
+  $ echo "(library (public_name libb))" > libb/dune
+  $ cat > liba.opam << EOF
+  > opam-version: "2.0"
+  > EOF
+  $ cp liba.opam libb.opam
+  $ touch README LICENSE
+  $ echo "(lang dune 2.7)" > dune-project
+  $ cat > .gitignore << EOF
+  > _build
+  > .formatted
+  > .bin
+  > /dune
+  > run.t
+  > EOF
+  $ git init 2> /dev/null . > /dev/null
+  $ git config user.name "dune-release-test"
+  $ git config user.email "pseudo@pseudo.invalid"
+  $ git add liba/* libb*/ CHANGES.md README LICENSE *.opam dune-project .gitignore
+  $ git commit -m 'Commit.' > /dev/null
 
 Try dune-release distrib with no project name.
 
-    $ dune-release distrib --skip-lint
-    [-] Building source archive
-    dune-release: [ERROR] cannot determine distribution name automatically: add (name <name>) to dune-project
-    [1]
+  $ dune-release distrib --skip-lint
+  [-] Building source archive
+  dune-release: [ERROR] cannot determine distribution name automatically: add (name <name>) to dune-project
+  [1]
 
 dune-release distrib --dry-run with no project name.
 
-    $ dune-release distrib --skip-lint --dry-run
-    [-] Building source archive
-    dune-release: [ERROR] cannot determine distribution name automatically: add (name <name>) to dune-project
-    [1]
+  $ dune-release distrib --skip-lint --dry-run
+  [-] Building source archive
+  dune-release: [ERROR] cannot determine distribution name automatically: add (name <name>) to dune-project
+  [1]
 
 Add an uncommitted name to dune-project. (Because of a dune limitation
 this name must be one the .opam file names.)
 
-    $ echo "(name liba)" >> dune-project
+  $ echo "(name liba)" >> dune-project
 
 Run dune-release distrib with the uncomitted name in dune-project.
 
-    $ dune-release tag -y
-    [-] Extracting tag from first entry in CHANGES.md
-    [-] Using tag "0.42.0"
-    [+] Tagged HEAD with version 0.42.0
-    $ dune-release distrib --skip-lint
-    [-] Building source archive
-    dune-release: [WARNING] The repo is dirty. The distribution archive may be
-                            inconsistent. Uncommitted changes to files (including
-                            dune-project) will be ignored.
-    Error: The project name is not defined, please add a (name <name>) field to
-    your dune-project file.
-    dune-release: [ERROR] run ['dune' 'subst']: exited with 1
-    [3]
+  $ dune-release tag -y
+  [-] Extracting tag from first entry in CHANGES.md
+  [-] Using tag "0.42.0"
+  [+] Tagged HEAD with version 0.42.0
+  $ dune-release distrib --skip-lint
+  [-] Building source archive
+  dune-release: [WARNING] The repo is dirty. The distribution archive may be
+                          inconsistent. Uncommitted changes to files (including
+                          dune-project) will be ignored.
+  Error: The project name is not defined, please add a (name <name>) field to
+  your dune-project file.
+  dune-release: [ERROR] run ['dune' 'subst']: exited with 1
+  [3]
 
 Commit the change in dune-project and run distrib.
 
-    $ git add dune-project && git commit -m 'add name' > /dev/null
-    $ dune-release distrib --skip-lint
-    [-] Building source archive
-    [+] Wrote archive ...
-    
-    [-] Building package in ...
-    [ OK ] package(s) build
-    
-    [-] Running package tests in ...
-    [ OK ] package(s) pass the tests
-    
-    [+] Distribution for liba ...
-    [+] Commit ...
-    [+] Archive ...
+  $ git add dune-project && git commit -m 'add name' > /dev/null
+  $ dune-release distrib --skip-lint | make_dune_release_deterministic
+  [-] Building source archive
+  [+] Wrote archive _build/PKG(liba)-VER(0.42.0)-SINCE(1)-COMMIT(<deterministic>).tbz
+  
+  [-] Building package in _build/PKG(liba)-VER(0.42.0)-SINCE(1)-COMMIT(<deterministic>)
+  [ OK ] package(s) build
+  
+  [-] Running package tests in _build/PKG(liba)-VER(0.42.0)-SINCE(1)-COMMIT(<deterministic>)
+  [ OK ] package(s) pass the tests
+  
+  [+] Distribution for PKG(liba) VER(0.42.0)-SINCE(1)-COMMIT(<deterministic>)
+  [+] Commit <deterministic>
+  [+] Archive _build/PKG(liba)-VER(0.42.0)-SINCE(1)-COMMIT(<deterministic>).tbz
