@@ -211,7 +211,7 @@ let lint_pkg ~dry_run ~dir ~pkg_name pkg todo =
     match total_errs with
     | 0 ->
         Logs.app (fun m ->
-            m "%a lint of %a and package %a %a " Text.Pp.status `Ok Text.Pp.path
+            m "%a lint of %a and package %a %a" Text.Pp.status `Ok Text.Pp.path
               dir pp_pkg_name pkg_name
               (Fmt.styled `Green Fmt.(any "success"))
               ());
