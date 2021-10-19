@@ -20,7 +20,6 @@ let dir_path_arg =
   Arg.conv ~docv:"DIR" (parse, Fpath.pp)
 
 let named f = Cmdliner.Term.(app (const f))
-
 let config term = Cmdliner.Term.(app (const Dune_release.Config.Cli.make)) term
 
 let config_opt term =

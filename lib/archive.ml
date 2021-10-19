@@ -149,7 +149,6 @@ let tar dir ~exclude_paths ~root ~mtime =
 (* Bzip2 compression and unarchiving *)
 
 let bzip2_cmd = OS.Env.(value "DUNE_RELEASE_BZIP2" cmd ~absent:(Cmd.v "bzip2"))
-
 let ensure_bzip2 () = OS.Cmd.must_exist bzip2_cmd >>| fun _ -> ()
 
 let bzip2 ~dry_run ?force ~dst s =

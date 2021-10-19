@@ -89,11 +89,8 @@ val describe :
     if the working tree is dirty. *)
 
 val get_tag : t -> (Tag.t, R.msg) result
-
 val tag_exists : dry_run:bool -> t -> Tag.t -> bool
-
 val tag_points_to : t -> Tag.t -> string option
-
 val branch_exists : dry_run:bool -> t -> commit_ish -> bool
 
 (** {1:ops Repository operations} *)

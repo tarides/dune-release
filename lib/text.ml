@@ -15,7 +15,6 @@ let flavour_of_fpath f =
   | _ -> None
 
 let rec drop_blanks = function "" :: ls -> drop_blanks ls | ls -> ls
-
 let last_line = function [] -> None | l :: _ -> Some l
 
 (* Detecting headers *)
@@ -143,17 +142,11 @@ let rewrite_github_refs ~user ~repo msg =
 
 module Pp = struct
   let name = Fmt.(styled `Bold string)
-
   let version = Fmt.(styled `Cyan Version.pp)
-
   let tag = Fmt.(styled `Cyan Vcs.Tag.pp)
-
   let commit = Fmt.(styled `Yellow string)
-
   let dirty = Fmt.(styled `Red (any "dirty"))
-
   let path fmt path = Fmt.(styled `Bold Fpath.pp) fmt (Fpath.normalize path)
-
   let url = Fmt.(styled `Underline string)
 
   let status ppf = function

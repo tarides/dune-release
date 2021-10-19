@@ -61,14 +61,11 @@ module Option = struct
     | _ -> false
 
   let map ~f = function None -> None | Some x -> Some (f x)
-
   let bind ~f = function None -> None | Some x -> f x
-
   let value ~default opt = match opt with Some x -> x | None -> default
 
   module O = struct
     let ( >>= ) opt f = bind ~f opt
-
     let ( >|= ) opt f = map ~f opt
   end
 end

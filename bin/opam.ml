@@ -367,11 +367,8 @@ let pkg_descr =
     Arg.(value & opt (some Cli.path_arg) None & info [ "pkg-descr" ] ~doc ~docv)
 
 let doc = "Interaction with opam and the OCaml opam repository"
-
 let sdocs = Manpage.s_common_options
-
 let envs = []
-
 let man_xrefs = [ `Main; `Cmd "distrib" ]
 
 let man =

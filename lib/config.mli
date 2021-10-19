@@ -48,7 +48,6 @@ val token :
     looks up the relevant config file as it would normally have. *)
 
 val keep_v : keep_v:bool Cli.t -> (bool, Bos_setup.R.msg) result
-
 val auto_open : no_auto_open:bool Cli.t -> (bool, Bos_setup.R.msg) result
 
 val opam_repo_fork :
@@ -71,7 +70,6 @@ val opam_repo_fork :
     quizz. *)
 
 val load : unit -> (t option, Bos_setup.R.msg) result
-
 val save : t -> (unit, Bos_setup.R.msg) result
 
 val pretty_fields : t -> (string * string option) list
@@ -112,7 +110,5 @@ module type S = sig
 end
 
 module Draft_release : S
-
 module Draft_pr : S
-
 module Release_asset_name : S

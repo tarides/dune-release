@@ -137,7 +137,6 @@ let doc =
    This command is experimental."
 
 let sdocs = Manpage.s_common_options
-
 let exits = Cli.exits
 
 let envs =

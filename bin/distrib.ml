@@ -74,9 +74,7 @@ let keep_build_dir =
     Arg.(value & flag & info [ "keep-build-dir" ] ~doc)
 
 let doc = "Create a package distribution archive"
-
 let sdocs = Manpage.s_common_options
-
 let exits = Cli.exits
 
 let envs =

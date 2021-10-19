@@ -24,9 +24,7 @@ let cmds =
 (* Command line interface *)
 
 let doc = "Release dune packages to opam"
-
 let sdocs = Manpage.s_common_options
-
 let exits = Cli.exits
 
 let man =
@@ -52,7 +50,6 @@ let main =
     Term.info "dune-release" ~version:"%%VERSION%%" ~doc ~sdocs ~exits ~man )
 
 let main () = Term.(exit_status @@ eval_choice main cmds)
-
 let () = main ()
 
 (*---------------------------------------------------------------------------
