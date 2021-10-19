@@ -40,7 +40,6 @@ let with_auth ~token Curl.{ url; meth; args } =
     }
 
 let client = "dune-release"
-
 let url = "https://api.github.com/graphql"
 
 module Pull_request = struct

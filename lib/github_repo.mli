@@ -1,7 +1,6 @@
 type t = { owner : string; repo : string }
 
 val equal : t -> t -> bool
-
 val pp : Format.formatter -> t -> unit
 
 val from_uri : string -> t option

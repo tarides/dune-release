@@ -65,7 +65,6 @@ val opam_descr : t -> (Opam.Descr.t, R.msg) result
 (** [opam_descr p] is [p]'s opam description. *)
 
 val opam_homepage : t -> (string option, R.msg) result
-
 val opam_doc : t -> (string option, R.msg) result
 
 val opam_field : t -> string -> (string list option, R.msg) result
@@ -123,7 +122,6 @@ val distrib_opam_path : t -> (Fpath.t, R.msg) result
 (** {1 Uri} *)
 
 val doc_uri : t -> (string, Bos_setup.R.msg) result
-
 val doc_dir : Fpath.t
 
 val github_doc_owner_repo_and_path :

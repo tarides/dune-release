@@ -8,21 +8,13 @@ open Bos_setup
 
 module D = struct
   let user = "${user}"
-
   let repo = "${repo}"
-
   let dir = Fpath.v "${dir}"
-
   let fetch_head = "${fetch_head}"
-
   let pr_url = "${pr_url}"
-
   let pr_node_id = "${pr_node_id}"
-
   let download_url = "${download_url}"
-
   let release_id = 1
-
   let asset_name = "${asset_name}"
 end
 

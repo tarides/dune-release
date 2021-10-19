@@ -26,23 +26,19 @@ type t = {
 }
 
 let opam_fields p = Lazy.force p.opam_fields
-
 let opam_field p f = opam_fields p >>| fun fields -> String.Map.find f fields
 
 let opam_field_hd p f =
   opam_field p f >>| function None | Some [] -> None | Some (v :: _) -> Some v
 
 let opam_homepage p = opam_field_hd p "homepage"
-
 let opam_doc p = opam_field_hd p "doc"
 
 let opam_homepage_sld p =
   opam_homepage p >>| Stdext.Option.bind ~f:Uri_helpers.get_sld
 
 let opam_doc_sld p = opam_doc p >>| Stdext.Option.bind ~f:Uri_helpers.get_sld
-
 let name p = Ok p.name
-
 let with_name p name = { p with name }
 
 let extract_version change_log =

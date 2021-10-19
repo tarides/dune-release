@@ -162,7 +162,6 @@ let doc =
   ^ Deprecate.Delegates.artefacts_warning
 
 let sdocs = Manpage.s_common_options
-
 let exits = Cli.exits
 
 let envs =

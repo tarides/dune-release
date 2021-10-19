@@ -12,9 +12,7 @@ module Tag = struct
   type t = string
 
   let pp = Fmt.string
-
   let equal = String.equal
-
   let to_string x = x
 
   (* no escaping here in case the user wants to force a literal tag *)
@@ -49,9 +47,7 @@ let vcs_cmd kind cmd dir =
   | `Hg -> Cmd.(cmd % "--repository" % dir)
 
 let v k cmd ~dir = (k, cmd, dir)
-
 let dir (_, _, dir) = dir
-
 let cmd (kind, cmd, dir) = vcs_cmd kind cmd Fpath.(to_string dir)
 
 (* Git support *)
@@ -69,9 +65,7 @@ let find_git () =
 
 module Default = struct
   let string = Sos.out ""
-
   let unit = Sos.out ()
-
   let list = Sos.out []
 end
 
@@ -212,7 +206,6 @@ let git_submodule_update ~dry_run r =
 (* See the reference here: https://git-scm.com/docs/git-check-ref-format
    * Similar escape as DEP-14: https://dep-team.pages.debian.net/deps/dep14/ *)
 let git_escape_tag t = String.map (function '~' -> '_' | c -> c) t
-
 let git_unescape_tag t = String.map (function '_' -> '~' | c -> c) t
 
 (* Hg support *)
@@ -221,9 +214,7 @@ let git_unescape_tag t = String.map (function '_' -> '~' | c -> c) t
  * unlikely to show up in versions so we just pass things through.
  *)
 let hg_escape_tag t = t
-
 let hg_unescape_tag t = t
-
 let hg_rev commit_ish = match commit_ish with "HEAD" -> "tip" | c -> c
 
 let find_hg () =

@@ -4,13 +4,9 @@ let hex = alt [ rg 'a' 'f'; digit ]
 
 (* git describe returns g *)
 let shorthash = seq [ char 'g'; rep hex ]
-
 let dash = char '-'
-
 let without_dash = diff any dash
-
 let pkg_name = rep without_dash
-
 let version = rep without_dash
 
 let version_set =

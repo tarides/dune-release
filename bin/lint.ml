@@ -34,11 +34,8 @@ let lints =
     Arg.(value & pos_all test Lint.all & info [] ~doc ~docv)
 
 let doc = "Check package distribution consistency and conventions"
-
 let sdocs = Manpage.s_common_options
-
 let exits = Term.exit_info 1 ~doc:"on lint failure" :: Cli.exits
-
 let man_xrefs = [ `Main; `Cmd "distrib" ]
 
 let man =

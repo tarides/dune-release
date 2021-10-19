@@ -34,11 +34,8 @@ let bistro () (`Dry_run dry_run) (`Package_names pkg_names)
 open Cmdliner
 
 let doc = "For when you are in a hurry or need to go for a drink"
-
 let sdocs = Manpage.s_common_options
-
 let exits = Cli.exits
-
 let man_xrefs = [ `Main; `Cmd "distrib"; `Cmd "publish"; `Cmd "opam" ]
 
 let man =

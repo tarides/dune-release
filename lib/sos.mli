@@ -96,24 +96,17 @@ val run_status :
   (Bos.OS.Cmd.status, error) result
 
 val delete_dir : dry_run:bool -> ?force:bool -> Fpath.t -> (unit, error) result
-
 val delete_path : dry_run:bool -> Fpath.t -> (unit, error) result
-
 val read_file : dry_run:bool -> Fpath.t -> (string, error) result
 
 val write_file :
   dry_run:bool -> ?force:bool -> Fpath.t -> string -> (unit, error) result
 
 val with_dir : dry_run:bool -> Fpath.t -> ('a -> 'b) -> 'a -> ('b, error) result
-
 val file_exists : dry_run:bool -> Fpath.t -> (bool, error) result
-
 val dir_exists : dry_run:bool -> Fpath.t -> (bool, error) result
-
 val file_must_exist : dry_run:bool -> Fpath.t -> (Fpath.t, error) result
-
 val out : 'a -> 'a * Bos.OS.Cmd.run_status
-
 val mkdir : dry_run:bool -> Fpath.t -> (bool, error) result
 
 val cp :

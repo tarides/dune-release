@@ -66,9 +66,7 @@ let distrib_cli () (`Dry_run dry_run) (`Build_dir build_dir)
 open Cmdliner
 
 let doc = "Create a package distribution archive"
-
 let sdocs = Manpage.s_common_options
-
 let exits = Cli.exits
 
 let envs =
