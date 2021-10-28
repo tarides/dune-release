@@ -8,6 +8,11 @@
 
 ### Fixed
 
+- Fixed the release asset URL for projects with multiple opam packages. Before,
+  the packages would attempt to infer their URL and fail in rare cases where
+  the project uses `v` as prefix for tags but the project version omits it. Now
+  they share the same URL. (#404, #<PR_NUMBER>, @Leonidas-from-XIV)
+
 ### Removed
 
 ### Security
