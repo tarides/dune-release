@@ -248,7 +248,8 @@ let distrib_archive_path p =
 
 let archive_url_path p =
   build_dir p >>= fun build_dir ->
-  distrib_archive_filename_prefix p >>| fun b ->
+  release_identifier p >>= fun identifier ->
+  Fpath.of_string (strf "asset-%s" identifier) >>| fun b ->
   Fpath.((build_dir // b) + "url")
 
 let distrib_file ~dry_run p =

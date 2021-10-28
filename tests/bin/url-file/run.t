@@ -118,12 +118,12 @@ We make a dry-run release:
     -: exec: curl --header Authorization: token ${token} --location --silent
          --show-error --config - --dump-header - --header
          Content-Type:application/x-tar --data-binary @_build/whatever-0.1.0.tbz
-    -: write _build/whatever-0.1.0.url
+    -: write _build/asset-0.1.0.url
 
 
 (3) Creating an opam package
 
-    $ echo "https://foo.fr/archive/foo/foo.tbz" > _build/whatever-0.1.0.url
+    $ echo "https://foo.fr/archive/foo/foo.tbz" > _build/asset-0.1.0.url
 
     $ dune-release opam pkg
     [-] Creating opam package description for whatever

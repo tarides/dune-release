@@ -81,7 +81,7 @@ We do the whole dune-release process
          {"tag_name":"3.3.4_4.10preview1","name":"3.3.4~4.10preview1","body":"CHANGES:\n\n- Some other feature\n","draft":false}
     [-] Uploading _build/whatever-3.3.4~4.10preview1.tbz as a release asset for 3.3.4~4.10preview1 via github's API
          @_build/whatever-3.3.4~4.10preview1.tbz
-    -: write _build/whatever-3.3.4~4.10preview1.url
+    -: write _build/asset-3.3.4~4.10preview1.url
 
 Check the changelog
 
