@@ -28,25 +28,16 @@ We also need a dotfile that we will properly version
 
 We need to set up a git project for dune-release to work properly
 
-  $ git init 2> /dev/null > /dev/null
+  $ git init > /dev/null 2>&1
   $ git config user.name "dune-release-test"
   $ git config user.email "pseudo@pseudo.invalid"
   $ git add CHANGES.md whatever.opam dune-project .somedotfile .gitignore
   $ git commit -m "Initial commit" > /dev/null
-  $ dune-release tag -y
-  [-] Extracting tag from first entry in CHANGES.md
-  [-] Using tag "0.1.0"
-  [+] Tagged HEAD with version 0.1.0
+  $ dune-release tag -y > /dev/null
 
 The generated tarball should contain the dotfile
 
-  $ dune-release distrib --skip-lint --skip-build --skip-test | make_dune_release_deterministic
-  [-] Building source archive
-  [+] Wrote archive _build/whatever-0.1.0.tbz
-  
-  [+] Distribution for whatever 0.1.0
-  [+] Commit <deterministic>
-  [+] Archive _build/whatever-0.1.0.tbz
+  $ dune-release distrib --skip-lint --skip-build --skip-test > /dev/null
   $ tar -xjf _build/whatever-0.1.0.tbz
   $ cat whatever-0.1.0/.somedotfile
   hello
