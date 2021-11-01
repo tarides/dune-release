@@ -29,15 +29,12 @@ We need to set up a git project for dune-release to work properly
   > /dune
   > run.t
   > EOF
-  $ git init 2> /dev/null > /dev/null
+  $ git init > /dev/null 2>&1
   $ git config user.name "dune-release-test"
   $ git config user.email "pseudo@pseudo.invalid"
   $ git add CHANGES.md whatever.opam dune-project README LICENSE .gitignore
   $ git commit -m "Initial commit" > /dev/null
-  $ dune-release tag -y
-  [-] Extracting tag from first entry in CHANGES.md
-  [-] Using tag "3.3.4_4.10preview1"
-  [+] Tagged HEAD with version 3.3.4_4.10preview1
+  $ dune-release tag -y > /dev/null
 
 We do the whole dune-release process
 
