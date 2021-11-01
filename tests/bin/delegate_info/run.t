@@ -22,10 +22,7 @@ We need to set up a git project for dune-release to work properly
   $ git config user.email "pseudo@pseudo.invalid"
   $ git add CHANGES.md whatever.opam dune-project
   $ git commit -m "Initial commit" > /dev/null
-  $ dune-release tag -y
-  [-] Extracting tag from first entry in CHANGES.md
-  [-] Using tag "0.1.0"
-  [+] Tagged HEAD with version 0.1.0
+  $ dune-release tag -y > /dev/null
 
 Dune-release delegate-info tarball should print the path to the tarball:
 
