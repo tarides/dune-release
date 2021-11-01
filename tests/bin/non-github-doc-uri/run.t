@@ -26,7 +26,6 @@ We need a basic opam project skeleton
 We need to set up a git project for dune-release to work properly
 
   $ cat > .gitignore << EOF
-  > .formatted
   > /dune
   > run.t
   > EOF

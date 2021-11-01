@@ -22,7 +22,6 @@ should set a name.
   $ echo "(lang dune 2.7)" > dune-project
   $ cat > .gitignore << EOF
   > _build
-  > .formatted
   > .bin
   > /dune
   > run.t
