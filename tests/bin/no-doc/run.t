@@ -32,48 +32,20 @@ We need a basic opam project skeleton with an empty doc field
 
 We need to set up a git project for dune-release to work properly
 
-  $ git init 2> /dev/null > /dev/null
+  $ git init > /dev/null 2>&1
   $ git config user.name "dune-release-test"
   $ git config user.email "pseudo@pseudo.invalid"
   $ git add CHANGES.md whatever.opam whatever-lib.opam dune-project README LICENSE
   $ git commit -m "Initial commit" > /dev/null
-  $ dune-release tag -y
-  [-] Extracting tag from first entry in CHANGES.md
-  [-] Using tag "0.1.0"
-  [+] Tagged HEAD with version 0.1.0
+  $ dune-release tag -y > /dev/null
 
 Trying to publish the documentation explicitly should fail:
 
-  $ dune-release publish doc -y --dry-run
-  [-] Publishing documentation
-  -: must exists _build/whatever-0.1.0.tbz
-  -: chdir _build/
-  -: exec: tar -xjf whatever-0.1.0.tbz
+  $ dune-release publish doc -y --dry-run > /dev/null
   dune-release: [ERROR] directory contents _build/whatever-0.1.0: No such file or directory
   [3]
 
 By default it should skip the documentation generation:
 
-  $ dune-release publish -y --dry-run | grep -v github.token
+  $ dune-release publish -y --dry-run | grep Skipping
   [-] Skipping documentation publication for package whatever: no doc field in whatever.opam
-  [-] Publishing distribution
-  -: must exists _build/whatever-0.1.0.tbz
-  [-] Publishing to github
-  -: exec: git --git-dir .git rev-parse --verify refs/tags/0.1.0
-  -: exec: git --git-dir .git rev-parse --verify refs/tags/0.1.0
-  -: exec:
-       git --git-dir .git ls-remote --quiet --tags   https://github.com/foo/whatever.git 0.1.0
-  [-] Pushing tag 0.1.0 to git@github.com:foo/whatever.git
-  -: exec: git --git-dir .git push --force git@github.com:foo/whatever.git 0.1.0
-  -: exec: curl --header Authorization: token ${token} --location --silent
-       --show-error --config - --dump-header -
-  [-] Creating release 0.1.0 on https://github.com/foo/whatever.git via github's API
-  -: exec: curl --header Authorization: token ${token} --location --silent
-       --show-error --config - --dump-header - --data
-       {"tag_name":"0.1.0","name":"0.1.0","body":"CHANGES:\n\n - Change A\n - Change B\n","draft":false}
-  [+] Successfully created release with id 1
-  [-] Uploading _build/whatever-0.1.0.tbz as a release asset for 0.1.0 via github's API
-  -: exec: curl --header Authorization: token ${token} --location --silent
-       --show-error --config - --dump-header - --header
-       Content-Type:application/x-tar --data-binary @_build/whatever-0.1.0.tbz
-  -: write _build/whatever-0.1.0.url
