@@ -1,7 +1,8 @@
-Set up a project with two packaged libraries, no name in
-dune-project. This goes with the fix for #320, where:
-- one sets a name in dune-project but does not commit it
-- dune distrib ignores this name and fails, complaining that you
+Set up a project with two packaged libraries, no name in `dune-project`. This
+goes with the fix for #320, where:
+
+- one sets a name in `dune-project` but does not commit it
+- `dune-release distrib` ignores this name and fails, complaining that you
 should set a name.
 
   $ mkdir liba libb
@@ -32,17 +33,16 @@ should set a name.
   $ git add liba/* libb*/ CHANGES.md README LICENSE *.opam dune-project .gitignore
   $ git commit -m 'Commit.' > /dev/null
 
-Try dune-release distrib with no project name.
+Try `dune-release distrib` with no project name, it should fail since it does
+not know how to call the project.
 
-  $ dune-release distrib --skip-lint
-  [-] Building source archive
+  $ dune-release distrib --skip-lint > /dev/null
   dune-release: [ERROR] cannot determine distribution name automatically: add (name <name>) to dune-project
   [1]
 
-dune-release distrib --dry-run with no project name.
+dune-release distrib --dry-run with no project name should fail as well.
 
-  $ dune-release distrib --skip-lint --dry-run
-  [-] Building source archive
+  $ dune-release distrib --skip-lint --dry-run > /dev/null
   dune-release: [ERROR] cannot determine distribution name automatically: add (name <name>) to dune-project
   [1]
 
@@ -53,12 +53,8 @@ this name must be one the .opam file names.)
 
 Run dune-release distrib with the uncomitted name in dune-project.
 
-  $ dune-release tag -y
-  [-] Extracting tag from first entry in CHANGES.md
-  [-] Using tag "0.42.0"
-  [+] Tagged HEAD with version 0.42.0
-  $ dune-release distrib --skip-lint
-  [-] Building source archive
+  $ dune-release tag -y > /dev/null
+  $ dune-release distrib --skip-lint > /dev/null
   dune-release: [WARNING] The repo is dirty. The distribution archive may be
                           inconsistent. Uncommitted changes to files (including
                           dune-project) will be ignored.
