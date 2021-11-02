@@ -14,6 +14,9 @@
   Previous users of this feature should now use `dune-release delegate-info`
   and wrap dune-release calls in a script. See #188 for details.
   (#428, @NathanReb)
+- Removed support for the OPAM 1.2.2 client. This means `dune-release` expects
+  the `opam` binary to be version 2.0 at least. (#406, #411,
+  @Leonidas-from-XIV)
 
 ### Security
 

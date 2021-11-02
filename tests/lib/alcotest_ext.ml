@@ -16,9 +16,6 @@ module Version = Dune_release.Version
 let changelog_version =
   Alcotest.testable Version.Changelog.pp Version.Changelog.equal
 
-let opam_version =
-  testable Dune_release.Opam.Version.pp Dune_release.Opam.Version.equal
-
 let curl =
   let pp fs Dune_release.Curl.{ url; meth; args } =
     let args = Dune_release.Curl_option.to_string_list args in

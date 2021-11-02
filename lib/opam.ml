@@ -298,40 +298,6 @@ module Url = struct
         else OS.File.must_exist distrib_file >>= fun _ -> assert false
 end
 
-module Version = struct
-  type t = V1_2_2 | V2
-
-  let pp fs = function
-    | V1_2_2 -> Format.fprintf fs "v1.2.2"
-    | V2 -> Format.fprintf fs "v2"
-
-  let equal v1 v2 =
-    match (v1, v2) with V1_2_2, V1_2_2 | V2, V2 -> true | _ -> false
-
-  let of_string v =
-    if Bos_setup.String.is_prefix v ~affix:"1." then
-      if String.equal v "1.2.2" then Ok V1_2_2
-      else R.error_msgf "unsupported opam version: %S" v
-    else
-      match String.cut ~sep:"2." v with
-      | Some ("", _) -> Ok V2
-      | _ -> R.error_msgf "unsupported opam version: %S" v
-
-  let cli () =
-    match
-      OS.Cmd.run_out Cmd.(cmd % "--version") |> OS.Cmd.out_string ~trim:true
-    with
-    | Ok (s, (_, `Exited 0)) ->
-        of_string s >>= fun v ->
-        if equal v V1_2_2 then
-          App_log.unhappy (fun l -> l "%s" Deprecate.Opam_1_x.client_warning);
-        Ok v
-    | Ok (_, (_, s)) -> R.error_msgf "opam: %a" OS.Cmd.pp_status s
-    | Error (`Msg e) -> R.error_msgf "opam: %s" e
-
-  let cli = lazy (cli ())
-end
-
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
 

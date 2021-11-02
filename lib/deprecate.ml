@@ -1,8 +1,4 @@
 module Opam_1_x = struct
-  let client_warning =
-    "The opam client 1.x is deprecated and its support will be dropped in \
-     dune-release 2.0.0, please switch to opam 2"
-
   let file_format_warning =
     "The opam file format 1.x is deprecated and its support will be dropped in \
      dune-release 2.0.0, please switch to opam 2"
