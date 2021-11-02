@@ -27,7 +27,7 @@ Make a minimal project set up
 
 If the condition described above is fulfilled, there are 4 checks to be performed
 
-  $ dune-release check --working-tree | make_check_deterministic
+  $ dune-release check --working-tree | make_dune_release_deterministic
   [-] Checking dune-release compatibility.
   [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
   [ OK ] The dune project contains a name stanza.
@@ -64,7 +64,7 @@ Add another package
 
 In multi package projects, the whole lint process (including the file lints, even though they are package independent) is done once for every package
 
-  $ dune-release check --working-tree | make_check_deterministic
+  $ dune-release check --working-tree | make_dune_release_deterministic
   [-] Checking dune-release compatibility.
   [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
   [ OK ] The dune project contains a name stanza.
@@ -99,7 +99,7 @@ In multi package projects, the whole lint process (including the file lints, eve
 
 In the same way in which the user can skip the lint check when releasing the tarball, they can also skip it here
 
-  $ dune-release check --working-tree --skip-lint | make_check_deterministic
+  $ dune-release check --working-tree --skip-lint | make_dune_release_deterministic
   [-] Checking dune-release compatibility.
   [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
   [ OK ] The dune project contains a name stanza.
@@ -112,7 +112,7 @@ In the same way in which the user can skip the lint check when releasing the tar
 
 Same for skipping the tests
 
-  $ dune-release check --working-tree --skip-lint --skip-test | make_check_deterministic
+  $ dune-release check --working-tree --skip-lint --skip-test | make_dune_release_deterministic
   [-] Checking dune-release compatibility.
   [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
   [ OK ] The dune project contains a name stanza.
