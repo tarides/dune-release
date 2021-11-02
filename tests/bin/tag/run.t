@@ -18,7 +18,7 @@ We need a basic opam project skeleton
 We need to set up a git project with two commits to test trying to tag different commits with the same tag name.
 
   $ export GIT_AUTHOR_DATE="2000-01-01 00:00:00 +0000"
-  $ git init 2> /dev/null > /dev/null
+  $ git init > /dev/null 2>&1
   $ git config user.name "dune-release-test"
   $ git config user.email "pseudo@pseudo.invalid"
   $ git add whatever.opam dune-project
@@ -28,10 +28,7 @@ We need to set up a git project with two commits to test trying to tag different
 
 Running `dune-release tag` for the first time should tag HEAD with the current version number.
 
-  $ dune-release tag -y
-  [-] Extracting tag from first entry in CHANGES.md
-  [-] Using tag "0.1.0"
-  [+] Tagged HEAD with version 0.1.0
+  $ dune-release tag -y > /dev/null
 
 Checking the message attached to the tag.
 
