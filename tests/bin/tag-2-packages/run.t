@@ -1,4 +1,4 @@
-Set up a project with two packaged libraries, no name in dune-project.
+Set up a project with two packaged libraries, no name in `dune-project`.
 
   $ mkdir liba libb
   $ cat > CHANGES.md << EOF
@@ -13,19 +13,19 @@ Set up a project with two packaged libraries, no name in dune-project.
   $ echo "(library (public_name libb))" > libb/dune
   $ touch liba.opam libb.opam
   $ echo "(lang dune 2.7)" > dune-project
-  $ git init 2> /dev/null . > /dev/null
+  $ git init > /dev/null 2>&1
   $ git config user.name "dune-release-test"
   $ git config user.email "pseudo@pseudo.invalid"
   $ git add liba/* libb*/ CHANGES.md *.opam dune-project
   $ git commit -m 'Commit.' > /dev/null
 
-Check error message about name in dune-project.
+Expect an error message about the name in `dune-project`.
 
   $ dune-release tag -y
   dune-release: [ERROR] cannot determine distribution name automatically: add (name <name>) to dune-project
   [1]
 
-Use (name <name>) in dune-project (not committed).
+Use `(name <name>)` in `dune-project` (not committed).
 
   $ cat > CHANGES.md << EOF
   > ## 0.44.0
@@ -33,8 +33,11 @@ Use (name <name>) in dune-project (not committed).
   > - Some other feature
   > 
   > EOF
-  $ git add CHANGES.md && git commit -m '0.44' > /dev/null
+  $ git add CHANGES.md
+  $ git commit -m '0.44' > /dev/null
   $ echo "(name titi)" >> dune-project
+
+Expect the tagging to work now:
 
   $ dune-release tag -y
   [-] Extracting tag from first entry in CHANGES.md
