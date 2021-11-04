@@ -67,14 +67,14 @@ Commit the change in dune-project and run distrib.
   $ git add dune-project && git commit -m 'add name' > /dev/null
   $ dune-release distrib --skip-lint | make_dune_release_deterministic
   [-] Building source archive
-  [+] Wrote archive _build/PKG(liba)-VER(0.42.0)-SINCE(1)-COMMIT(<deterministic>).tbz
+  [+] Wrote archive _build/liba-0.42.0-1-<deterministic>.tbz
   
-  [-] Building package in _build/PKG(liba)-VER(0.42.0)-SINCE(1)-COMMIT(<deterministic>)
+  [-] Building package in _build/liba-0.42.0-1-<deterministic>
   [ OK ] package(s) build
   
-  [-] Running package tests in _build/PKG(liba)-VER(0.42.0)-SINCE(1)-COMMIT(<deterministic>)
+  [-] Running package tests in _build/liba-0.42.0-1-<deterministic>
   [ OK ] package(s) pass the tests
   
-  [+] Distribution for PKG(liba) VER(0.42.0)-SINCE(1)-COMMIT(<deterministic>)
+  [+] Distribution for liba 0.42.0-1-<deterministic>
   [+] Commit <deterministic>
-  [+] Archive _build/PKG(liba)-VER(0.42.0)-SINCE(1)-COMMIT(<deterministic>).tbz
+  [+] Archive _build/liba-0.42.0-1-<deterministic>.tbz
