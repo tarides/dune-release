@@ -68,11 +68,19 @@ let make_test_directory_deterministic line =
   let re = compile @@ seq [ str "/"; rep any; str "/tests/bin/check" ] in
   replace_string re ~by:"<test_directory>" line
 
+let transforms =
+  [
+    make_build_deterministic;
+    make_commit_deterministic;
+    make_distribution_deterministic;
+    make_lint_directory_deterministic;
+    make_test_directory_deterministic;
+  ]
+
 let () =
   try
     while true do
-      () |> read_line |> make_build_deterministic |> make_commit_deterministic
-      |> make_distribution_deterministic |> make_lint_directory_deterministic
-      |> make_test_directory_deterministic |> print_endline
+      let line = read_line () in
+      List.fold_left ( |> ) line transforms |> print_endline
     done
   with End_of_file -> ()
