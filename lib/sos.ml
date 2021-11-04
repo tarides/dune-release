@@ -70,7 +70,7 @@ let cmd_error cmd err_msg status =
       R.error_msgf "The following command exited with signal %d:@\n  %a" c
         Cmd.pp cmd
   | Some err_msg, `Exited c ->
-      R.error_msgf "Exit code %d from command @\n  `%a`:@\n%s" c Cmd.pp cmd
+      R.error_msgf "Exit code %d from command@\n  `%a`:@\n%s" c Cmd.pp cmd
         err_msg
   | Some err_msg, `Signaled c ->
       R.error_msgf "Signal %d from command @\n  `%a`:@\n%s" c Cmd.pp cmd err_msg

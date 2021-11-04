@@ -1,7 +1,6 @@
 (lang dune 2.7)
 (name dune-release)
 
-(using mdx 0.1)
 (cram enable)
 
 (generate_opam_files true)
@@ -40,5 +39,4 @@ with [Dune](https://github.com/ocaml/dune) and hosted on
   logs
   odoc
   (alcotest :with-test)
-  (mdx (and :with-test (>= 1.6.0)))
   (yojson (>= 1.6))))

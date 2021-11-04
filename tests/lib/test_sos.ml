@@ -21,7 +21,7 @@ let cmd_error () =
   check ~name:"cmd exited verbose" ~cmd
     ~err_msg:(Some "fatal: This is all made up\n") ~status:(`Exited 2)
     ~expected:
-      "Exit code 2 from command \n\
+      "Exit code 2 from command\n\
       \  `git --git-dir .git --work-tree . diff-index --quiet HEAD`:\n\
        fatal: This is all made up\n"
     ();

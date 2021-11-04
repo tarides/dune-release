@@ -1,6 +1,8 @@
-(cram
- (enabled_if false))
+(env
+ (_
+  (binaries
+   (../helpers/make_dune_release_deterministic.exe as
+     make_dune_release_deterministic))))
 
-(mdx
- (files run.t)
- (packages dune-release))
+(cram
+ (deps %{bin:dune-release} %{bin:make_dune_release_deterministic}))
