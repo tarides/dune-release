@@ -32,6 +32,7 @@ with [Dune](https://github.com/ocaml/dune) and hosted on
   cmdliner
   (re (>= 1.7.2))
   astring
+  (opam-file-format (>= 2.1.2))
   (opam-format (>= 2.1.0~beta))
   (opam-state (>= 2.1.0~beta))
   (opam-core (>= 2.1.0~beta))
