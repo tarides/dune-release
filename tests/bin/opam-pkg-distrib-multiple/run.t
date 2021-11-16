@@ -33,6 +33,8 @@ Set up a project with two opam packages
 Set up a git project for dune-release to work properly
 
   $ git init 2> /dev/null > /dev/null
+  $ git config user.name "dune-release-test"
+  $ git config user.email "pseudo@pseudo.invalid"
   $ git add CHANGES.md whatever.opam whatever-sub.opam dune-project .gitignore
   $ git commit -m "Initial commit" > /dev/null
 
