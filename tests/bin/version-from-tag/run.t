@@ -28,6 +28,8 @@ We need a basic opam project skeleton
 We need to set up a git project with two commits to test trying to tag different commits with the same tag name.
 
   $ git init 2> /dev/null > /dev/null
+  $ git config user.name "dune-release-test"
+  $ git config user.email "pseudo@pseudo.invalid"
   $ git add whatever.opam dune-project .gitignore CHANGES.md README.md LICENSE
   $ git commit -m "Testing" --quiet
 
