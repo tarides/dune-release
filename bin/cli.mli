@@ -105,6 +105,10 @@ val skip_build : [> `Skip_build of bool ] Term.t
 val skip_tests : [> `Skip_tests of bool ] Term.t
 (** a [--skip-test] option to skip checking the tests *)
 
+val keep_build_dir : [> `Keep_build_dir of bool ] Term.t
+(** a [--keep-build-dir] flag to keep the build directory used for the archive
+    check. *)
+
 (** {1 Terms} *)
 
 val setup : unit Term.t

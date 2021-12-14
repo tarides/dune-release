@@ -54,7 +54,7 @@ let distrib ?build_dir ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir
 
 let distrib_cli () (`Dry_run dry_run) (`Build_dir build_dir)
     (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
-    (`Keep_v keep_v) (`Keep_dir keep_dir) (`Skip_lint skip_lint)
+    (`Keep_v keep_v) (`Keep_build_dir keep_dir) (`Skip_lint skip_lint)
     (`Skip_build skip_build) (`Skip_tests skip_tests)
     (`Include_submodules include_submodules) =
   distrib ?build_dir ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir
@@ -64,14 +64,6 @@ let distrib_cli () (`Dry_run dry_run) (`Build_dir build_dir)
 (* Command line interface *)
 
 open Cmdliner
-
-let keep_build_dir =
-  let doc =
-    "Keep the distribution build directory after successful archival."
-  in
-  Cli.named
-    (fun x -> `Keep_dir x)
-    Arg.(value & flag & info [ "keep-build-dir" ] ~doc)
 
 let doc = "Create a package distribution archive"
 
@@ -149,7 +141,7 @@ let man =
 let cmd =
   ( Term.(
       pure distrib_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.pkg_names
-      $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ keep_build_dir
+      $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ Cli.keep_build_dir
       $ Cli.skip_lint $ Cli.skip_build $ Cli.skip_tests $ Cli.include_submodules),
     Term.info "distrib" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )
 

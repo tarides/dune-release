@@ -2,6 +2,9 @@
 
 ### Added
 
+- Add `--skip-lint`, `--skip-build`, `--skip-test` and
+  `--keep-build-dir` to the main command (#419, @NathanReb)
+
 ### Changed
 
 ### Deprecated
