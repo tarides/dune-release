@@ -257,6 +257,14 @@ let skip_tests =
   in
   named (fun x -> `Skip_tests x) Arg.(value & flag & info [ "skip-tests" ] ~doc)
 
+let keep_build_dir =
+  let doc =
+    "Keep the distribution build directory after successful archival."
+  in
+  named
+    (fun x -> `Keep_build_dir x)
+    Arg.(value & flag & info [ "keep-build-dir" ] ~doc)
+
 (* Terms *)
 
 let setup style_renderer log_level cwd =
