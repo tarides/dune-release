@@ -123,15 +123,9 @@ let rec change_log_last_entry ?flavour text =
               | "" :: lines -> String.concat ~sep:"\n" lines
               | lines -> String.concat ~sep:"\n" lines
             in
-            let version =
-              let fst = String.get version 0 in
-              let len = String.length version in
-              let last = String.(get version (len - 1)) in
-              if List.mem fst [ '('; '[' ] && List.mem last [ ')'; ']' ] then
-                (* Drop delimitors for keepachangelog.com style *)
-                String.with_index_range ~first:1 ~last:(len - 2) version
-              else version
-            in
+            (* Drop delimitors from version, useful for keepachangelog.com style *)
+            let version_delimitors = function '[' | ']' | '(' | ')' -> true | _ -> false in
+            let version = String.trim ~drop:version_delimitors version in
             Some (Version.Changelog.of_string version, (h, changes)))
 
 let change_log_file_last_entry file =
