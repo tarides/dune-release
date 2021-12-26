@@ -12,7 +12,7 @@
 ### Fixed
 
 - Fixed parsing the changelog if it is written in the style of
-  keepachangelog.com(https://keepachangelog.com/) (#<PR_NUMBER>, @ifazk)
+  keepachangelog.com(https://keepachangelog.com/) (#421, @ifazk)
 
 ### Removed
 
