@@ -100,26 +100,39 @@ let header_title ?(flavour = `Markdown) h =
 
 (* Toy change log parsing *)
 
-let change_log_last_entry ?flavour text =
+let rec change_log_last_entry ?flavour text =
   match head ?flavour text with
   | None -> None
   | Some (h, changes) -> (
       let title = header_title ?flavour h in
-      match String.take ~sat:Char.Ascii.is_graphic title with
-      | "" ->
-          Logs.app (fun m -> m "%S %S" h changes);
-          None
-      | version ->
-          let changes =
-            match
-              String.cuts ~sep:"\n" changes
-              |> List.map (String.drop ~rev:true ~sat:Char.Ascii.is_white)
-            with
-            | [] -> "(none)"
-            | "" :: lines -> String.concat ~sep:"\n" lines
-            | lines -> String.concat ~sep:"\n" lines
-          in
-          Some (Version.Changelog.of_string version, (h, changes)))
+      if String.(equal (Ascii.lowercase title) "changelog") then
+        (* Recurse for keepachangelog.com style *)
+        change_log_last_entry ?flavour changes
+      else
+        match String.take ~sat:Char.Ascii.is_graphic title with
+        | "" ->
+            Logs.app (fun m -> m "%S %S" h changes);
+            None
+        | version ->
+            let changes =
+              match
+                String.cuts ~sep:"\n" changes
+                |> List.map (String.drop ~rev:true ~sat:Char.Ascii.is_white)
+              with
+              | [] -> "(none)"
+              | "" :: lines -> String.concat ~sep:"\n" lines
+              | lines -> String.concat ~sep:"\n" lines
+            in
+            let version =
+              let fst = String.get version 0 in
+              let len = String.length version in
+              let last = String.(get version (len - 1)) in
+              if List.mem fst [ '('; '[' ] && List.mem last [ ')'; ']' ] then
+                (* Drop delimitors for keepachangelog.com style *)
+                String.with_index_range ~first:1 ~last:(len - 2) version
+              else version
+            in
+            Some (Version.Changelog.of_string version, (h, changes)))
 
 let change_log_file_last_entry file =
   let flavour = flavour_of_fpath file in

@@ -11,6 +11,9 @@
 
 ### Fixed
 
+- Fixed parsing the changelog if it is written in the style of
+  keepachangelog.com(https://keepachangelog.com/) (#<PR_NUMBER>, @ifazk)
+
 ### Removed
 
 ### Security
