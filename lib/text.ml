@@ -124,7 +124,10 @@ let rec change_log_last_entry ?flavour text =
               | lines -> String.concat ~sep:"\n" lines
             in
             (* Drop delimitors from version, useful for keepachangelog.com style *)
-            let version_delimitors = function '[' | ']' | '(' | ')' -> true | _ -> false in
+            let version_delimitors = function
+              | '[' | ']' | '(' | ')' -> true
+              | _ -> false
+            in
             let version = String.trim ~drop:version_delimitors version in
             Some (Version.Changelog.of_string version, (h, changes)))
 
