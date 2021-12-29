@@ -4,6 +4,8 @@
 
 - Add `--skip-lint`, `--skip-build`, `--skip-test` and
   `--keep-build-dir` to the main command (#419, @NathanReb)
+- Added support for parsing changelogs written in the style of
+  [keepachangelog.com](https://keepachangelog.com/) (#421, @ifazk)
 
 ### Changed
 
