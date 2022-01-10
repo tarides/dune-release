@@ -6,10 +6,14 @@ You can do it via `opam`:
 ```sh
 $ git clone git@github.com:ocamllabs/dune-release.git
 $ cd dune-release
+$ opam switch create ./ ocaml-base-compiler.4.13.1 --no-install
 $ opam install -t --deps-only .
 ```
 
-This will install both regular and test dependencies to your active opam switch.
+This will create a local switch with a fresh compiler, the dependencies of
+`dune-release` and the dependencies for running the tests. The exact OCaml
+version is just an example, you should be able to use any reasonably recent
+version of OCaml.
 
 From there you can build `dune-release` by simply running:
 
