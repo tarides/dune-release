@@ -14,8 +14,7 @@ You can do it via `opam`:
 ```sh
 $ git clone git@github.com:ocamllabs/dune-release.git
 $ cd dune-release
-$ opam switch create ./ ocaml-base-compiler.4.13.1 --no-install
-$ opam install -t --deps-only .
+$ opam switch create ./ ocaml-base-compiler.4.13.1 --deps-only -t
 ```
 
 This will create a local switch with a fresh compiler, the dependencies of
