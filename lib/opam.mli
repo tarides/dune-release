@@ -82,7 +82,6 @@ module Version : sig
   type t = V1_2_2 | V2  (** Supported opam versions. *)
 
   val pp : Format.formatter -> t -> unit
-
   val equal : t -> t -> bool
 
   val of_string : string -> (t, R.msg) result

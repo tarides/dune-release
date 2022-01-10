@@ -8,7 +8,6 @@ type uri = { scheme : string option; domain : string list; path : string list }
     e.g. [\["some"; "path"\]] for ["domain.com/some/path"]. *)
 
 val pp_uri : Format.formatter -> uri -> unit
-
 val equal_uri : uri -> uri -> bool
 
 val parse : string -> uri option

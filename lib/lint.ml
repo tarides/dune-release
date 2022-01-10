@@ -192,7 +192,6 @@ let lint_opam ~dry_run pkg =
   Logs.on_error_msg ~use:(fun () -> 1) (lint_opam ~dry_run pkg)
 
 let t_to_fun = [ (`Std_files, lint_std_files); (`Opam, lint_opam) ]
-
 let all = List.map fst t_to_fun
 
 let apply_lint ~dry_run t pkg =

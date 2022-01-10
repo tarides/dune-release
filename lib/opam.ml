@@ -162,7 +162,6 @@ module File = struct
   (* Try to compose with the OpamFile.OPAM API *)
 
   let id x = x
-
   let list f v = [ f v ]
 
   let field name field conv =

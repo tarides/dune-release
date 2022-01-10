@@ -179,5 +179,4 @@ let value =
   Cmdliner.Arg.(value & pos 2 (some string) None & info ~doc ~docv [])
 
 let term = Cmdliner.Term.(pure run $ action $ key $ value)
-
 let cmd = (term, info)

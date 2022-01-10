@@ -136,11 +136,8 @@ let delete =
     Arg.(value & flag & info [ "d"; "delete" ] ~doc)
 
 let doc = "Tag the package's source repository with a version"
-
 let sdocs = Manpage.s_common_options
-
 let exits = Cli.exits
-
 let man_xrefs = [ `Main; `Cmd "log" ]
 
 let man =
