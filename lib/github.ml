@@ -8,7 +8,6 @@ open Bos_setup
 
 module D = struct
   let user = "${user}"
-  let repo = "${repo}"
   let dir = Fpath.v "${dir}"
   let fetch_head = "${fetch_head}"
   let pr_url = "${pr_url}"
@@ -111,9 +110,7 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
         Ok ()
 
 let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
-  (if dry_run then Ok D.(user, repo, dir)
-  else Pkg.github_doc_owner_repo_and_path p)
-  >>= fun (user, repo, dir) ->
+  Pkg.github_doc_owner_repo_and_path p >>= fun (user, repo, dir) ->
   Pkg.name p >>= fun name ->
   Pkg.version p >>= fun version ->
   let remote = strf "git@@github.com:%s/%s.git" user repo in
@@ -435,13 +432,7 @@ let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
       Ok id
 
 let publish_distrib ~token ~dry_run ~msg ~archive ~yes ~draft p =
-  (match Pkg.infer_github_repo p with
-  | Ok r -> Ok r
-  | Error _ as e ->
-      (* It probably does not make sense for dry-run to push any further
-         if the github repo cannot be infered, we should remove in 2.0. *)
-      if dry_run then Ok { owner = D.user; repo = D.repo } else e)
-  >>= fun { owner; repo } ->
+  Pkg.infer_github_repo p >>= fun { owner; repo } ->
   Pkg.tag p >>= fun tag ->
   assert_tag_exists ~dry_run tag >>= fun () ->
   Vcs.get () >>= fun vcs ->

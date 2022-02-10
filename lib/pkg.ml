@@ -13,7 +13,6 @@ type t = {
   tag : Vcs.Tag.t option;
   version : Version.t option;
   keep_v : bool;
-  delegate : Cmd.t option;
   build_dir : Fpath.t option;
   opam : Fpath.t option;
   opam_descr : Fpath.t option;
@@ -37,7 +36,6 @@ let opam_doc p = opam_field_hd p "doc"
 let opam_homepage_sld p =
   opam_homepage p >>| Stdext.Option.bind ~f:Uri_helpers.get_sld
 
-let opam_doc_sld p = opam_doc p >>| Stdext.Option.bind ~f:Uri_helpers.get_sld
 let name p = Ok p.name
 let with_name p name = { p with name }
 
@@ -74,49 +72,6 @@ let release_identifier pkg =
   match pkg.tag with
   | Some t -> Ok (strf "%a" Vcs.Tag.pp t)
   | None -> version pkg >>= fun version -> Ok (strf "%a" Version.pp version)
-
-let delegate p =
-  let not_found = function
-    | None ->
-        R.error_msg
-          "Package delegate command cannot be found (no homepage or doc \
-           field). Try `dune-release help delegate` for more information."
-    | Some cmd ->
-        R.error_msgf
-          "%a: package delegate cannot be found. Try `dune-release help \
-           delegate` for more information."
-          Cmd.pp cmd
-  in
-  match p.delegate with
-  | Some cmd -> Ok (Some cmd)
-  | None -> (
-      let delegate =
-        match
-          OS.Env.(value "DUNE_RELEASE_DELEGATE" (some string) ~absent:None)
-        with
-        | Some cmd -> Some cmd
-        | None -> None
-      in
-      let guess_delegate () =
-        match delegate with
-        | Some d -> Ok d
-        | None -> (
-            let cmd sld = strf "%s-dune-release-delegate" sld in
-            (* first look at `doc:` then `homepage:` *)
-            opam_doc_sld p >>= function
-            | Some sld -> Ok (cmd sld)
-            | None -> (
-                opam_homepage_sld p >>= function
-                | Some sld -> Ok (cmd sld)
-                | None -> not_found None))
-      in
-      guess_delegate () >>= fun cmd ->
-      let x = Cmd.v cmd in
-      OS.Cmd.exists x >>= function
-      | true -> Ok (Some x)
-      | false ->
-          if cmd <> "github-dune-release-delegate" then not_found (Some x)
-          else Ok None)
 
 let build_dir p =
   match p.build_dir with Some b -> Ok b | None -> Ok (Fpath.v "_build")
@@ -218,8 +173,9 @@ let infer_github_repo pkg =
       match Stdext.Option.O.(dev_repo >>= Github_repo.from_uri) with
       | Some gh_repo -> Ok gh_repo
       | None ->
-          R.error_msg "Github development repository URL could not be inferred."
-      )
+          R.error_msg
+            "Github development repository URL could not be inferred from opam \
+             files.")
 
 let infer_github_distrib_uri pkg =
   infer_github_repo pkg >>= fun gh_repo ->
@@ -364,9 +320,8 @@ let infer_name dir =
 
 let version_of_changelog pkg = Version.Changelog.to_version ~keep_v:pkg.keep_v
 
-let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
-    ?opam:opam_file ?opam_descr ?readme ?change_log ?license ?distrib_file
-    ?publish_msg () =
+let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?build_dir ?opam:opam_file
+    ?opam_descr ?readme ?change_log ?license ?distrib_file ?publish_msg () =
   let name =
     match name with None -> infer_name Fpath.(v ".") | Some v -> Ok v
   in
@@ -383,7 +338,6 @@ let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?delegate ?build_dir
       version;
       tag;
       keep_v;
-      delegate;
       build_dir;
       opam = opam_file;
       opam_descr;

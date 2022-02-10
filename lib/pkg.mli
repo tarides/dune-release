@@ -25,7 +25,6 @@ val v :
   ?version:Version.t ->
   ?tag:Vcs.Tag.t ->
   ?keep_v:bool ->
-  ?delegate:Cmd.t ->
   ?build_dir:Fpath.t ->
   ?opam:Fpath.t ->
   ?opam_descr:Fpath.t ->
@@ -51,9 +50,6 @@ val version : t -> (Version.t, R.msg) result
 (** [version p] is [p]'s version.*)
 
 val tag : t -> (Vcs.Tag.t, R.msg) result
-
-val delegate : t -> (Cmd.t option, R.msg) result
-(** [delegate p] is [p]'s delegate. *)
 
 val build_dir : t -> (Fpath.t, R.msg) result
 (** [build_dir p] is [p]'s build directory. *)

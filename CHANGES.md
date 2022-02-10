@@ -10,6 +10,11 @@
 
 ### Removed
 
+- Remove support for delegates.
+  Previous users of this feature should now use `dune-release delegate-info`
+  and wrap dune-release calls in a script. See #188 for details.
+  (#428, @NathanReb)
+
 ### Security
 
 ## 1.6.1
