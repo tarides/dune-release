@@ -8,6 +8,8 @@
 
 ### Fixed
 
+- Fix compatibility with recent cmdliner
+
 ### Removed
 
 ### Security

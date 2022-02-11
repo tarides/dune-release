@@ -46,10 +46,11 @@ let man =
   ]
 
 let main =
-  ( fst Bistro.cmd,
-    Term.info "dune-release" ~version:"%%VERSION%%" ~doc ~sdocs ~exits ~man )
+  Cmd.group ~default:Bistro.term
+    (Cmd.info "dune-release" ~version:"%%VERSION%%" ~doc ~sdocs ~exits ~man)
+    cmds
 
-let main () = Term.(exit_status @@ eval_choice main cmds)
+let main () = Stdlib.exit @@ Cmd.eval' main
 let () = main ()
 
 (*---------------------------------------------------------------------------

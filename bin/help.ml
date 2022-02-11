@@ -445,9 +445,9 @@ let man =
     `P "Use `topics' as $(i,TOPIC) to get a list of topics.";
   ]
 
-let cmd =
-  ( Term.(ret (const help $ Term.man_format $ topic $ Term.choice_names)),
-    Term.info "help" ~doc ~exits ~man ~man_xrefs )
+let term = Term.(ret (const help $ Arg.man_format $ topic $ Term.choice_names))
+let info = Cmd.info "help" ~doc ~exits ~man ~man_xrefs
+let cmd = Cmd.v info term
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

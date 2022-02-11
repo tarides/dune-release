@@ -149,11 +149,13 @@ let man =
        extracted from the package's change log.";
   ]
 
-let cmd =
-  ( Term.(
-      pure tag $ Cli.setup $ Cli.dry_run $ Cli.change_log $ Cli.keep_v $ version
-      $ commit $ force $ sign $ delete $ msg $ Cli.yes),
-    Term.info "tag" ~doc ~sdocs ~exits ~man ~man_xrefs )
+let term =
+  Term.(
+    const tag $ Cli.setup $ Cli.dry_run $ Cli.change_log $ Cli.keep_v $ version
+    $ commit $ force $ sign $ delete $ msg $ Cli.yes)
+
+let info = Cmd.info "tag" ~doc ~sdocs ~exits ~man ~man_xrefs
+let cmd = Cmd.v info term
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

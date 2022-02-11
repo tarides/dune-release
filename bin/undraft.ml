@@ -141,7 +141,7 @@ let exits = Cli.exits
 
 let envs =
   [
-    Term.env_info "DUNE_RELEASE_DELEGATE"
+    Cmd.Env.info "DUNE_RELEASE_DELEGATE"
       ~doc:"The package delegate to use, see dune-release-delegate(7).";
   ]
 
@@ -163,9 +163,11 @@ let man =
        opened before with dune-release-opam(2).";
   ]
 
-let cmd =
-  ( Term.(
-      pure undraft_cli $ Cli.setup $ Cli.dist_opam $ Cli.dist_file
-      $ Cli.opam_repo $ Cli.token $ Cli.local_repo $ Cli.remote_repo
-      $ Cli.build_dir $ Cli.pkg_names $ Cli.dry_run $ Cli.yes),
-    Term.info "undraft" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )
+let term =
+  Term.(
+    const undraft_cli $ Cli.setup $ Cli.dist_opam $ Cli.dist_file
+    $ Cli.opam_repo $ Cli.token $ Cli.local_repo $ Cli.remote_repo
+    $ Cli.build_dir $ Cli.pkg_names $ Cli.dry_run $ Cli.yes)
+
+let info = Cmd.info "undraft" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
+let cmd = Cmd.v info term

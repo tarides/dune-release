@@ -82,7 +82,7 @@ let token =
      token is provided through an environment variable."
   in
   let docv = "TOKEN" in
-  let env = Arg.env_var "DUNE_RELEASE_GITHUB_TOKEN" in
+  let env = Cmd.Env.info "DUNE_RELEASE_GITHUB_TOKEN" in
   let arg =
     Arg.(value & opt (some string) None & info [ "token" ] ~doc ~docv ~env)
   in
@@ -207,7 +207,7 @@ let user =
 
 let local_repo =
   let doc = "Location of the local fork of opam-repository" in
-  let env = Arg.env_var "DUNE_RELEASE_LOCAL_REPO" in
+  let env = Cmd.Env.info "DUNE_RELEASE_LOCAL_REPO" in
   let arg =
     Arg.(
       value
@@ -218,7 +218,7 @@ let local_repo =
 
 let remote_repo =
   let doc = "Location of the remote fork of opam-repository" in
-  let env = Arg.env_var "DUNE_RELEASE_REMOTE_REPO" in
+  let env = Cmd.Env.info "DUNE_RELEASE_REMOTE_REPO" in
   let arg =
     Arg.(
       value
@@ -233,7 +233,7 @@ let opam_repo =
      to release to a custom repo. Useful for testing purposes."
   in
   let docv = "GITHUB_USER_OR_ORG/REPO_NAME" in
-  let env = Arg.env_var "DUNE_RELEASE_OPAM_REPO" in
+  let env = Cmd.Env.info "DUNE_RELEASE_OPAM_REPO" in
   named
     (fun x -> `Opam_repo x)
     Arg.(
@@ -282,11 +282,11 @@ let setup style_renderer log_level cwd =
 
 let setup =
   let style_renderer =
-    let env = Arg.env_var "DUNE_RELEASE_COLOR" in
+    let env = Cmd.Env.info "DUNE_RELEASE_COLOR" in
     Fmt_cli.style_renderer ~docs:Manpage.s_common_options ~env ()
   in
   let log_level =
-    let env = Arg.env_var "DUNE_RELEASE_VERBOSITY" in
+    let env = Cmd.Env.info "DUNE_RELEASE_VERBOSITY" in
     Logs_cli.level ~docs:Manpage.s_common_options ~env ()
   in
   let cwd =
@@ -298,15 +298,6 @@ let setup =
       & info [ "C"; "pkg-dir" ] ~docs:Manpage.s_common_options ~doc ~docv)
   in
   Term.(ret (const setup $ style_renderer $ log_level $ cwd))
-
-(* Verbosity propagation. *)
-
-let propagate_verbosity_to_pkg_file () =
-  match Logs.level () with
-  | None -> Cmd.(v "-q")
-  | Some Logs.Info -> Cmd.(v "-v")
-  | Some Logs.Debug -> Cmd.(v "-v" % "-v")
-  | Some _ -> Cmd.empty
 
 (* Error handling *)
 
@@ -329,8 +320,8 @@ let handle_error = function
         r
 
 let exits =
-  Term.exit_info 3 ~doc:"on indiscriminate errors reported on stderr."
-  :: Term.default_exits
+  Cmd.Exit.info 3 ~doc:"on indiscriminate errors reported on stderr."
+  :: Cmd.Exit.defaults
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

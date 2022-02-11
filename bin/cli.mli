@@ -116,13 +116,6 @@ val setup : unit Term.t
     side effect, set {!Logs} log verbosity, adjusts colored output and sets the
     current working directory. *)
 
-(** {1 Verbosity propagation} *)
-
-val propagate_verbosity_to_pkg_file : unit -> Bos.Cmd.t
-(** [propagate_verbosity_to_pkg_file ()] is a command line fragment that has the
-    option to propagate the current log verbosity to an invocation of the
-    package description. *)
-
 (** {1 Warnings and errors} *)
 
 val warn_if_vcs_dirty : string -> (unit, R.msg) result
@@ -131,7 +124,7 @@ val warn_if_vcs_dirty : string -> (unit, R.msg) result
 val handle_error : (int, R.msg) result -> int
 (** [handle_error r] is [r]'s result or logs [r]'s error and returns [3]. *)
 
-val exits : Term.exit_info list
+val exits : Cmd.Exit.info list
 (** [exits] is are the exit codes common to all commands. *)
 
 (*---------------------------------------------------------------------------

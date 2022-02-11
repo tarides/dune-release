@@ -71,12 +71,12 @@ let exits = Cli.exits
 
 let envs =
   [
-    Term.env_info "DUNE_RELEASE_BZIP2"
+    Cmd.Env.info "DUNE_RELEASE_BZIP2"
       ~doc:
         "The $(b,bzip2) tool to use to compress the\n\
         \    archive. Gets the archive on stdin and must output the result on\n\
         \    standard out.";
-    Term.env_info "DUNE_RELEASE_TAR"
+    Cmd.Env.info "DUNE_RELEASE_TAR"
       ~doc:
         "The $(b,tar) tool to use to unarchive a tbz\n\
         \    archive (archive creation itself is handled by dune-release).";
@@ -136,12 +136,14 @@ let man =
          relies on bzip2 to be a reproducible function across platforms." );
   ]
 
-let cmd =
-  ( Term.(
-      pure distrib_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.pkg_names
-      $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ Cli.keep_build_dir
-      $ Cli.skip_lint $ Cli.skip_build $ Cli.skip_tests $ Cli.include_submodules),
-    Term.info "distrib" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )
+let term =
+  Term.(
+    const distrib_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.pkg_names
+    $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ Cli.keep_build_dir
+    $ Cli.skip_lint $ Cli.skip_build $ Cli.skip_tests $ Cli.include_submodules)
+
+let info = Cmd.info "distrib" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
+let cmd = Cmd.v info term
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

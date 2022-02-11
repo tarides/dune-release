@@ -21,9 +21,9 @@ let var =
   let doc = "The variable to print." in
   Arg.(required & pos 0 (some string) None & info [] ~doc ~docv:"VAR")
 
-let term = Term.(pure run $ var)
+let term = Term.(const run $ var)
 
 let info =
-  Term.info "delegate-info" ~doc:"Prints out the given variable to stdout"
+  Cmd.info "delegate-info" ~doc:"Prints out the given variable to stdout"
 
-let cmd = (term, info)
+let cmd = Cmd.v info term
