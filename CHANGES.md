@@ -8,7 +8,7 @@
 
 ### Fixed
 
-- Fix compatibility with recent cmdliner
+- Fix compatibility with Cmdliner 1.1.0 (#429, @NathanReb)
 
 ### Removed
 
