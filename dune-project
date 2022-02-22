@@ -43,7 +43,7 @@ with [Dune](https://github.com/ocaml/dune) and hosted on
   (yojson (>= 1.6))))
 
 (package
- (name dune_release.bin)
+ (name dune-release.bin)
  (synopsis "Release dune packages in opam")
  (description
 "`dune-release` is a tool to streamline the release of Dune packages in
