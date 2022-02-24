@@ -8,7 +8,8 @@
 
 ### Fixed
 
-- Fix compatibility with Cmdliner 1.1.0 (#429, @NathanReb)
+- Fix compatibility with Cmdliner 1.1.0. This also unfortunately means that the
+  minimum OCaml version is 4.08 now. (#429, @NathanReb)
 
 ### Removed
 
