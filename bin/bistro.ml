@@ -50,14 +50,15 @@ let man =
     `P "See dune-release(7) for more information.";
   ]
 
-let cmd =
-  ( Term.(
-      pure bistro $ Cli.setup $ Cli.dry_run $ Cli.pkg_names $ Cli.pkg_version
-      $ Cli.dist_tag $ Cli.keep_v $ Cli.token $ Cli.include_submodules
-      $ Cli.draft $ Cli.keep_build_dir $ Cli.skip_lint $ Cli.skip_build
-      $ Cli.skip_tests $ Cli.local_repo $ Cli.remote_repo $ Cli.opam_repo
-      $ Cli.no_auto_open),
-    Term.info "bistro" ~doc ~sdocs ~exits ~man ~man_xrefs )
+let term =
+  Term.(
+    const bistro $ Cli.setup $ Cli.dry_run $ Cli.pkg_names $ Cli.pkg_version
+    $ Cli.dist_tag $ Cli.keep_v $ Cli.token $ Cli.include_submodules $ Cli.draft
+    $ Cli.keep_build_dir $ Cli.skip_lint $ Cli.skip_build $ Cli.skip_tests
+    $ Cli.local_repo $ Cli.remote_repo $ Cli.opam_repo $ Cli.no_auto_open)
+
+let info = Cmd.info "bistro" ~doc ~sdocs ~exits ~man ~man_xrefs
+let cmd = Cmd.v info term
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

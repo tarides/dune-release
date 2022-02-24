@@ -35,7 +35,7 @@ let lints =
 
 let doc = "Check package distribution consistency and conventions"
 let sdocs = Manpage.s_common_options
-let exits = Term.exit_info 1 ~doc:"on lint failure" :: Cli.exits
+let exits = Cmd.Exit.info 1 ~doc:"on lint failure" :: Cli.exits
 let man_xrefs = [ `Main; `Cmd "distrib" ]
 
 let man =
@@ -52,11 +52,13 @@ let man =
        dune-release-distrib(1) for more details.";
   ]
 
-let cmd =
-  ( Term.(
-      pure lint $ Cli.setup $ Cli.dry_run $ Cli.pkg_names $ Cli.pkg_version
-      $ Cli.dist_tag $ Cli.keep_v $ lints),
-    Term.info "lint" ~doc ~sdocs ~exits ~man ~man_xrefs )
+let term =
+  Term.(
+    const lint $ Cli.setup $ Cli.dry_run $ Cli.pkg_names $ Cli.pkg_version
+    $ Cli.dist_tag $ Cli.keep_v $ lints)
+
+let info = Cmd.info "lint" ~doc ~sdocs ~exits ~man ~man_xrefs
+let cmd = Cmd.v info term
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

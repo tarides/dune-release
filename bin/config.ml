@@ -153,10 +153,6 @@ let man =
        newly created opam-repository PR or not.";
   ]
 
-let info =
-  let doc = "Displays or update dune-release global configuration" in
-  Cmdliner.Term.info ~doc ~man "config"
-
 let action =
   let docv = "ACTION" in
   let doc =
@@ -178,5 +174,10 @@ let value =
   let doc = "The new field value" in
   Cmdliner.Arg.(value & pos 2 (some string) None & info ~doc ~docv [])
 
-let term = Cmdliner.Term.(pure run $ action $ key $ value)
-let cmd = (term, info)
+let term = Cmdliner.Term.(const run $ action $ key $ value)
+
+let info =
+  let doc = "Displays or update dune-release global configuration" in
+  Cmdliner.Cmd.info ~doc ~man "config"
+
+let cmd = Cmdliner.Cmd.v info term

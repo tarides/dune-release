@@ -24,12 +24,12 @@
 with [Dune](https://github.com/ocaml/dune) and hosted on
 [GitHub](https://github.com).")
  (depends
-  (ocaml (>= 4.06.0))
+  (ocaml (>= 4.08.0))
   curly
   (fmt (>= 0.8.7))
   (fpath (>= 0.7.3))
   bos
-  cmdliner
+  (cmdliner (>= 1.1.0))
   (re (>= 1.7.2))
   astring
   (opam-file-format (>= 2.1.2))

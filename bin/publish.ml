@@ -119,7 +119,7 @@ let delegate =
      for the lookup procedure. $(b,Warning:) " ^ Deprecate.Delegates.warning
   in
   let docv = "TOOL" in
-  let to_cmd = function None -> None | Some s -> Some (Cmd.v s) in
+  let to_cmd = function None -> None | Some s -> Some (Bos.Cmd.v s) in
   Cli.named
     (fun x -> `Delegate x)
     Term.(
@@ -166,7 +166,7 @@ let exits = Cli.exits
 
 let envs =
   [
-    Term.env_info "DUNE_RELEASE_DELEGATE"
+    Cmd.Env.info "DUNE_RELEASE_DELEGATE"
       ~doc:
         ("The package delegate to use, see dune-release-delegate(7). "
        ^ Deprecate.Delegates.env_var_warning);
@@ -199,13 +199,15 @@ let man =
         ^ Deprecate.Delegates.artefacts_warning );
   ]
 
-let cmd =
-  ( Term.(
-      pure publish_cli $ Cli.setup $ Cli.build_dir $ Cli.pkg_names
-      $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ Cli.dist_opam $ delegate
-      $ Cli.change_log $ Cli.dist_uri $ Cli.dist_file $ Cli.publish_msg
-      $ Cli.dry_run $ artefacts $ Cli.yes $ Cli.token $ Cli.draft),
-    Term.info "publish" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs )
+let term =
+  Term.(
+    const publish_cli $ Cli.setup $ Cli.build_dir $ Cli.pkg_names
+    $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ Cli.dist_opam $ delegate
+    $ Cli.change_log $ Cli.dist_uri $ Cli.dist_file $ Cli.publish_msg
+    $ Cli.dry_run $ artefacts $ Cli.yes $ Cli.token $ Cli.draft)
+
+let info = Cmd.info "publish" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
+let cmd = Cmd.v info term
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

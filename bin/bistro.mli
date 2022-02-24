@@ -6,7 +6,8 @@
 
 (** The [bistro] command. *)
 
-val cmd : int Cmdliner.Term.t * Cmdliner.Term.info
+val term : int Cmdliner.Term.t
+val cmd : int Cmdliner.Cmd.t
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

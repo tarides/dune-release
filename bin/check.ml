@@ -76,9 +76,11 @@ let man =
        dune-release creates the distribution tarball.";
   ]
 
-let cmd =
-  ( Term.(
-      const check $ Cli.pkg_names $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v
-      $ Cli.build_dir $ Cli.skip_lint $ Cli.skip_build $ Cli.skip_tests
-      $ working_tree),
-    Term.info "check" ~doc ~man )
+let term =
+  Term.(
+    const check $ Cli.pkg_names $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v
+    $ Cli.build_dir $ Cli.skip_lint $ Cli.skip_build $ Cli.skip_tests
+    $ working_tree)
+
+let info = Cmd.info "check" ~doc ~man
+let cmd = Cmd.v info term

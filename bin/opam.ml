@@ -399,18 +399,18 @@ let man =
         "outputs the field $(i,FIELD) of the package's opam file." );
   ]
 
-let cmd =
-  let info = Term.info "opam" ~doc ~sdocs ~envs ~man ~man_xrefs in
-  let t =
-    Term.(
-      pure opam_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.local_repo
-      $ Cli.remote_repo $ Cli.opam_repo $ Cli.user $ Cli.keep_v $ Cli.dist_opam
-      $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $ Cli.pkg_names
-      $ Cli.pkg_version $ pkg_descr $ Cli.readme $ Cli.change_log
-      $ Cli.publish_msg $ action $ field_arg $ Cli.no_auto_open $ Cli.yes
-      $ Cli.token $ Cli.draft)
-  in
-  (t, info)
+let info = Cmd.info "opam" ~doc ~sdocs ~envs ~man ~man_xrefs
+
+let term =
+  Term.(
+    const opam_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.local_repo
+    $ Cli.remote_repo $ Cli.opam_repo $ Cli.user $ Cli.keep_v $ Cli.dist_opam
+    $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $ Cli.pkg_names
+    $ Cli.pkg_version $ pkg_descr $ Cli.readme $ Cli.change_log
+    $ Cli.publish_msg $ action $ field_arg $ Cli.no_auto_open $ Cli.yes
+    $ Cli.token $ Cli.draft)
+
+let cmd = Cmd.v info term
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
