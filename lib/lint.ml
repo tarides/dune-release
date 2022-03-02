@@ -104,10 +104,10 @@ let lint_opam_home_and_dev pkg =
 
 let lint_opam_github_fields pkg = lint_opam_doc pkg + lint_opam_home_and_dev pkg
 
-let opam_lint_cmd ~opam_file_version ~opam_tool_version =
+let opam_lint_cmd ~opam_file_version =
   let lint_older_format =
-    match (opam_file_version, opam_tool_version) with
-    | Some "1.2", Opam.Version.V2 ->
+    match opam_file_version with
+    | Some "1.2" ->
         let _ = Deprecate.Opam_1_x.remove_me in
         true
     | _ -> false
@@ -141,8 +141,8 @@ let lint_descr ~opam_file pkg =
     ~msgf:(fun l -> l "opam field %a is present" pp_field "synopsis")
     (check_has_synopsis ~opam_file pkg)
 
-let opam_lint ~dry_run ~opam_file_version ~opam_tool_version opam_file =
-  let base_lint_cmd = opam_lint_cmd ~opam_file_version ~opam_tool_version in
+let opam_lint ~dry_run ~opam_file_version opam_file =
+  let base_lint_cmd = opam_lint_cmd ~opam_file_version in
   let short_lint_cmd = Cmd.(base_lint_cmd % "-s") in
   let verbose_lint_cmd = base_lint_cmd in
   lint_file_with_cmd ~dry_run ~file_kind:"opam file" ~cmd:short_lint_cmd
@@ -167,26 +167,15 @@ let opam_file_format_major opam_file_version =
   | _ -> None
 
 let lint_opam ~dry_run pkg =
-  Lazy.force Opam.Version.cli >>= fun opam_tool_version ->
   Pkg.opam_field_hd pkg "opam-version" >>= fun opam_file_version ->
   (match Stdext.Option.bind ~f:opam_file_format_major opam_file_version with
   | Some 1 ->
       App_log.unhappy (fun l -> l "%s" Deprecate.Opam_1_x.file_format_warning)
   | _ -> ());
-  match (opam_file_version, opam_tool_version) with
-  | Some "2.0", Opam.Version.V1_2_2 ->
-      App_log.status (fun l ->
-          l
-            "Skipping opam lint as `opam-version` field is \"2.0\" while `opam \
-             --version` is 1.2.2");
-      Ok 0
-  | _ ->
-      Pkg.opam pkg >>= fun opam_file ->
-      let opam_lint_errors =
-        opam_lint ~dry_run ~opam_file_version ~opam_tool_version opam_file
-      in
-      let extra_errors = extra_opam_lint ~opam_file_version ~opam_file pkg in
-      Ok (opam_lint_errors + extra_errors)
+  Pkg.opam pkg >>= fun opam_file ->
+  let opam_lint_errors = opam_lint ~dry_run ~opam_file_version opam_file in
+  let extra_errors = extra_opam_lint ~opam_file_version ~opam_file pkg in
+  Ok (opam_lint_errors + extra_errors)
 
 let lint_opam ~dry_run pkg =
   Logs.on_error_msg ~use:(fun () -> 1) (lint_opam ~dry_run pkg)

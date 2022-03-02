@@ -77,21 +77,6 @@ module Url : sig
       of file [f]. *)
 end
 
-(** Opam version. *)
-module Version : sig
-  type t = V1_2_2 | V2  (** Supported opam versions. *)
-
-  val pp : Format.formatter -> t -> unit
-  val equal : t -> t -> bool
-
-  val of_string : string -> (t, R.msg) result
-  (** [of_string s] returns the supported opam version parsed from [s] or return
-      the associated error message. *)
-
-  val cli : (t, R.msg) result Lazy.t
-  (** [cli] is the output of [opam --version]. *)
-end
-
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
 

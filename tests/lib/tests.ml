@@ -4,7 +4,6 @@ let () =
       Test_github.suite;
       Test_github_v3_api.suite;
       Test_github_v4_api.suite;
-      Test_opam.suite;
       Test_opam_file.suite;
       Test_pkg.suite;
       Test_stdext.suite;

@@ -1,8 +1,4 @@
 module Opam_1_x : sig
-  val client_warning : string
-  (** Message warning users of the opam 1.x CLI tool that they need to upgade to
-      2.x to be able to be compatible with dune-release 2.0.0. *)
-
   val file_format_warning : string
   (** Message warning users that they need to upgrade their opam files from the
       1.x to the 2.x format to be compatible with dune-release 2.0.0 *)
