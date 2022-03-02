@@ -9,9 +9,7 @@
 val publish :
   ?build_dir:Fpath.t ->
   ?opam:Fpath.t ->
-  ?delegate:Bos_setup.Cmd.t ->
   ?change_log:Fpath.t ->
-  ?distrib_uri:string ->
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
   ?token:string Dune_release.Config.Cli.t ->
@@ -20,12 +18,12 @@ val publish :
   tag:Dune_release.Vcs.Tag.t option ->
   keep_v:bool Dune_release.Config.Cli.t ->
   dry_run:bool ->
-  publish_artefacts:[ `Alt of string | `Distrib | `Doc ] list ->
+  publish_artefacts:[ `Distrib | `Doc ] list ->
   yes:bool ->
   draft:bool ->
   unit ->
   (int, Bos_setup.R.msg) result
-(** [publish ~build_dir ~opam ~delegate ~change_log ~distrib_uri ~distrib_file
+(** [publish ~build_dir ~opam ~change_log ~distrib_uri ~distrib_file
     ~publish_msg ~name ~pkg_names ~version ~tag ~keep_v ~dry_run
     ~publish_artefacts ~yes ~draft ()]
     publishes the artefacts [publish_artefacts] of the package built with

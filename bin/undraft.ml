@@ -138,13 +138,6 @@ let doc =
 
 let sdocs = Manpage.s_common_options
 let exits = Cli.exits
-
-let envs =
-  [
-    Cmd.Env.info "DUNE_RELEASE_DELEGATE"
-      ~doc:"The package delegate to use, see dune-release-delegate(7).";
-  ]
-
 let man_xrefs = [ `Main; `Cmd "publish"; `Cmd "opam" ]
 
 let man =
@@ -169,5 +162,5 @@ let term =
     $ Cli.opam_repo $ Cli.token $ Cli.local_repo $ Cli.remote_repo
     $ Cli.build_dir $ Cli.pkg_names $ Cli.dry_run $ Cli.yes)
 
-let info = Cmd.info "undraft" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
+let info = Cmd.info "undraft" ~doc ~sdocs ~exits ~man ~man_xrefs
 let cmd = Cmd.v info term
