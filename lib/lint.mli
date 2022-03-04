@@ -3,6 +3,13 @@ open Bos_setup
 type t = [ `Std_files | `Opam ]
 (** The type for lints. *)
 
+val opam_lint :
+  dry_run:bool ->
+  opam_file_version:string option ->
+  opam_tool_version:Opam.Version.t ->
+  Fpath.t ->
+  int
+
 val all : t list
 (** [all] is a list with all lint values. *)
 

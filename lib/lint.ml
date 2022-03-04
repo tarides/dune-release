@@ -141,13 +141,21 @@ let lint_descr ~opam_file pkg =
     ~msgf:(fun l -> l "opam field %a is present" pp_field "synopsis")
     (check_has_synopsis ~opam_file pkg)
 
-let opam_lint ~dry_run ~opam_file_version opam_file =
-  let base_lint_cmd = opam_lint_cmd ~opam_file_version in
+let opam_lint_with_cmd ~dry_run ~opam_file_version ~opam_tool_version opam_file
+    =
+  let base_lint_cmd = opam_lint_cmd ~opam_file_version ~opam_tool_version in
   let short_lint_cmd = Cmd.(base_lint_cmd % "-s") in
   let verbose_lint_cmd = base_lint_cmd in
   lint_file_with_cmd ~dry_run ~file_kind:"opam file" ~cmd:short_lint_cmd
     ~handle_exit:(handle_opam_lint_exit ~dry_run ~verbose_lint_cmd ~opam_file)
     opam_file 0
+
+let opam_lint_impl ~dry_run ~opam_file_version ~opam_tool_version opam_file =
+  ref
+    (opam_lint_with_cmd ~dry_run ~opam_file_version ~opam_tool_version opam_file)
+
+let opam_lint ~dry_run ~opam_file_version ~opam_tool_version opam_file =
+  !(opam_lint_impl ~dry_run ~opam_file_version ~opam_tool_version opam_file)
 
 let extra_opam_lint ~opam_file_version ~opam_file pkg =
   let is_2_0_format =
