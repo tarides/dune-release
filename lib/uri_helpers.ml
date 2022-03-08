@@ -64,3 +64,6 @@ let append_to_base ~rel_path base =
 
 let chop_git_prefix uri =
   match String.cut ~sep:"git+" uri with Some ("", rest) -> rest | _ -> uri
+
+let chop_git_suffix uri =
+  match Filename.chop_suffix_opt ~suffix:".git" uri with Some x -> x | _ -> uri

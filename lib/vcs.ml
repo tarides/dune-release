@@ -146,6 +146,10 @@ let git_branch_exists ~dry_run r br =
   in
   match run_git_quiet ~dry_run r cmd with Ok () -> true | _ -> false
 
+let git_remote_url r =
+  run_git_string ~dry_run:false r ~default:Default.string
+    Cmd.(v "config" % "--get" % "remote.origin.url")
+
 let git_clone ~dry_run ?force ?branch ~dir:d r =
   let branch =
     match branch with None -> Cmd.empty | Some b -> Cmd.(v "-b" % b)
@@ -274,6 +278,9 @@ let hg_describe ~dirty r ~rev =
       hg_id ~rev:"tip" r >>= fun (_, is_dirty) ->
       Ok (if is_dirty then dirtify descr else descr)
 
+let hg_remote_url r =
+  run_hg r Cmd.(v "paths" % "default") OS.Cmd.out_string
+
 (* hg order is reverse from git *)
 
 let hg_clone r ~dir:d =
@@ -366,6 +373,11 @@ let branch_exists ~dry_run r tag =
   match r with
   | (`Git, _, _) as r -> git_branch_exists r ~dry_run tag
   | `Hg, _, _ -> failwith "TODO"
+
+let remote_url r =
+  match r with
+  | `Git, _, _ -> git_remote_url r
+  | `Hg, _, _ -> hg_remote_url r
 
 (* Operations *)
 

@@ -32,6 +32,7 @@ We need to set up a git project for dune-release to work properly
   $ git init > /dev/null 2>&1
   $ git config user.name "dune-release-test"
   $ git config user.email "pseudo@pseudo.invalid"
+  $ git config remote.origin.url git+https://github.com/foo/whatever.git
   $ git add CHANGES.md whatever.opam dune-project README LICENSE .gitignore
   $ git commit -m "Initial commit" > /dev/null
   $ dune-release tag -y > /dev/null

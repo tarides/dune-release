@@ -15,7 +15,7 @@ type t
 
 val infer_name_err : ('a, Format.formatter, unit, unit, unit, 'a) format6
 
-val try_infer_name : Fpath.t -> (string option, [> Rresult.R.msg ]) result
+val try_infer_name : Fpath.t -> (string option, R.msg) result
 (** [try_infer_name dir] tries to infer the name of the main package in [dir].
     If you already have a package [p], use [name p] instead. *)
 

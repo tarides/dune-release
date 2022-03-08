@@ -24,6 +24,7 @@ Make a minimal project set up
   > (lang dune 2.7)
   > (name my_pkg)
   > EOF
+  $ git config remote.origin.url git+https://github.com/fu/fa.git
 
 If the condition described above is fulfilled, there are 4 checks to be performed
 
@@ -194,6 +195,7 @@ but not dune-release compatible on the last git tag.
   $ git init 2> /dev/null > /dev/null
   $ git config user.name "dune-release-test"
   $ git config user.email "pseudo@pseudo.invalid"
+  $ git config remote.origin.url git+https://github.com/foo/whatever.git
   $ git add my_pkg.opam
   $ git commit -m "Initial commit" > /dev/null
   $ git tag -a 0.1.0 HEAD -m "release 0.1.0"

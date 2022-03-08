@@ -23,3 +23,6 @@ val append_to_base : rel_path:string -> string -> string
 
 val chop_git_prefix : string -> string
 (** Chop the prefix [git+] from a URI, if any. *)
+
+val chop_git_suffix : string -> string
+(** Chop the suffix [.git] from a URI, if any. *)

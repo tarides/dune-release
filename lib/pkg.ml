@@ -267,20 +267,6 @@ let infer_pkg_names dir = function
       else Ok (List.map (fun p -> Fpath.(basename @@ rem_ext p)) opam_files)
   | x -> Ok x
 
-let infer_from_opam_files dir =
-  infer_pkg_names dir [] >>= fun package_names ->
-  let shortest =
-    match package_names with
-    | [] -> assert false
-    | first :: rest ->
-        List.fold_left
-          (fun acc s -> if String.length s < String.length acc then s else acc)
-          first rest
-  in
-  if List.for_all (String.is_prefix ~affix:shortest) package_names then
-    Ok (Some shortest)
-  else Ok None
-
 let infer_from_readme dir =
   let file = Fpath.(dir / "README.md") in
   Bos.OS.File.exists file >>= function
@@ -296,16 +282,22 @@ let infer_from_readme dir =
           | false -> None
           | true -> Some name))
 
+let infer_from_remote_url dir =
+  Vcs.get ~dir () >>= fun repo ->
+  Vcs.remote_url repo >>= fun url ->
+  match Uri_helpers.parse url with
+  | Some {path= []; _} -> Ok None
+  | Some {path; _} ->
+      Ok (Some (Uri_helpers.chop_git_suffix (List.(hd (rev path)))))
+  | None -> Ok None
+
 let try_infer_name dir =
-  dune_project_name dir >>= function
-  | Some n -> Ok (Some n)
-  | None -> (
-      infer_from_opam_files dir >>= function
-      | Some n -> Ok (Some n)
-      | None -> (
-          infer_from_readme dir >>= function
-          | Some n -> Ok (Some n)
-          | None -> Ok None))
+  match infer_from_remote_url dir with
+  | Ok (Some n) -> Ok (Some n)
+  | Ok None | Error _ ->
+      match infer_from_readme dir with
+      | Ok (Some n) -> Ok (Some n)
+      | Ok None | Error _ -> Ok None
 
 let infer_name_err : ('a, Format.formatter, unit, unit, unit, 'a) format6 =
   "cannot determine distribution name automatically: add (name <name>) to \

@@ -1,4 +1,4 @@
-Set up a project with two packaged libraries, no name in `dune-project`.
+Set up a project with two packaged libraries, no name in git configuration.
 
   $ mkdir liba libb
   $ cat > CHANGES.md << EOF
@@ -25,8 +25,9 @@ Expect an error message about the name in `dune-project`.
   dune-release: [ERROR] cannot determine distribution name automatically: add (name <name>) to dune-project
   [1]
 
-Use `(name <name>)` in `dune-project` (not committed).
+Use remote url in git config.
 
+  $ git config remote.origin.url git+https://github.com/foo/whatever.git
   $ cat > CHANGES.md << EOF
   > ## 0.44.0
   > 

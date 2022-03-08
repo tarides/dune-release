@@ -48,9 +48,9 @@ dune-release distrib --dry-run with no project name should fail as well.
 Add an uncommitted name to dune-project. (Because of a dune limitation
 this name must be one the .opam file names.)
 
-  $ echo "(name liba)" >> dune-project
+  $ git config remote.origin.url git+https://github.com/foo/liba.git
 
-Run dune-release distrib with the uncomitted name in dune-project.
+Run dune-release distrib with the name set in git config.
 
   $ dune-release tag -y > /dev/null
   $ dune-release distrib --skip-lint > /dev/null
@@ -64,7 +64,6 @@ Run dune-release distrib with the uncomitted name in dune-project.
 
 Commit the change in dune-project and run distrib.
 
-  $ git add dune-project && git commit -m 'add name' > /dev/null
   $ dune-release distrib --skip-lint | make_dune_release_deterministic
   [-] Building source archive
   [+] Wrote archive _build/liba-0.42.0-1-<deterministic>.tbz

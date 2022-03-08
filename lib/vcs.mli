@@ -92,6 +92,7 @@ val get_tag : t -> (Tag.t, R.msg) result
 val tag_exists : dry_run:bool -> t -> Tag.t -> bool
 val tag_points_to : t -> Tag.t -> string option
 val branch_exists : dry_run:bool -> t -> commit_ish -> bool
+val remote_url : t -> (string, R.msg) result
 
 (** {1:ops Repository operations} *)
 

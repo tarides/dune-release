@@ -30,6 +30,7 @@ We need to set up a git project with two commits to test trying to tag different
   $ git init 2> /dev/null > /dev/null
   $ git config user.name "dune-release-test"
   $ git config user.email "pseudo@pseudo.invalid"
+  $ git config remote.origin.url git+https://github.com/foo/whatever.git
   $ git add whatever.opam dune-project .gitignore CHANGES.md README.md LICENSE
   $ git commit -m "Testing" --quiet
 
