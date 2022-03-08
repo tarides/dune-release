@@ -6,7 +6,7 @@ type t = [ `Std_files | `Opam ]
 val opam_lint_impl :
   dry_run:bool ->
   opam_file_version:string option ->
-  opam_tool_version:Opam.Version.t ->
+  opam_tool_version:OpamTypes.version ->
   Fpath.t ->
   int ref
 
