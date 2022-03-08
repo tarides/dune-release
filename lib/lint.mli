@@ -4,11 +4,7 @@ type t = [ `Std_files | `Opam ]
 (** The type for lints. *)
 
 val opam_lint_impl :
-  dry_run:bool ->
-  opam_file_version:string option ->
-  opam_tool_version:OpamTypes.version ->
-  Fpath.t ->
-  int ref
+  dry_run:bool -> opam_file_version:string option -> Fpath.t -> int ref
 
 val all : t list
 (** [all] is a list with all lint values. *)
