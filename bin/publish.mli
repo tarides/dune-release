@@ -6,6 +6,14 @@
 
 (** The entrypoint for the [distro] command. *)
 
+val publish_doc :
+  specific:bool ->
+  dry_run:bool ->
+  yes:bool ->
+  string list ->
+  Dune_release.Pkg.t ->
+  (unit, Bos_setup.R.msg) result
+
 val publish :
   ?build_dir:Fpath.t ->
   ?opam:Fpath.t ->
