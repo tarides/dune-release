@@ -50,11 +50,11 @@ archive should fail as only publishing to github is supported.
 
   $ dune-release distrib --dry-run 2>&1 | grep -E "FAIL|ERROR"
   [FAIL] opam fields homepage and dev-repo can be parsed by dune-release
-  dune-release: [ERROR] Github development repository URL could not be inferred
+  dune-release: [ERROR] Github development repository URL could not be
   [FAIL] lint of _build/whatever-0.1.0 and package whatever failure: 1 errors.
 
 (2) publish distrib
 
   $ dune-release publish distrib --dry-run > /dev/null
-  dune-release: [ERROR] Github development repository URL could not be inferred from opam files.
+  dune-release: [ERROR] whatever-dune-release-delegate: package delegate cannot be found. Try `dune-release help delegate` for more information.
   [3]
