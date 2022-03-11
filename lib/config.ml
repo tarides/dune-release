@@ -120,7 +120,7 @@ let save t =
 let create_config ?(pkgs = []) file =
   App_log.status (fun l -> l "%a does not exist!" Fpath.pp file);
   App_log.status (fun l ->
-      l "Please answer a few question so we can create it for you:");
+      l "Please answer a few questions so we can create it for you:");
   App_log.blank_line ();
   let guessed_user =
     match pkgs with
