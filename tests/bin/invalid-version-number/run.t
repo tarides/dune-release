@@ -54,12 +54,12 @@ We do the whole dune-release process
   [-] Performing lint for package whatever in _build/whatever-3.3.4~4.10preview1
   => chdir _build/whatever-3.3.4~4.10preview1
      [in _build/whatever-3.3.4~4.10preview1]
-  [ OK ] lint of _build/whatever-3.3.4~4.10preview1 and package whatever success
+  $TESTCASE_ROOT/_build/whatever-3.3.4~4.10preview1/whatever.opam: Errors.
+  [FAIL] lint of _build/whatever-3.3.4~4.10preview1 and package whatever failure: 1 errors.
   [-] Building package in _build/whatever-3.3.4~4.10preview1
   => chdir _build/whatever-3.3.4~4.10preview1
   [-] Running package tests in _build/whatever-3.3.4~4.10preview1
   => chdir _build/whatever-3.3.4~4.10preview1
-  -: rmdir _build/whatever-3.3.4~4.10preview1
   [+] Distribution for whatever 3.3.4~4.10preview1
   [+] Archive _build/whatever-3.3.4~4.10preview1.tbz
 

@@ -43,7 +43,15 @@ If the condition described above is fulfilled, there are 4 checks to be performe
   [FAIL] File LICENSE is missing.
   [FAIL] File CHANGES is missing.
   [ OK ] File opam is present.
-  [ OK ] lint opam file my_pkg.opam.
+  <test_directory>/my_pkg.opam: Passed.
+  opam-version: "2.0"
+  synopsis: "Dope project"
+  description: "Some description"
+  maintainer: "me"
+  authors: "also me"
+  homepage: "https://github.com/fu/fa"
+  bug-reports: "https://github.com/fu/fa/issues"
+  dev-repo: "git+https://github.com/fu/fa.git"
   [ OK ] opam field synopsis is present
   [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
   [ OK ] Skipping doc field linting, no doc field found
@@ -80,7 +88,24 @@ In multi package projects, the whole lint process (including the file lints, eve
   [FAIL] File LICENSE is missing.
   [FAIL] File CHANGES is missing.
   [ OK ] File opam is present.
-  [ OK ] lint opam file my_pkg.opam.
+  <test_directory>/my_pkg.opam: Passed.
+  opam-version: "2.0"
+  synopsis: "Dope project"
+  description: "Some description"
+  maintainer: "me"
+  authors: "also me"
+  homepage: "https://github.com/fu/fa"
+  bug-reports: "https://github.com/fu/fa/issues"
+  dev-repo: "git+https://github.com/fu/fa.git"
+  <test_directory>/my_pkg-sub.opam: Passed.
+  opam-version: "2.0"
+  synopsis: "Dope project"
+  description: "Some description"
+  maintainer: "me"
+  authors: "also me"
+  homepage: "https://github.com/fu/fa"
+  bug-reports: "https://github.com/fu/fa/issues"
+  dev-repo: "git+https://github.com/fu/fa.git"
   [ OK ] opam field synopsis is present
   [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
   [ OK ] Skipping doc field linting, no doc field found
@@ -91,7 +116,24 @@ In multi package projects, the whole lint process (including the file lints, eve
   [FAIL] File LICENSE is missing.
   [FAIL] File CHANGES is missing.
   [ OK ] File opam is present.
-  [ OK ] lint opam file my_pkg-sub.opam.
+  <test_directory>/my_pkg.opam: Passed.
+  opam-version: "2.0"
+  synopsis: "Dope project"
+  description: "Some description"
+  maintainer: "me"
+  authors: "also me"
+  homepage: "https://github.com/fu/fa"
+  bug-reports: "https://github.com/fu/fa/issues"
+  dev-repo: "git+https://github.com/fu/fa.git"
+  <test_directory>/my_pkg-sub.opam: Passed.
+  opam-version: "2.0"
+  synopsis: "Dope project"
+  description: "Some description"
+  maintainer: "me"
+  authors: "also me"
+  homepage: "https://github.com/fu/fa"
+  bug-reports: "https://github.com/fu/fa/issues"
+  dev-repo: "git+https://github.com/fu/fa.git"
   [ OK ] opam field synopsis is present
   [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
   [ OK ] Skipping doc field linting, no doc field found
