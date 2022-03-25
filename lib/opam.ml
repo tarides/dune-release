@@ -10,7 +10,7 @@ module D = struct
   let fetch_head = "${fetch_head}"
 end
 
-let os_tool_env name os =
+(* let os_tool_env name os =
   let pre = match os with `Build_os -> "BUILD_OS_" | `Host_os -> "HOST_OS_" in
   pre ^ String.Ascii.uppercase name
 
@@ -44,7 +44,7 @@ let tool name os =
               | Some cmd -> cmd
               | None -> Cmd.v name)))
 
-let cmd = Cmd.of_list @@ Cmd.to_list @@ tool "opam" `Host_os
+let cmd = Cmd.of_list @@ Cmd.to_list @@ tool "opam" `Host_os *)
 
 (* Publish *)
 
