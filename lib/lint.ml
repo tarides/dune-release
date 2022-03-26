@@ -94,7 +94,7 @@ let lint () =
     List.fold_left
       (fun (err, json) opam_f ->
         try
-          let warnings, opam =
+          let warnings, _ =
             match opam_f with
             | Some f ->
                 OpamFileTools.lint_file ~check_upstream:false
@@ -113,7 +113,7 @@ let lint () =
               (OpamStd.Option.to_string
                  (fun f -> OpamFile.to_string f ^ ": ")
                  opam_f)
-              (OpamConsole.colorise `green "Passed.")
+              (OpamConsole.colorise `green "Linting passed.")
           else
             msg "%s%s\n%s\n"
               (OpamStd.Option.to_string
@@ -122,7 +122,6 @@ let lint () =
               (if failed then OpamConsole.colorise `red "Errors."
               else OpamConsole.colorise `yellow "Warnings.")
               (OpamFileTools.warns_to_string warnings);
-          OpamStd.Option.iter (OpamFile.OPAM.write_to_channel stdout) opam;
           let json =
             OpamStd.Option.map
               (OpamStd.List.cons
