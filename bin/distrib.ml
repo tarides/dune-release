@@ -21,8 +21,8 @@ let check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar
 
 let warn_if_vcs_dirty () =
   Cli.warn_if_vcs_dirty
-    ("The distribution archive may be inconsistent."
-   ^ " Uncommitted changes to files (including dune-project) will be ignored.")
+    "Uncommitted changes to files (including dune-project) will not be \
+     included in the distribution archive."
 
 let log_footprint pkg archive =
   Pkg.name pkg >>= fun name ->
