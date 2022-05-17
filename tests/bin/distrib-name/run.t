@@ -54,9 +54,9 @@ Run dune-release distrib with the uncomitted name in dune-project.
 
   $ dune-release tag -y > /dev/null
   $ dune-release distrib --skip-lint > /dev/null
-  dune-release: [WARNING] The repo is dirty. The distribution archive may be
-                          inconsistent. Uncommitted changes to files (including
-                          dune-project) will be ignored.
+  dune-release: [WARNING] The repo is dirty. Uncommitted changes to files
+                          (including dune-project) will not be included in the
+                          distribution archive.
   Error: The project name is not defined, please add a (name <name>) field to
   your dune-project file.
   dune-release: [ERROR] run ['dune' 'subst']: exited with 1
