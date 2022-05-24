@@ -172,7 +172,7 @@ val dune_project_name : Fpath.t -> (string option, [> Rresult.R.msg ]) result
 (** Returns the name stanza entry of the dune project, if any; else, returns
     `None`. Returns an error, if one of the system calls fails. *)
 
-val dune_project_name_string : string list -> string option
+val dune_project_name_string : string -> string option
 
 (**/**)
 
