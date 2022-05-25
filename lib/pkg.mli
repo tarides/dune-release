@@ -159,6 +159,12 @@ val version_of_changelog : t -> Version.Changelog.t -> Version.t
 val dev_repo : t -> (string option, Sos.error) result
 (** dev-repo field with the ["git+"] prefix removed. *)
 
+(** {1 Dune project} *)
+
+val dune_project_name : Fpath.t -> (string option, [> Rresult.R.msg ]) result
+(** Returns the name stanza entry of the dune project, if any; else, returns
+    `None`. Returns an error, if one of the system calls fails. *)
+
 (**/**)
 
 val version_line_re : Re.t
@@ -166,11 +172,7 @@ val version_line_re : Re.t
 val prepare_opam_for_distrib :
   version:Version.t -> content:string list -> string list
 
-(** {1 Dune project} *)
-
-val dune_project_name : Fpath.t -> (string option, [> Rresult.R.msg ]) result
-(** Returns the name stanza entry of the dune project, if any; else, returns
-    `None`. Returns an error, if one of the system calls fails. *)
+val dune_project_name_string : string -> string option
 
 (**/**)
 

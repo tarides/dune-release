@@ -103,7 +103,40 @@ let distrib_uri =
       ~tag:"v0" url;
   ]
 
+let test_dune_project_name =
+  let test ~name contents ~expected =
+    ( name,
+      `Quick,
+      fun () ->
+        let got = Pkg.dune_project_name_string contents in
+        Alcotest.check Alcotest.(option string) __LOC__ expected got )
+  in
+  let unlines l = String.concat "\n" l in
+  [
+    test ~name:"ok" "(lang dune 2.4)\n(name xyz)" ~expected:(Some "xyz");
+    test ~name:"no name" "(lang dune 2.4)" ~expected:None;
+    test ~name:"opam file generation"
+      (unlines
+         [
+           "(lang dune 2.7)";
+           "(name first)";
+           "(generate_opam_files true)";
+           "(package";
+           " (name first))";
+           "(package";
+           " (name second))";
+         ])
+      ~expected:(Some "first");
+    test ~name:"leading whitespace" "(lang dune 2.4)\n (name xyz)"
+      ~expected:(Some "xyz");
+  ]
+
 let suite =
   ( "Pkg",
     List.concat
-      [ test_version_line_re; test_prepare_opam_for_distrib; distrib_uri ] )
+      [
+        test_version_line_re;
+        test_prepare_opam_for_distrib;
+        distrib_uri;
+        test_dune_project_name;
+      ] )

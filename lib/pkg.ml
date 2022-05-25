@@ -279,23 +279,29 @@ let publish_msg p =
       change_log p >>= Text.change_log_file_last_entry >>| fun (_, (_, txt)) ->
       strf "CHANGES:\n\n%s\n" txt
 
+let dune_project_name_string contents =
+  let opam_pkg_name_char = Re.(alt [ wordc; char '-' ]) in
+  let re =
+    Re.(
+      compile
+        (seq
+           [
+             str "(";
+             rep space;
+             str "name";
+             rep space;
+             group (rep opam_pkg_name_char);
+             rep space;
+             str ")";
+           ]))
+  in
+  Option.map (fun group -> Re.Group.get group 1) (Re.exec_opt re contents)
+
 let dune_project_name dir =
   let file = Fpath.(dir / "dune-project") in
   Bos.OS.File.exists file >>= function
   | false -> Ok None
-  | true ->
-      Bos.OS.File.read_lines file >>| fun lines ->
-      List.fold_left
-        (fun acc line ->
-          (* sorry *)
-          match String.cut ~sep:"(name " (String.trim line) with
-          | Some (_, s) ->
-              Some
-                (String.trim
-                   ~drop:(function ')' | ' ' -> true | _ -> false)
-                   s)
-          | _ -> acc)
-        None lines
+  | true -> Bos.OS.File.read file >>| dune_project_name_string
 
 let infer_pkg_names dir = function
   | [] ->
