@@ -10,7 +10,7 @@
 
 - Fix project name detection from `dune-project`. The parser could get confused
   when opam file generation is used. Now it only considers the first `(name X)`
-  in the file. (#445, @emillon)
+  in the file. (#445, #446, @emillon)
 
 ### Removed
 
