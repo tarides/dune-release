@@ -22,7 +22,7 @@ type t = {
   licenses : Fpath.t list option;
   distrib_file : Fpath.t option;
   publish_msg : string option;
-  is_main_pkg : bool;
+  is_main_pkg : (bool, R.msg) result;
 }
 
 let opam_fields p = Lazy.force p.opam_fields
@@ -340,13 +340,12 @@ let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?build_dir ?opam:opam_file
   let licenses = match license with Some l -> Some [ l ] | None -> None in
   let name = Rresult.R.error_msg_to_invalid_arg name in
   let is_main_pkg =
-    (match is_main_pkg with
+    match is_main_pkg with
     | Some b -> Ok b
     | None -> (
         dune_project_name cwd >>= function
         | None -> Ok false
-        | Some dune_name -> Ok (String.equal name dune_name)))
-    |> Rresult.R.error_msg_to_invalid_arg
+        | Some dune_name -> Ok (String.equal name dune_name))
   in
   let rec opam_fields = lazy (opam p >>= fun o -> Opam.File.fields ~dry_run o)
   and p =

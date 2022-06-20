@@ -198,7 +198,10 @@ let submit ~token ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open
     (Ok 0) pkgs
   >>= fun _ ->
   pkgs
-  |> List.find_opt Pkg.is_main_pkg
+  |> List.find_opt (fun pkg ->
+         match Pkg.is_main_pkg pkg with
+         | Ok true -> true
+         | Ok false | Error _ -> false)
   |> R.of_option ~none:(fun () -> Ok (List.hd pkgs))
   >>= fun pkg ->
   Pkg.version pkg >>= fun version ->

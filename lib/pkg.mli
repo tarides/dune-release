@@ -81,7 +81,7 @@ val change_log : t -> (Fpath.t, R.msg) result
 val licenses : t -> (Fpath.t list, R.msg) result
 (** [licenses p] are [p]'s license files. *)
 
-val is_main_pkg : t -> bool
+val is_main_pkg : t -> (bool, R.msg) result
 (** [is_main_pkg p] specifies whether the current [p] is the main package of the
     repository. *)
 
