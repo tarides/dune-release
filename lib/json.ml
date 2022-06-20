@@ -12,7 +12,7 @@ let string_field ~field json =
   | `Null ->
       R.error_msgf "Could not find %S from:@ %a" field Yojson.Basic.pp json
   | `String s -> R.ok s
-  | _ -> R.error_msgf "Cound not parse %S from:@ %a" field Yojson.Basic.pp json
+  | _ -> R.error_msgf "Could not parse %S from:@ %a" field Yojson.Basic.pp json
 
 let int_field ~field json =
   match Yojson.Basic.Util.member field json with

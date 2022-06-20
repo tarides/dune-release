@@ -88,7 +88,7 @@ let release =
       `S "SUBMIT TO OCAML'S OPAM REPOSITORY";
       `P
         "The following steps still need the distribution archive created in\n\
-        \        the preceeding step to be in the build directory. If that's no\n\
+        \        the preceding step to be in the build directory. If that's no\n\
         \        longer the case but nothing moved in your VCS, you can simply\n\
         \        invoke $(b,dune-release distrib), it should produce a \
          bit-wise identical\n\
@@ -174,8 +174,8 @@ let troubleshoot =
          $(b,--verbosity)\n\
         \        option.";
       `P
-        "Messages comming from the $(b,dune-release) tool are prefixed\n\
-        \        by 'dune-release:' while those comming from the package \
+        "Messages coming from the $(b,dune-release) tool are prefixed\n\
+        \        by 'dune-release:' while those coming from the package \
          description are\n\
         \        prefixed by its base name, usually 'pkg.ml:'.";
       `S "DEBUG DEV PACKAGE INSTALLS";

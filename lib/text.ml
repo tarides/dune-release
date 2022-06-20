@@ -122,7 +122,7 @@ let rec change_log_last_entry ?flavour text =
               | "" :: lines -> String.concat ~sep:"\n" lines
               | lines -> String.concat ~sep:"\n" lines
             in
-            (* Drop delimitors from version, useful for keepachangelog.com style *)
+            (* Drop delimiters from version, useful for keepachangelog.com style *)
             let version_delimitors = function
               | '[' | ']' | '(' | ')' -> true
               | _ -> false

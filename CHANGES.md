@@ -154,7 +154,7 @@
 - Fix a bug where `opam submit` would try to parse the custom URI provided through
   `--distrib-uri` as a github repo URI instead of using the dev-repo (#358, @NathanReb)
 - Fix the priority of the `--distrib-uri` option in `dune-release opam pkg`.
-  It used to have lower precendence than the url file written by `dune-release publish`
+  It used to have lower precedence than the url file written by `dune-release publish`
   and therefore made it impossible to overwrite it if needed. (#255, @NathanReb)
 - Fix a bug with --distrib-file in `dune-release opam pkg` where you would need
   the regular dune-release generated archive to be around even though you specified
@@ -237,7 +237,7 @@
 
 - Fix a bug where `opam submit` would fail if the opam files had no description
   (#165, @NathanReb)
-- Fix a bug where opam files could be inproperly tempered with while building
+- Fix a bug where opam files could be improperly tempered with while building
   the distribution tarball (#168, @NathanReb)
 
 ## 1.3.2 (2019-07-12)
@@ -365,4 +365,4 @@ Import some code from [topkg](http://erratique.ch/software/topkg).
 - Remove the IPC layer which is used between `topkg` and `topkg-care`;
 - Bundle everything as a single binary;
 - Assume that the package is built using [dune](https://github.com/ocaml/dune);
-- Do not read/neeed a `pkg/pkg.ml` file.
+- Do not read/need a `pkg/pkg.ml` file.

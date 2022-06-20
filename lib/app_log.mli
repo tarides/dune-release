@@ -14,7 +14,7 @@ val unhappy : ?src:Logs.src -> 'a Logs.log
 (** To report something that went wrong but isn't worth a warning *)
 
 val blank_line : unit -> unit
-(** Outpus an empty line *)
+(** Output an empty line *)
 
 (** Check logs *)
 

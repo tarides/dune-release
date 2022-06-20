@@ -17,7 +17,7 @@
 (** Safe OS operations.
 
     All the commands in that module can have side-effects. They also all take a
-    [--dry-run] paramater which cause the side-effect to be discarded and to
+    [--dry-run] parameter which cause the side-effect to be discarded and to
     display a message instead. Some of these commands also have a `[--force]`
     option: this causes the message to be printed AND the side-effects to be
     caused. *)

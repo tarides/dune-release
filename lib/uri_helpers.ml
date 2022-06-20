@@ -28,7 +28,7 @@ let parse uri =
   in
   let raw_domain, raw_path =
     (* We mark the separation between domain and path at the first
-       occurence of [':'] or ['/'] to support git@github.com: format
+       occurrence of [':'] or ['/'] to support git@github.com: format
        as well as regular URIs *)
     let separator_index =
       String.find (function ':' | '/' -> true | _ -> false) remainder
