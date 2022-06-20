@@ -33,7 +33,6 @@ val v :
   ?license:Fpath.t ->
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
-  ?is_main_pkg:bool ->
   unit ->
   t
 
@@ -80,10 +79,6 @@ val change_log : t -> (Fpath.t, R.msg) result
 
 val licenses : t -> (Fpath.t list, R.msg) result
 (** [licenses p] are [p]'s license files. *)
-
-val is_main_pkg : t -> (bool, R.msg) result
-(** [is_main_pkg p] specifies whether the current [p] is the main package of the
-    repository. *)
 
 val infer_github_distrib_uri : t -> (string, R.msg) result
 (** [infer_github_distrib_uri p] infers [p]'s Github distribution URI from the
