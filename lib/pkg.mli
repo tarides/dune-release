@@ -33,6 +33,7 @@ val v :
   ?license:Fpath.t ->
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
+  ?is_main_pkg:bool ->
   unit ->
   t
 

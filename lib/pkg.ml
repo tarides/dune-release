@@ -22,6 +22,7 @@ type t = {
   licenses : Fpath.t list option;
   distrib_file : Fpath.t option;
   publish_msg : string option;
+  is_main_pkg : bool;
 }
 
 let opam_fields p = Lazy.force p.opam_fields
@@ -327,16 +328,25 @@ let infer_name dir =
 let version_of_changelog pkg = Version.Changelog.to_version ~keep_v:pkg.keep_v
 
 let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?build_dir ?opam:opam_file
-    ?opam_descr ?readme ?change_log ?license ?distrib_file ?publish_msg () =
-  let name =
-    match name with None -> infer_name Fpath.(v ".") | Some v -> Ok v
-  in
+    ?opam_descr ?readme ?change_log ?license ?distrib_file ?publish_msg
+    ?is_main_pkg () =
+  let cwd = Fpath.v "." in
+  let name = match name with None -> infer_name cwd | Some v -> Ok v in
   let readmes = match readme with Some r -> Some [ r ] | None -> None in
   let change_logs =
     match change_log with Some c -> Some [ c ] | None -> None
   in
   let licenses = match license with Some l -> Some [ l ] | None -> None in
   let name = Rresult.R.error_msg_to_invalid_arg name in
+  let is_main_pkg =
+    (match is_main_pkg with
+    | Some b -> Ok b
+    | None -> (
+        dune_project_name cwd >>= function
+        | None -> Ok false
+        | Some dune_name -> Ok (String.equal name dune_name)))
+    |> Rresult.R.error_msg_to_invalid_arg
+  in
   let rec opam_fields = lazy (opam p >>= fun o -> Opam.File.fields ~dry_run o)
   and p =
     {
@@ -353,6 +363,7 @@ let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?build_dir ?opam:opam_file
       licenses;
       distrib_file;
       publish_msg;
+      is_main_pkg;
     }
   in
   p
