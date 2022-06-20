@@ -6,9 +6,7 @@
 
 (** Entrypoints for the [distro] command. *)
 
-module Pkgs : sig
-  type 'a t
-end
+type 'a pkgs
 
 val get_pkgs :
   ?build_dir:Fpath.t ->
@@ -24,20 +22,20 @@ val get_pkgs :
   pkg_names:string list ->
   version:Dune_release.Version.t option ->
   unit ->
-  (Dune_release.Pkg.t Pkgs.t, Bos_setup.R.msg) result
+  (Dune_release.Pkg.t pkgs, Bos_setup.R.msg) result
 (** [get_pkgs ~build_dir ~opam ~distrib_uri ~distrib_file ~readme ~change_log
     ~publish_msg ~pkg_descr ~dry_run ~keep_v ~tag ~name ~pkg_names ~version ()]
     returns the list of packages built from the [distrib_file] or the associated
     error messages. *)
 
-val descr : pkgs:Dune_release.Pkg.t Pkgs.t -> (int, Bos_setup.R.msg) result
+val descr : pkgs:Dune_release.Pkg.t pkgs -> (int, Bos_setup.R.msg) result
 (** [descr ~pkgs] prints the opam description of packages [pkgs]. Returns the
     exit code (0 for success, 1 for failure) or error messages. *)
 
 val pkg :
   ?distrib_uri:string ->
   dry_run:bool ->
-  pkgs:Dune_release.Pkg.t Pkgs.t ->
+  pkgs:Dune_release.Pkg.t pkgs ->
   unit ->
   (int, Bos_setup.R.msg) result
 (** [pkg ~dry_run ~pkgs] creates the opam package descriptions for packages
@@ -51,7 +49,7 @@ val submit :
   ?user:string ->
   ?token:string Dune_release.Config.Cli.t ->
   dry_run:bool ->
-  pkgs:Dune_release.Pkg.t Pkgs.t ->
+  pkgs:Dune_release.Pkg.t pkgs ->
   pkg_names:string list ->
   no_auto_open:bool Dune_release.Config.Cli.t ->
   yes:bool ->
@@ -64,7 +62,7 @@ val submit :
     the exit code (0 for success, 1 for failure) or error messages. *)
 
 val field :
-  pkgs:Dune_release.Pkg.t Pkgs.t ->
+  pkgs:Dune_release.Pkg.t pkgs ->
   field_name:string option ->
   (int, Bos_setup.R.msg) result
 (** [field ~pkgs ~field_name] prints the value of the field [field_name] in the
