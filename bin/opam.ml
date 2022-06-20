@@ -270,17 +270,6 @@ let get_pkgs ?build_dir ?opam ?distrib_file ?readme ?change_log ?publish_msg
     Pkg.distrib_file ~dry_run pkg
   in
   Pkg.infer_pkg_names Fpath.(v ".") pkg_names >>= fun pkg_names ->
-  (* shuffle main package to front if it exists *)
-  let pkg_names =
-    match Pkg.dune_project_name (Fpath.v ".") with
-    | Ok (Some main) -> (
-        match List.mem main pkg_names with
-        | false -> pkg_names
-        | true ->
-            let remaining = List.filter (String.equal main) pkg_names in
-            main :: remaining)
-    | Ok None | Error _ -> pkg_names
-  in
   let pkg_names = List.map (fun n -> Some n) pkg_names in
   distrib_file >>| fun distrib_file ->
   List.map
