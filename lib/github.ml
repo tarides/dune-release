@@ -142,7 +142,8 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
   | Ok () -> Ok ()
   | Error _ ->
       App_log.status (fun l ->
-          l "Creating new gh-pages branch with inital commit on %s/%s" user repo);
+          l "Creating new gh-pages branch with initial commit on %s/%s" user
+            repo);
       create_empty_gh_pages ())
   >>= fun () ->
   Vcs.run_git_string vcs ~dry_run ~force
@@ -367,7 +368,7 @@ let push_tag ~dry_run ~yes ~dev_repo vcs tag =
   | true ->
       App_log.status (fun l ->
           l
-            "The tag %a is present and uptodate on the remote: skipping the \
+            "The tag %a is present and up-to-date on the remote: skipping the \
              tag push"
             Text.Pp.tag tag);
       Ok () (* No need to push, avoiding the need to guess the uri. *)

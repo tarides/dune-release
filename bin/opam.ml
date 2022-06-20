@@ -177,7 +177,7 @@ let parse_remote_repo remote_repo =
       R.error_msgf
         "The URL to your remote fork of opam-repository %s does not seem to \
          point to a github repo.\n\
-         Try editting your config with `dune-release config set remote <URL>` \
+         Try editing your config with `dune-release config set remote <URL>` \
          or providing a valid Github repo URL via the --remote-repo option."
         remote_repo
 

@@ -2,7 +2,7 @@ type answer = Yes | No
 
 val confirm :
   question:('a, unit) Logs.msgf -> yes:bool -> default_answer:answer -> bool
-(** Promtps the user for confirmation. [confirm ~question ~yes ~default_answer]
+(** Prompts the user for confirmation. [confirm ~question ~yes ~default_answer]
     uses the message formatting function [question] to format and log a message
     with the app level and wait for a yes or no answer from the user. Returns
     [true] for yes. Defaults to [default_answer] if the user just presses enter.

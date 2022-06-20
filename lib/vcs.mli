@@ -66,7 +66,7 @@ val run_git_string :
 (** {1:state Repository state} *)
 
 val is_dirty : t -> (bool, R.msg) result
-(** [is_dirty r] is [Ok true] iff the working tree of [r] has uncommited
+(** [is_dirty r] is [Ok true] iff the working tree of [r] has uncommitted
     changes. *)
 
 val commit_id :

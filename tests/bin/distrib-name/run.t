@@ -50,7 +50,7 @@ this name must be one the .opam file names.)
 
   $ echo "(name liba)" >> dune-project
 
-Run dune-release distrib with the uncomitted name in dune-project.
+Run dune-release distrib with the uncommitted name in dune-project.
 
   $ dune-release tag -y > /dev/null
   $ dune-release distrib --skip-lint > /dev/null
