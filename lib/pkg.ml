@@ -39,6 +39,7 @@ let opam_homepage_sld p =
 
 let name p = Ok p.name
 let with_name p name = { p with name }
+let is_main_pkg p = p.is_main_pkg
 
 let extract_version change_log =
   Text.change_log_file_last_entry change_log >>= fun (version, _) -> Ok version
