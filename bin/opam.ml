@@ -213,7 +213,8 @@ let submit ~token ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open
   >>= fun () ->
   list_map Pkg.name pkgs >>= fun names ->
   let title =
-    strf "[new release] %a (%a)" (pp_list Fmt.string) names
+    strf "[new release] %a (%a)" (pp_list Fmt.string)
+      (List.sort String.compare names)
       Dune_release.Version.pp version
   in
   Pkg.publish_msg pkg >>= fun changes ->
