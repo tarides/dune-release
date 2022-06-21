@@ -11,6 +11,9 @@
 - Fix project name detection from `dune-project`. The parser could get confused
   when opam file generation is used. Now it only considers the first `(name X)`
   in the file. (#445, @emillon)
+- Fix detection of the project name when creating a pull request to
+  opam-repository. Previously it would pick a package at random to use as
+  description, now it tries to load the main package (#447, @Leonidas-from-XIV)
 
 ### Removed
 
