@@ -26,6 +26,9 @@ We need to set up a git project with two commits to test trying to tag different
   $ git add CHANGES.md
   $ git commit -m "Add CHANGES.md" > /dev/null
 
+Having branch named the same as version tag should have no impact.
+  $ git branch 0.1.0 > /dev/null
+
 Running `dune-release tag` for the first time should tag HEAD with the current version number.
 
   $ dune-release tag -y > /dev/null
@@ -33,6 +36,7 @@ Running `dune-release tag` for the first time should tag HEAD with the current v
 Checking the message attached to the tag.
 
   $ git show 0.1.0 | grep -E "(tag|Release|CHANGES:|Some other feature)"
+  warning: refname '0.1.0' is ambiguous.
   tag 0.1.0
   Release 0.1.0
   CHANGES:
