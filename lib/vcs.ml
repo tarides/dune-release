@@ -363,10 +363,8 @@ let tag_exists ~dry_run r tag =
   | `Hg, _, _ -> failwith "TODO"
 
 let tag_points_to r tag =
-  match r with
-  | (`Git, _, _) as r ->
-      commit_id ~dirty:false ~commit_ish:(git_tag_rev tag) r |> R.to_option
-  | `Hg, _, _ -> failwith "TODO"
+  let tag' = match r with `Git, _, _ -> git_tag_rev tag | `Hg, _, _ -> tag in
+  commit_id ~dirty:false ~commit_ish:tag' r |> R.to_option
 
 let branch_exists ~dry_run r tag =
   match r with
