@@ -196,3 +196,13 @@ The main differences between `dune-release` and `topkg` are:
 - `dune`, `curl`, `cp` and `ocamlfind` are expected to be in `PATH`.
 
 Using these `DUNE_RELEASE_*` and `HOST_OS_*` environment variables to configure the path to these binaries is deprecated since `dune-release.1.4.0`, and will no longer be supported in `dune-release.2.0.0`, it is thus recommended to only rely on the `PATH` variable.
+
+## Contributing
+
+While this project is in the [Tarides](https://tarides.com) organization, contributions from others
+are very much welcome. We're trying to build a tool that works for many users.
+
+If you're unclear whether a feature would fit the scope of `dune-release` don't
+hesitate to open an issue to gauge the interest.
+
+Please read the [guidelines](CONTRIBUTING.md) before contributing.

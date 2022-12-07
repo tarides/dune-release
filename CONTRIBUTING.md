@@ -1,11 +1,3 @@
-## General
-
-While this project is in the OCaml Labs organization, contributions from others
-are very much welcome. We're trying to build a tool that works for many users.
-
-If you're unclear whether a feature would fit the scope of `dune-release` don't
-hesitate to open an issue to gauge the interest.
-
 ## Setting up your working environment
 
 If you want to contribute to the project you'll first need to install the dependencies.
@@ -100,3 +92,11 @@ filter output in the `cram` tests.
 If your tests change behavior but the change is correct you can use `dune
 promote` to update your test file so the next run of `dune runtest` will expect
 the new behavior.
+
+## Code formatting
+
+Submitted code should be formatted with dune [automated formatting](https://dune.readthedocs.io/en/stable/formatting.html#formatting-a-project).
+
+## Changelog
+
+Contribution description should be appended to [changelog](CHANGES.md) under **unreleased** section.
