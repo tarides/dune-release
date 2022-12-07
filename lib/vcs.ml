@@ -134,9 +134,12 @@ let git_describe ~dirty r commit_ish =
   in
   run_git_string ~dry_run:false r git_describe ~default:Default.string
 
+let git_tag_rev tag = "refs/tags/" ^ tag
+
 let git_tag_exists ~dry_run r tag =
-  let tag_rev = "refs/tags/" ^ tag in
-  match run_git_quiet ~dry_run r Cmd.(v "rev-parse" % "--verify" % tag_rev) with
+  match
+    run_git_quiet ~dry_run r Cmd.(v "rev-parse" % "--verify" % git_tag_rev tag)
+  with
   | Ok () -> true
   | _ -> false
 
@@ -360,7 +363,8 @@ let tag_exists ~dry_run r tag =
   | `Hg, _, _ -> failwith "TODO"
 
 let tag_points_to r tag =
-  commit_id ~dirty:false ~commit_ish:tag r |> R.to_option
+  let tag' = match r with `Git, _, _ -> git_tag_rev tag | `Hg, _, _ -> tag in
+  commit_id ~dirty:false ~commit_ish:tag' r |> R.to_option
 
 let branch_exists ~dry_run r tag =
   match r with

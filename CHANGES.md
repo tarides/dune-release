@@ -8,6 +8,10 @@
 
 ### Fixed
 
+- Avoid collision between branch and tag name. Tag detection got confused when
+  branch was named the same as tag. Now it searches only for tag refs, instead
+  of all refs. (#452, @3Rafal)
+
 - Fix project name detection from `dune-project`. The parser could get confused
   when opam file generation is used. Now it only considers the first `(name X)`
   in the file. (#445, @emillon)
