@@ -1,4 +1,4 @@
-[![Build Status](https://img.shields.io/endpoint?url=https%3A%2F%2Fci.ocamllabs.io%2Fbadge%2Focamllabs%2Fdune-release%2Fmain&logo=ocaml)](https://ci.ocamllabs.io/github/ocamllabs/dune-release)
+[![Build Status](https://img.shields.io/endpoint?url=https%3A%2F%2Fci.ocamllabs.io%2Fbadge%2Ftarides%2Fdune-release%2Fmain&logo=ocaml)](https://ci.ocamllabs.io/github/tarides/dune-release)
 
 ## dune-release: release dune packages in opam
 

@@ -82,7 +82,7 @@ let run_git ~dry_run ?force ~default r args out =
         "\n\
          Hint from dune-release: the reason for the Permission denied error is \
          probably a failing ssh connection. For more information, see \
-         https://github.com/ocamllabs/dune-release#publish-troubleshooting ."
+         https://github.com/tarides/dune-release#publish-troubleshooting ."
       in
       Sos.cmd_error git (Some (response.err_msg ^ hint)) response.status
   | _ -> Sos.cmd_error git (Some response.err_msg) response.status

@@ -7,10 +7,10 @@ let test_ssh_uri_from_http =
   in
   [
     (* Use cases *)
-    check "https://github.com/ocamllabs/dune-release"
-      (Some "git@github.com:ocamllabs/dune-release");
-    check "git@github.com:ocamllabs/dune-release"
-      (Some "git@github.com:ocamllabs/dune-release");
+    check "https://github.com/tarides/dune-release"
+      (Some "git@github.com:tarides/dune-release");
+    check "git@github.com:tarides/dune-release"
+      (Some "git@github.com:tarides/dune-release");
     (* This function only works for github https urls, returns its input
        otherwise *)
     check "https://not-github.com/dune-release" None;

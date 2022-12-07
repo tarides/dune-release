@@ -15,8 +15,8 @@ authors: [
   "Sonja Heinze"
 ]
 license: "ISC"
-homepage: "https://github.com/ocamllabs/dune-release"
-bug-reports: "https://github.com/ocamllabs/dune-release/issues"
+homepage: "https://github.com/tarides/dune-release"
+bug-reports: "https://github.com/tarides/dune-release/issues"
 depends: [
   "dune" {>= "2.7"}
   "ocaml" {>= "4.08.0"}
@@ -51,4 +51,4 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/ocamllabs/dune-release.git"
+dev-repo: "git+https://github.com/tarides/dune-release.git"
