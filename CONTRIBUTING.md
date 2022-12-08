@@ -1,20 +1,12 @@
-## General
-
-While this project is in the OCaml Labs organization, contributions from others
-are very much welcome. We're trying to build a tool that works for many users.
-
-If you're unclear whether a feature would fit the scope of `dune-release` don't
-hesitate to open an issue to gauge the interest.
-
 ## Setting up your working environment
 
 If you want to contribute to the project you'll first need to install the dependencies.
 You can do it via `opam`:
 
 ```sh
-$ git clone git@github.com:ocamllabs/dune-release.git
+$ git clone git@github.com:tarides/dune-release.git
 $ cd dune-release
-$ opam switch create ./ ocaml-base-compiler.4.13.1 --deps-only -t
+$ opam switch create ./ ocaml-base-compiler.4.14.0 --deps-only -t
 ```
 
 This will create a local switch with a fresh compiler, the dependencies of
@@ -55,12 +47,12 @@ There should be one test module per actual module there. The test runner is
 [`tests.ml`](tests/lib/tests.ml). If you add tests for a new or so far untested
 module, don't forget to add its test suite to the runner.
 
-For each function we test, we build a list of Alcotest `unit test_case`. It's important to try to be
-consistent in that regard as it makes the output of the test runner more readable and helps with
-fixing or investigating broken tests.
+For each function we test, we build a list of Alcotest `unit test_case`. It's
+important to try to be consistent in that regard as it makes the output of the
+test runner more readable and helps with fixing or investigating broken tests.
 
-For each module, we then have one Alcotest `unit test` that contains the concatenation of all the
-test cases.
+For each module, we then have one Alcotest `unit test` that contains the
+concatenation of all the test cases.
 
 That results in the following test output for a successful run:
 
@@ -100,3 +92,32 @@ filter output in the `cram` tests.
 If your tests change behavior but the change is correct you can use `dune
 promote` to update your test file so the next run of `dune runtest` will expect
 the new behavior.
+
+## Code formatting
+
+Submitted code should be formatted using the supplied ocamlformat config. To do
+so easily use dune's [automated
+formatting](https://dune.readthedocs.io/en/stable/formatting.html#formatting-a-project):
+
+```sh
+$ dune fmt
+```
+
+This will automatically reformat all source files to fit the configuation.
+
+When submitting a PR, the CI will check for formatting, so if the formatting is
+wrong it will issue an error.
+
+## Changelog
+
+User-visible changes should come with an entry in the [changelog](CHANGES.md)
+under the appropriate part of the **unreleased** section. They should describe
+the change from the point of view of a user and include the PR number and
+username of the contributor. Check the existing entries for reference.
+
+The PR number is only known at submit time, so the placeholder `#<PR_NUMBER>`
+can be used, which will then trigger a bot to suggest the right number of the
+PR when submitting.
+
+When submitting a PR the PR check require an entry, although for changes that
+are not user-visible this can be overridden using the "no changelog" label.
