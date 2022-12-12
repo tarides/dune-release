@@ -5,7 +5,7 @@
 
 (generate_opam_files true)
 
-(source (github ocamllabs/dune-release))
+(source (github tarides/dune-release))
 (license ISC)
 (authors
   "Daniel Bünzli"
