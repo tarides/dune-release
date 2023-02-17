@@ -25,7 +25,7 @@ with [Dune](https://github.com/ocaml/dune) and hosted on
 [GitHub](https://github.com).")
  (depends
   (ocaml (>= 4.08.0))
-  curly
+  (curly (>= 0.3.0))
   (fmt (>= 0.8.7))
   (fpath (>= 0.7.3))
   bos
