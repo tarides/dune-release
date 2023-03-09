@@ -4,6 +4,9 @@
 
 ### Changed
 
+- In markdown changelog files, treat underline made of '-' characters as a H1 heading
+  rather than H2 heading if it is the first heading in a file (#460, @gridbugs)
+
 ### Deprecated
 
 ### Fixed

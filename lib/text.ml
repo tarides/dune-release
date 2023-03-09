@@ -34,7 +34,7 @@ let underline_header n uchar l before rest =
     | None -> None
     | Some t -> Some (n, strf "%s\n%s" t l, List.tl before, rest)
 
-let rec find_markdown_header before = function
+let rec find_markdown_header ~first before = function
   | [] -> None
   | l :: ls -> (
       match simple_header '#' l before ls with
@@ -43,11 +43,15 @@ let rec find_markdown_header before = function
           match underline_header 1 '=' l before ls with
           | Some _ as h -> h
           | None -> (
-              match underline_header 2 '-' l before ls with
+              (* If we're parsing the first header in a file and it uses '-' as
+                 an underline, it's likely that the author intended the header
+                 to be a H1 heading *)
+              let n = if first then 1 else 2 in
+              match underline_header n '-' l before ls with
               | Some _ as h -> h
-              | None -> find_markdown_header (l :: before) ls)))
+              | None -> find_markdown_header ~first (l :: before) ls)))
 
-let rec find_asciidoc_header before = function
+let rec find_asciidoc_header ~first before = function
   | [] -> None
   | l :: ls -> (
       match simple_header '=' l before ls with
@@ -64,7 +68,8 @@ let rec find_asciidoc_header before = function
                   | None -> (
                       match underline_header 4 '+' l before ls with
                       | Some _ as h -> h
-                      | None -> find_asciidoc_header (l :: before) ls)))))
+                      | None -> find_asciidoc_header ~first (l :: before) ls))))
+      )
 
 let head find_header text =
   let lines = String.cuts ~sep:"\n" text in
@@ -72,11 +77,11 @@ let head find_header text =
     let contents = String.concat ~sep:"\n" (List.rev @@ drop_blanks acc) in
     Some (h, contents)
   in
-  match find_header [] lines with
+  match find_header ~first:true [] lines with
   | None -> None
   | Some (n, first, _ (* discard *), rest) ->
       let rec loop acc rest =
-        match find_header acc rest with
+        match find_header ~first:false acc rest with
         | None -> ret first (List.rev_append rest acc)
         | Some (n', h, before, rest) ->
             if n' > n then loop (h :: before) rest else ret first before
