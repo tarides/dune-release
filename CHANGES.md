@@ -2,6 +2,9 @@
 
 ### Added
 
+- Add flag to `dune-release check` that attempts to discover and parse the
+  change log. (#458, @gridbugs)
+
 ### Changed
 
 ### Deprecated

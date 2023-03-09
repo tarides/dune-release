@@ -88,8 +88,11 @@ let dune_project_check dir =
   in
   R.join @@ Sos.with_dir ~dry_run:false dir check ()
 
-let check_project ~pkg_names ~skip_lint ~skip_build ~skip_tests ?tag ?version
-    ~keep_v ?build_dir ~dir () =
+let change_log_check pkg =
+  Pkg.change_log pkg >>= Text.change_log_file_last_entry >>| Fun.const 0
+
+let check_project ~pkg_names ~skip_lint ~skip_build ~skip_tests
+    ~check_change_log ?tag ?version ~keep_v ?build_dir ~dir () =
   match pkg_creation_check ?tag ?version ~keep_v ?build_dir dir with
   | Error (`Msg err) ->
       App_log.report_status `Fail (fun m -> m "%s" err);
@@ -102,5 +105,8 @@ let check_project ~pkg_names ~skip_lint ~skip_build ~skip_tests ?tag ?version
       >>= fun dune_exit ->
       (if skip_lint then Ok 0
       else Lint.lint_packages ~dry_run:false ~dir ~todo:Lint.all pkg pkg_names)
-      >>| fun lint_exit ->
+      >>= fun lint_exit ->
+      (if check_change_log then change_log_check pkg else Ok 0)
+      >>| fun change_log_exit ->
       opam_file_exit + dune_project_exit + dune_exit + lint_exit
+      + change_log_exit

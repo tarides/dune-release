@@ -15,7 +15,7 @@ let clone_and_checkout_tag repo ~dir ~tag =
 let check (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
     (`Keep_v keep_v) (`Build_dir build_dir) (`Skip_lint skip_lint)
     (`Skip_build skip_build) (`Skip_tests skip_tests)
-    (`Working_tree on_working_tree) =
+    (`Check_change_log check_change_log) (`Working_tree on_working_tree) =
   (let dir, clean_up =
      if on_working_tree then (OS.Dir.current (), fun _ -> ())
      else
@@ -46,7 +46,7 @@ let check (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
    Config.keep_v ~keep_v >>= fun keep_v ->
    let check_result =
      Check.check_project ~pkg_names ?tag ?version ~keep_v ?build_dir ~skip_lint
-       ~skip_build ~skip_tests ~dir ()
+       ~skip_build ~skip_tests ~check_change_log ~dir ()
    in
    let () = clean_up dir in
    check_result)
@@ -80,7 +80,7 @@ let term =
   Term.(
     const check $ Cli.pkg_names $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v
     $ Cli.build_dir $ Cli.skip_lint $ Cli.skip_build $ Cli.skip_tests
-    $ working_tree)
+    $ Cli.check_change_log $ working_tree)
 
 let info = Cmd.info "check" ~doc ~man
 let cmd = Cmd.v info term
