@@ -139,6 +139,7 @@ If the main opam file doesn't contain a dev-repo field, the first check fails
   [FAIL] main package my_pkg.opam is not dune-release compatible. Github development repository URL could not be inferred from opam files.
   Have you provided a github uri in the dev-repo field of your main opam file? If you don't use github, you can still use dune-release for everything but for publishing your release on the web. In that case, have a look at `dune-release delegate-info`.
   [FAIL] The dune project doesn't contain a name stanza. Please, add one.
+  [2]
 
 Add an invalid dev-repo field to the opam file
 
@@ -154,6 +155,7 @@ The first check also fails, if the opam file does contain a dev-repo field, but 
   [FAIL] main package my_pkg.opam is not dune-release compatible. Github development repository URL could not be inferred from opam files.
   Have you provided a github uri in the dev-repo field of your main opam file? If you don't use github, you can still use dune-release for everything but for publishing your release on the web. In that case, have a look at `dune-release delegate-info`.
   [FAIL] The dune project doesn't contain a name stanza. Please, add one.
+  [2]
 
 Create a sub-opam file with a valid dev-repo field
 
@@ -169,6 +171,7 @@ The first check only depends on the main package; all subpackages are irrelevant
   [FAIL] main package my_pkg.opam is not dune-release compatible. Github development repository URL could not be inferred from opam files.
   Have you provided a github uri in the dev-repo field of your main opam file? If you don't use github, you can still use dune-release for everything but for publishing your release on the web. In that case, have a look at `dune-release delegate-info`.
   [FAIL] The dune project doesn't contain a name stanza. Please, add one.
+  [2]
 
 Add a name stanza to the dune-project
 
@@ -219,3 +222,4 @@ The [--working-tree] option used so far, makes `check` be run on the working tre
   [FAIL] main package my_pkg.opam is not dune-release compatible. Github development repository URL could not be inferred from opam files.
   Have you provided a github uri in the dev-repo field of your main opam file? If you don't use github, you can still use dune-release for everything but for publishing your release on the web. In that case, have a look at `dune-release delegate-info`.
   [FAIL] The dune project doesn't contain a name stanza. Please, add one.
+  [2]
