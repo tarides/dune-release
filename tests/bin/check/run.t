@@ -223,3 +223,47 @@ The [--working-tree] option used so far, makes `check` be run on the working tre
   Have you provided a github uri in the dev-repo field of your main opam file? If you don't use github, you can still use dune-release for everything but for publishing your release on the web. In that case, have a look at `dune-release delegate-info`.
   [FAIL] The dune project doesn't contain a name stanza. Please, add one.
   [2]
+
+Detect case where there is no changelog file present:
+  $ dune-release check --skip-lint --skip-build --skip-tests --working-tree --check-change-log
+  [-] Checking dune-release compatibility.
+  [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
+  [ OK ] The dune project contains a name stanza.
+  dune-release: [ERROR] No change log specified in the package description.
+    Error while running `check`: No change log specified in the package description.
+  [3]
+
+Create a simple changelog file:
+  $ cat > ChangeLog <<EOF
+  > #ChangeLog
+  > 
+  > ##0.2.0
+  > - a feature
+  > 
+  > ##0.1.0
+  > - another feature
+  > EOF
+
+  $ dune-release check --skip-lint --skip-build --skip-tests --working-tree --check-change-log
+  [-] Checking dune-release compatibility.
+  [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
+  [ OK ] The dune project contains a name stanza.
+
+Create an invalid changelog file (the title is at the same H level to the rest of the file):
+  $ cat > ChangeLog <<EOF
+  > ##ChangeLog
+  > 
+  > ##0.2.0
+  > - a feature
+  > 
+  > ##0.1.0
+  > - another feature
+  > EOF
+
+  $ dune-release check --skip-lint --skip-build --skip-tests --working-tree --check-change-log
+  [-] Checking dune-release compatibility.
+  [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
+  [ OK ] The dune project contains a name stanza.
+  dune-release: [ERROR] ./ChangeLog: Could not parse change log.
+    Error while running `check`: ./ChangeLog: Could not parse change log.
+  [3]
