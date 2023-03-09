@@ -4,55 +4,31 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
+open Bos_setup
+open Dune_release
+
+let print_latest_change_log_entry () =
+  let pkg = Pkg.v ~dry_run:true () in
+  Pkg.change_log pkg >>= Text.change_log_file_last_entry
+  >>| (fun (version, (title, body)) ->
+        Fmt.pr "Tag: %a\nTitle: %s\nBody:\n%s\n" Version.Changelog.pp version
+          title body;
+        0)
+  |> Cli.handle_error
+
 open Cmdliner
 
-let cmds =
-  [
-    Tag.cmd;
-    Distrib.cmd;
-    Publish.cmd;
-    Opam.cmd;
-    Help.cmd;
-    Bistro.cmd;
-    Lint.cmd;
-    Check.cmd;
-    Delegate_info.cmd;
-    Config.cmd;
-    Undraft.cmd;
-    Change_log.cmd;
-  ]
-
-(* Command line interface *)
-
-let doc = "Release dune packages to opam"
-let sdocs = Manpage.s_common_options
-let exits = Cli.exits
+let doc = "Print out the latest change log entry"
 
 let man =
   [
     `S Manpage.s_description;
-    `P "$(mname) releases dune packages to opam.";
-    `P
-      "Without arguments, $(mname) acts like $(b,dune-release bistro): refer \
-       to $(b,dune-release help bistro) for help about the default behavior.";
-    `P "Use '$(mname) help release' for help to release a package.";
-    `Noblank;
-    `P "Use '$(mname) help troubleshoot' for a few troubleshooting tips.";
-    `Noblank;
-    `P "Use '$(mname) help $(i,COMMAND)' for help about $(i,COMMAND).";
-    `S Manpage.s_bugs;
-    `P "Report them, see $(i,%%PKG_HOMEPAGE%%) for contact information.";
-    `S Manpage.s_authors;
-    `P "Daniel C. Buenzli, $(i,http://erratique.ch)";
+    `P "Parses the change log and prints the latest entry to stdout";
   ]
 
-let main =
-  Cmd.group ~default:Bistro.term
-    (Cmd.info "dune-release" ~version:"%%VERSION%%" ~doc ~sdocs ~exits ~man)
-    cmds
-
-let main () = Stdlib.exit @@ Cmd.eval' main
-let () = main ()
+let term = Term.(const print_latest_change_log_entry $ const ())
+let info = Cmd.info "change-log" ~doc ~man
+let cmd = Cmd.v info term
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

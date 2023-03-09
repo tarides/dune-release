@@ -2,6 +2,9 @@
 
 ### Added
 
+- Added `dune-release change-log` subcommand that prints out the latest entry
+  in the change log. (#459, @gridbugs)
+
 ### Changed
 
 ### Deprecated
