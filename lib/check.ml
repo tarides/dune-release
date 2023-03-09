@@ -100,8 +100,7 @@ let check_project ~pkg_names ~skip_lint ~skip_build ~skip_tests ?tag ?version
       dune_project_check dir >>= fun dune_project_exit ->
       dune_checks ~dry_run:false ~skip_build ~skip_tests ~pkg_names dir
       >>= fun dune_exit ->
-      if skip_lint then Ok 0
-      else
-        Lint.lint_packages ~dry_run:false ~dir ~todo:Lint.all pkg pkg_names
-        >>| fun lint_exit ->
-        opam_file_exit + dune_project_exit + dune_exit + lint_exit
+      (if skip_lint then Ok 0
+      else Lint.lint_packages ~dry_run:false ~dir ~todo:Lint.all pkg pkg_names)
+      >>| fun lint_exit ->
+      opam_file_exit + dune_project_exit + dune_exit + lint_exit
