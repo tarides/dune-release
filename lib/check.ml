@@ -89,10 +89,18 @@ let dune_project_check dir =
   R.join @@ Sos.with_dir ~dry_run:false dir check ()
 
 let change_log_check pkg =
-  Pkg.change_log pkg >>= Text.change_log_file_last_entry >>| Fun.const 0
+  App_log.blank_line ();
+  App_log.status (fun m -> m "Validating change log.");
+  let result =
+    Pkg.change_log pkg >>= Text.change_log_file_last_entry >>| Fun.const 0
+  in
+  if Result.is_ok result then
+    App_log.report_status `Ok (fun m -> m "Change log is valid.")
+  else App_log.report_status `Fail (fun m -> m "Change log is not valid.");
+  result
 
-let check_project ~pkg_names ~skip_lint ~skip_build ~skip_tests
-    ~check_change_log ?tag ?version ~keep_v ?build_dir ~dir () =
+let check_project ~pkg_names ~skip_lint ~skip_build ~skip_tests ~skip_change_log
+    ?tag ?version ~keep_v ?build_dir ~dir () =
   match pkg_creation_check ?tag ?version ~keep_v ?build_dir dir with
   | Error (`Msg err) ->
       App_log.report_status `Fail (fun m -> m "%s" err);
@@ -106,7 +114,7 @@ let check_project ~pkg_names ~skip_lint ~skip_build ~skip_tests
       (if skip_lint then Ok 0
       else Lint.lint_packages ~dry_run:false ~dir ~todo:Lint.all pkg pkg_names)
       >>= fun lint_exit ->
-      (if check_change_log then change_log_check pkg else Ok 0)
+      (if skip_change_log then Ok 0 else change_log_check pkg)
       >>| fun change_log_exit ->
       opam_file_exit + dune_project_exit + dune_exit + lint_exit
       + change_log_exit

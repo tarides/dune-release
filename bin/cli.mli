@@ -105,8 +105,8 @@ val skip_build : [> `Skip_build of bool ] Term.t
 val skip_tests : [> `Skip_tests of bool ] Term.t
 (** a [--skip-test] option to skip checking the tests *)
 
-val check_change_log : [> `Check_change_log of bool ] Term.t
-(** a [--check-change-log] option to force validation of change-log *)
+val skip_change_log : [> `Skip_change_log of bool ] Term.t
+(** a [--skip-change-log] option to skip validation of change-log *)
 
 val keep_build_dir : [> `Keep_build_dir of bool ] Term.t
 (** a [--keep-build-dir] flag to keep the build directory used for the archive

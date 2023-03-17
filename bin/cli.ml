@@ -256,11 +256,11 @@ let skip_tests =
   in
   named (fun x -> `Skip_tests x) Arg.(value & flag & info [ "skip-tests" ] ~doc)
 
-let check_change_log =
-  let doc = "Check that the change log can be parsed" in
+let skip_change_log =
+  let doc = "Do not check that the change log can be parsed" in
   named
-    (fun x -> `Check_change_log x)
-    Arg.(value & flag & info [ "check-change-log" ] ~doc)
+    (fun x -> `Skip_change_log x)
+    Arg.(value & flag & info [ "skip-change-log" ] ~doc)
 
 let keep_build_dir =
   let doc =

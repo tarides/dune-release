@@ -16,7 +16,7 @@ val check_project :
   skip_lint:bool ->
   skip_build:bool ->
   skip_tests:bool ->
-  check_change_log:bool ->
+  skip_change_log:bool ->
   ?tag:Vcs.Tag.t ->
   ?version:Version.t ->
   keep_v:bool ->
