@@ -2,10 +2,11 @@
 
 ### Added
 
-- Add flag to `dune-release check` that attempts to discover and parse the
-  change log. (#458, @gridbugs)
-
 ### Changed
+
+- Running `dune-release check` now attempts to discover and parse the
+  change log, and a new flag `--skip-change-log` disables this behaviour.
+  (#458, @gridbugs)
 
 ### Deprecated
 
