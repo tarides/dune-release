@@ -24,6 +24,31 @@ Make a minimal project set up
   > (lang dune 2.7)
   > (name my_pkg)
   > EOF
+
+Test that the lint check produces an error if the change log is missing:
+  $ dune-release check --skip-change-log --working-tree | make_dune_release_deterministic
+  [-] Checking dune-release compatibility.
+  [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
+  [ OK ] The dune project contains a name stanza.
+  
+  [-] Building package in <test_directory>
+  [ OK ] package(s) build
+  
+  [-] Running package tests in <test_directory>
+  [ OK ] package(s) pass the tests
+  
+  [-] Performing lint for package my_pkg in <test_directory>
+  [FAIL] File README is missing.
+  [FAIL] File LICENSE is missing.
+  [FAIL] File CHANGES is missing.
+  [ OK ] File opam is present.
+  [ OK ] lint opam file my_pkg.opam.
+  [ OK ] opam field synopsis is present
+  [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
+  [ OK ] Skipping doc field linting, no doc field found
+  [FAIL] lint of <project_dir> and package my_pkg failure: 3 errors.
+
+Add a change log:
   $ cat > ChangeLog <<EOF
   > #ChangeLog
   > 
@@ -33,7 +58,6 @@ Make a minimal project set up
   > ##0.1.0
   > - another feature
   > EOF
-
 
 If the condition described above is fulfilled, there are 5 checks to be performed
 
