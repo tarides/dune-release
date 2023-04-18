@@ -466,6 +466,22 @@ let publish_distrib ~token ~dry_run ~msg ~archive ~yes ~draft p =
   else Config.Release_asset_name.unset ~dry_run ~build_dir ~name ~version)
   >>= fun () -> Ok url
 
+let rec pp_list pp ppf = function
+  | [] -> ()
+  | [ x ] -> pp ppf x
+  | [ x; y ] -> Fmt.pf ppf "%a and %a" pp x pp y
+  | h :: t -> Fmt.pf ppf "%a, %a" pp h (pp_list pp) t
+
+let pr_title ~names ~version ~project_name =
+  let number_of_pkgs = List.length names in
+  let pp_name ppf =
+    match project_name with
+    | Some project_name when number_of_pkgs > 1 ->
+        Format.fprintf ppf "%s (%d packages)" project_name number_of_pkgs
+    | _ -> pp_list Fmt.string ppf names
+  in
+  strf "[new release] %t (%a)" pp_name Version.pp version
+
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
 

@@ -46,6 +46,9 @@ val with_name : t -> string -> t
 (** [with_name t n] is [r] such that like [name r] is [n] and [f r] is [f t]
     otherwise. *)
 
+val project_name : t -> string option
+(** [project_name p] is the name of the project as found in [dune-project]. *)
+
 val version : t -> (Version.t, R.msg) result
 (** [version p] is [p]'s version.*)
 

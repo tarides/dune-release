@@ -19,4 +19,20 @@ let test_ssh_uri_from_http =
     check "git+https://github.com/user/repo.git" None;
   ]
 
-let suite = ("Github", test_ssh_uri_from_http)
+let test_pr_title =
+  let check test_name ~project_name ~names ~expected =
+    let version = Dune_release.Version.of_string "1.2.3" in
+    let got = Dune_release.Github.pr_title ~names ~version ~project_name in
+    let test_fun () = Alcotest.(check string) __LOC__ expected got in
+    (test_name, `Quick, test_fun)
+  in
+  [
+    check "No project name" ~project_name:None ~names:[ "a"; "b"; "c" ]
+      ~expected:"[new release] a, b and c (1.2.3)";
+    check "With project name" ~project_name:(Some "b") ~names:[ "a"; "b"; "c" ]
+      ~expected:"[new release] b (3 packages) (1.2.3)";
+    check "1 package with project name" ~project_name:(Some "a") ~names:[ "a" ]
+      ~expected:"[new release] a (1.2.3)";
+  ]
+
+let suite = ("Github", test_ssh_uri_from_http @ test_pr_title)

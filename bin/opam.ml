@@ -101,12 +101,6 @@ let pkg ~dry_run ~distrib_uri pkg =
       m "Wrote opam package description %a" Text.Pp.path dest_opam_file);
   if not dry_run then warn_if_vcs_dirty () else Ok ()
 
-let rec pp_list pp ppf = function
-  | [] -> ()
-  | [ x ] -> pp ppf x
-  | [ x; y ] -> Fmt.pf ppf "%a and %a" pp x pp y
-  | h :: t -> Fmt.pf ppf "%a, %a" pp h (pp_list pp) t
-
 let rec list_map f = function
   | [] -> Ok []
   | h :: t ->
@@ -202,6 +196,7 @@ let submit ~token ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open
   Pkg.tag pkg >>= fun tag ->
   Pkg.build_dir pkg >>= fun build_dir ->
   Pkg.name pkg >>= fun name ->
+  let project_name = Pkg.project_name pkg in
   (if draft then Ok ()
   else
     match Config.Draft_release.is_set ~dry_run ~build_dir ~name ~version with
@@ -212,10 +207,7 @@ let submit ~token ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open
     | _ -> Ok ())
   >>= fun () ->
   list_map Pkg.name pkgs >>= fun names ->
-  let title =
-    strf "[new release] %a (%a)" (pp_list Fmt.string) names
-      Dune_release.Version.pp version
-  in
+  let title = Github.pr_title ~names ~version ~project_name in
   Pkg.publish_msg pkg >>= fun changes ->
   let gh_repo = Rresult.R.to_option (Pkg.infer_github_repo pkg) in
   let changes =
@@ -229,7 +221,7 @@ let submit ~token ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open
       l "Preparing %a to %a" Text.Pp.maybe_draft (draft, "pull request")
         pp_opam_repo opam_repo);
   Opam.prepare ~dry_run ~msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
-    names
+    ~project_name names
   >>= fun branch ->
   open_pr ~dry_run ~changes ~remote_repo ~fork_owner ~branch ~token ~title
     ~opam_repo ~auto_open ~yes ~draft pkg

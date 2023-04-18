@@ -31,6 +31,7 @@ val prepare :
   opam_repo:string * string ->
   version:Version.t ->
   tag:Vcs.Tag.t ->
+  project_name:string option ->
   string list ->
   (Vcs.commit_ish, R.msg) result
 (** [prepare ~local_repo ~version pkgs] adds the packages [pkg.version] to a new

@@ -79,7 +79,7 @@ let prepare_package ~build_dir ~dry_run ~version vcs name =
   Vcs.run_git_quiet vcs ~dry_run ~force:true Cmd.(v "add" % p dst)
 
 let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
-    names =
+    ~project_name names =
   let msg =
     match msg with
     | None -> Ok Cmd.empty
@@ -102,7 +102,7 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
     Printf.sprintf "https://github.com/%s/%s.git" user repo
   in
   let remote_branch = "master" in
-  let pkg = shortest names in
+  let pkg = match project_name with Some n -> n | None -> shortest names in
   let branch = Fmt.str "release-%s-%a" pkg Vcs.Tag.pp tag in
   let prepare_repo () =
     App_log.status (fun l ->

@@ -22,6 +22,7 @@ type t = {
   licenses : Fpath.t list option;
   distrib_file : Fpath.t option;
   publish_msg : string option;
+  project_name : string option;
 }
 
 let opam_fields p = Lazy.force p.opam_fields
@@ -38,6 +39,7 @@ let opam_homepage_sld p =
 
 let name p = Ok p.name
 let with_name p name = { p with name }
+let project_name p = p.project_name
 
 let extract_version change_log =
   Text.change_log_file_last_entry change_log >>= fun (version, _) -> Ok version
@@ -328,9 +330,11 @@ let version_of_changelog pkg = Version.Changelog.to_version ~keep_v:pkg.keep_v
 
 let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?build_dir ?opam:opam_file
     ?opam_descr ?readme ?change_log ?license ?distrib_file ?publish_msg () =
-  let name =
-    match name with None -> infer_name Fpath.(v ".") | Some v -> Ok v
+  let project_name_result = infer_name Fpath.(v ".") in
+  let project_name =
+    match project_name_result with Ok s -> Some s | Error _ -> None
   in
+  let name = match name with None -> project_name_result | Some v -> Ok v in
   let readmes = match readme with Some r -> Some [ r ] | None -> None in
   let change_logs =
     match change_log with Some c -> Some [ c ] | None -> None
@@ -353,6 +357,7 @@ let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?build_dir ?opam:opam_file
       licenses;
       distrib_file;
       publish_msg;
+      project_name;
     }
   in
   p
