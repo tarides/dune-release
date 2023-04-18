@@ -3,6 +3,8 @@
 ### Added
 
 - Adopt the OCaml Code of Conduct (#473, @rikusilvola)
+- Added support for projects that have their OPAM files in the `opam/`
+  subdirectory. (#466, @Leonidas-from-XIV)
 
 ### Changed
 
