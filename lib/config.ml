@@ -163,9 +163,6 @@ let find () =
   OS.File.exists file >>= fun exists ->
   if exists then OS.File.read file >>= of_yaml >>| fun x -> Some x else Ok None
 
-let reset_terminal : (unit -> unit) option ref = ref None
-let cleanup () = match !reset_terminal with None -> () | Some f -> f ()
-let () = at_exit cleanup
 let token_file () = config_dir () >>= fun cfg -> Ok Fpath.(cfg / "github.token")
 
 let get_token () =
