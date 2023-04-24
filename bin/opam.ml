@@ -175,8 +175,8 @@ let parse_remote_repo remote_repo =
          or providing a valid Github repo URL via the --remote-repo option."
         remote_repo
 
-let submit ~token ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open
-    ~draft =
+let submit ~token ~dry_run ~yes ~opam_repo ~pkgs_to_submit local_repo
+    remote_repo pkgs auto_open ~draft =
   List.fold_left
     (fun acc pkg ->
       get_pkg_dir pkg >>= fun pkg_dir ->
@@ -207,7 +207,7 @@ let submit ~token ~dry_run ~yes ~opam_repo local_repo remote_repo pkgs auto_open
     | _ -> Ok ())
   >>= fun () ->
   list_map Pkg.name pkgs >>= fun names ->
-  let title = Github.pr_title ~names ~version ~project_name in
+  let title = Github.pr_title ~names ~version ~project_name ~pkgs_to_submit in
   Pkg.publish_msg pkg >>= fun changes ->
   let gh_repo = Rresult.R.to_option (Pkg.infer_github_repo pkg) in
   let changes =
@@ -293,7 +293,8 @@ let submit ?local_repo:local ?remote_repo:remote ?opam_repo ?user ?token
   Config.auto_open ~no_auto_open >>= fun auto_open ->
   App_log.status (fun m ->
       m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
-  submit ~token ~dry_run ~yes ~opam_repo local remote pkgs auto_open ~draft
+  submit ~token ~dry_run ~yes ~opam_repo ~pkgs_to_submit:pkg_names local remote
+    pkgs auto_open ~draft
 
 let field ~pkgs ~field_name = field pkgs field_name
 

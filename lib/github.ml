@@ -472,13 +472,14 @@ let rec pp_list pp ppf = function
   | [ x; y ] -> Fmt.pf ppf "%a and %a" pp x pp y
   | h :: t -> Fmt.pf ppf "%a, %a" pp h (pp_list pp) t
 
-let pr_title ~names ~version ~project_name =
+let pr_title ~names ~version ~project_name ~pkgs_to_submit =
   let number_of_pkgs = List.length names in
   let pp_name ppf =
-    match project_name with
-    | Some project_name when number_of_pkgs > 1 ->
+    match (pkgs_to_submit, project_name) with
+    | [], Some project_name when number_of_pkgs > 1 ->
         Format.fprintf ppf "%s (%d packages)" project_name number_of_pkgs
-    | _ -> pp_list Fmt.string ppf names
+    | [], _ -> pp_list Fmt.string ppf names
+    | pkgs_to_submit, _ -> pp_list Fmt.string ppf pkgs_to_submit
   in
   strf "[new release] %t (%a)" pp_name Version.pp version
 
