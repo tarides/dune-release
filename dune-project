@@ -40,4 +40,6 @@ with [Dune](https://github.com/ocaml/dune) and hosted on
   logs
   odoc
   (alcotest :with-test)
-  (yojson (>= 1.6))))
+  (yojson (>= 1.6)))
+ (conflicts
+   (result (< 1.5))))
