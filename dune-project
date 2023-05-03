@@ -42,4 +42,5 @@ with [Dune](https://github.com/ocaml/dune) and hosted on
   (alcotest :with-test)
   (yojson (>= 1.6)))
  (conflicts
-   (result (< 1.5))))
+   (result (< 1.5))
+   (dune (= 2.7.0))))
