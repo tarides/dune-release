@@ -326,15 +326,34 @@ let infer_name dir =
       Logs.err (fun m -> m infer_name_err);
       exit 1
 
+let main pkgs =
+  let pkg_opt =
+    List.find_opt
+      (fun pkg ->
+        match (project_name pkg, name pkg) with
+        | Some project_name, Ok name -> String.equal project_name name
+        | _ -> false)
+      pkgs
+  in
+  match pkg_opt with Some p -> p | None -> List.hd pkgs
+
 let version_of_changelog pkg = Version.Changelog.to_version ~keep_v:pkg.keep_v
 
 let v ~dry_run ?name ?version ?tag ?(keep_v = false) ?build_dir ?opam:opam_file
-    ?opam_descr ?readme ?change_log ?license ?distrib_file ?publish_msg () =
-  let project_name_result = infer_name Fpath.(v ".") in
+    ?opam_descr ?readme ?change_log ?license ?distrib_file ?publish_msg
+    ?project_name () =
+  let project_name_result = lazy (infer_name Fpath.(v ".")) in
   let project_name =
-    match project_name_result with Ok s -> Some s | Error _ -> None
+    match project_name with
+    | Some r -> r
+    | None -> (
+        match Lazy.force project_name_result with
+        | Ok s -> Some s
+        | Error _ -> None)
   in
-  let name = match name with None -> project_name_result | Some v -> Ok v in
+  let name =
+    match name with None -> Lazy.force project_name_result | Some v -> Ok v
+  in
   let readmes = match readme with Some r -> Some [ r ] | None -> None in
   let change_logs =
     match change_log with Some c -> Some [ c ] | None -> None

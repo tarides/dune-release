@@ -33,11 +33,16 @@ val v :
   ?license:Fpath.t ->
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
+  ?project_name:string option ->
   unit ->
   t
 
 val infer_pkg_names : Fpath.t -> string list -> (string list, R.msg) result
 (** Infer the package list. *)
+
+val main : t list -> t
+(** Infer which package is the main one in a nonempty list (the one with a name
+    equal to the project name) *)
 
 val name : t -> (string, R.msg) result
 (** [name p] is [p]'s name. *)

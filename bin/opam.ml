@@ -191,7 +191,7 @@ let submit ~token ~dry_run ~yes ~opam_repo ~pkgs_to_submit local_repo
           Ok 1)
     (Ok 0) pkgs
   >>= fun _ ->
-  let pkg = List.hd pkgs in
+  let pkg = Pkg.main pkgs in
   Pkg.version pkg >>= fun version ->
   Pkg.tag pkg >>= fun tag ->
   Pkg.build_dir pkg >>= fun build_dir ->
