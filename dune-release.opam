@@ -31,7 +31,7 @@ depends: [
   "opam-format" {>= "2.1.0"}
   "opam-state" {>= "2.1.0"}
   "opam-core" {>= "2.1.0"}
-  "rresult"
+  "rresult" {>= "0.6.0"}
   "logs"
   "odoc"
   "alcotest" {with-test}
