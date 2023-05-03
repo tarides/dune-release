@@ -36,10 +36,11 @@ with [Dune](https://github.com/ocaml/dune) and hosted on
   (opam-format (>= 2.1.0))
   (opam-state (>= 2.1.0))
   (opam-core (>= 2.1.0))
-  rresult
+  (rresult (>= 0.6.0))
   logs
   odoc
   (alcotest :with-test)
   (yojson (>= 1.6)))
  (conflicts
-   (result (< 1.5))))
+   (result (< 1.5))
+   (dune (= 2.7.0))))
