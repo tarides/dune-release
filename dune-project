@@ -28,7 +28,7 @@ with [Dune](https://github.com/ocaml/dune) and hosted on
   (curly (>= 0.3.0))
   (fmt (>= 0.8.7))
   (fpath (>= 0.7.3))
-  bos
+  (bos (>= 0.1.3))
   (cmdliner (>= 1.1.0))
   (re (>= 1.7.2))
   astring
@@ -42,5 +42,4 @@ with [Dune](https://github.com/ocaml/dune) and hosted on
   (alcotest :with-test)
   (yojson (>= 1.6)))
  (conflicts
-   (result (< 1.5))
-   (dune (= 2.7.0))))
+   (result (< 1.5))))
