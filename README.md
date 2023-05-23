@@ -3,7 +3,7 @@
 Usage:
 
 ```
-$ opam monorepo pull && dune exec -- ./main.exe
+$ opam monorepo pull && dune exec -- ./src/main.exe
 
 ❯ dune exec -- ./main.exe
 Done: 99% (4107/4108, 1 left) (jobs: 1)org: tarides
