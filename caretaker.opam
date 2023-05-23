@@ -1,0 +1,8 @@
+opam-version: "2.0"
+depends: [
+  "cohttp-lwt-unix"
+  "yojson"
+  "cmdliner"
+  "lwt_ssl"
+  "csv"
+  "conduit-lwt-unix"]

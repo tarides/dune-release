@@ -1,0 +1,3 @@
+(executable
+ (name main)
+ (libraries fmt.tty fmt.cli fmt yojson cohttp-lwt-unix cmdliner csv))
