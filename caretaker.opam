@@ -6,5 +6,6 @@ depends: [
   "lwt_ssl"
   "csv"
   "conduit-lwt-unix"
+  "omd"
   "alcotest" {with-test}
 ]

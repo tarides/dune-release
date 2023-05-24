@@ -34,6 +34,7 @@ depends: [
   "csv" {= "2.4" & ?vendor}
   "domain-name" {= "0.4.0" & ?vendor}
   "dune" {= "3.7.1-ocaml5.0.0+platform"}
+  "dune-build-info" {= "3.7.1" & ?vendor}
   "dune-configurator" {= "3.7.1" & ?vendor}
   "duration" {= "0.2.1" & ?vendor}
   "eqaf" {= "0.9" & ?vendor}
@@ -60,6 +61,7 @@ depends: [
   "ocaml-options-vanilla" {= "1"}
   "ocaml-syntax-shims" {= "1.0.0" & ?vendor}
   "ocplib-endian" {= "1.2" & ?vendor}
+  "omd" {= "2.0.0~alpha3" & ?vendor}
   "parsexp" {= "v0.15.0" & ?vendor}
   "pbkdf" {= "1.2.0" & ?vendor}
   "ppx_derivers" {= "1.2.1" & ?vendor}
@@ -73,10 +75,13 @@ depends: [
   "sexplib" {= "v0.15.1" & ?vendor}
   "sexplib0" {= "v0.15.1" & ?vendor}
   "ssl" {= "0.5.13" & ?vendor}
+  "stdcompat" {= "19" & ?vendor}
   "stdlib-shims" {= "0.3.0" & ?vendor}
   "stringext" {= "1.6.0" & ?vendor}
   "uri" {= "4.2.0" & ?vendor}
   "uri-sexp" {= "4.2.0" & ?vendor}
+  "uucp" {= "15.0.0+dune" & ?vendor}
+  "uunf" {= "15.0.0+dune" & ?vendor}
   "uutf" {= "1.0.3+dune" & ?vendor}
   "x509" {= "0.16.4" & ?vendor}
   "yojson" {= "2.1.0" & ?vendor}
@@ -217,6 +222,10 @@ pin-depends: [
     "https://github.com/hannesm/domain-name/releases/download/v0.4.0/domain-name-0.4.0.tbz"
   ]
   [
+    "dune-build-info.3.7.1"
+    "https://github.com/ocaml/dune/releases/download/3.7.1/dune-3.7.1.tbz"
+  ]
+  [
     "dune-configurator.3.7.1"
     "https://github.com/ocaml/dune/releases/download/3.7.1/dune-3.7.1.tbz"
   ]
@@ -302,6 +311,10 @@ pin-depends: [
     "https://github.com/OCamlPro/ocplib-endian/archive/refs/tags/1.2.tar.gz"
   ]
   [
+    "omd.2.0.0~alpha3"
+    "https://github.com/ocaml/omd/releases/download/2.0.0.alpha3/omd-2.0.0.alpha3.tbz"
+  ]
+  [
     "parsexp.v0.15.0"
     "https://ocaml.janestreet.com/ocaml-core/v0.15/files/parsexp-v0.15.0.tar.gz"
   ]
@@ -351,6 +364,10 @@ pin-depends: [
     "https://github.com/savonet/ocaml-ssl/releases/download/0.5.13/ssl-0.5.13.tbz"
   ]
   [
+    "stdcompat.19"
+    "https://github.com/thierry-martinez/stdcompat/releases/download/v19/stdcompat-19.tar.gz"
+  ]
+  [
     "stdlib-shims.0.3.0"
     "https://github.com/ocaml/stdlib-shims/releases/download/0.3.0/stdlib-shims-0.3.0.tbz"
   ]
@@ -365,6 +382,14 @@ pin-depends: [
   [
     "uri-sexp.4.2.0"
     "https://github.com/mirage/ocaml-uri/releases/download/v4.2.0/uri-v4.2.0.tbz"
+  ]
+  [
+    "uucp.15.0.0+dune"
+    "https://github.com/dune-universe/uucp/releases/download/v15.0.0%2Bdune/uucp-15.0.0.dune.tbz"
+  ]
+  [
+    "uunf.15.0.0+dune"
+    "https://github.com/dune-universe/uunf/releases/download/v15.0.0%2Bdune/uunf-15.0.0.dune.tbz"
   ]
   [
     "uutf.1.0.3+dune"
@@ -498,6 +523,22 @@ x-opam-monorepo-duniverse-dirs: [
     [
       "sha256=3726c0ddf709e1886ef9adae83bf3696fa65466cc675d2494fa6ea9da9945a9f"
       "sha512=e29d1a41fca85a301df370183740d89c6a23ceb7fa530e8ba3693917032d5784b7899b6f713fd5f66d49c3426811a65465f5709af23b3f9120017f94cd9a448e"
+    ]
+  ]
+  [
+    "https://github.com/dune-universe/uucp/releases/download/v15.0.0%2Bdune/uucp-15.0.0.dune.tbz"
+    "uucp"
+    [
+      "sha256=e89d2730a7d8a709cf9868cd2f654fb7df282e9bdc3e778a5c56ef388195f475"
+      "sha512=ffe8c7facefeb6912089a4e5c3a7d6346ac71af1a543dc665793a04b692ecbc70015298e770775b63e9e18a643f251fc6d6be3cc6b77ace1f888f324b56dad36"
+    ]
+  ]
+  [
+    "https://github.com/dune-universe/uunf/releases/download/v15.0.0%2Bdune/uunf-15.0.0.dune.tbz"
+    "uunf"
+    [
+      "sha256=9ab44234cb374c70ce8318e8ddc52eaa86ac798837c36b4190b1c70ddca64316"
+      "sha512=3d49068a973bd0eb6f0bd0ba460fda72bbf238537763ac8afde123d0c250522417f44a3f2cd28b45158f8f9657a30c7cba247d85232f0a70609328fbc715089b"
     ]
   ]
   [
@@ -754,6 +795,14 @@ x-opam-monorepo-duniverse-dirs: [
     ]
   ]
   [
+    "https://github.com/ocaml/omd/releases/download/2.0.0.alpha3/omd-2.0.0.alpha3.tbz"
+    "omd"
+    [
+      "sha256=278e8e5409954bee919ac853909f97061f954e728cbdb241466c235cb741377c"
+      "sha512=51c1ca573bd8e20e100788db575f3bee3c2ef61f0cf5c83fb5b67e193d2c87a223ae4a5776b1f3fe85f024cddf85bbe3e1f10988c38a88ae7304a282fd81825a"
+    ]
+  ]
+  [
     "https://github.com/ocaml/stdlib-shims/releases/download/0.3.0/stdlib-shims-0.3.0.tbz"
     "stdlib-shims"
     [
@@ -791,6 +840,13 @@ x-opam-monorepo-duniverse-dirs: [
     [
       "sha256=d68550952c8fed5e7922b273597a4da801c254edd21a971360f510529e1c2b39"
       "sha512=0d6b4265bf75c3d9b7f262486ab52410f9a16208193171d7a5b74e4e233dfab847c153aa711aaf9114f4997546c4c39d45273ce20e9cbdaaf5d41c58c1635adc"
+    ]
+  ]
+  [
+    "https://github.com/thierry-martinez/stdcompat/releases/download/v19/stdcompat-19.tar.gz"
+    "stdcompat"
+    [
+      "sha512=25582731170f2f80eed281c48af4904d1d00ef88a38d1b17853395c19a326d7b11e42c17b69f639402c467ff6f9b83a2e9d4dbab7255ac25d466b85a55674bd0"
     ]
   ]
   [

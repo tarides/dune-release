@@ -1,0 +1,3 @@
+(library
+ (name cmarkit)
+ (flags (:standard -w -9-27-32-35-30)))

@@ -4,6 +4,9 @@ let ( / ) a b = U.member b a
 
 type t = { id : string; title : string; cards : Card.t list }
 
+let filter ?(filter_out = Filter.default_out) data =
+  { data with cards = Card.filter_out filter_out data.cards }
+
 let to_csv t =
   let headers = "Project" :: Card.csv_headers in
   let rows = List.map (fun card -> t.title :: Card.to_csv card) t.cards in
