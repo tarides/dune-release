@@ -1,3 +1,4 @@
+open Caretaker
 open Lwt.Syntax
 open Cohttp_lwt_unix
 module U = Yojson.Safe.Util

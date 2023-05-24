@@ -1,0 +1,4 @@
+(executable
+ (name main)
+ (public_name caretaker)
+ (libraries caretaker fmt.tty fmt.cli fmt cmdliner))

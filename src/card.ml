@@ -11,6 +11,9 @@ type t = {
   other_fields : (string * string) list;
 }
 
+let v ~title ~objective ~status ?(schedule = "") ?(other_fields = []) id =
+  { title; objective; status; schedule; other_fields; id }
+
 let csv_headers = [ "Objective"; "Id"; "Title"; "Status"; "Schedule" ]
 let to_csv t = [ t.objective; t.id; t.title; t.status; t.schedule ]
 let other_fields t = t.other_fields
@@ -87,9 +90,6 @@ let parse json =
     }
     json
 
-let filter_out f card =
-  List.exists (fun (k, v) -> try get card k = v with Not_found -> false) f
-
 let pp ppf t =
   Fmt.pf ppf "  [%7s] %a\n" t.id Fmt.(styled `Bold string) t.title;
   Fmt.pf ppf "    %a: %s\n"
@@ -100,3 +100,34 @@ let pp ppf t =
     Fmt.(styled `Italic string)
     "Schedule    " t.schedule;
   List.iter (fun (k, v) -> Fmt.pf ppf "    %-12s: %s\n" k v) t.other_fields
+
+let order_by (pivot : Column.t) cards =
+  let sections = Hashtbl.create 12 in
+  List.iter
+    (fun card ->
+      let name = get card pivot in
+      let others =
+        match Hashtbl.find_opt sections name with None -> [] | Some l -> l
+      in
+      Hashtbl.replace sections name (card :: others))
+    cards;
+  Hashtbl.fold (fun k v acc -> (k, v) :: acc) sections []
+
+let matches f card =
+  List.exists
+    (fun (k, q) ->
+      try
+        let v = String.lowercase_ascii (get card k) in
+        match q with
+        | Filter.Is x -> x = v
+        | Starts_with x -> String.starts_with ~prefix:x v
+      with Not_found -> false)
+    f
+
+let filter_out f cards =
+  List.fold_left
+    (fun acc card ->
+      let matching = matches f card in
+      if matching then acc else card :: acc)
+    [] cards
+  |> List.rev

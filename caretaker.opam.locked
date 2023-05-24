@@ -2,6 +2,7 @@ opam-version: "2.0"
 synopsis: "opam-monorepo generated lockfile"
 maintainer: "opam-monorepo"
 depends: [
+  "alcotest" {= "1.7.0" & ?vendor}
   "angstrom" {= "0.15.0" & ?vendor}
   "asn1-combinators" {= "0.2.6" & ?vendor}
   "astring" {= "0.8.5+dune" & ?vendor}
@@ -47,10 +48,10 @@ depends: [
   "lwt_ssl" {= "1.2.0" & ?vendor}
   "macaddr" {= "5.5.0" & ?vendor}
   "magic-mime" {= "1.3.0" & ?vendor}
-  "mirage-crypto" {= "dev" & ?vendor}
-  "mirage-crypto-ec" {= "dev" & ?vendor}
-  "mirage-crypto-pk" {= "dev" & ?vendor}
-  "mirage-crypto-rng" {= "dev" & ?vendor}
+  "mirage-crypto" {= "0.11.1" & ?vendor}
+  "mirage-crypto-ec" {= "0.11.1" & ?vendor}
+  "mirage-crypto-pk" {= "0.11.1" & ?vendor}
+  "mirage-crypto-rng" {= "0.11.1" & ?vendor}
   "num" {= "1.4+dune2" & ?vendor}
   "ocaml" {= "5.0.0"}
   "ocaml-base-compiler" {= "5.0.0"}
@@ -127,6 +128,10 @@ depexts: [
   ["system:pkgconf"] {os = "win32" & os-distribution = "cygwinports"}
 ]
 pin-depends: [
+  [
+    "alcotest.1.7.0"
+    "https://github.com/mirage/alcotest/releases/download/1.7.0/alcotest-1.7.0.tbz"
+  ]
   [
     "angstrom.0.15.0"
     "https://github.com/inhabitedtype/angstrom/archive/0.15.0.tar.gz"
@@ -265,20 +270,20 @@ pin-depends: [
     "https://github.com/mirage/ocaml-magic-mime/releases/download/v1.3.0/magic-mime-1.3.0.tbz"
   ]
   [
-    "mirage-crypto.dev"
-    "git+https://github.com/mirage/mirage-crypto.git#38adeb669f5da31b0ab26642a822e4e018a1e063"
+    "mirage-crypto.0.11.1"
+    "https://github.com/mirage/mirage-crypto/releases/download/v0.11.1/mirage-crypto-0.11.1.tbz"
   ]
   [
-    "mirage-crypto-ec.dev"
-    "git+https://github.com/mirage/mirage-crypto.git#38adeb669f5da31b0ab26642a822e4e018a1e063"
+    "mirage-crypto-ec.0.11.1"
+    "https://github.com/mirage/mirage-crypto/releases/download/v0.11.1/mirage-crypto-0.11.1.tbz"
   ]
   [
-    "mirage-crypto-pk.dev"
-    "git+https://github.com/mirage/mirage-crypto.git#38adeb669f5da31b0ab26642a822e4e018a1e063"
+    "mirage-crypto-pk.0.11.1"
+    "https://github.com/mirage/mirage-crypto/releases/download/v0.11.1/mirage-crypto-0.11.1.tbz"
   ]
   [
-    "mirage-crypto-rng.dev"
-    "git+https://github.com/mirage/mirage-crypto.git#38adeb669f5da31b0ab26642a822e4e018a1e063"
+    "mirage-crypto-rng.0.11.1"
+    "https://github.com/mirage/mirage-crypto/releases/download/v0.11.1/mirage-crypto-0.11.1.tbz"
   ]
   [
     "num.1.4+dune2"
@@ -584,6 +589,14 @@ x-opam-monorepo-duniverse-dirs: [
     ]
   ]
   [
+    "https://github.com/mirage/alcotest/releases/download/1.7.0/alcotest-1.7.0.tbz"
+    "alcotest"
+    [
+      "sha256=812bacdb34b45e88995e07d7306bdab2f72479ef1996637f1d5d1f41667902df"
+      "sha512=4ae1ba318949ec9db8b87bc8072632a02f0e4003a95ab21e474f5c34c3b5bde867b0194a2d0ea7d9fc4580c70a30ca39287d33a8c134acc7611902f79c7b7ce8"
+    ]
+  ]
+  [
     "https://github.com/mirage/ca-certs/releases/download/v0.2.3/ca-certs-0.2.3.tbz"
     "ca-certs"
     [
@@ -600,8 +613,12 @@ x-opam-monorepo-duniverse-dirs: [
     ]
   ]
   [
-    "git+https://github.com/mirage/mirage-crypto.git#38adeb669f5da31b0ab26642a822e4e018a1e063"
+    "https://github.com/mirage/mirage-crypto/releases/download/v0.11.1/mirage-crypto-0.11.1.tbz"
     "mirage-crypto"
+    [
+      "sha256=0cda147b20a92bf70c5c9eb7f55c675d03abc76bbd4b1f0dd9cf7fc38016d29c"
+      "sha512=36e184c950f8ac51283cbcc2ccea84240c9369c3a5b36d8d0253d45a53b979ca97bd779450c79510205a9d257cc5916c42ab217111b4cad62758292648c79bc3"
+    ]
   ]
   [
     "https://github.com/mirage/ocaml-base64/releases/download/v3.5.1/base64-3.5.1.tbz"
@@ -784,5 +801,5 @@ x-opam-monorepo-duniverse-dirs: [
     ]
   ]
 ]
-x-opam-monorepo-root-packages: ["gh-project"]
+x-opam-monorepo-root-packages: ["caretaker"]
 x-opam-monorepo-version: "0.3"

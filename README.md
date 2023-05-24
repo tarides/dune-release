@@ -3,7 +3,7 @@
 Usage:
 
 ```
-$ opam monorepo pull && dune exec -- ./src/main.exe
+$ opam monorepo pull && dune exec -- ./bin/main.exe
 Done: 99% (4107/4108, 1 left) (jobs: 1)org: tarides
 
 == Platform Roadmap (PVT_kwDOAeo-K84AA2jF) ==
