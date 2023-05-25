@@ -1,15 +1,6 @@
 open Caretaker
 open Lwt.Syntax
-open Cohttp_lwt_unix
 module U = Yojson.Safe.Util
-
-let ( / ) a b = U.member b a
-
-let debug =
-  match Sys.getenv "GH_DEBUG" with
-  | "" | "0" | "false" -> false
-  | _ -> true
-  | exception Not_found -> false
 
 type t = { org : string; projects : Project.t list }
 
@@ -21,48 +12,6 @@ let pp_csv ppf t =
   List.iter (fun p -> Fmt.string ppf (Project.to_csv p)) t.projects
 
 let pp_csv_ts ppf t = Fmt.string ppf (Report.to_csv t)
-
-let query org project_id =
-  Fmt.str
-    {| query{
-  organization(login: %S) {
-      %s
-  }
-    }
-  |}
-    org
-    (Project.graphql project_id)
-
-let token =
-  let f = Sys.getenv "HOME" ^ "/.github/github-activity-token" in
-  let ic = open_in f in
-  let n = in_channel_length ic in
-  String.trim (really_input_string ic n)
-
-let graphql_endpoint = Uri.of_string "https://api.github.com/graphql"
-
-let exec ~token query =
-  if debug then Fmt.epr "QUERY: %s\n" query;
-  let body =
-    `Assoc [ ("query", `String query) ]
-    |> Yojson.Safe.to_string |> Cohttp_lwt.Body.of_string
-  in
-  let headers = Cohttp.Header.init_with "Authorization" ("bearer " ^ token) in
-  let* resp, body = Client.post ~headers ~body graphql_endpoint in
-  let+ body = Cohttp_lwt.Body.to_string body in
-  match Cohttp.Response.status resp with
-  | `OK -> (
-      let json = Yojson.Safe.from_string body in
-      match json / "errors" with
-      | `Null -> json
-      | _errors ->
-          Fmt.failwith "@[<v2>GitHub returned errors: %a@]"
-            (Yojson.Safe.pretty_print ~std:true)
-            json)
-  | err ->
-      Fmt.failwith "@[<v2>Error performing GraphQL query on GitHub: %s@,%s@]"
-        (Cohttp.Code.string_of_status err)
-        body
 
 let read_file f =
   let ic = open_in f in
@@ -91,17 +40,6 @@ let read_timesheets ~years ~weeks okr_updates_dir =
               acc files)
         acc weeks)
     (Hashtbl.create 13) years
-
-let query_github ~token org project_numbers : t Lwt.t =
-  let+ projects =
-    Lwt_list.map_p
-      (fun project_number ->
-        let+ json = exec ~token (query org project_number) in
-        if debug then Fmt.epr "Result: %a\n" Yojson.Safe.pp json;
-        Project.parse json)
-      project_numbers
-  in
-  { org; projects }
 
 let filter ?filter_out data =
   let filter = Project.filter ?filter_out in
@@ -165,10 +103,12 @@ let projects () format org project_numbers okr_updates_dir timesheets =
         in
         out_ts ts
   else
-    Lwt_main.run
-    @@ let+ data = query_github ~token org project_numbers in
-       let data = filter data in
-       out ~format data
+    let lwt =
+      let+ projects = Project.get_all ~org_name:org project_numbers in
+      let data = filter { org; projects } in
+      out ~format data
+    in
+    Lwt_main.run lwt
 
 let cmd =
   Cmd.v (Cmd.info "gh-projects")
