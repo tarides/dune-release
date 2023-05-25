@@ -159,7 +159,7 @@ let projects () format org project_numbers okr_updates_dir timesheets =
     | Some okr_updates_dir ->
         let ts =
           read_timesheets ~years:[ 2023 ]
-            ~months:[ 0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10 ]
+            ~months:[ 1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11; 12; 13 ]
             okr_updates_dir
         in
         out_ts ts

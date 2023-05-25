@@ -14,9 +14,7 @@ type t = {
 let v ~title ~objective ~status ?(schedule = "") ?(other_fields = []) id =
   { title; objective; status; schedule; other_fields; id }
 
-let csv_headers =
-  [ "Id"; "Objective"; "Title"; "Status"; "Schedule"; "Resources" ]
-
+let csv_headers = [ "Id"; "Objective"; "Title"; "Status"; "Schedule" ]
 let to_csv t = [ t.id; t.objective; t.title; t.status; t.schedule ]
 let other_fields t = t.other_fields
 let id t = t.id
