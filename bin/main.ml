@@ -70,14 +70,14 @@ let read_file f =
   close_in ic;
   s
 
-let read_timesheets ~years ~months okr_updates_dir =
+let read_timesheets ~years ~weeks okr_updates_dir =
   let ( / ) = Filename.concat in
   List.fold_left
     (fun acc year ->
       let root = okr_updates_dir / "team-weeklies" / string_of_int year in
       List.fold_left
-        (fun acc month ->
-          let dir = Fmt.str "%s/%02d" root month in
+        (fun acc week ->
+          let dir = Fmt.str "%s/%02d" root week in
           if (not (Sys.file_exists dir)) || not (Sys.is_directory dir) then acc
           else
             let files =
@@ -87,9 +87,9 @@ let read_timesheets ~years ~months okr_updates_dir =
             List.fold_left
               (fun acc file ->
                 let str = read_file (dir / file) in
-                Report.of_markdown ~acc ~year ~month str)
+                Report.of_markdown ~acc ~year ~week str)
               acc files)
-        acc months)
+        acc weeks)
     (Hashtbl.create 13) years
 
 let query_github ~token org project_numbers : t Lwt.t =
@@ -149,6 +149,9 @@ let setup =
     const (fun style_renderer -> Fmt_tty.setup_std_outputs ?style_renderer ())
     $ style_renderer)
 
+let all_weeks = List.init 52 (fun i -> i + 1)
+let all_years = [ 2022; 2023 ]
+
 let projects () format org project_numbers okr_updates_dir timesheets =
   if timesheets then
     match okr_updates_dir with
@@ -158,9 +161,7 @@ let projects () format org project_numbers okr_updates_dir timesheets =
            okr-updates repositories"
     | Some okr_updates_dir ->
         let ts =
-          read_timesheets ~years:[ 2023 ]
-            ~months:[ 1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11; 12; 13 ]
-            okr_updates_dir
+          read_timesheets ~years:all_years ~weeks:all_weeks okr_updates_dir
         in
         out_ts ts
   else

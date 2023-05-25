@@ -7,5 +7,6 @@ depends: [
   "csv"
   "conduit-lwt-unix"
   "omd"
+  "calendar"
   "alcotest" {with-test}
 ]

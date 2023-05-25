@@ -5,25 +5,37 @@ let pp_id ppf = function
   | No_KR -> Fmt.pf ppf "No KR"
   | ID s -> Fmt.pf ppf "%s" s
 
-let total_time (t : (string * float) list list) =
-  List.fold_left (List.fold_left (fun acc (_, f) -> acc +. f)) 0. t
+type item = {
+  id : string;
+  year : int;
+  month : int;
+  week : int;
+  user : string;
+  days : float;
+}
 
-type item = { id : string; year : int; month : int; duration : float }
 type t = (string, item) Hashtbl.t
 
-let of_markdown ?(acc = Hashtbl.create 13) ~year ~month s =
+let month_of_week ~year week =
+  let cal = Calendar.of_week ~year week in
+  Calendar.month cal
+
+let of_markdown ?(acc = Hashtbl.create 13) ~year ~week s =
   let md = Omd.of_string s in
   let okrs = Parser.of_markdown md in
+  let month = month_of_week ~year week in
   let report = Report.of_krs okrs in
   Report.iter
     (fun (kr : KR.t) ->
       let id = Fmt.str "%a" pp_id kr.id in
-      let duration = total_time kr.time_entries in
-      Hashtbl.add acc id { id; year; month; duration })
+      Hashtbl.iter
+        (fun user days ->
+          Hashtbl.add acc id { id; year; month; week; user; days })
+        kr.time_per_engineer)
     report;
   acc
 
-let csv_headers = [ "Id"; "Year"; "Month"; "Duration" ]
+let csv_headers = [ "Id"; "Year"; "Month"; "Week"; "User"; "Days" ]
 
 let rows t =
   let result = ref [] in
@@ -33,8 +45,10 @@ let rows t =
         [
           i.id;
           Fmt.str "%d" i.year;
-          Fmt.str "%2d" i.month;
-          Fmt.str "%.1f" i.duration;
+          Fmt.str "%02d" i.month;
+          Fmt.str "%02d" i.week;
+          Fmt.str "%s" i.user;
+          Fmt.str "%.1f" i.days;
         ]
         :: !result)
     t;

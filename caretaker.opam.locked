@@ -17,6 +17,7 @@ depends: [
   "bigstringaf" {= "0.9.1" & ?vendor}
   "bos" {= "0.2.1+dune" & ?vendor}
   "ca-certs" {= "0.2.3" & ?vendor}
+  "calendar" {= "3.0.0" & ?vendor}
   "cmdliner" {= "1.1.1+dune" & ?vendor}
   "cohttp" {= "5.1.0" & ?vendor}
   "cohttp-lwt" {= "5.1.0" & ?vendor}
@@ -172,6 +173,10 @@ pin-depends: [
   [
     "ca-certs.0.2.3"
     "https://github.com/mirage/ca-certs/releases/download/v0.2.3/ca-certs-0.2.3.tbz"
+  ]
+  [
+    "calendar.3.0.0"
+    "https://github.com/ocaml-community/calendar/archive/refs/tags/v3.0.0.tar.gz"
   ]
   [
     "cmdliner.1.1.1+dune"
@@ -731,6 +736,14 @@ x-opam-monorepo-duniverse-dirs: [
     [
       "sha256=5de83185d01240afc8ed777480948bba64c66c2605a56b2347b3e56525aa695a"
       "sha512=fd7c0275d91e717b04a57939dea4d0c1a0133903c37de2e5a1650e321401c39b4684bc885a29d5c5093a51b5b43b95a2a2a57cd4554af191159d32a44d489c66"
+    ]
+  ]
+  [
+    "https://github.com/ocaml-community/calendar/archive/refs/tags/v3.0.0.tar.gz"
+    "calendar"
+    [
+      "md5=8c7207407fc6b4d0bd3d05ed3c13f91a"
+      "sha512=cf8a5cfbfb8879da7bcacf765d5461523cbc4f0c13133dfb2f311b051ed95b5f72815af5ca2836294a793d9b57bfc4cc1abbb8b54e17954cb4ecc99e1743bdc3"
     ]
   ]
   [
