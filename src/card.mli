@@ -3,7 +3,9 @@ type t
 val v :
   title:string ->
   objective:string ->
-  status:string ->
+  ?status:string ->
+  ?team:string ->
+  ?funders:string list ->
   ?schedule:string ->
   ?other_fields:(string * string) list ->
   string ->

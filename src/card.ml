@@ -8,14 +8,29 @@ type t = {
   objective : string;
   status : string;
   schedule : string;
+  funders : string list;
+  team : string;
   other_fields : (string * string) list;
 }
 
-let v ~title ~objective ~status ?(schedule = "") ?(other_fields = []) id =
-  { title; objective; status; schedule; other_fields; id }
+let v ~title ~objective ?(status = "") ?(team = "") ?(funders = [])
+    ?(schedule = "") ?(other_fields = []) id =
+  { title; objective; status; schedule; other_fields; team; funders; id }
 
-let csv_headers = [ "Id"; "Objective"; "Title"; "Status"; "Schedule" ]
-let to_csv t = [ t.id; t.objective; t.title; t.status; t.schedule ]
+let csv_headers =
+  [ "Id"; "Objective"; "Title"; "Status"; "Schedule"; "Funders"; "Team" ]
+
+let to_csv t =
+  [
+    t.id;
+    t.objective;
+    t.title;
+    t.status;
+    t.schedule;
+    String.concat "," t.funders;
+    t.team;
+  ]
+
 let other_fields t = t.other_fields
 let id t = t.id
 
@@ -78,6 +93,8 @@ let parse json =
           | "objective" -> { acc with objective = v }
           | "status" -> { acc with status = v }
           | "schedule" -> { acc with schedule = v }
+          | "funder" -> { acc with funders = [ v ] }
+          | "team" -> { acc with team = v }
           | _ -> { acc with other_fields = (k, v) :: acc.other_fields })
       | _ -> acc)
     {
@@ -86,20 +103,29 @@ let parse json =
       objective = "";
       status = "";
       schedule = "";
+      funders = [];
+      team = "";
       other_fields = [];
     }
     json
 
 let pp ppf t =
-  Fmt.pf ppf "  [%7s] %a\n" t.id Fmt.(styled `Bold string) t.title;
-  Fmt.pf ppf "    %a: %s\n"
-    Fmt.(styled `Italic string)
-    "Objective   " t.objective;
-  Fmt.pf ppf "    %a: %s\n" Fmt.(styled `Italic string) "Status      " t.status;
-  Fmt.pf ppf "    %a: %s\n"
-    Fmt.(styled `Italic string)
-    "Schedule    " t.schedule;
-  List.iter (fun (k, v) -> Fmt.pf ppf "    %-12s: %s\n" k v) t.other_fields
+  let em = Fmt.(styled `Italic string) in
+  let bold = Fmt.(styled `Bold string) in
+  let pf_field k v =
+    let n = max 10 (String.length k) in
+    let buf = Bytes.make n ' ' in
+    String.blit k 0 buf 0 (String.length k);
+    let k = String.of_bytes buf in
+    match v with "" -> () | _ -> Fmt.pf ppf "    %a: %s\n" em k v
+  in
+  Fmt.pf ppf "  [%7s] %a\n" t.id bold t.title;
+  pf_field "Objective" t.objective;
+  pf_field "Status" t.status;
+  pf_field "Schedule" t.schedule;
+  pf_field "Team" t.team;
+  pf_field "Funders" (String.concat ", " t.funders);
+  List.iter (fun (k, v) -> pf_field k v) t.other_fields
 
 let order_by (pivot : Column.t) cards =
   let sections = Hashtbl.create 12 in
