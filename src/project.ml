@@ -4,7 +4,7 @@ module Query = struct
   let make ~org_name ~project_number ~after =
     Printf.sprintf
       {|
-query { 
+query {
   organization(login: %S) {
     projectV2(number: %d) {
       id
@@ -12,27 +12,7 @@ query {
       items(first: 100 %s) {
         edges {
           cursor
-          node {
-            fieldValues(first: 10) {
-              nodes {
-                ... on ProjectV2ItemFieldTextValue {
-                  text
-                  field {
-                    ... on ProjectV2FieldCommon {
-                      name
-                    }
-                  }
-                }
-                ... on ProjectV2ItemFieldSingleSelectValue {
-                  name
-                  field {
-                    ... on ProjectV2FieldCommon {
-                      name
-                    }
-                  }
-                }
-              }
-            }
+          node { %s
           }
         }
       }
@@ -44,6 +24,7 @@ query {
       (match after with
       | None -> ""
       | Some s -> Printf.sprintf ", after: \"%s\" " s)
+      Card.graphql
 
   module U = Yojson.Safe.Util
 

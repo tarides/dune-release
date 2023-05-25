@@ -7,6 +7,8 @@ val v :
   ?team:string ->
   ?funders:string list ->
   ?schedule:string ->
+  ?starts:string ->
+  ?ends:string ->
   ?other_fields:(string * string) list ->
   string ->
   t

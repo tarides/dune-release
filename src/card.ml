@@ -10,15 +10,40 @@ type t = {
   schedule : string;
   funders : string list;
   team : string;
+  starts : string;
+  ends : string;
   other_fields : (string * string) list;
 }
 
 let v ~title ~objective ?(status = "") ?(team = "") ?(funders = [])
-    ?(schedule = "") ?(other_fields = []) id =
-  { title; objective; status; schedule; other_fields; team; funders; id }
+    ?(schedule = "") ?(starts = "") ?(ends = "") ?(other_fields = []) id =
+  {
+    title;
+    objective;
+    status;
+    schedule;
+    starts;
+    ends;
+    other_fields;
+    team;
+    funders;
+    id;
+  }
 
 let csv_headers =
-  [ "Id"; "Objective"; "Title"; "Status"; "Schedule"; "Funders"; "Team" ]
+  [
+    "Id";
+    "Objective";
+    "Title";
+    "Status";
+    "Schedule";
+    "Starts";
+    "Ends";
+    "Funders";
+    "Team";
+    "Starts";
+    "Ends";
+  ]
 
 let to_csv t =
   [
@@ -27,6 +52,8 @@ let to_csv t =
     t.title;
     t.status;
     t.schedule;
+    t.starts;
+    t.ends;
     String.concat "," t.funders;
     t.team;
   ]
@@ -56,26 +83,34 @@ let first_assoc = function
 
 let graphql =
   {|
-          fieldValues(first: 10) {
-            nodes {
-              ... on ProjectV2ItemFieldTextValue {
-                text
-                field {
-                  ... on ProjectV2FieldCommon {
-                    name
+            fieldValues(first: 100) {
+              nodes {
+                ... on ProjectV2ItemFieldTextValue {
+                  text
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
                   }
                 }
-              }
-              ... on ProjectV2ItemFieldSingleSelectValue {
-                name
-                field {
-                  ... on ProjectV2FieldCommon {
-                    name
+                ... on ProjectV2ItemFieldSingleSelectValue {
+                  name
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
+                ... on ProjectV2ItemFieldDateValue {
+                  date
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
                   }
                 }
               }
             }
-          }
   |}
 
 let parse json =
@@ -95,6 +130,8 @@ let parse json =
           | "schedule" -> { acc with schedule = v }
           | "funder" -> { acc with funders = [ v ] }
           | "team" -> { acc with team = v }
+          | "start date" -> { acc with starts = v }
+          | "target date" -> { acc with ends = v }
           | _ -> { acc with other_fields = (k, v) :: acc.other_fields })
       | _ -> acc)
     {
@@ -103,6 +140,8 @@ let parse json =
       objective = "";
       status = "";
       schedule = "";
+      starts = "";
+      ends = "";
       funders = [];
       team = "";
       other_fields = [];
@@ -123,6 +162,8 @@ let pp ppf t =
   pf_field "Objective" t.objective;
   pf_field "Status" t.status;
   pf_field "Schedule" t.schedule;
+  pf_field "Starts" t.starts;
+  pf_field "Ends" t.ends;
   pf_field "Team" t.team;
   pf_field "Funders" (String.concat ", " t.funders);
   List.iter (fun (k, v) -> pf_field k v) t.other_fields
