@@ -1,4 +1,4 @@
 (library
  (public_name caretaker.okra)
  (name okra)
- (libraries omd fmt logs csv str))
+ (libraries omd fmt logs csv str calendar))
