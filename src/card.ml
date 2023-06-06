@@ -210,8 +210,8 @@ let matches f card =
       with Not_found -> false)
     f
 
-let is_complete t = matches [ (Objective, Filter.starts_with "complete") ] t
-let is_dropped t = matches [ (Objective, Filter.starts_with "dropped") ] t
+let is_complete t = matches [ (Status, Filter.starts_with "complete") ] t
+let is_dropped t = matches [ (Status, Filter.starts_with "dropped") ] t
 
 let filter_out f cards =
   List.fold_left
@@ -225,7 +225,8 @@ let graphql_mutate t field v =
   let field_kind, field_id =
     try Fields.find t.fields field
     with Not_found ->
-      Fmt.failwith "mutate: cannot find %a\n" Fields.pp t.fields
+      Fmt.failwith "mutate: cannot find %a in %a\n" Column.pp field Fields.pp
+        t.fields
   in
   let text =
     match field_kind with
