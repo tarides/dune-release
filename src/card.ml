@@ -1,5 +1,4 @@
 module U = Yojson.Safe.Util
-open Lwt.Syntax
 
 let ( / ) a b = U.member b a
 
@@ -70,6 +69,13 @@ let to_csv t =
 
 let other_fields t = t.other_fields
 let id t = t.id
+let ends t = t.ends
+let starts t = t.starts
+let objective t = t.objective
+let title t = t.title
+let status t = t.status
+let funders t = t.funders
+let schedule t = t.schedule
 
 let get t = function
   | Column.Id -> t.id
@@ -252,75 +258,6 @@ let graphql_mutate t field v =
   }
   |}
     t.project_id t.item_id field_id text
-
-let sync ~heatmap t =
-  let starts = Heatmap.start_date heatmap t.id in
-  let ends = Heatmap.end_date heatmap t.id in
-  let starts =
-    let str = Fmt.to_to_string Heatmap.pp_start_date in
-    match (starts, t.starts) with
-    | None, "" -> None
-    | Some x, "" ->
-        let x = str x in
-        let msg =
-          Fmt.str "%s has started in %s but is not recorded on the card" t.id x
-        in
-        Some (x, msg)
-    | Some x, y ->
-        let x = str x in
-        if x <> y then
-          let msg = Fmt.str "%s: start dates mismatch - %s vs. %s" t.id x y in
-          Some (x, msg)
-        else None
-    | None, x ->
-        let _msg =
-          Fmt.str "%s hasn't started but was planning to start on %s" t.id x
-        in
-        None
-  in
-  let ends =
-    let str = Fmt.to_to_string Heatmap.pp_end_date in
-    if is_complete t || is_dropped t then
-      match (ends, t.ends) with
-      | None, "" -> None
-      | Some x, "" ->
-          let x = str x in
-          let msg =
-            Fmt.str "%s has ended in %s but is not recorded on the card" t.id x
-          in
-          Some (x, msg)
-      | Some x, y ->
-          let x = str x in
-          if x <> y then
-            let msg = Fmt.str "%s: end dates mismatch - %s - %s" t.id x y in
-            Some (x, msg)
-          else None
-      | None, x ->
-          let _msg =
-            Fmt.str "%s hasn't started by was planning to end on %s" t.id x
-          in
-          None
-    else None
-  in
-  let* () =
-    match starts with
-    | None -> Lwt.return ()
-    | Some (x, msg) ->
-        let s = graphql_mutate t Starts x in
-        Fmt.pr "ACTION: %s\n%!" msg;
-        let+ _res = Github.run s in
-        ()
-  in
-  let* () =
-    match ends with
-    | None -> Lwt.return ()
-    | Some (x, msg) ->
-        Fmt.pr "ACTION: %s\n%!" msg;
-        let s = graphql_mutate t Ends x in
-        let+ _res = Github.run s in
-        ()
-  in
-  Lwt.return ()
 
 let lint db t =
   match t.id with

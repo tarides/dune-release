@@ -15,6 +15,18 @@ val v :
   t
 
 val id : t -> string
+val starts : t -> string
+val ends : t -> string
+val title : t -> string
+val objective : t -> string
+val status : t -> string
+val funders : t -> string list
+val schedule : t -> string
+val is_complete : t -> bool
+val is_dropped : t -> bool
+
+(* other stuff *)
+
 val get : t -> Column.t -> string
 val other_fields : t -> (string * string) list
 val graphql_query : string
@@ -30,7 +42,3 @@ val lint : db -> t -> unit
 val matches : Filter.t -> t -> bool
 val filter_out : Filter.t -> t list -> t list
 val order_by : Column.t -> t list -> (string * t list) list
-
-(** mutation *)
-
-val sync : heatmap:Heatmap.t -> t -> unit Lwt.t
