@@ -2,6 +2,8 @@ open Caretaker
 open Lwt.Syntax
 module U = Yojson.Safe.Util
 
+let ( / ) = Filename.concat
+
 type t = { org : string; projects : Project.t list }
 
 let pp ppf t =
@@ -20,7 +22,6 @@ let read_file f =
   s
 
 let read_timesheets ~years ~weeks okr_updates_dir =
-  let ( / ) = Filename.concat in
   List.fold_left
     (fun acc year ->
       let root = okr_updates_dir / "team-weeklies" / string_of_int year in
@@ -91,6 +92,10 @@ let sync_term =
   Arg.(
     value @@ flag @@ info ~doc:"Sync heatmaps with GH boards" [ "sync"; "s" ])
 
+(* XXX: temporary hack - we should have a subcommand instead *)
+let lint_term =
+  Arg.(value @@ flag @@ info ~doc:"Lint GH boards" [ "lint"; "l" ])
+
 let setup =
   let style_renderer = Fmt_cli.style_renderer () in
   Term.(
@@ -102,8 +107,17 @@ let all_years = [ 2021; 2022; 2023 ]
 let filter_sync = [ (Column.Id, Filter.is "New KR"); (Id, Filter.is "") ]
 
 let projects () format org project_numbers okr_updates_dir timesheets heatmap
-    sync =
+    sync lint =
   let run () =
+    let db =
+      if not lint then None
+      else
+        match okr_updates_dir with
+        | None -> None
+        | Some dir ->
+            let file = dir / "team-weeklies" / "db.csv" in
+            Some (Okra.Masterdb.load_csv file)
+    in
     if timesheets || heatmap then
       match okr_updates_dir with
       | None ->
@@ -128,9 +142,9 @@ let projects () format org project_numbers okr_updates_dir timesheets heatmap
             out_report ts;
             Lwt.return ())
     else
-      let+ projects = Project.get_all ~org_name:org project_numbers in
+      let+ projects = Project.get_all ?db ~org_name:org project_numbers in
       let data = filter { org; projects } in
-      out ~format data
+      if not lint then out ~format data
   in
   Lwt_main.run @@ run ()
 
@@ -138,6 +152,7 @@ let cmd =
   Cmd.v (Cmd.info "gh-projects")
     Term.(
       const projects $ setup $ format $ org_term $ project_numbers_term
-      $ okr_updates_dir_term $ timesheets_term $ heatmap_term $ sync_term)
+      $ okr_updates_dir_term $ timesheets_term $ heatmap_term $ sync_term
+      $ lint_term)
 
 let () = exit (Cmd.eval cmd)

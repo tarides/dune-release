@@ -1,4 +1,5 @@
 type t
+type db := Okra.Masterdb.t
 
 val v :
   title:string ->
@@ -22,6 +23,7 @@ val parse : project_id:string -> fields:Fields.t -> Yojson.Safe.t -> t
 val pp : t Fmt.t
 val to_csv : t -> string list
 val csv_headers : string list
+val lint : db -> t -> unit
 
 (** Filters *)
 
