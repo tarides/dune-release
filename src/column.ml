@@ -18,6 +18,8 @@ let to_string = function
   | Ends -> "ends"
   | Other_field f -> f
 
+let pp = Fmt.of_to_string to_string
+
 let of_string x =
   match String.lowercase_ascii x with
   | "id" -> Id
@@ -26,5 +28,5 @@ let of_string x =
   | "status" -> Status
   | "schedule" -> Schedule
   | "start date" | "starts" -> Starts
-  | "target date" | "ends" -> Ends
+  | "target date" | "ends" | "end date" -> Ends
   | f -> Other_field f
