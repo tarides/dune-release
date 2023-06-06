@@ -1,4 +1,12 @@
-type t = Id | Title | Objective | Status | Schedule | Other_field of string
+type t =
+  | Id
+  | Title
+  | Objective
+  | Status
+  | Schedule
+  | Starts
+  | Ends
+  | Other_field of string
 
 let to_string = function
   | Id -> "id"
@@ -6,4 +14,17 @@ let to_string = function
   | Objective -> "objective"
   | Status -> "status"
   | Schedule -> "schedule"
+  | Starts -> "starts"
+  | Ends -> "ends"
   | Other_field f -> f
+
+let of_string x =
+  match String.lowercase_ascii x with
+  | "id" -> Id
+  | "title" -> Title
+  | "objective" -> Objective
+  | "status" -> Status
+  | "schedule" -> Schedule
+  | "start date" | "starts" -> Starts
+  | "target date" | "ends" -> Ends
+  | f -> Other_field f

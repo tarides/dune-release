@@ -1,38 +1,41 @@
 type t = { id : string; title : string; cards : Card.t list }
 
 module Query = struct
+  let fields =
+    {|
+      fields(first: 100) {
+        nodes {
+          ... on ProjectV2Field {
+            name
+            id
+            dataType
+          }
+          ... on ProjectV2IterationField {
+            name
+            id
+            dataType
+          }
+          ... on ProjectV2SingleSelectField {
+            name
+            id
+            dataType
+          }
+        }
+      }
+    |}
+
   let make ~org_name ~project_number ~after =
     Printf.sprintf
       {|
-query { 
+query {
   organization(login: %S) {
     projectV2(number: %d) {
       id
-      title
+      title%s
       items(first: 100 %s) {
         edges {
           cursor
-          node {
-            fieldValues(first: 10) {
-              nodes {
-                ... on ProjectV2ItemFieldTextValue {
-                  text
-                  field {
-                    ... on ProjectV2FieldCommon {
-                      name
-                    }
-                  }
-                }
-                ... on ProjectV2ItemFieldSingleSelectValue {
-                  name
-                  field {
-                    ... on ProjectV2FieldCommon {
-                      name
-                    }
-                  }
-                }
-              }
-            }
+          node { %s
           }
         }
       }
@@ -41,25 +44,46 @@ query {
 }
 |}
       org_name project_number
+      (match after with None -> fields | Some _ -> "")
       (match after with
       | None -> ""
       | Some s -> Printf.sprintf ", after: \"%s\" " s)
+      Card.graphql_query
 
   module U = Yojson.Safe.Util
 
   let ( / ) a b = U.member b a
 
-  let parse json =
+  let parse_fields json =
+    let json = json / "nodes" |> U.to_list in
+    let fields = Fields.empty () in
+    List.iter
+      (fun json ->
+        let key = json / "name" |> U.to_string |> Column.of_string in
+        let id = json / "id" |> U.to_string in
+        let kind = json / "dataType" |> U.to_string |> Fields.kind_of_string in
+        Fields.add fields key kind id)
+      json;
+    fields
+
+  let parse ?fields json =
     let json = json / "data" / "organization" / "projectV2" in
     let id = json / "id" |> U.to_string in
+    let fields =
+      match fields with None -> json / "fields" |> parse_fields | Some f -> f
+    in
     let title = json / "title" |> U.to_string in
     let edges = json / "items" / "edges" |> U.to_list in
     match edges with
-    | [] -> ("", { id; title; cards = [] })
+    | [] -> ("", fields, { id; title; cards = [] })
     | edges ->
         let cursor = (List.rev edges |> List.hd) / "cursor" |> U.to_string in
-        let cards = List.map (fun edge -> edge / "node" |> Card.parse) edges in
-        (cursor, { id; title; cards })
+        let cards =
+          List.map
+            (fun edge -> edge / "node" |> Card.parse ~project_id:id ~fields)
+            edges
+        in
+        (cursor, fields, { id; title; cards })
 end
 
 let filter ?(filter_out = Filter.default_out) data =
@@ -87,17 +111,19 @@ let pp ?(order_by = Column.Objective) ?(filter_out = Filter.default_out) ppf t =
         List.iter (Card.pp ppf) section)
       sections
 
+let sync ~heatmap (t : t) = Lwt_list.iter_p (Card.sync ~heatmap) t.cards
+
 let get ~org_name ~project_number =
   let open Lwt.Syntax in
-  let rec aux cursor acc =
+  let rec aux fields cursor acc =
     let query = Query.make ~org_name ~project_number ~after:cursor in
     let* json = Github.run query in
-    let cursor, project = Query.parse json in
+    let cursor, fields, project = Query.parse ?fields json in
     if List.length project.cards < 100 then
       Lwt.return { project with cards = acc @ project.cards }
-    else aux (Some cursor) (acc @ project.cards)
+    else aux (Some fields) (Some cursor) (acc @ project.cards)
   in
-  aux None []
+  aux None None []
 
 let get_all ~org_name project_numbers =
   Lwt_list.map_p

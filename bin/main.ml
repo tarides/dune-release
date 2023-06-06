@@ -50,7 +50,8 @@ let out ~format t =
   | `Plain -> Fmt.pr "%a\n%!" pp t
   | `CSV -> Fmt.pr "%a\n%!" pp_csv t
 
-let out_ts t = Fmt.pr "%a\n%!" pp_csv_ts t
+let out_report t = Fmt.pr "%a\n%!" pp_csv_ts t
+let out_heatmap t = Fmt.pr "%a\n%!" Heatmap.pp t
 
 open Cmdliner
 
@@ -81,6 +82,15 @@ let okr_updates_dir_term =
 let timesheets_term =
   Arg.(value @@ flag @@ info ~doc:"Manage timesheets" [ "timesheets"; "t" ])
 
+(* XXX: temporary hack *)
+let heatmap_term =
+  Arg.(value @@ flag @@ info ~doc:"Manage heatmaps" [ "heatmaps"; "h" ])
+
+(* XXX: temporary hack *)
+let sync_term =
+  Arg.(
+    value @@ flag @@ info ~doc:"Sync heatmaps with GH boards" [ "sync"; "s" ])
+
 let setup =
   let style_renderer = Fmt_cli.style_renderer () in
   Term.(
@@ -88,32 +98,46 @@ let setup =
     $ style_renderer)
 
 let all_weeks = List.init 52 (fun i -> i + 1)
-let all_years = [ 2022; 2023 ]
+let all_years = [ 2021; 2022; 2023 ]
+let filter_sync = [ (Column.Id, Filter.is "New KR"); (Id, Filter.is "") ]
 
-let projects () format org project_numbers okr_updates_dir timesheets =
-  if timesheets then
-    match okr_updates_dir with
-    | None ->
-        failwith
-          "Please set-up OKR_UPDATES_DIR to point to your local copy of the \
-           okr-updates repositories"
-    | Some okr_updates_dir ->
-        let ts =
-          read_timesheets ~years:all_years ~weeks:all_weeks okr_updates_dir
-        in
-        out_ts ts
-  else
-    let lwt =
+let projects () format org project_numbers okr_updates_dir timesheets heatmap
+    sync =
+  let run () =
+    if timesheets || heatmap then
+      match okr_updates_dir with
+      | None ->
+          failwith
+            "Please set-up OKR_UPDATES_DIR to point to your local copy of the \
+             okr-updates repositories"
+      | Some okr_updates_dir ->
+          let ts =
+            read_timesheets ~years:all_years ~weeks:all_weeks okr_updates_dir
+          in
+          if heatmap then (
+            let heatmap = Heatmap.of_report ts in
+            out_heatmap heatmap;
+            if sync then
+              let* projects = Project.get_all ~org_name:org project_numbers in
+              let projects =
+                List.map (Project.filter ~filter_out:filter_sync) projects
+              in
+              Lwt_list.iter_p (Project.sync ~heatmap) projects
+            else Lwt.return ())
+          else (
+            out_report ts;
+            Lwt.return ())
+    else
       let+ projects = Project.get_all ~org_name:org project_numbers in
       let data = filter { org; projects } in
       out ~format data
-    in
-    Lwt_main.run lwt
+  in
+  Lwt_main.run @@ run ()
 
 let cmd =
   Cmd.v (Cmd.info "gh-projects")
     Term.(
       const projects $ setup $ format $ org_term $ project_numbers_term
-      $ okr_updates_dir_term $ timesheets_term)
+      $ okr_updates_dir_term $ timesheets_term $ heatmap_term $ sync_term)
 
 let () = exit (Cmd.eval cmd)
