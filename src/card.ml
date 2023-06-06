@@ -1,4 +1,5 @@
 module U = Yojson.Safe.Util
+open Lwt.Syntax
 
 let ( / ) a b = U.member b a
 
@@ -223,7 +224,8 @@ let filter_out f cards =
 let graphql_mutate t field v =
   let field_kind, field_id =
     try Fields.find t.fields field
-    with Not_found -> Fmt.failwith "XXX mutate %a\n" Fields.pp t.fields
+    with Not_found ->
+      Fmt.failwith "mutate: cannot find %a\n" Fields.pp t.fields
   in
   let text =
     match field_kind with
@@ -259,46 +261,62 @@ let sync ~heatmap t =
     | None, "" -> None
     | Some x, "" ->
         let x = str x in
-        Fmt.epr "%s has started in %s but is not recorded on the card\n" t.id x;
-        Some x
+        let msg =
+          Fmt.str "%s has started in %s but is not recorded on the card" t.id x
+        in
+        Some (x, msg)
     | Some x, y ->
         let x = str x in
-        if x <> y then Fmt.epr "%s: start dates mismatch - %s vs. %s\n" t.id x y;
-        Some x
+        if x <> y then
+          let msg = Fmt.str "%s: start dates mismatch - %s vs. %s" t.id x y in
+          Some (x, msg)
+        else None
     | None, x ->
-        Fmt.epr "%s hasn't started by was planning to start on %s\n" t.id x;
+        let _msg =
+          Fmt.str "%s hasn't started but was planning to start on %s" t.id x
+        in
         None
   in
   let ends =
     let str = Fmt.to_to_string Heatmap.pp_end_date in
-    if is_complete t || is_dropped t then (
+    if is_complete t || is_dropped t then
       match (ends, t.ends) with
       | None, "" -> None
       | Some x, "" ->
           let x = str x in
-          Fmt.epr "%s has ended in %s but is not recorded on the card\n" t.id x;
-          Some x
+          let msg =
+            Fmt.str "%s has ended in %s but is not recorded on the card" t.id x
+          in
+          Some (x, msg)
       | Some x, y ->
           let x = str x in
-          if x <> y then Fmt.epr "%s: end dates mismatch - %s - %s\n" t.id x y;
-          Some x
+          if x <> y then
+            let msg = Fmt.str "%s: end dates mismatch - %s - %s" t.id x y in
+            Some (x, msg)
+          else None
       | None, x ->
-          Fmt.epr "%s hasn't started by was planning to end on %s\n" t.id x;
-          None)
+          let _msg =
+            Fmt.str "%s hasn't started by was planning to end on %s" t.id x
+          in
+          None
     else None
   in
-  let () =
+  let* () =
     match starts with
-    | None -> ()
-    | Some x ->
+    | None -> Lwt.return ()
+    | Some (x, msg) ->
         let s = graphql_mutate t Starts x in
-        Fmt.pr "UPDATE: %s\n" s
+        Fmt.pr "ACTION: %s\n%!" msg;
+        let+ _res = Github.run s in
+        ()
   in
-  let () =
+  let* () =
     match ends with
-    | None -> ()
-    | Some x ->
+    | None -> Lwt.return ()
+    | Some (x, msg) ->
+        Fmt.pr "ACTION: %s\n%!" msg;
         let s = graphql_mutate t Ends x in
-        Fmt.pr "UPDATE: %s\n" s
+        let+ _res = Github.run s in
+        ()
   in
   Lwt.return ()

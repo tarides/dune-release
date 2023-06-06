@@ -104,7 +104,7 @@ let filter_sync = [ (Column.Id, Filter.is "New KR"); (Id, Filter.is "") ]
 let projects () format org project_numbers okr_updates_dir timesheets heatmap
     sync =
   let run () =
-    if timesheets then
+    if timesheets || heatmap then
       match okr_updates_dir with
       | None ->
           failwith
