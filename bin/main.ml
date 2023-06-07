@@ -51,7 +51,9 @@ let out ~format t =
   | `Plain -> Fmt.pr "%a\n%!" pp t
   | `CSV -> Fmt.pr "%a\n%!" pp_csv t
 
-let lint_project ~db t = List.iter (Project.lint ~db) t.projects
+let lint_project ?heatmap ~db t =
+  List.iter (Project.lint ?heatmap ~db) t.projects
+
 let out_report t = Fmt.pr "%a\n%!" pp_csv_ts t
 
 open Cmdliner
@@ -168,7 +170,7 @@ let projects () format org project_numbers okr_updates_dir timesheets heatmap
         Option.iter
           (fun projects ->
             let data = filter { org; projects } in
-            lint_project ~db data)
+            lint_project ?heatmap ~db data)
           projects;
         Lwt.return ()
     | true, _ ->
