@@ -103,6 +103,16 @@ let first_assoc = function
 let graphql_query =
   {|
             id
+            content {
+              ... on Issue {
+                trackedInIssues(first:10) {
+                  nodes {
+                    id
+                    title
+                  }
+                }
+              }
+            }
             fieldValues(first: 100) {
               nodes {
                 ... on ProjectV2ItemFieldTextValue {
@@ -133,46 +143,63 @@ let graphql_query =
             }
   |}
 
+(* FIXME: not super generic *)
+let parse_objective json =
+  match U.to_list json with
+  | [] -> ""
+  | json :: _ ->
+      let _id = json / "id" |> U.to_string in
+      let title = json / "title" |> U.to_string in
+      title
+
 let parse ~project_id ~fields json =
   let item_id = json / "id" |> U.to_string in
-  let json = json / "fieldValues" / "nodes" |> U.to_list in
-  List.fold_left
-    (fun acc (json : Yojson.Safe.t) ->
-      match json with
-      | `Assoc [] -> acc
-      | `Assoc a -> (
-          let k = trace_assoc "field" a / "name" |> U.to_string in
-          let v = first_assoc a |> U.to_string in
-          let c = Column.of_string k in
-          match c with
-          | Title -> { acc with title = v }
-          | Id -> { acc with id = v }
-          | Objective -> { acc with objective = v }
-          | Status -> { acc with status = v }
-          | Schedule -> { acc with schedule = v }
-          | Starts -> { acc with starts = v }
-          | Ends -> { acc with ends = v }
-          | Funder -> { acc with funder = v }
-          | Other_field "team" -> { acc with team = v }
-          | Other_field k ->
-              { acc with other_fields = (k, v) :: acc.other_fields })
-      | _ -> acc)
-    {
-      title = "";
-      id = "";
-      objective = "";
-      status = "";
-      schedule = "";
-      starts = "";
-      ends = "";
-      funder = "";
-      team = "";
-      other_fields = [];
-      fields;
-      item_id;
-      project_id;
-    }
-    json
+  let t =
+    let json = json / "fieldValues" / "nodes" |> U.to_list in
+    List.fold_left
+      (fun acc (json : Yojson.Safe.t) ->
+        match json with
+        | `Assoc [] -> acc
+        | `Assoc a -> (
+            let k = trace_assoc "field" a / "name" |> U.to_string in
+            let v = first_assoc a |> U.to_string in
+            let c = Column.of_string k in
+            match c with
+            | Title -> { acc with title = v }
+            | Id -> { acc with id = v }
+            | Objective -> { acc with objective = v }
+            | Status -> { acc with status = v }
+            | Schedule -> { acc with schedule = v }
+            | Starts -> { acc with starts = v }
+            | Ends -> { acc with ends = v }
+            | Funder -> { acc with funder = v }
+            | Other_field "team" -> { acc with team = v }
+            | Other_field k ->
+                { acc with other_fields = (k, v) :: acc.other_fields })
+        | _ -> acc)
+      {
+        title = "";
+        id = "";
+        objective = "";
+        status = "";
+        schedule = "";
+        starts = "";
+        ends = "";
+        funder = "";
+        team = "";
+        other_fields = [];
+        fields;
+        item_id;
+        project_id;
+      }
+      json
+  in
+  let objective =
+    match json / "content" / "trackedInIssues" with
+    | exception _ -> ""
+    | json -> json / "nodes" |> parse_objective
+  in
+  { t with objective }
 
 let pp ppf t =
   let em = Fmt.(styled `Italic string) in
