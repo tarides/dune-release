@@ -131,7 +131,7 @@ let projects () format org project_numbers okr_updates_dir timesheets heatmap
       match db with None -> err_okr_updates_dir () | Some db -> db
     in
     let timesheets, heatmap =
-      if timesheets then
+      if timesheets || heatmap then
         let ts =
           read_timesheets ~years:all_years ~weeks:all_weeks
             (get_okr_updates_dir ())

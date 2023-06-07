@@ -19,6 +19,7 @@ module Query = struct
             name
             id
             dataType
+            options { id name }
           }
         }
       }
@@ -62,7 +63,19 @@ query {
         let key = json / "name" |> U.to_string |> Column.of_string in
         let id = json / "id" |> U.to_string in
         let kind = json / "dataType" |> U.to_string |> Fields.kind_of_string in
-        Fields.add fields key kind id)
+        match kind with
+        | Text | Date -> Fields.add fields key kind id
+        | Single_select _ ->
+            let options = json / "options" |> U.to_list in
+            let options =
+              List.map
+                (fun json ->
+                  let id = json / "id" |> U.to_string in
+                  let name = json / "name" |> U.to_string in
+                  Fields.option ~name ~id)
+                options
+            in
+            Fields.add fields key (Single_select options) id)
       json;
     fields
 

@@ -6,7 +6,7 @@ val v :
   objective:string ->
   ?status:string ->
   ?team:string ->
-  ?funders:string list ->
+  ?funder:string ->
   ?schedule:string ->
   ?starts:string ->
   ?ends:string ->
@@ -20,7 +20,7 @@ val ends : t -> string
 val title : t -> string
 val objective : t -> string
 val status : t -> string
-val funders : t -> string list
+val funder : t -> string
 val schedule : t -> string
 val is_complete : t -> bool
 val is_dropped : t -> bool

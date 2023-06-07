@@ -10,7 +10,7 @@ type t = {
   objective : string;
   status : string;
   schedule : string;
-  funders : string list;
+  funder : string;
   team : string;
   starts : string;
   ends : string;
@@ -21,7 +21,7 @@ type t = {
   project_id : string;
 }
 
-let v ~title ~objective ?(status = "") ?(team = "") ?(funders = [])
+let v ~title ~objective ?(status = "") ?(team = "") ?(funder = "")
     ?(schedule = "") ?(starts = "") ?(ends = "") ?(other_fields = []) id =
   {
     title;
@@ -32,7 +32,7 @@ let v ~title ~objective ?(status = "") ?(team = "") ?(funders = [])
     ends;
     other_fields;
     team;
-    funders;
+    funder;
     id;
     fields = Fields.empty ();
     item_id = "";
@@ -48,7 +48,7 @@ let csv_headers =
     "Schedule";
     "Starts";
     "Ends";
-    "Funders";
+    "Funder";
     "Team";
     "Starts";
     "Ends";
@@ -63,7 +63,7 @@ let to_csv t =
     t.schedule;
     t.starts;
     t.ends;
-    String.concat "," t.funders;
+    t.funder;
     t.team;
   ]
 
@@ -74,7 +74,7 @@ let starts t = t.starts
 let objective t = t.objective
 let title t = t.title
 let status t = t.status
-let funders t = t.funders
+let funder t = t.funder
 let schedule t = t.schedule
 
 let get t = function
@@ -85,6 +85,7 @@ let get t = function
   | Schedule -> t.status
   | Starts -> t.starts
   | Ends -> t.ends
+  | Funder -> t.funder
   | Other_field f -> List.assoc f t.other_fields
 
 let trace_assoc f a =
@@ -151,7 +152,7 @@ let parse ~project_id ~fields json =
           | Schedule -> { acc with schedule = v }
           | Starts -> { acc with starts = v }
           | Ends -> { acc with ends = v }
-          | Other_field "funder" -> { acc with funders = [ v ] }
+          | Funder -> { acc with funder = v }
           | Other_field "team" -> { acc with team = v }
           | Other_field k ->
               { acc with other_fields = (k, v) :: acc.other_fields })
@@ -164,7 +165,7 @@ let parse ~project_id ~fields json =
       schedule = "";
       starts = "";
       ends = "";
-      funders = [];
+      funder = "";
       team = "";
       other_fields = [];
       fields;
@@ -190,7 +191,7 @@ let pp ppf t =
   pf_field "Starts" t.starts;
   pf_field "Ends" t.ends;
   pf_field "Team" t.team;
-  pf_field "Funders" (String.concat ", " t.funders);
+  pf_field "Funder" t.funder;
   List.iter (fun (k, v) -> pf_field (k ^ "*") v) t.other_fields
 
 let order_by (pivot : Column.t) cards =
@@ -238,7 +239,9 @@ let graphql_mutate t field v =
     match field_kind with
     | Text -> Fmt.str "text: %S" v
     | Date -> Fmt.str "date: %S" v
-    | Single_select -> Fmt.str "singleSelectOptionId: %S" v
+    | Single_select options ->
+        let id = Fields.get_id options ~name:v in
+        Fmt.str "singleSelectOptionId: %S" id
   in
   Fmt.str
     {|
