@@ -321,3 +321,15 @@ let sync ~heatmap t =
         ()
   in
   Lwt.return ()
+
+let lint db t =
+  match t.id with
+  | "" -> Fmt.epr "KR '%s' doesn't have an id\n%!" t.title
+  | "New KR" -> ()
+  | id -> (
+      match Okra.Masterdb.find_kr_opt db id with
+      | None -> Fmt.epr "Cannot find KR %S\n" id
+      | Some db ->
+          if t.title <> db.title then
+            Fmt.epr "Title for KR %s differs:\n  - [GH] %s\n  - [DB] %s\n%!" id
+              t.title db.title)

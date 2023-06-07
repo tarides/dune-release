@@ -113,19 +113,23 @@ let pp ?(order_by = Column.Objective) ?(filter_out = Filter.default_out) ppf t =
 
 let sync ~heatmap (t : t) = Lwt_list.iter_p (Card.sync ~heatmap) t.cards
 
-let get ~org_name ~project_number =
+let lint ?db project =
+  match db with None -> () | Some db -> List.iter (Card.lint db) project.cards
+
+let get ?db ~org_name ~project_number () =
   let open Lwt.Syntax in
   let rec aux fields cursor acc =
     let query = Query.make ~org_name ~project_number ~after:cursor in
     let* json = Github.run query in
     let cursor, fields, project = Query.parse ?fields json in
+    lint ?db project;
     if List.length project.cards < 100 then
       Lwt.return { project with cards = acc @ project.cards }
     else aux (Some fields) (Some cursor) (acc @ project.cards)
   in
   aux None None []
 
-let get_all ~org_name project_numbers =
+let get_all ?db ~org_name project_numbers =
   Lwt_list.map_p
-    (fun project_number -> get ~org_name ~project_number)
+    (fun project_number -> get ?db ~org_name ~project_number ())
     project_numbers
