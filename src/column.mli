@@ -6,6 +6,7 @@ type t =
   | Schedule
   | Starts
   | Ends
+  | Funder
   | Other_field of string
 
 val to_string : t -> string

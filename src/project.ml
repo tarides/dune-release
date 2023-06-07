@@ -19,6 +19,7 @@ module Query = struct
             name
             id
             dataType
+            options { id name }
           }
         }
       }
@@ -62,7 +63,19 @@ query {
         let key = json / "name" |> U.to_string |> Column.of_string in
         let id = json / "id" |> U.to_string in
         let kind = json / "dataType" |> U.to_string |> Fields.kind_of_string in
-        Fields.add fields key kind id)
+        match kind with
+        | Text | Date -> Fields.add fields key kind id
+        | Single_select _ ->
+            let options = json / "options" |> U.to_list in
+            let options =
+              List.map
+                (fun json ->
+                  let id = json / "id" |> U.to_string in
+                  let name = json / "name" |> U.to_string in
+                  Fields.option ~name ~id)
+                options
+            in
+            Fields.add fields key (Single_select options) id)
       json;
     fields
 
@@ -111,25 +124,26 @@ let pp ?(order_by = Column.Objective) ?(filter_out = Filter.default_out) ppf t =
         List.iter (Card.pp ppf) section)
       sections
 
-let sync ~heatmap (t : t) = Lwt_list.iter_p (Card.sync ~heatmap) t.cards
+let sync ?heatmap ?db (t : t) =
+  let diffs = List.map (Diff.v ?heatmap ?db) t.cards in
+  let diffs = Diff.concat diffs in
+  Diff.apply diffs
 
-let lint ?db project =
-  match db with None -> () | Some db -> List.iter (Card.lint db) project.cards
+let lint ~db project = List.iter (Card.lint db) project.cards
 
-let get ?db ~org_name ~project_number () =
+let get ~org_name ~project_number () =
   let open Lwt.Syntax in
   let rec aux fields cursor acc =
     let query = Query.make ~org_name ~project_number ~after:cursor in
     let* json = Github.run query in
     let cursor, fields, project = Query.parse ?fields json in
-    lint ?db project;
     if List.length project.cards < 100 then
       Lwt.return { project with cards = acc @ project.cards }
     else aux (Some fields) (Some cursor) (acc @ project.cards)
   in
   aux None None []
 
-let get_all ?db ~org_name project_numbers =
+let get_all ~org_name project_numbers =
   Lwt_list.map_p
-    (fun project_number -> get ?db ~org_name ~project_number ())
+    (fun project_number -> get ~org_name ~project_number ())
     project_numbers

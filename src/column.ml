@@ -6,6 +6,7 @@ type t =
   | Schedule
   | Starts
   | Ends
+  | Funder
   | Other_field of string
 
 let to_string = function
@@ -16,6 +17,7 @@ let to_string = function
   | Schedule -> "schedule"
   | Starts -> "starts"
   | Ends -> "ends"
+  | Funder -> "funder"
   | Other_field f -> f
 
 let pp = Fmt.of_to_string to_string
@@ -29,4 +31,5 @@ let of_string x =
   | "schedule" -> Schedule
   | "start date" | "starts" -> Starts
   | "target date" | "ends" | "end date" -> Ends
+  | "funder" -> Funder
   | f -> Other_field f

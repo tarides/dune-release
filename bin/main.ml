@@ -51,8 +51,8 @@ let out ~format t =
   | `Plain -> Fmt.pr "%a\n%!" pp t
   | `CSV -> Fmt.pr "%a\n%!" pp_csv t
 
+let lint_project ~db t = List.iter (Project.lint ~db) t.projects
 let out_report t = Fmt.pr "%a\n%!" pp_csv_ts t
-let out_heatmap t = Fmt.pr "%a\n%!" Heatmap.pp t
 
 open Cmdliner
 
@@ -64,7 +64,7 @@ let org_term =
 let project_numbers_term =
   Arg.(
     value
-    @@ opt (list int) [ 5; 20 ]
+    @@ opt (list int) [ 25 ]
     @@ info ~doc:"The project IDS" ~docv:"IDs" [ "number"; "n" ])
 
 let format =
@@ -106,45 +106,78 @@ let all_weeks = List.init 52 (fun i -> i + 1)
 let all_years = [ 2021; 2022; 2023 ]
 let filter_sync = [ (Column.Id, Filter.is "New KR"); (Id, Filter.is "") ]
 
+let err_okr_updates_dir () =
+  failwith
+    "Please set-up OKR_UPDATES_DIR to point to your local copy of the \
+     okr-updates repositories"
+
 let projects () format org project_numbers okr_updates_dir timesheets heatmap
     sync lint =
+  let get_okr_updates_dir () =
+    match okr_updates_dir with
+    | None -> err_okr_updates_dir ()
+    | Some dir -> dir
+  in
   let run () =
+    (* 3 resources: DB, timesheets and github *)
     let db =
-      if not lint then None
-      else
-        match okr_updates_dir with
-        | None -> None
-        | Some dir ->
-            let file = dir / "team-weeklies" / "db.csv" in
-            Some (Okra.Masterdb.load_csv file)
-    in
-    if timesheets || heatmap then
       match okr_updates_dir with
-      | None ->
-          failwith
-            "Please set-up OKR_UPDATES_DIR to point to your local copy of the \
-             okr-updates repositories"
-      | Some okr_updates_dir ->
-          let ts =
-            read_timesheets ~years:all_years ~weeks:all_weeks okr_updates_dir
-          in
-          if heatmap then (
-            let heatmap = Heatmap.of_report ts in
-            out_heatmap heatmap;
-            if sync then
-              let* projects = Project.get_all ~org_name:org project_numbers in
-              let projects =
-                List.map (Project.filter ~filter_out:filter_sync) projects
-              in
-              Lwt_list.iter_p (Project.sync ~heatmap) projects
-            else Lwt.return ())
-          else (
-            out_report ts;
-            Lwt.return ())
-    else
-      let+ projects = Project.get_all ?db ~org_name:org project_numbers in
-      let data = filter { org; projects } in
-      if not lint then out ~format data
+      | None -> None
+      | Some dir ->
+          let file = dir / "team-weeklies" / "db.csv" in
+          Some (Okra.Masterdb.load_csv file)
+    in
+    let get_db () =
+      match db with None -> err_okr_updates_dir () | Some db -> db
+    in
+    let timesheets, heatmap =
+      if timesheets || heatmap then
+        let ts =
+          read_timesheets ~years:all_years ~weeks:all_weeks
+            (get_okr_updates_dir ())
+        in
+        if heatmap then
+          let hm = Heatmap.of_report ts in
+          (Some ts, Some hm)
+        else (Some ts, None)
+      else (None, None)
+    in
+    let* projects =
+      if sync || (timesheets = None && heatmap = None) then
+        (* FIXME *)
+        let+ projects = Project.get_all ~org_name:org project_numbers in
+        Some projects
+      else Lwt.return None
+    in
+    let get_projects () =
+      match projects with None -> assert false | Some p -> p
+    in
+
+    (* action: print / sync / lint *)
+    match (sync, lint) with
+    | false, false ->
+        Option.iter
+          (fun projects ->
+            let data = filter { org; projects } in
+            out ~format data)
+          projects;
+        Option.iter out_report timesheets;
+        Lwt.return ()
+    | false, true ->
+        let db = get_db () in
+        Option.iter
+          (fun projects ->
+            let data = filter { org; projects } in
+            lint_project ~db data)
+          projects;
+        Lwt.return ()
+    | true, _ ->
+        let projects = get_projects () in
+        let db = get_db () in
+        let projects =
+          List.map (Project.filter ~filter_out:filter_sync) projects
+        in
+        Lwt_list.iter_p (Project.sync ~db ?heatmap) projects
   in
   Lwt_main.run @@ run ()
 

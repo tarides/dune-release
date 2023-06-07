@@ -1,5 +1,4 @@
 module U = Yojson.Safe.Util
-open Lwt.Syntax
 
 let ( / ) a b = U.member b a
 
@@ -11,7 +10,7 @@ type t = {
   objective : string;
   status : string;
   schedule : string;
-  funders : string list;
+  funder : string;
   team : string;
   starts : string;
   ends : string;
@@ -22,7 +21,7 @@ type t = {
   project_id : string;
 }
 
-let v ~title ~objective ?(status = "") ?(team = "") ?(funders = [])
+let v ~title ~objective ?(status = "") ?(team = "") ?(funder = "")
     ?(schedule = "") ?(starts = "") ?(ends = "") ?(other_fields = []) id =
   {
     title;
@@ -33,7 +32,7 @@ let v ~title ~objective ?(status = "") ?(team = "") ?(funders = [])
     ends;
     other_fields;
     team;
-    funders;
+    funder;
     id;
     fields = Fields.empty ();
     item_id = "";
@@ -49,7 +48,7 @@ let csv_headers =
     "Schedule";
     "Starts";
     "Ends";
-    "Funders";
+    "Funder";
     "Team";
     "Starts";
     "Ends";
@@ -64,12 +63,19 @@ let to_csv t =
     t.schedule;
     t.starts;
     t.ends;
-    String.concat "," t.funders;
+    t.funder;
     t.team;
   ]
 
 let other_fields t = t.other_fields
 let id t = t.id
+let ends t = t.ends
+let starts t = t.starts
+let objective t = t.objective
+let title t = t.title
+let status t = t.status
+let funder t = t.funder
+let schedule t = t.schedule
 
 let get t = function
   | Column.Id -> t.id
@@ -79,6 +85,7 @@ let get t = function
   | Schedule -> t.status
   | Starts -> t.starts
   | Ends -> t.ends
+  | Funder -> t.funder
   | Other_field f -> List.assoc f t.other_fields
 
 let trace_assoc f a =
@@ -145,7 +152,7 @@ let parse ~project_id ~fields json =
           | Schedule -> { acc with schedule = v }
           | Starts -> { acc with starts = v }
           | Ends -> { acc with ends = v }
-          | Other_field "funder" -> { acc with funders = [ v ] }
+          | Funder -> { acc with funder = v }
           | Other_field "team" -> { acc with team = v }
           | Other_field k ->
               { acc with other_fields = (k, v) :: acc.other_fields })
@@ -158,7 +165,7 @@ let parse ~project_id ~fields json =
       schedule = "";
       starts = "";
       ends = "";
-      funders = [];
+      funder = "";
       team = "";
       other_fields = [];
       fields;
@@ -184,7 +191,7 @@ let pp ppf t =
   pf_field "Starts" t.starts;
   pf_field "Ends" t.ends;
   pf_field "Team" t.team;
-  pf_field "Funders" (String.concat ", " t.funders);
+  pf_field "Funder" t.funder;
   List.iter (fun (k, v) -> pf_field (k ^ "*") v) t.other_fields
 
 let order_by (pivot : Column.t) cards =
@@ -232,7 +239,9 @@ let graphql_mutate t field v =
     match field_kind with
     | Text -> Fmt.str "text: %S" v
     | Date -> Fmt.str "date: %S" v
-    | Single_select -> Fmt.str "singleSelectOptionId: %S" v
+    | Single_select options ->
+        let id = Fields.get_id options ~name:v in
+        Fmt.str "singleSelectOptionId: %S" id
   in
   Fmt.str
     {|
@@ -252,75 +261,6 @@ let graphql_mutate t field v =
   }
   |}
     t.project_id t.item_id field_id text
-
-let sync ~heatmap t =
-  let starts = Heatmap.start_date heatmap t.id in
-  let ends = Heatmap.end_date heatmap t.id in
-  let starts =
-    let str = Fmt.to_to_string Heatmap.pp_start_date in
-    match (starts, t.starts) with
-    | None, "" -> None
-    | Some x, "" ->
-        let x = str x in
-        let msg =
-          Fmt.str "%s has started in %s but is not recorded on the card" t.id x
-        in
-        Some (x, msg)
-    | Some x, y ->
-        let x = str x in
-        if x <> y then
-          let msg = Fmt.str "%s: start dates mismatch - %s vs. %s" t.id x y in
-          Some (x, msg)
-        else None
-    | None, x ->
-        let _msg =
-          Fmt.str "%s hasn't started but was planning to start on %s" t.id x
-        in
-        None
-  in
-  let ends =
-    let str = Fmt.to_to_string Heatmap.pp_end_date in
-    if is_complete t || is_dropped t then
-      match (ends, t.ends) with
-      | None, "" -> None
-      | Some x, "" ->
-          let x = str x in
-          let msg =
-            Fmt.str "%s has ended in %s but is not recorded on the card" t.id x
-          in
-          Some (x, msg)
-      | Some x, y ->
-          let x = str x in
-          if x <> y then
-            let msg = Fmt.str "%s: end dates mismatch - %s - %s" t.id x y in
-            Some (x, msg)
-          else None
-      | None, x ->
-          let _msg =
-            Fmt.str "%s hasn't started by was planning to end on %s" t.id x
-          in
-          None
-    else None
-  in
-  let* () =
-    match starts with
-    | None -> Lwt.return ()
-    | Some (x, msg) ->
-        let s = graphql_mutate t Starts x in
-        Fmt.pr "ACTION: %s\n%!" msg;
-        let+ _res = Github.run s in
-        ()
-  in
-  let* () =
-    match ends with
-    | None -> Lwt.return ()
-    | Some (x, msg) ->
-        Fmt.pr "ACTION: %s\n%!" msg;
-        let s = graphql_mutate t Ends x in
-        let+ _res = Github.run s in
-        ()
-  in
-  Lwt.return ()
 
 let lint db t =
   match t.id with
