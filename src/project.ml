@@ -124,12 +124,13 @@ let pp ?(order_by = Column.Objective) ?(filter_out = Filter.default_out) ppf t =
         List.iter (Card.pp ppf) section)
       sections
 
-let sync ?heatmap ?db (t : t) =
+let diff ?heatmap ?db (t : t) =
   let diffs = List.map (Diff.v ?heatmap ?db) t.cards in
   let diffs = Diff.concat diffs in
-  Diff.apply diffs
+  diffs
 
-let lint ~db project = List.iter (Card.lint db) project.cards
+let sync ?heatmap ?db t = Diff.apply (diff ?heatmap ?db t)
+let lint ?heatmap ~db t = Diff.lint (diff ?heatmap ~db t)
 
 let get ~org_name ~project_number () =
   let open Lwt.Syntax in
