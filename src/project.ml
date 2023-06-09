@@ -1,4 +1,19 @@
-type t = { id : string; title : string; cards : Card.t list }
+module U = Yojson.Safe.Util
+
+let ( / ) a b = U.member b a
+
+type t = {
+  org : string;
+  number : int;
+  title : string;
+  cards : Card.t list;
+  (* for mutations *)
+  fields : Fields.t;
+  uuid : string;
+}
+
+let org t = t.org
+let number t = t.number
 
 module Query = struct
   let fields =
@@ -25,7 +40,7 @@ module Query = struct
       }
     |}
 
-  let make ~org_name ~project_number ~after =
+  let make ~org ~project_number ~after =
     Printf.sprintf
       {|
 query {
@@ -44,16 +59,12 @@ query {
   }
 }
 |}
-      org_name project_number
+      org project_number
       (match after with None -> fields | Some _ -> "")
       (match after with
       | None -> ""
       | Some s -> Printf.sprintf ", after: \"%s\" " s)
       Card.graphql_query
-
-  module U = Yojson.Safe.Util
-
-  let ( / ) a b = U.member b a
 
   let parse_fields json =
     let json = json / "nodes" |> U.to_list in
@@ -79,40 +90,68 @@ query {
       json;
     fields
 
-  let parse ?fields json =
+  let parse ?fields ~org ~project_number json =
     let json = json / "data" / "organization" / "projectV2" in
-    let id = json / "id" |> U.to_string in
+    let uuid = json / "id" |> U.to_string in
     let fields =
       match fields with None -> json / "fields" |> parse_fields | Some f -> f
     in
     let title = json / "title" |> U.to_string in
     let edges = json / "items" / "edges" |> U.to_list in
     match edges with
-    | [] -> ("", fields, { id; title; cards = [] })
+    | [] ->
+        ("", { org; uuid; title; cards = []; fields; number = project_number })
     | edges ->
         let cursor = (List.rev edges |> List.hd) / "cursor" |> U.to_string in
         let cards =
           List.map
-            (fun edge -> edge / "node" |> Card.parse ~project_id:id ~fields)
+            (fun edge ->
+              edge / "node"
+              |> Card.parse_github_query ~project_uuid:uuid ~fields)
             edges
         in
-        (cursor, fields, { id; title; cards })
+        (cursor, { org; uuid; title; cards; fields; number = project_number })
 end
 
 let filter ?(filter_out = Filter.default_out) data =
   { data with cards = Card.filter_out filter_out data.cards }
 
 let to_csv t =
-  let headers = "Project" :: Card.csv_headers in
-  let rows = List.map (fun card -> t.title :: Card.to_csv card) t.cards in
+  let headers = Card.csv_headers in
+  let rows = List.map (fun card -> Card.to_csv card) t.cards in
   let buffer = Buffer.create 10 in
   let out = Csv.to_buffer ~quote_all:true buffer in
   Csv.output_all out (headers :: rows);
   Csv.close_out out;
   Buffer.contents buffer
 
+let to_json t =
+  let fields = Fields.to_json t.fields in
+  let jsons = List.map Card.to_json t.cards in
+  `Assoc
+    [
+      ("org", `String t.org);
+      ("number", `Int t.number);
+      ("title", `String t.title);
+      ("cards", `List jsons);
+      ("fields", fields);
+      ("uuid", `String t.uuid);
+    ]
+
+let of_json json =
+  let number = json / "number" |> U.to_int in
+  let title = json / "title" |> U.to_string in
+  let fields = json / "fields" |> Fields.of_json in
+  let uuid = json / "uuid" |> U.to_string in
+  let org = json / "org" |> U.to_string in
+  let cards =
+    json / "cards" |> U.to_list
+    |> List.map (Card.of_json ~fields ~project_uuid:uuid)
+  in
+  { org; number; title; fields; cards; uuid }
+
 let pp ?(order_by = Column.Objective) ?(filter_out = Filter.default_out) ppf t =
-  Fmt.pf ppf "\n== %s (%s) ==\n" t.title t.id;
+  Fmt.pf ppf "\n== %s (%d) ==\n" t.title t.number;
   let sections = Card.filter_out filter_out t.cards in
   let sections = Card.order_by order_by sections in
   if List.compare_length_with sections 1 = 0 then
@@ -132,19 +171,19 @@ let diff ?heatmap ?db (t : t) =
 let sync ?heatmap ?db t = Diff.apply (diff ?heatmap ?db t)
 let lint ?heatmap ~db t = Diff.lint (diff ?heatmap ~db t)
 
-let get ~org_name ~project_number () =
+let get ~org ~project_number () =
   let open Lwt.Syntax in
   let rec aux fields cursor acc =
-    let query = Query.make ~org_name ~project_number ~after:cursor in
+    let query = Query.make ~org ~project_number ~after:cursor in
     let* json = Github.run query in
-    let cursor, fields, project = Query.parse ?fields json in
+    let cursor, project = Query.parse ?fields ~project_number ~org json in
     if List.length project.cards < 100 then
       Lwt.return { project with cards = acc @ project.cards }
-    else aux (Some fields) (Some cursor) (acc @ project.cards)
+    else aux (Some project.fields) (Some cursor) (acc @ project.cards)
   in
   aux None None []
 
-let get_all ~org_name project_numbers =
+let get_all ~org project_numbers =
   Lwt_list.map_p
-    (fun project_number -> get ~org_name ~project_number ())
+    (fun project_number -> get ~org ~project_number ())
     project_numbers

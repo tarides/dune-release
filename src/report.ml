@@ -54,6 +54,25 @@ let rows t =
     t;
   !result
 
+let of_row x =
+  if x = csv_headers then `Skip
+  else
+    match x with
+    | [ id; year; month; week; user; days ] ->
+        let i = int_of_string in
+        let f = float_of_string in
+        `Row
+          {
+            id;
+            year = i year;
+            month = i month;
+            week = i week;
+            user;
+            days = f days;
+          }
+    | [] | [ "" ] -> `Skip
+    | _ -> Fmt.failwith "invalid row: %a" Fmt.Dump.(list string) x
+
 let to_csv t =
   let rows = rows t in
   let buffer = Buffer.create 10 in
@@ -61,3 +80,13 @@ let to_csv t =
   Csv.output_all out (csv_headers :: rows);
   Csv.close_out out;
   Buffer.contents buffer
+
+let of_csv s =
+  let input = Csv.of_string s in
+  let csv = Csv.input_all input in
+  let t = Hashtbl.create 13 in
+  List.iter
+    (fun x ->
+      match of_row x with `Skip -> () | `Row x -> Hashtbl.add t x.id x)
+    csv;
+  t
