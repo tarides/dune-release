@@ -75,27 +75,22 @@ let format =
     @@ opt (enum [ ("plain", `Plain); ("csv", `CSV) ]) `Plain
     @@ info ~doc:"The output format" [ "format"; "f" ])
 
+let common_options = "COMMON OPTIONS"
+
 let okr_updates_dir_term =
   let env = Cmd.Env.info ~doc:"PATH" "OKR_UPDATES_DIR" in
   Arg.(
     value
     @@ opt (some string) None
-    @@ info ~env ~doc:"Path to the okr-updates repository" [ "okr-updates-dir" ])
+    @@ info ~docs:common_options ~env ~doc:"Path to the okr-updates repository"
+         [ "okr-updates-dir" ])
 
 let timesheets_term =
-  Arg.(value @@ flag @@ info ~doc:"Manage timesheets" [ "timesheets"; "t" ])
-
-(* XXX: temporary hack *)
-let sync_term =
   Arg.(
-    value @@ flag @@ info ~doc:"Sync heatmaps with GH boards" [ "sync"; "s" ])
-
-(* XXX: temporary hack - we should have a subcommand instead *)
-let lint_term =
-  Arg.(value @@ flag @@ info ~doc:"Lint GH boards" [ "lint"; "l" ])
+    value @@ flag @@ info ~doc:"Display timesheet reports" [ "timesheets"; "t" ])
 
 let setup =
-  let style_renderer = Fmt_cli.style_renderer () in
+  let style_renderer = Fmt_cli.style_renderer ~docs:common_options () in
   Term.(
     const (fun style_renderer -> Fmt_tty.setup_std_outputs ?style_renderer ())
     $ style_renderer)
@@ -109,72 +104,64 @@ let err_okr_updates_dir () =
     "Please set-up OKR_UPDATES_DIR to point to your local copy of the \
      okr-updates repositories"
 
-let projects () format org project_numbers okr_updates_dir timesheets sync lint
-    =
-  (* FIXME *)
-  let action =
-    match (lint, sync, timesheets) with
-    | false, false, false -> `Show_project
-    | false, false, true -> `Show_timesheets
-    | true, false, false -> `Lint
-    | false, true, false -> `Sync
-    | _ -> failwith "invalid combination of flags"
+let get_okr_updates_dir = function
+  | None -> err_okr_updates_dir ()
+  | Some dir -> dir
+
+let get_timesheets ?(years = all_years) ?(weeks = all_weeks) dir =
+  read_timesheets ~years ~weeks dir
+
+let get_db dir = Okra.Masterdb.load_csv (dir / "team-weeklies" / "db.csv")
+
+let default =
+  let run () format org project_numbers okr_updates_dir timesheets =
+    Lwt_main.run
+    @@
+    if timesheets then (
+      let dir = get_okr_updates_dir okr_updates_dir in
+      let timesheets = get_timesheets dir in
+      out_timesheets timesheets;
+      Lwt.return ())
+    else
+      let+ projects = Project.get_all ~org_name:org project_numbers in
+      let data = filter { org; projects } in
+      out ~format data
   in
+  Term.(
+    const run $ setup $ format $ org_term $ project_numbers_term
+    $ okr_updates_dir_term $ timesheets_term)
 
-  let okr_updates_dir =
-    lazy
-      (match okr_updates_dir with
-      | None -> err_okr_updates_dir ()
-      | Some dir -> dir)
+let show = Cmd.v (Cmd.info "show") default
+
+let sync =
+  let run () org project_numbers okr_updates_dir =
+    Lwt_main.run
+    @@ let* projects = Project.get_all ~org_name:org project_numbers in
+       let dir = get_okr_updates_dir okr_updates_dir in
+       let db = get_db dir in
+       let timesheets = get_timesheets dir in
+       let heatmap = Heatmap.of_report timesheets in
+       let data = filter ~filter_out:filter_sync { org; projects } in
+       Lwt_list.iter_p (Project.sync ~db ~heatmap) data.projects
   in
-
-  let db =
-    lazy
-      (let file = Lazy.force okr_updates_dir / "team-weeklies" / "db.csv" in
-       Okra.Masterdb.load_csv file)
-  in
-
-  let timesheets =
-    lazy
-      (read_timesheets ~years:all_years ~weeks:all_weeks
-         (Lazy.force okr_updates_dir))
-  in
-
-  let heatmap = lazy (Heatmap.of_report (Lazy.force timesheets)) in
-
-  let projects () = Project.get_all ~org_name:org project_numbers in
-
-  let run () =
-    match action with
-    | `Show_project ->
-        let+ projects = projects () in
-        let data = filter { org; projects } in
-        out ~format data
-    | `Show_timesheets ->
-        let timesheets = Lazy.force timesheets in
-        out_timesheets timesheets;
-        Lwt.return ()
-    | `Sync ->
-        let* projects = projects () in
-        let db = Lazy.force db in
-        let heatmap = Lazy.force heatmap in
-        let projects =
-          List.map (Project.filter ~filter_out:filter_sync) projects
-        in
-        Lwt_list.iter_p (Project.sync ~db ~heatmap) projects
-    | `Lint ->
-        let+ projects = projects () in
-        let db = Lazy.force db in
-        let heatmap = Lazy.force heatmap in
-        let data = filter { org; projects } in
-        lint_project ~heatmap ~db data
-  in
-  Lwt_main.run @@ run ()
-
-let cmd =
-  Cmd.v (Cmd.info "gh-projects")
+  Cmd.v (Cmd.info "sync")
     Term.(
-      const projects $ setup $ format $ org_term $ project_numbers_term
-      $ okr_updates_dir_term $ timesheets_term $ sync_term $ lint_term)
+      const run $ setup $ org_term $ project_numbers_term $ okr_updates_dir_term)
 
+let lint =
+  let run () org project_numbers okr_updates_dir =
+    Lwt_main.run
+    @@ let+ projects = Project.get_all ~org_name:org project_numbers in
+       let dir = get_okr_updates_dir okr_updates_dir in
+       let db = get_db dir in
+       let timesheets = get_timesheets dir in
+       let heatmap = Heatmap.of_report timesheets in
+       let data = filter { org; projects } in
+       lint_project ~heatmap ~db data
+  in
+  Cmd.v (Cmd.info "sync")
+    Term.(
+      const run $ setup $ org_term $ project_numbers_term $ okr_updates_dir_term)
+
+let cmd = Cmd.group ~default (Cmd.info "caretaker") [ show; lint; sync ]
 let () = exit (Cmd.eval cmd)
