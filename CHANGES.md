@@ -2,6 +2,8 @@
 
 ### Added
 
+- Adopt the OCaml Code of Conduct (#473, @rikusilvola)
+
 ### Changed
 
 - Running `dune-release check` now attempts to discover and parse the
