@@ -54,22 +54,24 @@ to look in that folder.
 Importantly, dune requires the packages in the `opam/` folder to be declared in
 `dune-project` as `package`.
 
-  $ mkdir opam
-  $ git mv myproject.opam opam/
   $ cat  > CHANGES.md << EOF
   > ## 0.2.0
   > 
-  > - Move opam file to opam folder
+  > - Use dune to generate opam file in opam subfolder
   > 
   > EOF
   $ cat >> dune-project << EOF
   > (package
   >   (name myproject)
   >   (allow_empty))
+  > (generate_opam_files true)
   > (opam_file_location inside_opam_directory)
   > EOF
+  $ git rm myproject.opam
+  rm 'myproject.opam'
+  $ dune build opam/myproject.opam
   $ git add opam/myproject.opam CHANGES.md dune-project
-  $ git commit -m 'Moved opam file' > /dev/null
+  $ git commit -m 'Opam file in subfolder' > /dev/null
 
 Now we should still be able to tag:
 
