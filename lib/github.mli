@@ -67,6 +67,13 @@ val undraft_pr :
 (** [undraft_pr] updates an existing pull request to undraft it and returns the
     pull request URL. *)
 
+val pr_title :
+  names:string list ->
+  version:Version.t ->
+  project_name:string option ->
+  pkgs_to_submit:string list ->
+  string
+
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
 

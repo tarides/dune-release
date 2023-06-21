@@ -131,6 +131,36 @@ let test_dune_project_name =
       ~expected:(Some "xyz");
   ]
 
+let test_main =
+  let pkg ~name ~project_name ~msg =
+    Pkg.v ~dry_run:true ~name ~project_name ~publish_msg:msg ()
+  in
+  let test ~name pkgs ~expected_msg =
+    ( Printf.sprintf "Pkg.main: %s" name,
+      `Quick,
+      fun () ->
+        let got = Pkg.main pkgs in
+        let got_msg = Pkg.publish_msg got |> Rresult.R.failwith_error_msg in
+        Alcotest.check Alcotest.string __LOC__ expected_msg got_msg )
+  in
+  [
+    test ~name:"single package"
+      [ pkg ~name:"a" ~project_name:(Some "a") ~msg:"message for a" ]
+      ~expected_msg:"message for a";
+    test ~name:"two packages with a name"
+      [
+        pkg ~name:"a" ~project_name:(Some "b") ~msg:"message for a";
+        pkg ~name:"b" ~project_name:(Some "b") ~msg:"message for b";
+      ]
+      ~expected_msg:"message for b";
+    test ~name:"two packages, no name"
+      [
+        pkg ~name:"a" ~project_name:None ~msg:"message for a";
+        pkg ~name:"b" ~project_name:None ~msg:"message for b";
+      ]
+      ~expected_msg:"message for a";
+  ]
+
 let suite =
   ( "Pkg",
     List.concat
@@ -139,4 +169,5 @@ let suite =
         test_prepare_opam_for_distrib;
         distrib_uri;
         test_dune_project_name;
+        test_main;
       ] )

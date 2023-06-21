@@ -33,11 +33,16 @@ val v :
   ?license:Fpath.t ->
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
+  ?project_name:string option ->
   unit ->
   t
 
 val infer_pkg_names : Fpath.t -> string list -> (string list, R.msg) result
 (** Infer the package list. *)
+
+val main : t list -> t
+(** Infer which package is the main one in a nonempty list (the one with a name
+    equal to the project name) *)
 
 val name : t -> (string, R.msg) result
 (** [name p] is [p]'s name. *)
@@ -45,6 +50,9 @@ val name : t -> (string, R.msg) result
 val with_name : t -> string -> t
 (** [with_name t n] is [r] such that like [name r] is [n] and [f r] is [f t]
     otherwise. *)
+
+val project_name : t -> string option
+(** [project_name p] is the name of the project as found in [dune-project]. *)
 
 val version : t -> (Version.t, R.msg) result
 (** [version p] is [p]'s version.*)
