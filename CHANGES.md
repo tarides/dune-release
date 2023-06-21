@@ -4,9 +4,11 @@
 
 ### Changed
 
-- Running `dune-release check` now attempts to discover and parse the
-  change log, and a new flag `--skip-change-log` disables this behaviour.
-  (#458, @gridbugs)
+- Running `dune-release check` now attempts to discover and parse the change
+  log, and a new flag `--skip-change-log` disables this behaviour. (#458,
+  @gridbugs)
+- List the main package and amount of subpackages when creating the PR to avoid
+  very long package lists in PRs (#465, @emillon)
 
 ### Deprecated
 
