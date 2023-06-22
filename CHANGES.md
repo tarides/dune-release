@@ -1,4 +1,4 @@
-## unreleased
+## 2.0.0
 
 ### Added
 
@@ -14,14 +14,11 @@
 - List the main package and amount of subpackages when creating the PR to avoid
   very long package lists in PRs (#465, @emillon)
 
-### Deprecated
-
 ### Fixed
 
 - Avoid collision between branch and tag name. Tag detection got confused when
   branch was named the same as tag. Now it searches only for tag refs, instead
   of all refs. (#452, @3Rafal)
-
 - Fix project name detection from `dune-project`. The parser could get confused
   when opam file generation is used. Now it only considers the first `(name X)`
   in the file. (#445, @emillon)
@@ -35,8 +32,6 @@
 - Removed support for the OPAM 1.2.2 client. This means `dune-release` expects
   the `opam` binary to be version 2.0 at least. (#406, #411,
   @Leonidas-from-XIV)
-
-### Security
 
 ## 1.6.1
 
