@@ -91,7 +91,13 @@ let readme p =
 let opam p =
   match p.opam with
   | Some f -> Ok f
-  | None -> name p >>| fun name -> Fpath.v (name ^ ".opam")
+  | None ->
+      name p >>= fun name ->
+      let filename = name |> Fpath.v |> Fpath.add_ext ".opam" in
+      let opam_subdir = Fpath.v "opam" in
+      let in_opam_subdir = Fpath.append opam_subdir filename in
+      OS.File.exists in_opam_subdir
+      |> Result.map (function true -> in_opam_subdir | false -> filename)
 
 let opam_descr p =
   let descr_file_for_opam opam =
@@ -263,16 +269,26 @@ let dune_project_name dir =
 
 let infer_pkg_names dir = function
   | [] ->
-      Bos.OS.Dir.contents ~dotfiles:false ~rel:false dir >>= fun files ->
-      let files = List.fast_sort Fpath.compare files |> List.rev in
-      let opam_files =
-        List.filter
-          (fun p -> String.is_suffix ~affix:".opam" Fpath.(to_string p))
-          files
+      let remove_extension =
+        List.map (fun p -> Fpath.(basename @@ rem_ext p))
       in
-      if opam_files = [] then
-        Rresult.R.error_msg "no <package>.opam files found."
-      else Ok (List.map (fun p -> Fpath.(basename @@ rem_ext p)) opam_files)
+      let collect dir =
+        Bos.OS.Dir.contents ~dotfiles:false ~rel:false dir >>= fun files ->
+        let files = List.fast_sort Fpath.compare files |> List.rev in
+        let opam_files =
+          List.filter
+            (fun p -> String.is_suffix ~affix:".opam" Fpath.(to_string p))
+            files
+        in
+        Ok (remove_extension opam_files)
+      in
+      Result.bind (collect dir) (function
+        | [] ->
+            let opam_subdir = Fpath.(dir / "opam") in
+            Result.bind (collect opam_subdir) (function
+              | [] -> Rresult.R.error_msg "no <package>.opam files found."
+              | opam_files -> Ok opam_files)
+        | opam_files -> Ok opam_files)
   | x -> Ok x
 
 let infer_from_opam_files dir =
@@ -403,11 +419,24 @@ let prepare_opam_for_distrib ~version ~content =
   let without_version = List.filter is_not_version_field content in
   Fmt.str "version: \"%a\"" Version.pp version :: without_version
 
+let opam_file_contents name =
+  let filename = name |> Fpath.v |> Fpath.add_ext ".opam" in
+  let location =
+    OS.File.exists filename >>= function
+    | true -> Ok filename
+    | false -> (
+        let filename = Fpath.append (Fpath.v "opam") filename in
+        OS.File.exists filename >>= function
+        | true -> Ok filename
+        | false -> Rresult.R.error_msgf "Can't open %a" Fpath.pp filename)
+  in
+  location >>= fun filename ->
+  OS.File.read_lines filename >>| fun content -> (filename, content)
+
 let distrib_version_opam_files ~dry_run ~version =
   infer_pkg_names Fpath.(v ".") [] >>= fun names ->
   Stdext.Result.List.iter names ~f:(fun name ->
-      let file = Fpath.(v name + "opam") in
-      OS.File.read_lines file >>= fun content ->
+      opam_file_contents name >>= fun (file, content) ->
       let content = prepare_opam_for_distrib ~version ~content in
       Sos.write_file ~dry_run file (String.concat ~sep:"\n" content))
 
