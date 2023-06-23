@@ -1,3 +1,17 @@
+## unreleased
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Fixed
+
+### Removed
+
+### Security
+
 ## 2.0.0
 
 ### Added
@@ -32,8 +46,6 @@
 - Removed support for the OPAM 1.2.2 client. This means `dune-release` expects
   the `opam` binary to be version 2.0 at least. (#406, #411,
   @Leonidas-from-XIV)
-
-### Security
 
 ## 1.6.1
 
