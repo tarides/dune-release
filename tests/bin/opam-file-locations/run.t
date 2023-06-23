@@ -14,6 +14,8 @@ Set up a project with an `.opam` file in the toplevel folder:
   > opam-version: "2.0"
   > EOF
   $ git init 2> /dev/null . > /dev/null
+  $ git config user.name "dune-release-test"
+  $ git config user.email "pseudo@pseudo.invalid"
   $ touch README LICENSE
   $ cat > .gitignore << EOF
   > _build
