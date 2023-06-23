@@ -16,9 +16,9 @@ type t = {
   ends : string;
   other_fields : (string * string) list;
   (* for mutations *)
+  project_uuid : string;
+  uuid : string;
   fields : Fields.t;
-  item_id : string;
-  project_id : string;
 }
 
 let v ~title ~objective ?(status = "") ?(team = "") ?(funder = "")
@@ -35,8 +35,8 @@ let v ~title ~objective ?(status = "") ?(team = "") ?(funder = "")
     funder;
     id;
     fields = Fields.empty ();
-    item_id = "";
-    project_id = "";
+    project_uuid = "";
+    uuid = "";
   }
 
 let csv_headers =
@@ -50,8 +50,6 @@ let csv_headers =
     "Ends";
     "Funder";
     "Team";
-    "Starts";
-    "Ends";
   ]
 
 let to_csv t =
@@ -66,6 +64,57 @@ let to_csv t =
     t.funder;
     t.team;
   ]
+
+let json_fields = "uuid" :: List.map String.lowercase_ascii csv_headers
+
+let to_json t =
+  `Assoc
+    [
+      ("id", `String t.id);
+      ("objective", `String t.objective);
+      ("title", `String t.title);
+      ("status", `String t.status);
+      ("schedule", `String t.schedule);
+      ("starts", `String t.starts);
+      ("ends", `String t.ends);
+      ("funder", `String t.funder);
+      ("team", `String t.team);
+      ("uuid", `String t.uuid);
+    ]
+
+let of_json ~project_uuid ~fields json =
+  let id = json / "id" |> U.to_string in
+  let objective = json / "objective" |> U.to_string in
+  let title = json / "title" |> U.to_string in
+  let status = json / "status" |> U.to_string in
+  let schedule = json / "schedule" |> U.to_string in
+  let starts = json / "starts" |> U.to_string in
+  let ends = json / "ends" |> U.to_string in
+  let funder = json / "funder" |> U.to_string in
+  let team = json / "team" |> U.to_string in
+  let uuid = json / "uuid" |> U.to_string in
+  let other_fields = json |> U.to_assoc in
+  let other_fields =
+    List.fold_left
+      (fun acc (x, y) ->
+        if List.mem x json_fields then acc else (x, U.to_string y) :: acc)
+      [] other_fields
+  in
+  {
+    id;
+    objective;
+    title;
+    status;
+    schedule;
+    starts;
+    ends;
+    funder;
+    team;
+    other_fields;
+    uuid;
+    project_uuid;
+    fields;
+  }
 
 let other_fields t = t.other_fields
 let id t = t.id
@@ -152,8 +201,8 @@ let parse_objective json =
       let title = json / "title" |> U.to_string in
       title
 
-let parse ~project_id ~fields json =
-  let item_id = json / "id" |> U.to_string in
+let parse_github_query ~project_uuid ~fields json =
+  let uuid = json / "id" |> U.to_string in
   let t =
     let json = json / "fieldValues" / "nodes" |> U.to_list in
     List.fold_left
@@ -189,8 +238,8 @@ let parse ~project_id ~fields json =
         team = "";
         other_fields = [];
         fields;
-        item_id;
-        project_id;
+        uuid;
+        project_uuid;
       }
       json
   in
@@ -287,4 +336,4 @@ let graphql_mutate t field v =
     }
   }
   |}
-    t.project_id t.item_id field_id text
+    t.project_uuid t.uuid field_id text
