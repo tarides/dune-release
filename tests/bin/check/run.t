@@ -13,12 +13,13 @@ Make a minimal project set up
   $ cat > my_pkg.opam <<EOF
   > opam-version: "2.0"
   > dev-repo: "git+https://github.com/fu/fa.git"
-  > description : "Some description"
-  > maintainer : "me"
-  > authors : "also me"
-  > homepage : "https://github.com/fu/fa"
-  > bug-reports : "https://github.com/fu/fa/issues"
-  > synopsis : "Dope project"
+  > description: "Some description"
+  > maintainer: "me"
+  > authors: "also me"
+  > homepage: "https://github.com/fu/fa"
+  > bug-reports: "https://github.com/fu/fa/issues"
+  > synopsis: "Dope project"
+  > license: "ISC"
   > EOF
   $ cat > dune-project << EOF 
   > (lang dune 2.7)
@@ -91,12 +92,13 @@ Add another package
   $ cat > my_pkg-sub.opam <<EOF 
   > opam-version: "2.0"
   > dev-repo: "git+https://github.com/fu/fa.git"
-  > description : "Some description"
-  > maintainer : "me"
-  > authors : "also me"
-  > homepage : "https://github.com/fu/fa"
-  > bug-reports : "https://github.com/fu/fa/issues"
-  > synopsis : "Dope project"
+  > description: "Some description"
+  > maintainer: "me"
+  > authors: "also me"
+  > homepage: "https://github.com/fu/fa"
+  > bug-reports: "https://github.com/fu/fa/issues"
+  > synopsis: "Dope project"
+  > license: "ISC"
   > EOF
 
 In multi package projects, the whole lint process (including the file lints, even though they are package independent) is done once for every package
