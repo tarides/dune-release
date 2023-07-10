@@ -71,7 +71,7 @@ let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week s =
     report;
   List.iter
     (fun e ->
-      Fmt.epr "%a %a\n" Fmt.(styled `Yellow string) "WARNING:" (pp_exn path) e)
+      Fmt.epr "%a %a\n%!" Fmt.(styled `Yellow string) "WARNING:" (pp_exn path) e)
     exns;
   acc
 

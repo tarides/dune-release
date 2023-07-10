@@ -82,6 +82,7 @@ let lint_project ?heatmap ~db t =
   List.iter (Project.lint ?heatmap ~db) t.projects
 
 let out_timesheets t = Fmt.pr "%a\n%!" pp_csv_ts t
+let out_heatmap t = Fmt.pr "%a\n%!" Heatmap.pp t
 
 let write_timesheets ~dir t =
   let file = dir / "timesheets.csv" in
@@ -163,8 +164,10 @@ let admin_dir_term =
          [ "admin-dir" ])
 
 let timesheets_term =
-  Arg.(
-    value @@ flag @@ info ~doc:"Display timesheet reports" [ "timesheets"; "t" ])
+  Arg.(value @@ flag @@ info ~doc:"Display timesheet reports" [ "timesheets" ])
+
+let heatmap_term =
+  Arg.(value @@ flag @@ info ~doc:"Display heatmap reports" [ "heatmap" ])
 
 let setup =
   let style_renderer = Fmt_cli.style_renderer ~docs:common_options () in
@@ -268,15 +271,18 @@ let fetch =
 
 let default =
   let run () format org project_numbers okr_updates_dir admin_dir data_dir
-      timesheets years weeks sources =
+      timesheets heatmap years weeks sources =
     Lwt_main.run
     @@
-    if timesheets then (
-      let timesheets =
+    if timesheets || heatmap then (
+      let ts =
         get_timesheets ~years ~weeks ~admin_dir ~okr_updates_dir ~data_dir
           sources
       in
-      out_timesheets timesheets;
+      (if heatmap then
+         let heatmap = Heatmap.of_report ts in
+         out_heatmap heatmap);
+      if timesheets then out_timesheets ts;
       Lwt.return ())
     else
       let+ projects = get_project org project_numbers data_dir in
@@ -286,7 +292,7 @@ let default =
   Term.(
     const run $ setup $ format $ org_term $ project_numbers_term
     $ okr_updates_dir_term $ admin_dir_term $ data_dir_term $ timesheets_term
-    $ years $ weeks $ source_term)
+    $ heatmap_term $ years $ weeks $ source_term)
 
 let show = Cmd.v (Cmd.info "show") default
 
