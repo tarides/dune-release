@@ -26,10 +26,15 @@ let ignore_sections =
     "Projects:";
     "OKR Updates";
     "Meetings etc:";
-    "Next week";
-    "Other";
+    "Meetings, etc.";
     "Issue and blockers (optional)";
     "Issue and blockers";
+    "This Week";
+    "Next week";
+    "Other";
+    "Others";
+    "Activity";
+    "Activity (move these items to last week)";
   ]
 
 let pp_exn path ppf = function

@@ -53,7 +53,7 @@ let is_time_block = function
   | _ -> false
 
 let time_block_is_sane s =
-  let regexp = Str.regexp "^@[a-zA-Z0-9-]+[ ]+([0-9.]+ day[s]?)$" in
+  let regexp = Str.regexp "^@[a-zA-Z0-9-]+[ ]+([0-9.]+[ ]+day[s]?)$" in
   let pieces = String.split_on_char ',' (String.trim s) in
   List.for_all
     (fun s ->
