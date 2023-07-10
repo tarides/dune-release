@@ -31,7 +31,7 @@ val of_markdown :
   ?ignore_sections:string list ->
   ?include_sections:string list ->
   markdown ->
-  KR.t list
+  KR.t list * exn list
 (** Process markdown data from omd. Optionally [ignore_sections] can be used to
     ignore specific sections, or [include_sections] can be used to only process
     specific sections. *)

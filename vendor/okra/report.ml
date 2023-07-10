@@ -229,8 +229,7 @@ let of_projects projects =
 
 let of_objectives ~project objectives =
   let objectives =
-    objectives
-    |> List.to_seq
+    objectives |> List.to_seq
     |> Seq.map (fun (o : objective) -> (o.name, o))
     |> Hashtbl.of_seq
   in
@@ -247,15 +246,11 @@ let make_objective ?show_time ?show_time_calc ?show_engineers o =
   let krs = Hashtbl.to_seq o.krs.ids |> Seq.map snd |> List.of_seq in
   let new_krs =
     Hashtbl.to_seq o.krs.titles
-    |> Seq.map snd
-    |> Seq.filter is_new_kr
-    |> List.of_seq
+    |> Seq.map snd |> Seq.filter is_new_kr |> List.of_seq
   in
   let no_krs =
     Hashtbl.to_seq o.krs.titles
-    |> Seq.map snd
-    |> Seq.filter is_no_kr
-    |> List.of_seq
+    |> Seq.map snd |> Seq.filter is_no_kr |> List.of_seq
   in
   let krs =
     List.sort KR.compare krs

@@ -309,7 +309,7 @@ let process_block state acc = function
       acc
   | List (_, _, _, bls) ->
       List.fold_left
-        (fun ((sections, krs) as acc) xs ->
+        (fun ((sections, krs, exns) as acc) xs ->
           let includes = include_section state in
           if ignore_section state || Option.is_none includes then acc
           else
@@ -319,14 +319,15 @@ let process_block state acc = function
               kr ~project:state.current_proj ~objective:state.current_o block
             with
             (* Safe to Option.get given if-then-else *)
-            | None -> (Option.get includes :: sections, krs)
-            | Some x -> (Option.get includes :: sections, x :: krs))
+            | None -> (Option.get includes :: sections, krs, exns)
+            | Some x -> (Option.get includes :: sections, x :: krs, exns)
+            | exception e -> (Option.get includes :: sections, krs, e :: exns))
         acc bls
   | _ ->
       (* FIXME: also keep floating text *)
       acc
 
-let process t ast = List.fold_left (process_block t) ([], []) ast
+let process t ast = List.fold_left (process_block t) ([], [], []) ast
 
 let check_includes u_includes (includes : string list) =
   let missing =
@@ -342,6 +343,6 @@ let of_markdown ?(ignore_sections = [ "OKR Updates" ]) ?(include_sections = [])
   let u_ignore = List.map String.uppercase_ascii ignore_sections in
   let u_include = List.map String.uppercase_ascii include_sections in
   let state = init ~ignore_sections:u_ignore ~include_sections:u_include () in
-  let includes, krs = process state ast in
+  let includes, krs, exns = process state ast in
   check_includes u_include (List.sort_uniq String.compare includes);
-  List.rev krs
+  (List.rev krs, exns)
