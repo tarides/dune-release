@@ -181,7 +181,10 @@ let add ?okr_db (t : t) (e : KR.t) =
   in
   let update t =
     replace_no_case t.titles e.title e;
-    match e.id with ID id -> replace_no_case t.ids id e | _ -> ()
+    let id =
+      match e.id with ID id -> id | No_KR -> "No KR" | New_KR -> "New KR"
+    in
+    replace_no_case t.ids id e
   in
   let p =
     match find_no_case t.projects e.project with

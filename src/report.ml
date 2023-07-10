@@ -28,6 +28,8 @@ let ignore_sections =
     "Meetings etc:";
     "Next week";
     "Other";
+    "Issue and blockers (optional)";
+    "Issue and blockers";
   ]
 
 let pp_exn path ppf = function
@@ -38,8 +40,7 @@ let pp_exn path ppf = function
         s
   | Parser.Invalid_time s ->
       Fmt.pf ppf "Cannot parse %s: invalid time for entry `%s'." path s
-  | Parser.No_work_found s ->
-      Fmt.pf ppf "Cannot parse %s: missing work for `%s'." path s
+  | Parser.No_work_found _ -> ()
   | Parser.No_KR_ID_found s ->
       Fmt.pf ppf "Cannot parse %s: missing KR ID for `%s'." path s
   | Parser.No_project_found s ->

@@ -215,9 +215,7 @@ let kr ~project ~objective = function
         | l -> l
       in
 
-      let id =
-        try Option.get !id with Invalid_argument _ -> err_no_id title
-      in
+      let id = try Option.get !id with Invalid_argument _ -> No_KR in
 
       let time_entries =
         match !time_entries with
@@ -226,9 +224,7 @@ let kr ~project ~objective = function
         | _ -> err_multiple_time_entries title
       in
 
-      let project =
-        match String.trim project with "" -> err_no_project title | s -> s
-      in
+      let project = String.trim project in
       let objective = String.trim objective in
 
       (* Construct final entry *)
