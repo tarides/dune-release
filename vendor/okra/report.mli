@@ -52,7 +52,7 @@ val of_markdown :
   ?include_sections:string list ->
   ?okr_db:Masterdb.t ->
   Parser.markdown ->
-  t
+  t * exn list
 
 val iter :
   ?project:(string -> project -> unit) ->
