@@ -1,4 +1,11 @@
 (executable
  (name main)
  (public_name caretaker)
+ (modules main)
+ (libraries caretaker fmt.tty fmt.cli fmt cmdliner))
+
+(executable
+ (name upload)
+ (public_name upload)
+ (modules upload)
  (libraries caretaker fmt.tty fmt.cli fmt cmdliner))

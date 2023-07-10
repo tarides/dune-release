@@ -20,11 +20,24 @@ let pp ppf t =
   Fmt.Dump.(list (pair Column.pp (pair pp_kind string))) ppf l
 
 let get_id ~name l =
-  match List.find (fun x -> String.starts_with ~prefix:name x.name) l with
+  let name = String.lowercase_ascii name in
+  match
+    List.find
+      (fun x -> String.starts_with ~prefix:name (String.lowercase_ascii x.name))
+      l
+  with
   | x -> x.id
-  | exception Not_found ->
-      Fmt.epr "Cannot find name %s in %a\n" name pp_options l;
-      failwith "boo"
+  | exception Not_found -> (
+      match
+        List.find
+          (fun x ->
+            String.ends_with ~suffix:name (String.lowercase_ascii x.name))
+          l
+      with
+      | x -> x.id
+      | exception Not_found ->
+          Fmt.epr "Cannot find name %s in %a\n" name pp_options l;
+          failwith "boo")
 
 let string_of_kind = function
   | Text -> "Text"
