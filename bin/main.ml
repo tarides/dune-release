@@ -97,6 +97,23 @@ let project_numbers_term =
     @@ opt (list int) [ 25 ]
     @@ info ~doc:"The project IDS" ~docv:"IDs" [ "number"; "n" ])
 
+let years =
+  let all_years = [ 2021; 2022; 2023 ] in
+  Arg.(
+    value
+    @@ opt (list ~sep:',' int) all_years
+    @@ info ~doc:"The years to consider" ~docv:"YEARS" [ "years" ])
+
+let weeks =
+  let all_weeks = List.init 52 (fun i -> i + 1) in
+  let return t = Term.(const (function [] -> all_weeks | l -> l) $ t) in
+  return
+    Arg.(
+      value
+      @@ opt (list ~sep:',' int) []
+      @@ info ~doc:"The weeks to consider. By default, use all weeks."
+           ~docv:"WEEKS" [ "weeks" ])
+
 let data_dir_term =
   let env = Cmd.Env.info ~doc:"PATH" "CARETAKER_DATA_DIR" in
   Arg.(
@@ -140,8 +157,6 @@ let setup =
     const (fun style_renderer -> Fmt_tty.setup_std_outputs ?style_renderer ())
     $ style_renderer)
 
-let all_weeks = List.init 52 (fun i -> i + 1)
-let all_years = [ 2021; 2022; 2023 ]
 let filter_sync = [ (Column.Id, Filter.is "New KR"); (Id, Filter.is "") ]
 
 let err_okr_updates_dir () =
@@ -153,8 +168,7 @@ let get_okr_updates_dir = function
   | None -> err_okr_updates_dir ()
   | Some dir -> dir
 
-let get_timesheets ?(years = all_years) ?(weeks = all_weeks) ~data_dir
-    ~okr_updates_dir () =
+let get_timesheets ~years ~weeks ~data_dir ~okr_updates_dir () =
   match data_dir with
   | None ->
       let okr_updates_dir = get_okr_updates_dir okr_updates_dir in
@@ -196,12 +210,12 @@ let copy_db ~src ~dst =
   if x <> 0 then failwith "invalid cp"
 
 let fetch =
-  let run () org project_numbers okr_updates_dir data_dir =
+  let run () org project_numbers okr_updates_dir years weeks data_dir =
     Lwt_main.run
     @@
     let dir = get_okr_updates_dir okr_updates_dir in
     let timesheets =
-      get_timesheets ~okr_updates_dir:(Some dir) ~data_dir:None ()
+      get_timesheets ~years ~weeks ~okr_updates_dir:(Some dir) ~data_dir:None ()
     in
     let+ projects = Project.get_all ~org project_numbers in
     write_timesheets ~dir:data_dir timesheets;
@@ -211,14 +225,17 @@ let fetch =
   Cmd.v (Cmd.info "fetch")
     Term.(
       const run $ setup $ org_term $ project_numbers_term $ okr_updates_dir_term
-      $ data_dir_term)
+      $ years $ weeks $ data_dir_term)
 
 let default =
-  let run () format org project_numbers okr_updates_dir timesheets data_dir =
+  let run () format org project_numbers okr_updates_dir timesheets years weeks
+      data_dir =
     Lwt_main.run
     @@
     if timesheets then (
-      let timesheets = get_timesheets ~okr_updates_dir ~data_dir () in
+      let timesheets =
+        get_timesheets ~years ~weeks ~okr_updates_dir ~data_dir ()
+      in
       out_timesheets timesheets;
       Lwt.return ())
     else
@@ -228,15 +245,17 @@ let default =
   in
   Term.(
     const run $ setup $ format $ org_term $ project_numbers_term
-    $ okr_updates_dir_term $ timesheets_term $ data_dir_opt)
+    $ okr_updates_dir_term $ timesheets_term $ years $ weeks $ data_dir_opt)
 
 let show = Cmd.v (Cmd.info "show") default
 
 let sync =
-  let run () org project_numbers okr_updates_dir data_dir =
+  let run () org project_numbers okr_updates_dir years weeks data_dir =
     Lwt_main.run
     @@ let* projects = get_project org project_numbers data_dir in
-       let timesheets = get_timesheets ~okr_updates_dir ~data_dir () in
+       let timesheets =
+         get_timesheets ~years ~weeks ~okr_updates_dir ~data_dir ()
+       in
        let db = get_db ~okr_updates_dir ~data_dir () in
        let heatmap = Heatmap.of_report timesheets in
        let data = filter ~filter_out:filter_sync { org; projects } in
@@ -245,14 +264,16 @@ let sync =
   Cmd.v (Cmd.info "sync")
     Term.(
       const run $ setup $ org_term $ project_numbers_term $ okr_updates_dir_term
-      $ data_dir_opt)
+      $ years $ weeks $ data_dir_opt)
 
 let lint =
-  let run () org project_numbers okr_updates_dir data_dir =
+  let run () org project_numbers okr_updates_dir years weeks data_dir =
     Lwt_main.run
     @@ let+ projects = get_project org project_numbers data_dir in
        let db = get_db ~okr_updates_dir ~data_dir () in
-       let timesheets = get_timesheets ~okr_updates_dir ~data_dir () in
+       let timesheets =
+         get_timesheets ~years ~weeks ~okr_updates_dir ~data_dir ()
+       in
        let heatmap = Heatmap.of_report timesheets in
        let data = filter { org; projects } in
        lint_project ~heatmap ~db data
@@ -260,7 +281,7 @@ let lint =
   Cmd.v (Cmd.info "lint")
     Term.(
       const run $ setup $ org_term $ project_numbers_term $ okr_updates_dir_term
-      $ data_dir_opt)
+      $ years $ weeks $ data_dir_opt)
 
 let cmd = Cmd.group ~default (Cmd.info "caretaker") [ show; lint; sync; fetch ]
 let () = exit (Cmd.eval cmd)
