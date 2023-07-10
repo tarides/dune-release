@@ -48,3 +48,13 @@ val order_by : Column.t -> t list -> (string * t list) list
 
 val to_json : t -> Yojson.Safe.t
 val of_json : project_uuid:string -> fields:Fields.t -> Yojson.Safe.t -> t
+
+module Raw : sig
+  val graphql_mutate :
+    project_id:string ->
+    card_id:string ->
+    fields:Fields.t ->
+    Column.t ->
+    string ->
+    string
+end

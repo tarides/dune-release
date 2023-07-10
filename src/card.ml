@@ -304,23 +304,24 @@ let filter_out f cards =
     [] cards
   |> List.rev
 
-let graphql_mutate t field v =
-  let field_kind, field_id =
-    try Fields.find t.fields field
-    with Not_found ->
-      Fmt.failwith "mutate: cannot find %a in %a\n" Column.pp field Fields.pp
-        t.fields
-  in
-  let text =
-    match field_kind with
-    | Text -> Fmt.str "text: %S" v
-    | Date -> Fmt.str "date: %S" v
-    | Single_select options ->
-        let id = Fields.get_id options ~name:v in
-        Fmt.str "singleSelectOptionId: %S" id
-  in
-  Fmt.str
-    {|
+module Raw = struct
+  let graphql_mutate ~project_id ~card_id ~fields field v =
+    let field_kind, field_id =
+      try Fields.find fields field
+      with Not_found ->
+        Fmt.failwith "mutate: cannot find %a in %a\n" Column.pp field Fields.pp
+          fields
+    in
+    let text =
+      match field_kind with
+      | Text -> Fmt.str "text: %S" v
+      | Date -> Fmt.str "date: %S" v
+      | Single_select options ->
+          let id = Fields.get_id options ~name:v in
+          Fmt.str "singleSelectOptionId: %S" id
+    in
+    Fmt.str
+      {|
   mutation {
     updateProjectV2ItemFieldValue(
       input: {
@@ -336,4 +337,8 @@ let graphql_mutate t field v =
     }
   }
   |}
-    t.project_uuid t.uuid field_id text
+      project_id card_id field_id text
+end
+
+let graphql_mutate t =
+  Raw.graphql_mutate ~project_id:t.project_uuid ~card_id:t.uuid ~fields:t.fields

@@ -96,3 +96,9 @@ $ dune exec -- bin/main.exe --timesheets
 "Comp121","2023"," 9","3.5"
 [...]
 ```
+
+### Upload CSV
+
+```
+$ dune exec -- ./bin/upload.exe input.csv
+```

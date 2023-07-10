@@ -183,6 +183,13 @@ let get ~org ~project_number () =
   in
   aux None None []
 
+let get_id_and_fields ~org ~project_number =
+  let open Lwt.Syntax in
+  let query = Query.make ~org ~project_number ~after:None in
+  let+ json = Github.run query in
+  let _, project = Query.parse ~project_number ~org json in
+  (project.uuid, project.fields)
+
 let get_all ~org project_numbers =
   Lwt_list.map_p
     (fun project_number -> get ~org ~project_number ())
