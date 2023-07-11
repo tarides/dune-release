@@ -181,7 +181,10 @@ let add ?okr_db (t : t) (e : KR.t) =
   in
   let update t =
     replace_no_case t.titles e.title e;
-    match e.id with ID id -> replace_no_case t.ids id e | _ -> ()
+    let id =
+      match e.id with ID id -> id | No_KR -> "No KR" | New_KR -> "New KR"
+    in
+    replace_no_case t.ids id e
   in
   let p =
     match find_no_case t.projects e.project with
@@ -229,8 +232,7 @@ let of_projects projects =
 
 let of_objectives ~project objectives =
   let objectives =
-    objectives
-    |> List.to_seq
+    objectives |> List.to_seq
     |> Seq.map (fun (o : objective) -> (o.name, o))
     |> Hashtbl.of_seq
   in
@@ -238,24 +240,20 @@ let of_objectives ~project objectives =
   of_projects [ p ]
 
 let of_markdown ?existing_report ?ignore_sections ?include_sections ?okr_db m =
-  let new_krs = Parser.of_markdown ?ignore_sections ?include_sections m in
+  let new_krs, exns = Parser.of_markdown ?ignore_sections ?include_sections m in
   let old_krs = match existing_report with None -> [] | Some t -> all_krs t in
   let krs = old_krs @ new_krs in
-  of_krs ?okr_db krs
+  (of_krs ?okr_db krs, exns)
 
 let make_objective ?show_time ?show_time_calc ?show_engineers o =
   let krs = Hashtbl.to_seq o.krs.ids |> Seq.map snd |> List.of_seq in
   let new_krs =
     Hashtbl.to_seq o.krs.titles
-    |> Seq.map snd
-    |> Seq.filter is_new_kr
-    |> List.of_seq
+    |> Seq.map snd |> Seq.filter is_new_kr |> List.of_seq
   in
   let no_krs =
     Hashtbl.to_seq o.krs.titles
-    |> Seq.map snd
-    |> Seq.filter is_no_kr
-    |> List.of_seq
+    |> Seq.map snd |> Seq.filter is_no_kr |> List.of_seq
   in
   let krs =
     List.sort KR.compare krs

@@ -2,7 +2,7 @@
  (name main)
  (public_name caretaker)
  (modules main)
- (libraries caretaker fmt.tty fmt.cli fmt cmdliner))
+ (libraries caretaker fmt.tty fmt.cli fmt cmdliner logs.cli))
 
 (executable
  (name upload)

@@ -9,7 +9,7 @@ type item = {
 
 type t = (string, item) Hashtbl.t
 
-val of_markdown : ?acc:t -> year:int -> week:int -> string -> t
+val of_markdown : ?acc:t -> path:string -> year:int -> week:int -> string -> t
 val csv_headers : string list
 val to_csv : t -> string
 val of_csv : string -> t

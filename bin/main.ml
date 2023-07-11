@@ -28,10 +28,11 @@ let write_file f data =
   close_out oc;
   s
 
-let read_timesheets ~years ~weeks okr_updates_dir =
+let read_timesheets ~years ~weeks root =
+  let weeks = Weeks.to_ints weeks in
   List.fold_left
     (fun acc year ->
-      let root = okr_updates_dir / "team-weeklies" / string_of_int year in
+      let root = root / string_of_int year in
       List.fold_left
         (fun acc week ->
           let dir = Fmt.str "%s/%02d" root week in
@@ -43,11 +44,15 @@ let read_timesheets ~years ~weeks okr_updates_dir =
             in
             List.fold_left
               (fun acc file ->
-                let str = read_file (dir / file) in
-                Report.of_markdown ~acc ~year ~week str)
+                let path = dir / file in
+                let str = read_file path in
+                Report.of_markdown ~acc ~path ~year ~week str)
               acc files)
         acc weeks)
     (Hashtbl.create 13) years
+
+let read_timesheets_from_okr_updates d = read_timesheets (d / "team-weeklies")
+let read_timesheets_from_admin d = read_timesheets (d / "weekly")
 
 let filter ?filter_out data =
   let filter = Project.filter ?filter_out in
@@ -78,6 +83,7 @@ let lint_project ?heatmap ~db t =
   List.iter (Project.lint ?heatmap ~db) t.projects
 
 let out_timesheets t = Fmt.pr "%a\n%!" pp_csv_ts t
+let out_heatmap t = Fmt.pr "%a\n%!" Heatmap.pp t
 
 let write_timesheets ~dir t =
   let file = dir / "timesheets.csv" in
@@ -90,6 +96,17 @@ let org_term =
   Arg.(
     value @@ pos 0 string "tarides"
     @@ info ~doc:"The organisation to get projects from" ~docv:"ORG" [])
+
+type sources = Sync | Okr_updates | Admin
+
+let source_term =
+  let sources =
+    Arg.enum [ ("sync", Sync); ("okr-updates", Okr_updates); ("admin", Admin) ]
+  in
+  Arg.(
+    value @@ opt sources Sync
+    @@ info ~doc:"The data-source to read data from." ~docv:"SOURCE"
+         [ "source"; "s" ])
 
 let project_numbers_term =
   Arg.(
@@ -105,24 +122,19 @@ let years =
     @@ info ~doc:"The years to consider" ~docv:"YEARS" [ "years" ])
 
 let weeks =
-  let all_weeks = List.init 52 (fun i -> i + 1) in
-  let return t = Term.(const (function [] -> all_weeks | l -> l) $ t) in
-  return
-    Arg.(
-      value
-      @@ opt (list ~sep:',' int) []
-      @@ info ~doc:"The weeks to consider. By default, use all weeks."
-           ~docv:"WEEKS" [ "weeks" ])
+  let weeks = Arg.conv (Weeks.of_string, Weeks.pp) in
+  Arg.(
+    value @@ opt weeks Weeks.all
+    @@ info
+         ~doc:
+           "The weeks to consider. By default, use all weeks. The format is a \
+            $(b,`,')-separated list of values, where a value is either \
+            specific week number, an (inclusive) range between week numbers \
+            like $(b,`12-16'), or a quarter name (like $(b,`q1'). For \
+            instance, $(b,--weeks='12,q1,34-45') is a valid parameter."
+         ~docv:"WEEKS" [ "weeks" ])
 
 let data_dir_term =
-  let env = Cmd.Env.info ~doc:"PATH" "CARETAKER_DATA_DIR" in
-  Arg.(
-    value @@ opt string "data"
-    @@ info ~env
-         ~doc:"Use data from a local directory instead of querying the web"
-         ~docv:"FILE" [ "d"; "data-dir" ])
-
-let data_dir_opt =
   let env = Cmd.Env.info ~doc:"PATH" "CARETAKER_DATA_DIR" in
   Arg.(
     value
@@ -147,36 +159,67 @@ let okr_updates_dir_term =
     @@ info ~docs:common_options ~env ~doc:"Path to the okr-updates repository"
          [ "okr-updates-dir" ])
 
-let timesheets_term =
+let admin_dir_term =
+  let env = Cmd.Env.info ~doc:"PATH" "ADMIN_DIR" in
   Arg.(
-    value @@ flag @@ info ~doc:"Display timesheet reports" [ "timesheets"; "t" ])
+    value
+    @@ opt (some string) None
+    @@ info ~docs:common_options ~env ~doc:"Path to the admin repository"
+         [ "admin-dir" ])
+
+let timesheets_term =
+  Arg.(value @@ flag @@ info ~doc:"Display timesheet reports" [ "timesheets" ])
+
+let heatmap_term =
+  Arg.(value @@ flag @@ info ~doc:"Display heatmap reports" [ "heatmap" ])
 
 let setup =
   let style_renderer = Fmt_cli.style_renderer ~docs:common_options () in
   Term.(
-    const (fun style_renderer -> Fmt_tty.setup_std_outputs ?style_renderer ())
-    $ style_renderer)
+    const (fun style_renderer level ->
+        Fmt_tty.setup_std_outputs ?style_renderer ();
+        Logs.set_level level;
+        Logs.set_reporter (Logs_fmt.reporter ()))
+    $ style_renderer $ Logs_cli.level ())
 
 let filter_sync = [ (Column.Id, Filter.is "New KR"); (Id, Filter.is "") ]
 
 let err_okr_updates_dir () =
-  failwith
-    "Please set-up OKR_UPDATES_DIR to point to your local copy of the \
-     okr-updates repositories"
+  invalid_arg
+    "Missing path to tarides/okr-updates. Please use --okr-updates-dir \n\
+     or set-up OKR_UPDATES_DIR to point to your local copy of the \n\
+     tarides/okr-updates repositories."
+
+let err_data_dir () =
+  invalid_arg
+    "Missing path to local synced data. Please use --data-dir or set-up \n\
+     DATA_DIR to point to your local copy of the local synced data."
+
+let err_admin_dir () =
+  invalid_arg
+    "Missing path to tarides/admin. Please use --admin-dir or set-up ADMIN_DIR \n\
+     to point to your local copy of the local tarides/admin repositories."
 
 let get_okr_updates_dir = function
   | None -> err_okr_updates_dir ()
   | Some dir -> dir
 
-let get_timesheets ~years ~weeks ~data_dir ~okr_updates_dir () =
-  match data_dir with
-  | None ->
-      let okr_updates_dir = get_okr_updates_dir okr_updates_dir in
-      read_timesheets ~years ~weeks okr_updates_dir
-  | Some dir ->
+let get_admin_dir = function None -> err_admin_dir () | Some dir -> dir
+let get_data_dir = function None -> err_data_dir () | Some dir -> dir
+
+let get_timesheets ~years ~weeks ~data_dir ~okr_updates_dir ~admin_dir =
+  function
+  | Sync ->
+      let dir = get_data_dir data_dir in
       let file = dir / "timesheets.csv" in
       let data = read_file file in
       Report.of_csv data
+  | Okr_updates ->
+      let dir = get_okr_updates_dir okr_updates_dir in
+      read_timesheets_from_okr_updates ~years ~weeks dir
+  | Admin ->
+      let dir = get_admin_dir admin_dir in
+      read_timesheets_from_admin ~years ~weeks dir
 
 let get_project org project_numbers data_dir =
   match data_dir with
@@ -210,33 +253,40 @@ let copy_db ~src ~dst =
   if x <> 0 then failwith "invalid cp"
 
 let fetch =
-  let run () org project_numbers okr_updates_dir years weeks data_dir =
+  let run () org project_numbers okr_updates_dir admin_dir data_dir years weeks
+      source =
     Lwt_main.run
     @@
-    let dir = get_okr_updates_dir okr_updates_dir in
+    let data_dir = get_data_dir data_dir in
     let timesheets =
-      get_timesheets ~years ~weeks ~okr_updates_dir:(Some dir) ~data_dir:None ()
+      get_timesheets ~years ~weeks ~admin_dir ~okr_updates_dir ~data_dir:None
+        source
     in
     let+ projects = Project.get_all ~org project_numbers in
     write_timesheets ~dir:data_dir timesheets;
     write ~dir:data_dir { org; projects };
+    let dir = get_okr_updates_dir okr_updates_dir in
     copy_db ~src:dir ~dst:data_dir
   in
   Cmd.v (Cmd.info "fetch")
     Term.(
       const run $ setup $ org_term $ project_numbers_term $ okr_updates_dir_term
-      $ years $ weeks $ data_dir_term)
+      $ admin_dir_term $ data_dir_term $ years $ weeks $ source_term)
 
 let default =
-  let run () format org project_numbers okr_updates_dir timesheets years weeks
-      data_dir =
+  let run () format org project_numbers okr_updates_dir admin_dir data_dir
+      timesheets heatmap years weeks sources =
     Lwt_main.run
     @@
-    if timesheets then (
-      let timesheets =
-        get_timesheets ~years ~weeks ~okr_updates_dir ~data_dir ()
+    if timesheets || heatmap then (
+      let ts =
+        get_timesheets ~years ~weeks ~admin_dir ~okr_updates_dir ~data_dir
+          sources
       in
-      out_timesheets timesheets;
+      (if heatmap then
+         let heatmap = Heatmap.of_report ts in
+         out_heatmap heatmap);
+      if timesheets then out_timesheets ts;
       Lwt.return ())
     else
       let+ projects = get_project org project_numbers data_dir in
@@ -245,16 +295,19 @@ let default =
   in
   Term.(
     const run $ setup $ format $ org_term $ project_numbers_term
-    $ okr_updates_dir_term $ timesheets_term $ years $ weeks $ data_dir_opt)
+    $ okr_updates_dir_term $ admin_dir_term $ data_dir_term $ timesheets_term
+    $ heatmap_term $ years $ weeks $ source_term)
 
 let show = Cmd.v (Cmd.info "show") default
 
 let sync =
-  let run () org project_numbers okr_updates_dir years weeks data_dir =
+  let run () org project_numbers okr_updates_dir admin_dir data_dir years weeks
+      sources =
     Lwt_main.run
     @@ let* projects = get_project org project_numbers data_dir in
        let timesheets =
-         get_timesheets ~years ~weeks ~okr_updates_dir ~data_dir ()
+         get_timesheets ~years ~weeks ~okr_updates_dir ~data_dir ~admin_dir
+           sources
        in
        let db = get_db ~okr_updates_dir ~data_dir () in
        let heatmap = Heatmap.of_report timesheets in
@@ -264,15 +317,17 @@ let sync =
   Cmd.v (Cmd.info "sync")
     Term.(
       const run $ setup $ org_term $ project_numbers_term $ okr_updates_dir_term
-      $ years $ weeks $ data_dir_opt)
+      $ admin_dir_term $ data_dir_term $ years $ weeks $ source_term)
 
 let lint =
-  let run () org project_numbers okr_updates_dir years weeks data_dir =
+  let run () org project_numbers okr_updates_dir admin_dir data_dir years weeks
+      sources =
     Lwt_main.run
     @@ let+ projects = get_project org project_numbers data_dir in
        let db = get_db ~okr_updates_dir ~data_dir () in
        let timesheets =
-         get_timesheets ~years ~weeks ~okr_updates_dir ~data_dir ()
+         get_timesheets ~years ~weeks ~okr_updates_dir ~data_dir ~admin_dir
+           sources
        in
        let heatmap = Heatmap.of_report timesheets in
        let data = filter { org; projects } in
@@ -281,7 +336,18 @@ let lint =
   Cmd.v (Cmd.info "lint")
     Term.(
       const run $ setup $ org_term $ project_numbers_term $ okr_updates_dir_term
-      $ years $ weeks $ data_dir_opt)
+      $ admin_dir_term $ data_dir_term $ years $ weeks $ source_term)
 
 let cmd = Cmd.group ~default (Cmd.info "caretaker") [ show; lint; sync; fetch ]
-let () = exit (Cmd.eval cmd)
+
+let () =
+  let () = Printexc.record_backtrace true in
+  match Cmd.eval ~catch:false cmd with
+  | i -> exit i
+  | exception Invalid_argument s ->
+      Fmt.epr "\n%a %s\n%!" Fmt.(styled `Red string) "[ERROR]" s;
+      exit Cmd.Exit.cli_error
+  | exception e ->
+      Printexc.print_backtrace stderr;
+      Fmt.epr "\n%a\n%!" Fmt.exn e;
+      exit Cmd.Exit.some_error

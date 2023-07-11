@@ -20,19 +20,65 @@ let month_of_week ~year week =
   let cal = Calendar.of_week ~year week in
   Calendar.month cal
 
-let of_markdown ?(acc = Hashtbl.create 13) ~year ~week s =
+let ignore_sections =
+  [
+    "Projects";
+    "Projects:";
+    "OKR Updates";
+    "Meetings etc:";
+    "Meetings, etc.";
+    "Issue and blockers (optional)";
+    "Issue and blockers";
+    "This Week";
+    "Next week";
+    "Other";
+    "Others";
+    "Activity";
+    "Activity (move these items to last week)";
+  ]
+
+let pp_exn path ppf = function
+  | Parser.No_time_found s ->
+      Fmt.pf ppf "Cannot parse %s: no time found for entry `%s'." path s
+  | Parser.Multiple_time_entries s ->
+      Fmt.pf ppf "Cannot parse %s: multiple entries found for entry `%s'." path
+        s
+  | Parser.Invalid_time s ->
+      Fmt.pf ppf "Cannot parse %s: invalid time for entry `%s'." path s
+  | Parser.No_work_found _ -> ()
+  | Parser.No_KR_ID_found s ->
+      Fmt.pf ppf "Cannot parse %s: missing KR ID for `%s'." path s
+  | Parser.No_project_found s ->
+      Fmt.pf ppf "Cannot parse %s: missing project for `%s'." path s
+  | Parser.Not_all_includes_accounted_for ss ->
+      Fmt.pf ppf "Cannot parse %s: invalid time maths: %a." path
+        Fmt.Dump.(list string)
+        ss
+  | e -> Fmt.pf ppf "Cannot parse %s: %a" path Fmt.exn e
+
+let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week s =
   let md = Omd.of_string s in
-  let okrs = Parser.of_markdown md in
+  let okrs, exns = Parser.of_markdown ~ignore_sections md in
   let month = month_of_week ~year week in
   let report = Report.of_krs okrs in
   Report.iter
     (fun (kr : KR.t) ->
-      let id = Fmt.str "%a" pp_id kr.id in
+      let id =
+        match kr.id with
+        | No_KR -> Fmt.str "(%s)" kr.title
+        | New_KR -> Fmt.str "(new: %s)" kr.title
+        | _ -> Fmt.str "%a" pp_id kr.id
+      in
       Hashtbl.iter
         (fun user days ->
           Hashtbl.add acc id { id; year; month; week; user; days })
         kr.time_per_engineer)
     report;
+  List.iter
+    (fun e ->
+      let s = String.trim (Fmt.str "%a" (pp_exn path) e) in
+      if s <> "" then Logs.warn (fun l -> l "%s" s))
+    exns;
   acc
 
 let csv_headers = [ "Id"; "Year"; "Month"; "Week"; "User"; "Days" ]
