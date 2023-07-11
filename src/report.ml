@@ -63,7 +63,12 @@ let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week s =
   let report = Report.of_krs okrs in
   Report.iter
     (fun (kr : KR.t) ->
-      let id = Fmt.str "%a" pp_id kr.id in
+      let id =
+        match kr.id with
+        | No_KR -> Fmt.str "(%s)" kr.title
+        | New_KR -> Fmt.str "(new: %s)" kr.title
+        | _ -> Fmt.str "%a" pp_id kr.id
+      in
       Hashtbl.iter
         (fun user days ->
           Hashtbl.add acc id { id; year; month; week; user; days })
