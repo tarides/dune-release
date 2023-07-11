@@ -29,6 +29,7 @@ let write_file f data =
   s
 
 let read_timesheets ~years ~weeks root =
+  let weeks = Weeks.to_ints weeks in
   List.fold_left
     (fun acc year ->
       let root = root / string_of_int year in
@@ -121,14 +122,17 @@ let years =
     @@ info ~doc:"The years to consider" ~docv:"YEARS" [ "years" ])
 
 let weeks =
-  let all_weeks = List.init 52 (fun i -> i + 1) in
-  let return t = Term.(const (function [] -> all_weeks | l -> l) $ t) in
-  return
-    Arg.(
-      value
-      @@ opt (list ~sep:',' int) []
-      @@ info ~doc:"The weeks to consider. By default, use all weeks."
-           ~docv:"WEEKS" [ "weeks" ])
+  let weeks = Arg.conv (Weeks.of_string, Weeks.pp) in
+  Arg.(
+    value @@ opt weeks Weeks.all
+    @@ info
+         ~doc:
+           "The weeks to consider. By default, use all weeks. The format is a \
+            $(b,`,')-separated list of values, where a value is either \
+            specific week number, an (inclusive) range between week numbers \
+            like $(b,`12-16'), or a quarter name (like $(b,`q1'). For \
+            instance, $(b,--weeks='12,q1,34-45') is a valid parameter."
+         ~docv:"WEEKS" [ "weeks" ])
 
 let data_dir_term =
   let env = Cmd.Env.info ~doc:"PATH" "CARETAKER_DATA_DIR" in
