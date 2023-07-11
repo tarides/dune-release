@@ -19,7 +19,6 @@ let rec pp ppf = function
   | Union xs -> Fmt.list ~sep:(Fmt.any ",") pp ppf xs
 
 let range_of_string s =
-  Fmt.epr "XXX RANGE_OF_STRING %s\n" s;
   match String.split_on_char '-' s with
   | [ s ] -> (
       match int_of_string_opt s with
@@ -38,14 +37,11 @@ let rec of_string = function
   | "q4" -> Ok Q4
   | s -> (
       match String.split_on_char ',' s with
-      | [ s ] ->
-          Fmt.epr "XXX SPLIT\n%!";
-          range_of_string s
+      | [ s ] -> range_of_string s
       | xs -> (
           match
             List.fold_left
               (fun acc x ->
-                Fmt.epr "XXX %S\n%!" x;
                 match (acc, of_string x) with
                 | Ok acc, Ok y -> Ok (y :: acc)
                 | Error e, _ | _, Error e -> Error e)

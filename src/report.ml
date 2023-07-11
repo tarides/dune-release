@@ -69,7 +69,11 @@ let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week s =
           Hashtbl.add acc id { id; year; month; week; user; days })
         kr.time_per_engineer)
     report;
-  List.iter (fun e -> Logs.warn (fun l -> l "%a\n%!" (pp_exn path) e)) exns;
+  List.iter
+    (fun e ->
+      let s = String.trim (Fmt.str "%a" (pp_exn path) e) in
+      if s <> "" then Logs.warn (fun l -> l "%s" s))
+    exns;
   acc
 
 let csv_headers = [ "Id"; "Year"; "Month"; "Week"; "User"; "Days" ]
