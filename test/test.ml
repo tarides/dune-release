@@ -44,6 +44,11 @@ let parse_weeks () =
     [ 1; 12; 13; 14; 40; 41; 42; 43; 44; 45; 46; 47; 48; 49; 50; 51; 52 ]
     (Weeks.to_ints s2)
 
+let test_same_field () =
+  let x = "da56149b:Build system" in
+  let y = "build system" in
+  Alcotest.(check bool) __LOC__ true (Fields.same x y)
+
 let test x y = Alcotest.test_case x `Quick y
 
 let () =
@@ -51,4 +56,5 @@ let () =
     [
       ("filters", [ test "default" default_filter; test "is" test_is ]);
       ("weeks", [ test "to_ints" weeks_to_ints; test "parse" parse_weeks ]);
+      ("fields", [ test "same" test_same_field ]);
     ]

@@ -29,7 +29,7 @@ val is_dropped : t -> bool
 val get : t -> Column.t -> string
 val other_fields : t -> (string * string) list
 val graphql_query : string
-val graphql_mutate : t -> Column.t -> string -> string
+val graphql_mutate : ?name:string -> t -> Column.t -> string -> string
 val pp : t Fmt.t
 val to_csv : t -> string list
 val csv_headers : string list
@@ -50,11 +50,26 @@ val to_json : t -> Yojson.Safe.t
 val of_json : project_uuid:string -> fields:Fields.t -> Yojson.Safe.t -> t
 
 module Raw : sig
-  val graphql_mutate :
+  val graphql_update :
+    ?name:string ->
     project_id:string ->
     card_id:string ->
     fields:Fields.t ->
     Column.t ->
     string ->
     string
+
+  val add :
+    Fields.t ->
+    project_id:string ->
+    issue_id:string ->
+    (Column.t * string) list ->
+    string Lwt.t
+
+  val update :
+    Fields.t ->
+    project_id:string ->
+    card_id:string ->
+    (Column.t * string) list ->
+    string Lwt.t
 end

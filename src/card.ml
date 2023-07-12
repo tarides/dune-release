@@ -18,6 +18,7 @@ type t = {
   (* for mutations *)
   project_uuid : string;
   uuid : string;
+  issue_uuid : string; (* the issue the card points to *)
   fields : Fields.t;
 }
 
@@ -37,6 +38,7 @@ let v ~title ~objective ?(status = "") ?(team = "") ?(funder = "")
     fields = Fields.empty ();
     project_uuid = "";
     uuid = "";
+    issue_uuid = "";
   }
 
 let csv_headers =
@@ -80,10 +82,12 @@ let to_json t =
       ("funder", `String t.funder);
       ("team", `String t.team);
       ("uuid", `String t.uuid);
+      ("issue_uuid", `String t.issue_uuid);
     ]
 
 let of_json ~project_uuid ~fields json =
   let id = json / "id" |> U.to_string in
+  let issue_uuid = json / "issue_id" |> U.to_string in
   let objective = json / "objective" |> U.to_string in
   let title = json / "title" |> U.to_string in
   let status = json / "status" |> U.to_string in
@@ -114,6 +118,7 @@ let of_json ~project_uuid ~fields json =
     uuid;
     project_uuid;
     fields;
+    issue_uuid;
   }
 
 let other_fields t = t.other_fields
@@ -154,6 +159,7 @@ let graphql_query =
             id
             content {
               ... on Issue {
+                id
                 trackedInIssues(first:10) {
                   nodes {
                     id
@@ -203,6 +209,13 @@ let parse_objective json =
 
 let parse_github_query ~project_uuid ~fields json =
   let uuid = json / "id" |> U.to_string in
+  let issue_uuid =
+    try json / "content" / "id" |> U.to_string
+    with _ ->
+      Fmt.epr "XXX %a\n" Yojson.Safe.pp json;
+      Fmt.epr "XXX missing ID for %s:" uuid;
+      ""
+  in
   let t =
     let json = json / "fieldValues" / "nodes" |> U.to_list in
     List.fold_left
@@ -239,6 +252,7 @@ let parse_github_query ~project_uuid ~fields json =
         other_fields = [];
         fields;
         uuid;
+        issue_uuid;
         project_uuid;
       }
       json
@@ -305,7 +319,7 @@ let filter_out f cards =
   |> List.rev
 
 module Raw = struct
-  let graphql_mutate ~project_id ~card_id ~fields field v =
+  let graphql_update ?name ~project_id ~card_id ~fields field v =
     let field_kind, field_id =
       try Fields.find fields field
       with Not_found ->
@@ -320,9 +334,10 @@ module Raw = struct
           let id = Fields.get_id options ~name:v in
           Fmt.str "singleSelectOptionId: %S" id
     in
+    let id = match name with None -> "" | Some id -> id ^ " " in
     Fmt.str
       {|
-  mutation {
+  mutation %s{
     updateProjectV2ItemFieldValue(
       input: {
         projectId: %S
@@ -337,8 +352,54 @@ module Raw = struct
     }
   }
   |}
-      project_id card_id field_id text
+      id project_id card_id field_id text
+
+  let graphql_add ~project_id ~issue_id =
+    Fmt.str
+      {|
+      mutation {
+        addProjectV2ItemById(input: {projectId: %S contentId: %S}) {
+          item {
+            id
+          }
+        }
+      }
+  |}
+      project_id issue_id
+
+  let parse_card_id json =
+    U.(
+      json |> member "data"
+      |> member "addProjectV2ItemById"
+      |> member "item" |> member "id" |> to_string)
+
+  let add fields ~project_id ~issue_id row =
+    let open Lwt.Syntax in
+    let* json = Github.run (graphql_add ~project_id ~issue_id) in
+    let card_id = parse_card_id json in
+    let mutations =
+      List.mapi
+        (fun i (k, v) ->
+          let name = Fmt.str "M%d" i in
+          graphql_update ~name ~fields ~project_id ~card_id k v)
+        row
+      |> String.concat "\n"
+    in
+    let+ _ = Github.run mutations in
+    card_id
+
+  let update fields ~project_id ~card_id row =
+    let open Lwt.Syntax in
+    let mutations =
+      List.map
+        (fun (k, v) -> graphql_update ~fields ~project_id ~card_id k v)
+        row
+      |> String.concat "\n"
+    in
+    let+ _ = Github.run mutations in
+    card_id
 end
 
-let graphql_mutate t =
-  Raw.graphql_mutate ~project_id:t.project_uuid ~card_id:t.uuid ~fields:t.fields
+let graphql_mutate ?name t =
+  Raw.graphql_update ?name ~project_id:t.project_uuid ~card_id:t.uuid
+    ~fields:t.fields

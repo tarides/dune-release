@@ -12,3 +12,4 @@ val pp : t Fmt.t
 val get_id : name:string -> option list -> string
 val to_json : t -> Yojson.Safe.t
 val of_json : Yojson.Safe.t -> t
+val same : string -> string -> bool

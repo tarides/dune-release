@@ -8,6 +8,9 @@ val to_csv : t -> string
 val filter : ?filter_out:Filter.t -> t -> t
 val sync : ?heatmap:Heatmap.t -> ?db:db -> t -> unit Lwt.t
 val lint : ?heatmap:Heatmap.t -> db:db -> t -> unit
+val cards : t -> Card.t list
+val id : t -> string
+val fields : t -> Fields.t
 
 (** Local dumps *)
 

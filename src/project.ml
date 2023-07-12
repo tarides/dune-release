@@ -12,8 +12,11 @@ type t = {
   uuid : string;
 }
 
+let cards t = t.cards
 let org t = t.org
 let number t = t.number
+let fields t = t.fields
+let id t = t.uuid
 
 module Query = struct
   let fields =
