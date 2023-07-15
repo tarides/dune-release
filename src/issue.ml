@@ -8,7 +8,7 @@ let ( / ) a b = U.member b a
 let headers accept =
   Cohttp.Header.of_list
     [
-      ("Authorization", "bearer " ^ Github.Token.t);
+      ("Authorization", "bearer " ^ Lazy.force Github.Token.t);
       ("User-Agent", "caretaker");
       ("Accept", accept);
     ]
