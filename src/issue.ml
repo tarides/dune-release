@@ -46,7 +46,7 @@ let tracks_of_body body =
       in
       match String.cuts ~empty:true ~sep:"\n- [ ] " str with
       | [] -> []
-      | _ :: t -> t)
+      | _ :: t -> List.map String.trim t)
 
 let v ?(title = "") ?(body = "") ?(url = "") ?(closed = false) number =
   let tracks = tracks_of_body body in

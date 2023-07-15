@@ -232,8 +232,9 @@ let pp ?(order_by = Column.Objective) ?(filter_out = Filter.default_out) ppf t =
 
 let diff ?heatmap ?db (t : t) =
   let goals = goals t.goals in
-  let diffs = List.map (Diff.v ?heatmap ?db ~goals) t.cards in
-  let diffs = Diff.concat diffs in
+  let diffs = List.map (Diff.of_card ?heatmap ?db ~goals) t.cards in
+  let goals = List.map (Diff.of_goal t.cards) t.goals in
+  let diffs = Diff.concat (goals @ diffs) in
   diffs
 
 let sync ?heatmap ?db t = Diff.apply (diff ?heatmap ?db t)
