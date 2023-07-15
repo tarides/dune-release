@@ -70,7 +70,9 @@ let run ~force () =
   let repo = "goals" in
   let project_number = 27 in
   let* issues = Issue.list ~org ~repo () in
-  let* project_id, fields = Project.get_id_and_fields ~org ~project_number in
+  let* project_id, fields =
+    Project.get_project_id_and_fields ~org ~project_number
+  in
   find_duplicates ~org ~repo issues;
   Lwt_list.iter_s
     (fun e ->
@@ -78,7 +80,11 @@ let run ~force () =
       | None ->
           let* i = create_issue ~org ~repo e in
           add_project fields ~project_id ~issue_id:(Issue.id i) e
-      | Some _ -> if force then failwith "force: TODO" else Lwt.return ())
+      | Some _ ->
+          if force then
+            let _ = update_project in
+            failwith "force: TODO"
+          else Lwt.return ())
     entries
 
 let () =

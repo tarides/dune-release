@@ -7,6 +7,10 @@ type t =
   | Starts
   | Ends
   | Funder
+  | Team
+  | Pillar
+  | Stakeholder
+  | Category
   | Other_field of string
 
 val to_string : t -> string

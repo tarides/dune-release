@@ -7,16 +7,20 @@ type t = {
   number : int;
   title : string;
   cards : Card.t list;
+  goals : Issue.t list;
   (* for mutations *)
   fields : Fields.t;
-  uuid : string;
+  project_id : string;
 }
+
+let v ?(title = "") ?(cards = []) ?(project_id = "") ?(goals = []) org number =
+  { org; number; title; cards; fields = Fields.empty (); goals; project_id }
 
 let cards t = t.cards
 let org t = t.org
 let number t = t.number
 let fields t = t.fields
-let id t = t.uuid
+let project_id t = t.project_id
 
 module Query = struct
   let fields =
@@ -93,9 +97,9 @@ query {
       json;
     fields
 
-  let parse ?fields ~org ~project_number json =
+  let parse ?fields ~org ~project_number ~goals json =
     let json = json / "data" / "organization" / "projectV2" in
-    let uuid = json / "id" |> U.to_string in
+    let project_id = json / "id" |> U.to_string in
     let fields =
       match fields with None -> json / "fields" |> parse_fields | Some f -> f
     in
@@ -103,17 +107,34 @@ query {
     let edges = json / "items" / "edges" |> U.to_list in
     match edges with
     | [] ->
-        ("", { org; uuid; title; cards = []; fields; number = project_number })
+        ( "",
+          {
+            org;
+            project_id;
+            title;
+            cards = [];
+            fields;
+            goals;
+            number = project_number;
+          } )
     | edges ->
         let cursor = (List.rev edges |> List.hd) / "cursor" |> U.to_string in
         let cards =
           List.map
             (fun edge ->
-              edge / "node"
-              |> Card.parse_github_query ~project_uuid:uuid ~fields)
+              edge / "node" |> Card.parse_github_query ~project_id ~fields)
             edges
         in
-        (cursor, { org; uuid; title; cards; fields; number = project_number })
+        ( cursor,
+          {
+            org;
+            project_id;
+            title;
+            cards;
+            fields;
+            number = project_number;
+            goals;
+          } )
 end
 
 let filter ?(filter_out = Filter.default_out) data =
@@ -130,28 +151,71 @@ let to_csv t =
 
 let to_json t =
   let fields = Fields.to_json t.fields in
-  let jsons = List.map Card.to_json t.cards in
+  let cards = List.map Card.to_json t.cards in
+  let goals = List.map Issue.to_json t.goals in
   `Assoc
     [
       ("org", `String t.org);
       ("number", `Int t.number);
       ("title", `String t.title);
-      ("cards", `List jsons);
+      ("cards", `List cards);
       ("fields", fields);
-      ("uuid", `String t.uuid);
+      ("project-id", `String t.project_id);
+      ("goals", `List goals);
     ]
+
+let find_duplicates l =
+  let title x = String.lowercase_ascii (Issue.title x) in
+  let compare_issue x y =
+    match String.compare (title x) (title y) with
+    | 0 -> compare (Issue.number x) (Issue.number y)
+    | i -> i
+  in
+  let l = List.sort compare_issue l in
+  let rec aux = function
+    | [] | [ _ ] -> ()
+    | a :: b :: t ->
+        if title a = title b then (
+          assert (Issue.number b > Issue.number a);
+          Fmt.pr "DUPLICATE GOAL: %s\n%!" (Issue.url b);
+          aux (a :: t))
+        else aux (b :: t)
+  in
+  aux l
+
+let goals g =
+  let h = Hashtbl.create 13 in
+  let title i = String.lowercase_ascii (Issue.title i) in
+  List.iter (fun i -> Hashtbl.add h (title i) i) g;
+  h
+
+let find_non_existing_goals g cards =
+  let goals = goals g in
+  List.iter
+    (fun c ->
+      match String.lowercase_ascii (Card.objective c) with
+      | "" -> ()
+      | s -> (
+          match Hashtbl.find_opt goals s with
+          | None ->
+              Fmt.pr "GOAL NOT FOUND: %s (%s)\n%!" (Card.objective c)
+                (Card.id c)
+          | Some _ -> ()))
+    cards
 
 let of_json json =
   let number = json / "number" |> U.to_int in
   let title = json / "title" |> U.to_string in
   let fields = json / "fields" |> Fields.of_json in
-  let uuid = json / "uuid" |> U.to_string in
+  let project_id = json / "project-id" |> U.to_string in
   let org = json / "org" |> U.to_string in
   let cards =
-    json / "cards" |> U.to_list
-    |> List.map (Card.of_json ~fields ~project_uuid:uuid)
+    json / "cards" |> U.to_list |> List.map (Card.of_json ~fields ~project_id)
   in
-  { org; number; title; fields; cards; uuid }
+  let goals = json / "goals" |> U.to_list |> List.map Issue.of_json in
+  find_duplicates goals;
+  find_non_existing_goals goals cards;
+  { org; number; title; fields; cards; project_id; goals }
 
 let pp ?(order_by = Column.Objective) ?(filter_out = Filter.default_out) ppf t =
   Fmt.pf ppf "\n== %s (%d) ==\n" t.title t.number;
@@ -167,33 +231,34 @@ let pp ?(order_by = Column.Objective) ?(filter_out = Filter.default_out) ppf t =
       sections
 
 let diff ?heatmap ?db (t : t) =
-  let diffs = List.map (Diff.v ?heatmap ?db) t.cards in
+  let goals = goals t.goals in
+  let diffs = List.map (Diff.v ?heatmap ?db ~goals) t.cards in
   let diffs = Diff.concat diffs in
   diffs
 
 let sync ?heatmap ?db t = Diff.apply (diff ?heatmap ?db t)
 let lint ?heatmap ~db t = Diff.lint (diff ?heatmap ~db t)
 
-let get ~org ~project_number () =
+let get ~goals ~org ~project_number () =
+  find_duplicates goals;
   let open Lwt.Syntax in
   let rec aux fields cursor acc =
     let query = Query.make ~org ~project_number ~after:cursor in
     let* json = Github.run query in
-    let cursor, project = Query.parse ?fields ~project_number ~org json in
+    let cursor, project =
+      Query.parse ?fields ~project_number ~org ~goals json
+    in
     if List.length project.cards < 100 then
       Lwt.return { project with cards = acc @ project.cards }
     else aux (Some project.fields) (Some cursor) (acc @ project.cards)
   in
-  aux None None []
+  let+ t = aux None None [] in
+  find_non_existing_goals t.goals t.cards;
+  t
 
-let get_id_and_fields ~org ~project_number =
+let get_project_id_and_fields ~org ~project_number =
   let open Lwt.Syntax in
   let query = Query.make ~org ~project_number ~after:None in
   let+ json = Github.run query in
-  let _, project = Query.parse ~project_number ~org json in
-  (project.uuid, project.fields)
-
-let get_all ~org project_numbers =
-  Lwt_list.map_p
-    (fun project_number -> get ~org ~project_number ())
-    project_numbers
+  let _, project = Query.parse ~project_number ~org ~goals:[] json in
+  (project.project_id, project.fields)

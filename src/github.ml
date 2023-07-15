@@ -24,10 +24,11 @@ let debug =
   | exception Not_found -> false
 
 let run query =
+  Fmt.pr "Querying Github...\n%!";
   if Hashtbl.mem cache query then Lwt.return (Hashtbl.find cache query)
   else
     let open Lwt.Syntax in
-    if debug then Fmt.epr "QUERY: %s\n" query;
+    if debug then Fmt.epr "QUERY: %s\n%!" query;
     let body =
       `Assoc [ ("query", `String query) ]
       |> Yojson.Safe.to_string |> Cohttp_lwt.Body.of_string
