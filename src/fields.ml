@@ -19,25 +19,28 @@ let pp ppf t =
   let l = Hashtbl.fold (fun k v acc -> (k, v) :: acc) t [] in
   Fmt.Dump.(list (pair Column.pp (pair pp_kind string))) ppf l
 
+let drop_color s =
+  match String.split_on_char ':' s with
+  | [] -> s
+  | [ s ] -> s
+  | [ _; s ] -> s
+  | _ :: t -> String.concat ":" t
+
+let same x y =
+  let x = String.lowercase_ascii x in
+  let y = String.lowercase_ascii y in
+  (* drop colors *)
+  let x = drop_color x in
+  let y = drop_color y in
+  String.starts_with ~prefix:x y || String.ends_with ~suffix:x y
+
 let get_id ~name l =
   let name = String.lowercase_ascii name in
-  match
-    List.find
-      (fun x -> String.starts_with ~prefix:name (String.lowercase_ascii x.name))
-      l
-  with
+  match List.find (fun x -> same name x.name) l with
   | x -> x.id
-  | exception Not_found -> (
-      match
-        List.find
-          (fun x ->
-            String.ends_with ~suffix:name (String.lowercase_ascii x.name))
-          l
-      with
-      | x -> x.id
-      | exception Not_found ->
-          Fmt.epr "Cannot find name %s in %a\n" name pp_options l;
-          failwith "boo")
+  | exception Not_found ->
+      Fmt.epr "Cannot find name %s in %a\n" name pp_options l;
+      failwith "boo"
 
 let string_of_kind = function
   | Text -> "Text"
