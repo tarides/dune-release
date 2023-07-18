@@ -346,6 +346,10 @@ let parse_github_query ~project_id ~fields json =
   in
   { t with objective; tracked_by }
 
+let pp_state ppf = function
+  | true -> Fmt.string ppf "closed"
+  | false -> Fmt.string ppf "open"
+
 let pp ppf t =
   let em = Fmt.(styled `Italic string) in
   let bold = Fmt.(styled `Bold string) in
@@ -356,7 +360,7 @@ let pp ppf t =
     let k = String.of_bytes buf in
     match v with "" -> () | _ -> Fmt.pf ppf "    %a: %s\n" em k v
   in
-  Fmt.pf ppf "  [%7s] %a\n" t.id bold t.title;
+  Fmt.pf ppf "  [%7s] %a (%a)\n" t.id bold t.title pp_state t.issue_closed;
   pf_field "Objective" t.objective;
   pf_field "Status" t.status;
   pf_field "Schedule" t.schedule;

@@ -16,8 +16,12 @@ type item =
     }
   | Warning of string
 
+let item card column ~set ~old = [ Item { card; column; set; github = old } ]
+let state ~id ~issue_id ~status ~set = [ State { id; issue_id; status; set } ]
+
 type t = item list
 
+let empty = []
 let same_title x y = String.lowercase_ascii x = String.lowercase_ascii y
 
 let starts ~card ?(github = "") set =
@@ -197,25 +201,29 @@ let of_card ?db ?heatmap ?goals card =
 
 let of_goal cards goal =
   let tracks = Issue.tracks goal in
+  let tracks =
+    List.fold_left
+      (fun acc url ->
+        match List.find_opt (fun c -> Card.issue_url c = url) cards with
+        | None ->
+            Fmt.pr "tarides/goals#%d: external tracked issue: %s\n"
+              (Issue.number goal) url;
+            acc
+        | Some s -> s :: acc)
+      [] (List.rev tracks)
+  in
   match tracks with
   | [] -> []
   | _ ->
-      let tracks =
-        List.fold_left
-          (fun acc url ->
-            match List.find_opt (fun c -> Card.issue_url c = url) cards with
-            | None ->
-                Fmt.pr "#%d: Ignoring tracking issue: %s\n" (Issue.number goal)
-                  url;
-                acc
-            | Some s -> s :: acc)
-          [] (List.rev tracks)
+      let active =
+        List.exists
+          (fun i -> (not (Card.issue_closed i)) && Card.is_active i)
+          tracks
       in
-      let active = List.exists Card.is_active tracks in
       let id = Issue.title goal in
       let issue_id = Issue.id goal in
       let set = if active then `Open else `Closed in
-      let status = if Issue.closed goal then "Closed" else "Openy" in
+      let status = if Issue.closed goal then "Closed" else "Open" in
       if active <> Issue.closed goal then []
       else [ State { id; issue_id; status; set } ]
 
