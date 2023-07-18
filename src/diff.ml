@@ -215,11 +215,7 @@ let of_goal cards goal =
   match tracks with
   | [] -> []
   | _ ->
-      let active =
-        List.exists
-          (fun i -> (not (Card.issue_closed i)) && Card.is_active i)
-          tracks
-      in
+      let active = List.exists (fun i -> not (Card.issue_closed i)) tracks in
       let id = Issue.title goal in
       let issue_id = Issue.id goal in
       let set = if active then `Open else `Closed in
