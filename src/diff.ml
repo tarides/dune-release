@@ -206,8 +206,8 @@ let of_goal cards goal =
       (fun acc url ->
         match List.find_opt (fun c -> Card.issue_url c = url) cards with
         | None ->
-            Fmt.pr "tarides/goals#%d: external tracked issue: %s\n"
-              (Issue.number goal) url;
+            (* Fmt.pr "tarides/goals#%d: external tracked issue: %s\n"
+               (Issue.number goal) url; *)
             acc
         | Some s -> s :: acc)
       [] (List.rev tracks)
