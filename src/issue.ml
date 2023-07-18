@@ -38,7 +38,7 @@ let copy_tracks ~src ~dst =
 
 let tracks_of_body body =
   let open Astring in
-  match String.cut ~sep:"```[tasklist]" body with
+  match String.cut ~rev:true ~sep:"```[tasklist]" body with
   | None -> []
   | Some (_, str) -> (
       let str =
