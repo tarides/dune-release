@@ -58,34 +58,28 @@ let v ~title ~objective ?(status = "") ?(team = "") ?(funder = "")
 
 let csv_headers =
   [
-    "Id";
-    "Objective";
-    "Title";
-    "Status";
-    "Schedule";
-    "Starts";
-    "Ends";
-    "Funder";
-    "Team";
-    "Pillar";
-    "Stakeholder";
-    "Category";
+    "id";
+    "title";
+    "objective";
+    "status";
+    "schedule";
+    "team";
+    "category";
+    "project";
+    "reports";
   ]
 
 let to_csv t =
   [
     t.id;
-    t.objective;
     t.title;
+    t.objective;
     t.status;
     t.schedule;
-    t.starts;
-    t.ends;
-    t.funder;
     t.team;
-    t.pillar;
-    t.stakeholder;
     t.category;
+    t.pillar;
+    t.funder;
   ]
 
 let json_fields =
