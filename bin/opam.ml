@@ -198,13 +198,13 @@ let submit ~token ~dry_run ~yes ~opam_repo ~pkgs_to_submit local_repo
   Pkg.name pkg >>= fun name ->
   let project_name = Pkg.project_name pkg in
   (if draft then Ok ()
-  else
-    match Config.Draft_release.is_set ~dry_run ~build_dir ~name ~version with
-    | Ok true ->
-        R.error_msg
-          "Cannot open a non-draft pull request for a draft release. Please \
-           use option '--draft' for 'dune-release opam submit'."
-    | _ -> Ok ())
+   else
+     match Config.Draft_release.is_set ~dry_run ~build_dir ~name ~version with
+     | Ok true ->
+         R.error_msg
+           "Cannot open a non-draft pull request for a draft release. Please \
+            use option '--draft' for 'dune-release opam submit'."
+     | _ -> Ok ())
   >>= fun () ->
   list_map Pkg.name pkgs >>= fun names ->
   let title = Github.pr_title ~names ~version ~project_name ~pkgs_to_submit in

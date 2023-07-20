@@ -3,9 +3,9 @@
 type uri = { scheme : string option; domain : string list; path : string list }
 (** Helper type describing the content of an URI to facilitate parsing. Scheme
     is None if no explicit scheme was specified. The domain is a non empty list
-    in hierarchical order, e.g. [\["io"; "github"; "me"\]] for ["me.github.io"].
-    The path is [\[\]] if there was no path and a list of the path components,
-    e.g. [\["some"; "path"\]] for ["domain.com/some/path"]. *)
+    in hierarchical order, e.g. [["io"; "github"; "me"]] for ["me.github.io"].
+    The path is [[]] if there was no path and a list of the path components,
+    e.g. [["some"; "path"]] for ["domain.com/some/path"]. *)
 
 val pp_uri : Format.formatter -> uri -> unit
 val equal_uri : uri -> uri -> bool

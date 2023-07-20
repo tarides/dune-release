@@ -474,7 +474,7 @@ let distrib_archive ~dry_run ~keep_dir ~include_submodules p =
   let branch = Fmt.str "dune-release-dist-%a" Vcs.Tag.pp tag in
   Vcs.checkout ~dry_run clone_vcs ~branch ~commit_ish:(Tag tag) >>= fun () ->
   (if include_submodules then pull_submodules ~dry_run ~dist_build_dir
-  else Ok ())
+   else Ok ())
   >>= fun () ->
   distrib_prepare ~dry_run ~dist_build_dir ~version >>= fun () ->
   let exclude_paths = Fpath.Set.of_list Distrib.exclude_paths in

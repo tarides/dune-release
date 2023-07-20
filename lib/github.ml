@@ -219,13 +219,13 @@ let open_pr ~token ~dry_run ~title ~fork_owner ~branch ~opam_repo ~draft body
   let default_body = `Assoc [ ("html_url", `String D.pr_url) ] in
   run_with_auth ~dry_run ~default_body curl_t >>= fun json ->
   (if draft then
-   Pkg.build_dir pkg >>= fun build_dir ->
-   Pkg.name pkg >>= fun name ->
-   Pkg.version pkg >>= fun version ->
-   Github_v3_api.Pull_request.Response.number json >>= fun pr_number ->
-   Config.Draft_pr.set ~dry_run ~build_dir ~name ~version
-     (string_of_int pr_number)
-  else Ok ())
+     Pkg.build_dir pkg >>= fun build_dir ->
+     Pkg.name pkg >>= fun name ->
+     Pkg.version pkg >>= fun version ->
+     Github_v3_api.Pull_request.Response.number json >>= fun pr_number ->
+     Config.Draft_pr.set ~dry_run ~build_dir ~name ~version
+       (string_of_int pr_number)
+   else Ok ())
   >>= fun () -> Github_v3_api.Pull_request.Response.html_url json
 
 let undraft_release ~token ~dry_run ~owner ~repo ~release_id ~name =
@@ -447,9 +447,9 @@ let publish_distrib ~token ~dry_run ~msg ~archive ~yes ~draft p =
     ~repo ~draft
   >>= fun id ->
   (if draft then
-   Config.Draft_release.set ~dry_run ~build_dir ~name ~version
-     (string_of_int id)
-  else Config.Draft_release.unset ~dry_run ~build_dir ~name ~version)
+     Config.Draft_release.set ~dry_run ~build_dir ~name ~version
+       (string_of_int id)
+   else Config.Draft_release.unset ~dry_run ~build_dir ~name ~version)
   >>= fun () ->
   Prompt.(
     confirm_or_abort ~yes
@@ -462,8 +462,8 @@ let publish_distrib ~token ~dry_run ~msg ~archive ~yes ~draft p =
   curl_upload_archive ~token ~dry_run ~yes archive owner repo id
   >>= fun (url, asset_name) ->
   (if draft then
-   Config.Release_asset_name.set ~dry_run ~build_dir ~name ~version asset_name
-  else Config.Release_asset_name.unset ~dry_run ~build_dir ~name ~version)
+     Config.Release_asset_name.set ~dry_run ~build_dir ~name ~version asset_name
+   else Config.Release_asset_name.unset ~dry_run ~build_dir ~name ~version)
   >>= fun () -> Ok url
 
 let rec pp_list pp ppf = function

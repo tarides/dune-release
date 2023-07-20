@@ -66,10 +66,10 @@ let prepare_package ~build_dir ~dry_run ~version vcs name =
   in
   OS.Dir.exists src >>= fun exists ->
   (if exists then Ok ()
-  else
-    R.error_msgf
-      "%a does not exist, did you run:\n  dune-release opam pkg -p %s\n"
-      Fpath.pp src name)
+   else
+     R.error_msgf
+       "%a does not exist, did you run:\n  dune-release opam pkg -p %s\n"
+       Fpath.pp src name)
   >>= fun () ->
   OS.Dir.create ~path:true dst >>= fun _ ->
   cp "opam" >>= fun () ->
@@ -92,7 +92,7 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
   msg >>= fun msg ->
   Sos.dir_exists ~dry_run Fpath.(local_repo / ".git") >>= fun exists ->
   (if exists then Ok ()
-  else R.error_msgf "%a is not a valid Git repository." Fpath.pp local_repo)
+   else R.error_msgf "%a is not a valid Git repository." Fpath.pp local_repo)
   >>= fun () ->
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
   Vcs.get () >>= fun repo ->
