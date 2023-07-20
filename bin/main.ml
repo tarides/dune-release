@@ -59,7 +59,7 @@ let filter ?filter_out data =
 let out ~format t =
   match format with
   | `Plain -> Fmt.pr "%a\n%!" pp t
-  | `CSV -> Fmt.pr "%a\n%!" pp_csv t
+  | `CSV -> Fmt.pr "%a%!" pp_csv t
 
 let write ~dir t =
   (* save what is needed to update offline *)

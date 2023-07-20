@@ -66,7 +66,7 @@ let csv_headers =
     "team";
     "category";
     "project";
-    "reports";
+    "funder";
   ]
 
 let to_csv t =
@@ -390,16 +390,16 @@ let matches f card =
 let is_complete t = matches [ (Status, Filter.starts_with "complete") ] t
 let is_dropped t = matches [ (Status, Filter.starts_with "dropped") ] t
 
-let is_active t =
+let should_be_closed t =
   matches
     [
-      (Status, Filter.starts_with "scheduled");
-      (Status, Filter.starts_with "active");
-      (Status, Filter.starts_with "rolling");
-      (Status, Filter.starts_with "blocked");
-      (Status, Filter.is "");
+      (Status, Filter.starts_with "complete");
+      (Status, Filter.starts_with "closed");
+      (Status, Filter.starts_with "dropped");
     ]
     t
+
+let should_be_open t = not (should_be_closed t)
 
 let filter_out f cards =
   List.fold_left

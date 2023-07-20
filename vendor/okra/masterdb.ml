@@ -42,7 +42,7 @@ type elt_t = {
   team : string;
   category : string;
   links : string option;
-  reports : string list;
+  funder : string;
   status : status_t option;
 }
 
@@ -74,7 +74,7 @@ let load_csv ?(separator = ',') f =
   let line = ref 1 in
   let ic = open_in f in
   try
-    let rows = Csv.of_channel ~separator ~has_header:true ic in
+    let rows = Csv.of_channel ~separator ~has_header:true ~strip:true ic in
     Csv.Rows.iter
       ~f:(fun row ->
         line := !line + 1;
@@ -100,7 +100,7 @@ let load_csv ?(separator = ',') f =
             lead = find_and_trim "lead";
             team = find_and_trim "team";
             category = find_and_trim "category";
-            reports = find_and_trim_list "reports";
+            funder = find_and_trim "funder";
             links = find_and_trim_opt "links";
             status = find_and_trim "status" |> status_of_string;
           }
@@ -108,21 +108,14 @@ let load_csv ?(separator = ',') f =
         if e.id = "" then
           raise (Missing_ID (!line, "A unique KR ID is required per line"));
         if Hashtbl.mem res e.id then
-          raise
-            (Duplicate_ID (!line, Fmt.str "KR ID \"%s\" is not unique." e.id));
+          raise (Duplicate_ID (!line, Fmt.str "KR %S is not unique." e.id));
         if e.title = "" then
           raise
-            (Missing_title
-               (!line, Fmt.str "KR ID \"%s\" does not have a title" e.id));
-        if e.objective = "" then
-          raise
-            (Missing_objective
-               ( !line,
-                 Fmt.str "KR ID \"%s\" does is not part of an objective" e.id ));
+            (Missing_title (!line, Fmt.str "KR %S does not have a title" e.id));
         if e.project = "" then
           raise
             (Missing_project
-               (!line, Fmt.str "KR ID \"%s\" does is not part of a project" e.id));
+               (!line, Fmt.str "KR %S is not part of a project" e.id));
         Hashtbl.add res e.id e)
       rows;
     res
@@ -161,13 +154,10 @@ let find_krs_for_categories t categories =
   in
   filter_krs t p
 
-let find_krs_for_reports t reports =
-  let reports = List.map String.uppercase_ascii reports in
+let find_krs_for_funders t funders =
+  let funders = List.map String.uppercase_ascii funders in
   let p e =
-    List.exists
-      (fun report ->
-        let report = String.uppercase_ascii report in
-        List.exists (String.equal report) reports)
-      e.reports
+    let funder = String.uppercase_ascii e.funder in
+    List.exists (String.equal funder) funders
   in
   filter_krs t p

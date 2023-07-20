@@ -41,7 +41,7 @@ val stakeholder : t -> string
 val category : t -> string
 val is_complete : t -> bool
 val is_dropped : t -> bool
-val is_active : t -> bool
+val should_be_open : t -> bool
 
 (* other stuff *)
 
