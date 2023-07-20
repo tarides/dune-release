@@ -86,6 +86,13 @@ let write_timesheets ~dir t =
 
 open Cmdliner
 
+let all =
+  let doc =
+    Arg.info ~doc:"Show all items (by default, just show open cards and issues"
+      [ "all" ]
+  in
+  Arg.(value @@ flag doc)
+
 let org_term =
   Arg.(
     value @@ pos 0 string "tarides"
@@ -284,7 +291,7 @@ let fetch =
 
 let default =
   let run () format org goals project_numbers okr_updates_dir admin_dir data_dir
-      timesheets heatmap years weeks sources =
+      timesheets heatmap years weeks sources all =
     Lwt_main.run
     @@
     if timesheets || heatmap then (
@@ -299,14 +306,14 @@ let default =
       Lwt.return ())
     else
       let+ project = get_project org goals project_numbers data_dir in
-      let data = filter { org; project } in
+      let data = if all then { org; project } else filter { org; project } in
       out ~format data
   in
   Term.(
     const run $ setup $ format $ org_term $ project_goals_term
     $ project_number_term $ okr_updates_dir_term $ admin_dir_term
     $ data_dir_term $ timesheets_term $ heatmap_term $ years $ weeks
-    $ source_term)
+    $ source_term $ all)
 
 let show = Cmd.v (Cmd.info "show") default
 
