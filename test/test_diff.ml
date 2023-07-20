@@ -103,14 +103,15 @@ let test_status () =
     Card.v ~issue_url:issue1 ~issue_closed:(state s) ~title:"TITLE1"
       ~objective:"OBJB1" "ID1" ~status
   in
+
   let c = card `Closed "" in
   let d = Diff.of_card c in
-  let e = Diff.state ~id:"ID1" ~issue_id:"" ~set:`Open ~status:"" in
+  let e = Diff.card_state c ~set:`Open in
   Alcotest.(check diff) __LOC__ e d;
 
   let c = card `Closed "active" in
   let d = Diff.of_card c in
-  let e = Diff.state ~id:"ID1" ~issue_id:"" ~set:`Open ~status:"active" in
+  let e = Diff.card_state c ~set:`Open in
   Alcotest.(check diff) __LOC__ e d;
 
   let c = card `Closed "complete" in
