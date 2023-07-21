@@ -26,7 +26,7 @@ let write_file f data =
   close_out oc;
   s
 
-let read_timesheets ~years ~weeks root =
+let read_timesheets ~years ~weeks ~users ~ids root =
   let weeks = Weeks.to_ints weeks in
   List.fold_left
     (fun acc year ->
@@ -44,7 +44,7 @@ let read_timesheets ~years ~weeks root =
               (fun acc file ->
                 let path = dir / file in
                 let str = read_file path in
-                Report.of_markdown ~acc ~path ~year ~week str)
+                Report.of_markdown ~acc ~path ~year ~week ~users ~ids str)
               acc files)
         acc weeks)
     (Hashtbl.create 13) years
@@ -139,6 +139,37 @@ let weeks =
             instance, $(b,--weeks='12,q1,34-45') is a valid parameter."
          ~docv:"WEEKS" [ "weeks" ])
 
+let users =
+  Arg.(
+    value
+    @@ opt (some (list ~sep:',' string)) None
+    @@ info ~doc:"The users to consider" ~docv:"NAMES" [ "users" ])
+
+let ids =
+  let arg =
+    Arg.(
+      value
+      @@ opt (some (list ~sep:',' string)) None
+      @@ info
+           ~doc:
+             "The IDs to consider. Use $(b, -id) to not consider a specific ID \
+              $(b,id). "
+           ~docv:"IDs" [ "ids" ])
+  in
+  let f ids =
+    match ids with
+    | None -> None
+    | Some ids ->
+        Some
+          (List.map
+             (fun id ->
+               if String.starts_with ~prefix:"-" id then
+                 Filter.is_not (String.sub id 1 (String.length id - 1))
+               else Filter.is id)
+             ids)
+  in
+  Term.(const f $ arg)
+
 let data_dir_term =
   let env = Cmd.Env.info ~doc:"PATH" "DATA_DIR" in
   Arg.(
@@ -187,8 +218,6 @@ let setup =
         Logs.set_reporter (Logs_fmt.reporter ()))
     $ style_renderer $ Logs_cli.level ())
 
-let filter_sync = [ (Column.Id, Filter.is "New KR"); (Id, Filter.is "") ]
-
 let err_okr_updates_dir () =
   invalid_arg
     "Missing path to tarides/okr-updates. Please use --okr-updates-dir \n\
@@ -212,19 +241,19 @@ let get_okr_updates_dir = function
 let get_admin_dir = function None -> err_admin_dir () | Some dir -> dir
 let get_data_dir = function None -> err_data_dir () | Some dir -> dir
 
-let get_timesheets ~years ~weeks ~data_dir ~okr_updates_dir ~admin_dir =
-  function
+let get_timesheets ~years ~weeks ~users ~ids ~data_dir ~okr_updates_dir
+    ~admin_dir = function
   | Sync ->
       let dir = get_data_dir data_dir in
       let file = dir / "timesheets.csv" in
       let data = read_file file in
-      Report.of_csv ~years ~weeks data
+      Report.of_csv ~years ~weeks ~users ~ids data
   | Okr_updates ->
       let dir = get_okr_updates_dir okr_updates_dir in
-      read_timesheets_from_okr_updates ~years ~weeks dir
+      read_timesheets_from_okr_updates ~years ~weeks ~users ~ids dir
   | Admin ->
       let dir = get_admin_dir admin_dir in
-      read_timesheets_from_admin ~years ~weeks dir
+      read_timesheets_from_admin ~years ~weeks ~users ~ids dir
 
 let get_goals org repo =
   let+ issues = Issue.list ~org ~repo () in
@@ -265,12 +294,13 @@ let copy_db ~src ~dst =
 
 let fetch =
   let run () org goals project_number okr_updates_dir admin_dir data_dir years
-      weeks source =
+      weeks users ids source =
     Lwt_main.run
     @@
     let data_dir = get_data_dir data_dir in
     let timesheets =
-      get_timesheets ~years ~weeks ~admin_dir ~okr_updates_dir ~data_dir:None
+      get_timesheets ~years ~weeks ~users ~ids ~admin_dir ~okr_updates_dir
+        ~data_dir:None
         (if source = Sync then Okr_updates else source)
     in
     let* goals = get_goals org goals in
@@ -287,17 +317,17 @@ let fetch =
     Term.(
       const run $ setup $ org_term $ project_goals_term $ project_number_term
       $ okr_updates_dir_term $ admin_dir_term $ data_dir_term $ years $ weeks
-      $ source_term)
+      $ users $ ids $ source_term)
 
 let default =
   let run () format org goals project_numbers okr_updates_dir admin_dir data_dir
-      timesheets heatmap years weeks sources all =
+      timesheets heatmap years weeks users ids sources all =
     Lwt_main.run
     @@
     if timesheets || heatmap then (
       let ts =
-        get_timesheets ~years ~weeks ~admin_dir ~okr_updates_dir ~data_dir
-          sources
+        get_timesheets ~years ~weeks ~users ~ids ~admin_dir ~okr_updates_dir
+          ~data_dir sources
       in
       (if heatmap then
          let heatmap = Heatmap.of_report ts in
@@ -306,46 +336,63 @@ let default =
       Lwt.return ())
     else
       let+ project = get_project org goals project_numbers data_dir in
-      let data = if all then { org; project } else filter { org; project } in
+      let data =
+        if all then { org; project }
+        else
+          let filter_out =
+            match ids with
+            | None -> None
+            | Some ids -> Some (List.map (fun id -> (Column.Id, id)) ids)
+          in
+          let () =
+            match users with
+            | None -> ()
+            | Some _ -> Fmt.epr "warning: ignoring filter --users\n%!"
+          in
+          filter ?filter_out { org; project }
+      in
       out ~format data
   in
   Term.(
     const run $ setup $ format $ org_term $ project_goals_term
     $ project_number_term $ okr_updates_dir_term $ admin_dir_term
-    $ data_dir_term $ timesheets_term $ heatmap_term $ years $ weeks
-    $ source_term $ all)
+    $ data_dir_term $ timesheets_term $ heatmap_term $ years $ weeks $ users
+    $ ids $ source_term $ all)
 
 let show = Cmd.v (Cmd.info "show") default
 
 let sync =
   let run () org goals project_numbers okr_updates_dir admin_dir data_dir years
-      weeks sources =
+      weeks users ids sources =
     Lwt_main.run
     @@ let* project = get_project org goals project_numbers data_dir in
        let timesheets =
-         get_timesheets ~years ~weeks ~okr_updates_dir ~data_dir ~admin_dir
-           sources
+         get_timesheets ~years ~weeks ~users ~ids ~okr_updates_dir ~data_dir
+           ~admin_dir sources
        in
        let db = get_db ~okr_updates_dir ~data_dir () in
        let heatmap = Heatmap.of_report timesheets in
-       let data = filter ~filter_out:filter_sync { org; project } in
+       let filter_out =
+         [ (Column.Id, Filter.is "New KR"); (Id, Filter.is "") ]
+       in
+       let data = filter ~filter_out { org; project } in
        Project.sync ~db ~heatmap data.project
   in
   Cmd.v (Cmd.info "sync")
     Term.(
       const run $ setup $ org_term $ project_goals_term $ project_number_term
       $ okr_updates_dir_term $ admin_dir_term $ data_dir_term $ years $ weeks
-      $ source_term)
+      $ users $ ids $ source_term)
 
 let lint =
   let run () org goals project_numbers okr_updates_dir admin_dir data_dir years
-      weeks sources =
+      weeks users ids sources =
     Lwt_main.run
     @@ let+ project = get_project org goals project_numbers data_dir in
        let db = get_db ~okr_updates_dir ~data_dir () in
        let timesheets =
-         get_timesheets ~years ~weeks ~okr_updates_dir ~data_dir ~admin_dir
-           sources
+         get_timesheets ~years ~weeks ~users ~ids ~okr_updates_dir ~data_dir
+           ~admin_dir sources
        in
        let heatmap = Heatmap.of_report timesheets in
        lint_project ~heatmap ~db { org; project }
@@ -354,7 +401,7 @@ let lint =
     Term.(
       const run $ setup $ org_term $ project_goals_term $ project_number_term
       $ okr_updates_dir_term $ admin_dir_term $ data_dir_term $ years $ weeks
-      $ source_term)
+      $ users $ ids $ source_term)
 
 let cmd = Cmd.group ~default (Cmd.info "caretaker") [ show; lint; sync; fetch ]
 

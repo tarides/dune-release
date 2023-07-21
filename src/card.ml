@@ -376,17 +376,7 @@ let order_by (pivot : Column.t) cards =
     cards;
   Hashtbl.fold (fun k v acc -> (k, v) :: acc) sections []
 
-let matches f card =
-  List.exists
-    (fun (k, q) ->
-      try
-        let v = String.lowercase_ascii (get card k) in
-        match q with
-        | Filter.Is x -> x = v
-        | Starts_with x -> String.starts_with ~prefix:x v
-      with Not_found -> false)
-    f
-
+let matches q t = Filter.eval ~get:(get t) q
 let is_complete t = matches [ (Status, Filter.starts_with "complete") ] t
 let is_dropped t = matches [ (Status, Filter.starts_with "dropped") ] t
 
