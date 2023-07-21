@@ -56,11 +56,27 @@ let pp_exn path ppf = function
         ss
   | e -> Fmt.pf ppf "Cannot parse %s: %a" path Fmt.exn e
 
-let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week s =
+let match_user users =
+  match users with
+  | None -> fun _ -> true
+  | Some us ->
+      let us = List.map String.lowercase_ascii us in
+      fun u -> List.mem (String.lowercase_ascii u) us
+
+let match_ids ids =
+  match ids with
+  | None -> fun _ -> true
+  | Some ids ->
+      let ids = List.map (fun id -> (Column.Id, id)) ids in
+      fun u -> Filter.eval ~get:(function Id -> u | _ -> assert false) ids
+
+let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids s =
   let md = Omd.of_string s in
   let okrs, exns = Parser.of_markdown ~ignore_sections md in
   let month = month_of_week ~year week in
   let report = Report.of_krs okrs in
+  let match_user = match_user users in
+  let match_ids = match_ids ids in
   Report.iter
     (fun (kr : KR.t) ->
       let id =
@@ -69,10 +85,12 @@ let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week s =
         | New_KR -> Fmt.str "(new: %s)" kr.title
         | _ -> Fmt.str "%a" pp_id kr.id
       in
-      Hashtbl.iter
-        (fun user days ->
-          Hashtbl.add acc id { id; year; month; week; user; days })
-        kr.time_per_engineer)
+      if match_ids id then
+        Hashtbl.iter
+          (fun user days ->
+            if match_user user then
+              Hashtbl.add acc id { id; year; month; week; user; days })
+          kr.time_per_engineer)
     report;
   List.iter
     (fun e ->
@@ -127,17 +145,21 @@ let to_csv t =
   Csv.close_out out;
   Buffer.contents buffer
 
-let of_csv ~years ~weeks s =
+let of_csv ~years ~weeks ~users ~ids s =
   let weeks = Weeks.to_ints weeks in
   let input = Csv.of_string s in
   let csv = Csv.input_all input in
   let t = Hashtbl.create 13 in
+  let match_user = match_user users in
+  let match_ids = match_ids ids in
   List.iter
     (fun x ->
       match of_row x with
       | `Skip -> ()
       | `Row x ->
-          if List.mem x.year years && List.mem x.week weeks then
-            Hashtbl.add t x.id x)
+          if
+            List.mem x.year years && List.mem x.week weeks && match_user x.user
+            && match_ids x.id
+          then Hashtbl.add t x.id x)
     csv;
   t

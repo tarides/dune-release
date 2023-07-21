@@ -47,6 +47,7 @@ let pp_end_date ppf (year, week) =
   Fmt.string ppf to_
 
 let pp_opt f ppf = function None -> Fmt.string ppf "?" | Some x -> f ppf x
+let total (t : t) = Hashtbl.fold (fun _ { total; _ } acc -> total +. acc) t 0.
 
 let pp ppf (t : t) =
   let ids = Hashtbl.fold (fun id { total; _ } acc -> (id, total) :: acc) t [] in
@@ -55,4 +56,6 @@ let pp ppf (t : t) =
     (fun (id, total) ->
       Fmt.pf ppf "%-12s [%.1f] %a => %a\n" id total (pp_opt pp_start_date)
         (start_date t id) (pp_opt pp_end_date) (end_date t id))
-    ids
+    ids;
+  Fmt.pf ppf "-----------\n";
+  Fmt.pf ppf "%-12s [%.1f]\n" "Total" (total t)
