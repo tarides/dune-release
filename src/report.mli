@@ -16,6 +16,7 @@ val of_markdown :
   week:int ->
   users:string list option ->
   ids:Filter.query list option ->
+  lint:bool ->
   string ->
   t
 

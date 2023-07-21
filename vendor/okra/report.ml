@@ -153,9 +153,9 @@ let add ?okr_db (t : t) (e : KR.t) =
   Log.debug (fun l -> l "Report.add %a %a" dump t KR.dump e);
 
   (* replace e fields with master db lookup if possible *)
-  let e =
+  let e, warms1 =
     match okr_db with
-    | None -> e (* no db *)
+    | None -> (e, [] (* no db *))
     | Some db -> KR.update_from_master_db e db
   in
   let existing_kr =
@@ -170,9 +170,9 @@ let add ?okr_db (t : t) (e : KR.t) =
             | Some kr when is_no_kr kr -> Some kr
             | _ -> None))
   in
-  let e =
+  let e, warms2 =
     match existing_kr with
-    | None -> e
+    | None -> (e, [])
     | Some kr ->
         (* cleanup existing KR if needed *)
         if kr.title = "" || kr.objective = "" || kr.project = "" then
@@ -203,14 +203,15 @@ let add ?okr_db (t : t) (e : KR.t) =
         o
   in
   update t.all_krs;
-  update o.krs
+  update o.krs;
+  warms1 @ warms2
 
 let empty () = { projects = Hashtbl.create 13; all_krs = empty_krs () }
 
 let of_krs ?okr_db entries =
   let t = empty () in
-  List.iter (add ?okr_db t) entries;
-  t
+  let warms = List.map (add ?okr_db t) entries in
+  (t, List.flatten warms)
 
 let of_projects projects =
   let ids = ref [] in
@@ -243,7 +244,8 @@ let of_markdown ?existing_report ?ignore_sections ?include_sections ?okr_db m =
   let new_krs, exns = Parser.of_markdown ?ignore_sections ?include_sections m in
   let old_krs = match existing_report with None -> [] | Some t -> all_krs t in
   let krs = old_krs @ new_krs in
-  (of_krs ?okr_db krs, exns)
+  let reports, _warms = of_krs ?okr_db krs in
+  (reports, exns)
 
 let make_objective ?show_time ?show_time_calc ?show_engineers o =
   let krs = Hashtbl.to_seq o.krs.ids |> Seq.map snd |> List.of_seq in

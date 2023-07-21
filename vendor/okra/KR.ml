@@ -16,10 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-let src = Logs.Src.create "okra.KR"
-
-module Log = (val Logs.src_log src : Logs.LOG)
-
 type id = New_KR | No_KR | ID of string
 
 let pp_id ppf = function
@@ -100,13 +96,15 @@ let equal_id a b =
   | _ -> false
 
 let merge x y =
+  let warns = ref [] in
+  let warn fmt = Fmt.kstr (fun s -> warns := s :: !warns) fmt in
   let counter = x.counter in
   let title =
     match (x.title, y.title) with
     | "", s | s, "" -> s
     | x, y ->
         if compare_no_case x y <> 0 then
-          Log.warn (fun l -> l "Conflicting titles:\n- %S\n- %S" x y);
+          warn "Conflicting titles:\n- %S\n- %S" x y;
         x
   in
   let project =
@@ -114,8 +112,7 @@ let merge x y =
     | "", s | s, "" -> s
     | x, y ->
         if compare_no_case x y <> 0 then
-          Log.warn (fun l ->
-              l "KR %S appears in two projects:\n- %S\n- %S" title x y);
+          warn "KR %S appears in two projects:\n- %S\n- %S" title x y;
         x
   in
   let objective =
@@ -123,8 +120,7 @@ let merge x y =
     | "", s | s, "" -> s
     | x, y ->
         if compare_no_case x y <> 0 then
-          Log.warn (fun l ->
-              l "KR %S appears in two objectives:\n- %S\n- %S" title x y);
+          warn "KR %S appears in two objectives:\n- %S\n- %S" title x y;
         x
   in
   let id =
@@ -154,16 +150,17 @@ let merge x y =
     t
   in
   let work = x.work @ y.work in
-  {
-    counter;
-    project;
-    objective;
-    title;
-    id;
-    time_entries;
-    time_per_engineer;
-    work;
-  }
+  ( {
+      counter;
+      project;
+      objective;
+      title;
+      id;
+      time_entries;
+      time_per_engineer;
+      work;
+    },
+    !warns )
 
 let compare a b =
   match (a.id, b.id) with
@@ -201,30 +198,29 @@ let make_time_entries t =
   Item.[ Paragraph (Text (String.concat ", " (List.map aux t))) ]
 
 let update_from_master_db t db =
+  let warns = ref [] in
+  let warn fmt = Fmt.kstr (fun s -> warns := s :: !warns) fmt in
   let update (orig_kr : t) (db_kr : Masterdb.elt_t option) =
     match db_kr with
     | None ->
         if orig_kr.id = New_KR then
-          Log.warn (fun l -> l "KR ID not found for new KR %S" orig_kr.title);
+          warn "KR ID not found for new KR %S" orig_kr.title;
         orig_kr
     | Some db_kr ->
         if orig_kr.id = No_KR then
-          Log.warn (fun l ->
-              l "KR ID updated from \"No KR\" to %S:\n- %S\n- %S" db_kr.id
-                orig_kr.title db_kr.title);
+          warn "KR ID updated from \"No KR\" to %S:\n- %S\n- %S" db_kr.id
+            orig_kr.title db_kr.title;
         (match db_kr.status with
         | Some Active -> ()
         | Some s ->
-            Log.warn (fun l ->
-                l "Work logged on KR marked as %S: %S (%S)"
-                  (Masterdb.string_of_status s)
-                  db_kr.title db_kr.id)
+            warn "Work logged on KR marked as %S: %S (%S)"
+              (Masterdb.string_of_status s)
+              db_kr.title db_kr.id
         | None ->
-            Log.warn (fun l ->
-                l
-                  "Work logged on KR with no status set, status should be \
-                   Active: %S (%S)"
-                  db_kr.title db_kr.id));
+            warn
+              "Work logged on KR with no status set, status should be Active: \
+               %S (%S)"
+              db_kr.title db_kr.id);
         {
           orig_kr with
           id = ID db_kr.printable_id;
@@ -233,14 +229,13 @@ let update_from_master_db t db =
           project = db_kr.project;
         }
   in
-
   match t.id with
   | ID id ->
       let db_kr = Masterdb.find_kr_opt db id in
-      update t db_kr
+      (update t db_kr, !warns)
   | _ ->
       let db_kr = Masterdb.find_title_opt db t.title in
-      update t db_kr
+      (update t db_kr, !warns)
 
 let items ?(show_time = true) ?(show_time_calc = false) ?(show_engineers = true)
     kr =
