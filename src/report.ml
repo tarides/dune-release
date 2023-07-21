@@ -127,12 +127,17 @@ let to_csv t =
   Csv.close_out out;
   Buffer.contents buffer
 
-let of_csv s =
+let of_csv ~years ~weeks s =
+  let weeks = Weeks.to_ints weeks in
   let input = Csv.of_string s in
   let csv = Csv.input_all input in
   let t = Hashtbl.create 13 in
   List.iter
     (fun x ->
-      match of_row x with `Skip -> () | `Row x -> Hashtbl.add t x.id x)
+      match of_row x with
+      | `Skip -> ()
+      | `Row x ->
+          if List.mem x.year years && List.mem x.week weeks then
+            Hashtbl.add t x.id x)
     csv;
   t
