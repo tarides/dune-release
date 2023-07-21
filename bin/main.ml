@@ -218,7 +218,7 @@ let get_timesheets ~years ~weeks ~data_dir ~okr_updates_dir ~admin_dir =
       let dir = get_data_dir data_dir in
       let file = dir / "timesheets.csv" in
       let data = read_file file in
-      Report.of_csv data
+      Report.of_csv ~years ~weeks data
   | Okr_updates ->
       let dir = get_okr_updates_dir okr_updates_dir in
       read_timesheets_from_okr_updates ~years ~weeks dir
