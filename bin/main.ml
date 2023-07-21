@@ -26,7 +26,7 @@ let write_file f data =
   close_out oc;
   s
 
-let read_timesheets ~years ~weeks ~users ~ids root =
+let read_timesheets ~years ~weeks ~users ~ids ~lint root =
   let weeks = Weeks.to_ints weeks in
   List.fold_left
     (fun acc year ->
@@ -44,7 +44,7 @@ let read_timesheets ~years ~weeks ~users ~ids root =
               (fun acc file ->
                 let path = dir / file in
                 let str = read_file path in
-                Report.of_markdown ~acc ~path ~year ~week ~users ~ids str)
+                Report.of_markdown ~lint ~acc ~path ~year ~week ~users ~ids str)
               acc files)
         acc weeks)
     (Hashtbl.create 13) years
@@ -241,7 +241,7 @@ let get_okr_updates_dir = function
 let get_admin_dir = function None -> err_admin_dir () | Some dir -> dir
 let get_data_dir = function None -> err_data_dir () | Some dir -> dir
 
-let get_timesheets ~years ~weeks ~users ~ids ~data_dir ~okr_updates_dir
+let get_timesheets ~years ~weeks ~users ~ids ~lint ~data_dir ~okr_updates_dir
     ~admin_dir = function
   | Sync ->
       let dir = get_data_dir data_dir in
@@ -250,10 +250,10 @@ let get_timesheets ~years ~weeks ~users ~ids ~data_dir ~okr_updates_dir
       Report.of_csv ~years ~weeks ~users ~ids data
   | Okr_updates ->
       let dir = get_okr_updates_dir okr_updates_dir in
-      read_timesheets_from_okr_updates ~years ~weeks ~users ~ids dir
+      read_timesheets_from_okr_updates ~years ~weeks ~users ~ids ~lint dir
   | Admin ->
       let dir = get_admin_dir admin_dir in
-      read_timesheets_from_admin ~years ~weeks ~users ~ids dir
+      read_timesheets_from_admin ~years ~weeks ~users ~ids ~lint dir
 
 let get_goals org repo =
   let+ issues = Issue.list ~org ~repo () in
@@ -300,7 +300,7 @@ let fetch =
     let data_dir = get_data_dir data_dir in
     let timesheets =
       get_timesheets ~years ~weeks ~users ~ids ~admin_dir ~okr_updates_dir
-        ~data_dir:None
+        ~data_dir:None ~lint:false
         (if source = Sync then Okr_updates else source)
     in
     let* goals = get_goals org goals in
@@ -327,7 +327,7 @@ let default =
     if timesheets || heatmap then (
       let ts =
         get_timesheets ~years ~weeks ~users ~ids ~admin_dir ~okr_updates_dir
-          ~data_dir sources
+          ~data_dir ~lint:false sources
       in
       (if heatmap then
          let heatmap = Heatmap.of_report ts in
@@ -368,7 +368,7 @@ let sync =
     @@ let* project = get_project org goals project_numbers data_dir in
        let timesheets =
          get_timesheets ~years ~weeks ~users ~ids ~okr_updates_dir ~data_dir
-           ~admin_dir sources
+           ~admin_dir ~lint:false sources
        in
        let db = get_db ~okr_updates_dir ~data_dir () in
        let heatmap = Heatmap.of_report timesheets in
@@ -392,7 +392,7 @@ let lint =
        let db = get_db ~okr_updates_dir ~data_dir () in
        let timesheets =
          get_timesheets ~years ~weeks ~users ~ids ~okr_updates_dir ~data_dir
-           ~admin_dir sources
+           ~lint:true ~admin_dir sources
        in
        let heatmap = Heatmap.of_report timesheets in
        lint_project ~heatmap ~db { org; project }

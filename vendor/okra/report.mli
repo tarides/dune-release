@@ -42,7 +42,7 @@ end
 
 val empty : unit -> t
 val dump : t Fmt.t
-val of_krs : ?okr_db:Masterdb.t -> KR.t list -> t
+val of_krs : ?okr_db:Masterdb.t -> KR.t list -> t * string list (* warnings *)
 val of_projects : project list -> t
 val of_objectives : project:string -> objective list -> t
 
@@ -62,7 +62,7 @@ val iter :
   unit
 
 val find : t -> ?title:string -> ?id:KR.id -> unit -> KR.t list
-val add : ?okr_db:Masterdb.t -> t -> KR.t -> unit
+val add : ?okr_db:Masterdb.t -> t -> KR.t -> string list
 val all_krs : t -> KR.t list
 val new_krs : t -> KR.t list
 val no_krs : t -> KR.t list

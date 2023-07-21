@@ -70,11 +70,12 @@ let match_ids ids =
       let ids = List.map (fun id -> (Column.Id, id)) ids in
       fun u -> Filter.eval ~get:(function Id -> u | _ -> assert false) ids
 
-let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids s =
+let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids ~lint s
+    =
   let md = Omd.of_string s in
   let okrs, exns = Parser.of_markdown ~ignore_sections md in
   let month = month_of_week ~year week in
-  let report = Report.of_krs okrs in
+  let report, warms = Report.of_krs okrs in
   let match_user = match_user users in
   let match_ids = match_ids ids in
   Report.iter
@@ -92,11 +93,13 @@ let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids s =
               Hashtbl.add acc id { id; year; month; week; user; days })
           kr.time_per_engineer)
     report;
-  List.iter
-    (fun e ->
-      let s = String.trim (Fmt.str "%a" (pp_exn path) e) in
-      if s <> "" then Logs.warn (fun l -> l "%s" s))
-    exns;
+  if lint then (
+    List.iter
+      (fun e ->
+        let s = String.trim (Fmt.str "%a" (pp_exn path) e) in
+        if s <> "" then Logs.warn (fun l -> l "%s" s))
+      exns;
+    List.iter (fun s -> Logs.warn (fun l -> l "%s" s)) warms);
   acc
 
 let csv_headers = [ "Id"; "Year"; "Month"; "Week"; "User"; "Days" ]
