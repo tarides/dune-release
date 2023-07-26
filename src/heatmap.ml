@@ -59,3 +59,20 @@ let pp ppf (t : t) =
     ids;
   Fmt.pf ppf "-----------\n";
   Fmt.pf ppf "%-12s [%.1f]\n" "Total" (total t)
+
+let to_csv (t : t) =
+  let csv_headers = [ "ID"; "Weeks" ] in
+  let ids =
+    Hashtbl.fold
+      (fun id { total; _ } acc -> (id, Fmt.str "%.1f" total) :: acc)
+      t []
+  in
+  let rows = List.sort (fun (a, _) (b, _) -> String.compare a b) ids in
+  let rows' = List.sort_uniq (fun (a, _) (b, _) -> String.compare a b) ids in
+  assert (List.length rows = List.length rows');
+  let rows = List.map (fun (a, b) -> [ a; b ]) rows in
+  let buffer = Buffer.create 10 in
+  let out = Csv.to_buffer ~quote_all:true buffer in
+  Csv.output_all out (csv_headers :: rows);
+  Csv.close_out out;
+  Buffer.contents buffer

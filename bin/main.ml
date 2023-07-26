@@ -77,7 +77,11 @@ let write ~dir t =
 
 let lint_project ?heatmap ~db t = Project.lint ?heatmap ~db t.project
 let out_timesheets t = Fmt.pr "%a\n%!" pp_csv_ts t
-let out_heatmap t = Fmt.pr "%a\n%!" Heatmap.pp t
+
+let out_heatmap ~format t =
+  match format with
+  | `Plain -> Fmt.pr "%a\n%!" Heatmap.pp t
+  | `CSV -> Fmt.pr "%s%!" (Heatmap.to_csv t)
 
 let write_timesheets ~dir t =
   let file = dir / "timesheets.csv" in
@@ -157,16 +161,7 @@ let ids =
            ~docv:"IDs" [ "ids" ])
   in
   let f ids =
-    match ids with
-    | None -> None
-    | Some ids ->
-        Some
-          (List.map
-             (fun id ->
-               if String.starts_with ~prefix:"-" id then
-                 Filter.is_not (String.sub id 1 (String.length id - 1))
-               else Filter.is id)
-             ids)
+    match ids with None -> None | Some ids -> Some (List.map Filter.query ids)
   in
   Term.(const f $ arg)
 
@@ -331,7 +326,7 @@ let default =
       in
       (if heatmap then
          let heatmap = Heatmap.of_report ts in
-         out_heatmap heatmap);
+         out_heatmap ~format heatmap);
       if timesheets then out_timesheets ts;
       Lwt.return ())
     else
