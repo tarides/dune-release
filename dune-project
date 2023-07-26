@@ -22,9 +22,9 @@
   cohttp-lwt-unix
   yojson
   cmdliner
-  tls
+  lwt_ssl
   csv
   conduit-lwt-unix
-  (omd (>= 2.0.0~alpha3))
+  (omd (>= 2.0.0~alpha4))
   calendar
   (alcotest :with-test)))
