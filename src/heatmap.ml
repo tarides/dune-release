@@ -61,7 +61,7 @@ let pp ppf (t : t) =
   Fmt.pf ppf "%-12s [%.1f]\n" "Total" (total t)
 
 let to_csv (t : t) =
-  let csv_headers = [ "ID"; "Weeks" ] in
+  let csv_headers = [ "ID"; "Days" ] in
   let ids =
     Hashtbl.fold
       (fun id { total; _ } acc -> (id, Fmt.str "%.1f" total) :: acc)
