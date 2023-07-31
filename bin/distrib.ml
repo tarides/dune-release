@@ -11,7 +11,7 @@ let check_archive ~dry_run ~skip_lint ~skip_build ~skip_tests ~pkg_names pkg ar
     =
   Archive.untbz ~dry_run ~clean:true ar >>= fun dir ->
   (if skip_lint then Ok 0
-  else Lint.lint_packages ~dry_run ~dir ~todo:Lint.all pkg pkg_names)
+   else Lint.lint_packages ~dry_run ~dir ~todo:Lint.all pkg pkg_names)
   >>= fun c0 ->
   Check.dune_checks ~dry_run ~skip_build ~skip_tests ~pkg_names dir
   >>= fun c1 ->

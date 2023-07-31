@@ -112,7 +112,7 @@ let check_project ~pkg_names ~skip_lint ~skip_build ~skip_tests ~skip_change_log
       dune_checks ~dry_run:false ~skip_build ~skip_tests ~pkg_names dir
       >>= fun dune_exit ->
       (if skip_lint then Ok 0
-      else Lint.lint_packages ~dry_run:false ~dir ~todo:Lint.all pkg pkg_names)
+       else Lint.lint_packages ~dry_run:false ~dir ~todo:Lint.all pkg pkg_names)
       >>= fun lint_exit ->
       (if skip_change_log then Ok 0 else change_log_check pkg)
       >>| fun change_log_exit ->
