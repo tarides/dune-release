@@ -298,13 +298,23 @@ let fetch =
         ~data_dir:None ~lint:false
         (if source = Sync then Okr_updates else source)
     in
-    let* goals = get_goals org goals in
-    let+ project = Project.get ~goals ~org ~project_number () in
-    Fmt.epr "Found %d cards in %s/%d.\n%!"
-      (List.length (Project.cards project))
-      org project_number;
+    let* goals =
+      match source with Sync -> get_goals org goals | _ -> Lwt.return []
+    in
+    let+ project =
+      match source with
+      | Sync ->
+          let+ p = Project.get ~goals ~org ~project_number () in
+          Fmt.epr "Found %d cards in %s/%d.\n%!"
+            (List.length (Project.cards p))
+            org project_number;
+          p
+      | _ -> Lwt.return Project.empty
+    in
     write_timesheets ~dir:data_dir timesheets;
-    write ~dir:data_dir { org; project };
+    let () =
+      match source with Sync -> write ~dir:data_dir { org; project } | _ -> ()
+    in
     let dir = get_okr_updates_dir okr_updates_dir in
     copy_db ~src:dir ~dst:data_dir
   in

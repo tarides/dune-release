@@ -58,28 +58,12 @@ let v ~title ~objective ?(status = "") ?(team = "") ?(funder = "")
 
 let csv_headers =
   [
-    "id";
-    "title";
-    "objective";
-    "status";
-    "schedule";
-    "team";
-    "category";
-    "project";
-    "funder";
+    "id"; "title"; "status"; "schedule"; "team"; "pillar"; "objective"; "funder";
   ]
 
 let to_csv t =
   [
-    t.id;
-    t.title;
-    t.objective;
-    t.status;
-    t.schedule;
-    t.team;
-    t.category;
-    t.pillar;
-    t.funder;
+    t.id; t.title; t.status; t.schedule; t.team; t.pillar; t.objective; t.funder;
   ]
 
 let json_fields =
@@ -260,6 +244,11 @@ let parse_objective json =
       let id = json / "id" |> U.to_string in
       (title, id)
 
+let id_of_url s =
+  match List.rev (String.split_on_char '/' s) with
+  | id :: _ -> "#" ^ id
+  | _ -> assert false
+
 let parse_github_query ~project_id ~fields json =
   let card_id = json / "id" |> U.to_string in
   let issue_id =
@@ -338,7 +327,8 @@ let parse_github_query ~project_id ~fields json =
     | exception _ -> ("", "")
     | json -> json / "nodes" |> parse_objective
   in
-  { t with objective; tracked_by }
+  let id = match t.id with "" -> id_of_url t.issue_url | s -> s in
+  { t with objective; tracked_by; id }
 
 let pp_state ppf = function
   | true -> Fmt.string ppf "closed"
