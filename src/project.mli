@@ -10,6 +10,7 @@ val v :
   int ->
   t
 
+val empty : t
 val org : t -> string
 val number : t -> int
 val pp : ?order_by:Column.t -> ?filter_out:Filter.t -> t Fmt.t

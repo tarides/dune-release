@@ -16,6 +16,7 @@ type t = {
 let v ?(title = "") ?(cards = []) ?(project_id = "") ?(goals = []) org number =
   { org; number; title; cards; fields = Fields.empty (); goals; project_id }
 
+let empty = v "empty" 0
 let cards t = t.cards
 let org t = t.org
 let number t = t.number

@@ -9,8 +9,12 @@ let c4 = Card.v ~title:"c" ~objective:o1 ~status:"Active" "New KR"
 let card = Alcotest.testable Card.pp ( = )
 let cards = [ c1; c2; c3; c4 ]
 
+let f1 =
+  let open Filter in
+  [ (Column.Id, is ""); (Id, is "New KR") ]
+
 let default_filter () =
-  let x = Card.filter_out Filter.default_out cards in
+  let x = Card.filter_out f1 cards in
   Alcotest.(check (list card)) __LOC__ [ c1; c2 ] x
 
 let test_is () =
