@@ -2,18 +2,20 @@ module U = Yojson.Safe.Util
 
 let ( / ) a b = U.member b a
 
-(** Fields *)
-
 type t = {
-  id : string; (* unique field - human readable ID used everywhere *)
   title : string;
+  id : string;
   objective : string;
   status : string;
-  schedule : string;
-  funder : string;
+  labels : string list;
   team : string;
   pillar : string;
+  assignees : string list;
+  quarter : string;
+  funder : string;
   stakeholder : string;
+  size : string;
+  tracks : string list;
   category : string;
   starts : string;
   ends : string;
@@ -24,29 +26,34 @@ type t = {
   issue_id : string; (* the issue the card points to *)
   issue_url : string;
   issue_closed : bool;
-  tracked_by : string;
+  tracked_by : string; (* the ID of the [objective] field *)
   fields : Fields.t;
 }
 
-let v ~title ~objective ?(status = "") ?(team = "") ?(funder = "")
-    ?(pillar = "") ?(stakeholder = "") ?(category = "") ?(schedule = "")
-    ?(starts = "") ?(ends = "") ?(project_id = "") ?(card_id = "")
-    ?(issue_id = "") ?(issue_url = "") ?(issue_closed = false)
-    ?(tracked_by = "") ?(other_fields = []) id =
+let v ?(title = "") ?(objective = "") ?(status = "") ?(labels = []) ?(team = "")
+    ?(pillar = "") ?(assignees = []) ?(quarter = "") ?(funder = "")
+    ?(stakeholder = "") ?(size = "") ?(tracks = []) ?(category = "")
+    ?(other_fields = []) ?(starts = "") ?(ends = "") ?(project_id = "")
+    ?(card_id = "") ?(issue_id = "") ?(issue_url = "") ?(issue_closed = false)
+    ?(tracked_by = "") id =
   {
     title;
+    id;
     objective;
     status;
-    schedule;
+    labels;
+    team;
+    pillar;
+    assignees;
+    quarter;
+    funder;
+    stakeholder;
+    size;
+    tracks;
+    category;
     starts;
     ends;
     other_fields;
-    team;
-    funder;
-    id;
-    pillar;
-    stakeholder;
-    category;
     fields = Fields.empty ();
     project_id;
     card_id;
@@ -56,58 +63,83 @@ let v ~title ~objective ?(status = "") ?(team = "") ?(funder = "")
     tracked_by;
   }
 
+let empty = v ""
+
 let csv_headers =
   [
-    "id"; "title"; "status"; "schedule"; "team"; "pillar"; "objective"; "funder";
+    "id"; "title"; "status"; "quarter"; "team"; "pillar"; "objective"; "funder";
   ]
 
 let to_csv t =
   [
-    t.id; t.title; t.status; t.schedule; t.team; t.pillar; t.objective; t.funder;
+    t.id; t.title; t.status; t.quarter; t.team; t.pillar; t.objective; t.funder;
   ]
+
+let get ~one ~many t = function
+  | Column.Id -> one t.id
+  | Title -> one t.title
+  | Objective -> one t.objective
+  | Status -> one t.status
+  | Quarter -> one t.quarter
+  | Starts -> one t.starts
+  | Ends -> one t.ends
+  | Funder -> one t.funder
+  | Team -> one t.team
+  | Pillar -> one t.pillar
+  | Stakeholder -> one t.stakeholder
+  | Category -> one t.category
+  | Labels -> many t.labels
+  | Assignees -> many t.assignees
+  | Size -> one t.size
+  | Tracks -> many t.tracks
+  | Other_field f -> one (List.assoc f t.other_fields)
+
+let get_string = get ~one:(fun s -> s) ~many:(fun s -> String.concat "," s)
+
+let get_json =
+  let one s = `String s in
+  get ~one ~many:(fun s -> `List (List.map one s))
 
 let json_fields =
   "issue_id" :: "issue_url" :: "issue_closed" :: "tracked-by"
   :: List.map String.lowercase_ascii csv_headers
 
 let to_json t =
+  let columns =
+    List.map (fun c -> (Column.to_string c, get_json t c)) Column.all
+  in
+  let other_fields =
+    `Assoc (List.map (fun (k, v) -> (k, `String v)) t.other_fields)
+  in
   `Assoc
-    [
-      ("id", `String t.id);
-      ("title", `String t.title);
-      ("objective", `String t.objective);
-      ("status", `String t.status);
-      ("schedule", `String t.schedule);
-      ("funder", `String t.funder);
-      ("team", `String t.team);
-      ("pillar", `String t.pillar);
-      ("stakeholder", `String t.stakeholder);
-      ("category", `String t.category);
-      ("starts", `String t.starts);
-      ("ends", `String t.ends);
-      ( "other-fields",
-        `Assoc (List.map (fun (k, v) -> (k, `String v)) t.other_fields) );
-      ("project-id", `String t.project_id);
-      ("card-id", `String t.card_id);
-      ("issue-id", `String t.issue_id);
-      ("issue-url", `String t.issue_url);
-      ("issue-closed", `Bool t.issue_closed);
-      ("tracked-by", `String t.tracked_by);
-    ]
+    (columns
+    @ [
+        ("other-fields", other_fields);
+        ("project-id", `String t.project_id);
+        ("card-id", `String t.card_id);
+        ("issue-id", `String t.issue_id);
+        ("issue-url", `String t.issue_url);
+        ("issue-closed", `Bool t.issue_closed);
+        ("tracked-by", `String t.tracked_by);
+      ])
 
 let of_json ~project_id ~fields json =
   let id = json / "id" |> U.to_string in
   let objective = json / "objective" |> U.to_string in
   let title = json / "title" |> U.to_string in
   let status = json / "status" |> U.to_string in
-  let schedule = json / "schedule" |> U.to_string in
+  let tracks = json / "tracks" |> U.to_list |> List.map U.to_string in
   let starts = json / "starts" |> U.to_string in
   let ends = json / "ends" |> U.to_string in
   let funder = json / "funder" |> U.to_string in
-  let team = json / "team" |> U.to_string in
-  let pillar = json / "pillar" |> U.to_string in
   let stakeholder = json / "stakeholder" |> U.to_string in
+  let team = json / "team" |> U.to_string in
+  let size = json / "size" |> U.to_string in
+  let pillar = json / "pillar" |> U.to_string in
+  let quarter = json / "quarter" |> U.to_string in
   let category = json / "category" |> U.to_string in
+  let assignees = json / "assignees" |> U.to_list |> List.map U.to_string in
+  let labels = json / "labels" |> U.to_list |> List.map U.to_string in
   let card_id = json / "card-id" |> U.to_string in
   let issue_id = json / "issue-id" |> U.to_string in
   let issue_url = json / "issue-url" |> U.to_string in
@@ -125,11 +157,15 @@ let of_json ~project_id ~fields json =
     objective;
     title;
     status;
-    schedule;
+    quarter;
     starts;
+    tracks;
     ends;
     funder;
     team;
+    size;
+    assignees;
+    labels;
     other_fields = List.rev other_fields;
     card_id;
     project_id;
@@ -160,22 +196,8 @@ let objective t = t.objective
 let title t = t.title
 let status t = t.status
 let funder t = t.funder
-let schedule t = t.schedule
-
-let get t = function
-  | Column.Id -> t.id
-  | Title -> t.title
-  | Objective -> t.objective
-  | Status -> t.status
-  | Schedule -> t.status
-  | Starts -> t.starts
-  | Ends -> t.ends
-  | Funder -> t.funder
-  | Team -> t.team
-  | Pillar -> t.pillar
-  | Stakeholder -> t.stakeholder
-  | Category -> t.category
-  | Other_field f -> List.assoc f t.other_fields
+let quarter t = t.quarter
+let tracks t = t.tracks
 
 let trace_assoc f a =
   match List.assoc_opt f a with
@@ -280,39 +302,31 @@ let parse_github_query ~project_id ~fields json =
         | `Assoc [] -> acc
         | `Assoc a -> (
             let k = trace_assoc "field" a / "name" |> U.to_string in
-            let v = first_assoc a |> U.to_string in
+            let one a = first_assoc a |> U.to_string in
+            let many a = first_assoc a |> U.to_list |> List.map U.to_string in
             let c = Column.of_string k in
             match c with
-            | Title -> { acc with title = v }
-            | Id -> { acc with id = v }
-            | Objective -> { acc with objective = v }
-            | Status -> { acc with status = v }
-            | Schedule -> { acc with schedule = v }
-            | Starts -> { acc with starts = v }
-            | Ends -> { acc with ends = v }
-            | Funder -> { acc with funder = v }
-            | Team -> { acc with team = v }
-            | Pillar -> { acc with pillar = v }
-            | Stakeholder -> { acc with stakeholder = v }
-            | Category -> { acc with category = v }
+            | Title -> { acc with title = one a }
+            | Id -> { acc with id = one a }
+            | Objective -> { acc with objective = one a }
+            | Status -> { acc with status = one a }
+            | Quarter -> { acc with quarter = one a }
+            | Labels -> { acc with labels = many a }
+            | Starts -> { acc with starts = one a }
+            | Size -> { acc with size = one a }
+            | Assignees -> { acc with assignees = many a }
+            | Ends -> { acc with ends = one a }
+            | Funder -> { acc with funder = one a }
+            | Team -> { acc with team = one a }
+            | Pillar -> { acc with pillar = one a }
+            | Tracks -> { acc with tracks = many a }
+            | Stakeholder -> { acc with stakeholder = one a }
+            | Category -> { acc with category = one a }
             | Other_field k ->
-                { acc with other_fields = (k, v) :: acc.other_fields })
+                { acc with other_fields = (k, one a) :: acc.other_fields })
         | _ -> acc)
       {
-        title = "";
-        id = "";
-        objective = "";
-        tracked_by = "";
-        status = "";
-        schedule = "";
-        starts = "";
-        ends = "";
-        funder = "";
-        team = "";
-        pillar = "";
-        stakeholder = "";
-        category = "";
-        other_fields = [];
+        empty with
         fields;
         card_id;
         issue_id;
@@ -347,7 +361,7 @@ let pp ppf t =
   Fmt.pf ppf "  [%7s] %a (%a)\n" t.id bold t.title pp_state t.issue_closed;
   pf_field "Objective" t.objective;
   pf_field "Status" t.status;
-  pf_field "Schedule" t.schedule;
+  pf_field "Quarter" t.quarter;
   pf_field "Starts" t.starts;
   pf_field "Ends" t.ends;
   pf_field "Team" t.team;
@@ -358,7 +372,7 @@ let order_by (pivot : Column.t) cards =
   let sections = Hashtbl.create 12 in
   List.iter
     (fun card ->
-      let name = get card pivot in
+      let name = get_string card pivot in
       let others =
         match Hashtbl.find_opt sections name with None -> [] | Some l -> l
       in
@@ -366,7 +380,7 @@ let order_by (pivot : Column.t) cards =
     cards;
   Hashtbl.fold (fun k v acc -> (k, v) :: acc) sections []
 
-let matches q t = Filter.eval ~get:(get t) q
+let matches q t = Filter.eval ~get:(get_string t) q
 let is_complete t = matches [ (Status, Filter.starts_with "complete") ] t
 let is_dropped t = matches [ (Status, Filter.starts_with "dropped") ] t
 

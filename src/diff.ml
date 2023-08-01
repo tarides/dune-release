@@ -3,20 +3,13 @@ open Lwt.Syntax
 type card =
   | Column of { card : Card.t; column : Column.t; set : string; old : string }
   | State of { card : Card.t; set : [ `Open | `Closed ] }
-  | Tracked_by of {
-      card : Card.t;
-      url : string;
-      set : Issue.t option;
-      github : Issue.t option;
-    }
 
 type issue = State of { issue : Issue.t; set : [ `Open | `Closed ] }
 type item = Card of card | Issue of issue | Warning of string
 
 let card_of_item = function
   | Issue _ | Warning _ -> None
-  | Card (Column { card; _ } | State { card; _ } | Tracked_by { card; _ }) ->
-      Some card
+  | Card (Column { card; _ } | State { card; _ }) -> Some card
 
 let card_column card column ~set ~old =
   [ Card (Column { card; column; set; old }) ]
@@ -27,32 +20,8 @@ let issue_state issue ~set = [ Issue (State { issue; set }) ]
 type t = item list
 
 let empty = []
-let same_title x y = String.lowercase_ascii x = String.lowercase_ascii y
-let starts ~card ?(old = "") set = card_column card Starts ~set ~old
-let ends ~card ?(old = "") set = card_column card Ends ~set ~old
-let title ~card ?(old = "") set = card_column card Title ~set ~old
-let funder ~card ?(old = "") set = card_column card Funder ~set ~old
-let schedule ~card ?(old = "") set = card_column card Schedule ~set ~old
-let status ~card ?(old = "") set = card_column card Status ~set ~old
-
-let objective ?goals ~card ~url ?(github = "") set =
-  let goals = match goals with None -> Hashtbl.create 1 | Some h -> h in
-  let find msg x =
-    match x with
-    | "" -> None
-    | _ -> (
-        let l = String.lowercase_ascii x in
-        match Hashtbl.find_opt goals l with
-        | None ->
-            Fmt.failwith "unknown goal for card %s in %s: %s\n%!" (Card.id card)
-              msg x
-        | Some i -> Some i)
-  in
-
-  let set = find "DB" set in
-  let github = find "Github" github in
-  [ Card (Tracked_by { card; url; set; github }) ]
-
+let starts ~card ?(github = "") set = card_column card Starts ~set ~old:github
+let ends ~card ?(github = "") set = card_column card Ends ~set ~old:github
 let state_of_closed b = if b then "Closed" else "Open"
 
 let pp_card_item ppf = function
@@ -62,16 +31,6 @@ let pp_card_item ppf = function
         "%s: column '%a' is out-of-sync.\n\
         \  - expected(DB): %S\n\
         \  - got(GitHub) : %S" id Column.pp column set old
-  | Tracked_by { card; set; github; _ } ->
-      let pp ppf = function
-        | None -> Fmt.pf ppf "<none>"
-        | Some i -> Fmt.string ppf (Issue.url i)
-      in
-      Fmt.pf ppf
-        "%s: column '%a' is out-of-sync.\n\
-        \  - expected(DB): %a\n\
-        \  - got(GitHub) : %a" (Card.id card) Column.pp Objective pp set pp
-        github
   | State { card; set; _ } ->
       let status = Card.status card in
       Fmt.pf ppf
@@ -103,7 +62,7 @@ let diff_starts ~heatmap t =
   | Some x, "" -> starts ~card:t (str x)
   | Some x, y ->
       let date = str x in
-      if date <> y then starts ~card:t date ~old:y else []
+      if date <> y then starts ~card:t date ~github:y else []
   | None, x ->
       let msg =
         Fmt.str "%s was planning to start on %s but hasn't started yet " id x
@@ -120,45 +79,13 @@ let diff_ends ~heatmap t =
     | Some x, "" -> ends ~card:t (str x)
     | Some x, y ->
         let date = str x in
-        if date <> y then ends ~card:t date ~old:y else []
+        if date <> y then ends ~card:t date ~github:y else []
     | None, x ->
         let msg =
           Fmt.str "%s hasn't started by was planning to end on %s" id x
         in
         [ Warning msg ]
   else []
-
-let diff_title ~(db : Okra.Masterdb.elt_t) t =
-  let id = Card.id t in
-  let old = Card.title t in
-  if same_title db.title old || same_title (Fmt.str "%s: %s" id db.title) old
-  then []
-  else title ~card:t db.title ~old
-
-let diff_objective ?goals ~(db : Okra.Masterdb.elt_t) t =
-  let github = Card.objective t in
-  let url = Card.issue_url t in
-  if same_title db.objective github then []
-  else objective ?goals ~card:t ~url db.objective ~github
-
-let diff_schedule ~(db : Okra.Masterdb.elt_t) t =
-  let old = Card.schedule t in
-  let db = match db.schedule with None -> "" | Some s -> s in
-  (* FIXME: fix the DB *)
-  if db = "Rolling" then []
-  else if String.starts_with ~prefix:db old then []
-  else schedule ~card:t db ~old
-
-let diff_status ~(db : Okra.Masterdb.elt_t) t =
-  let old = Card.status t in
-  let db =
-    match db.status with
-    | None -> ""
-    | Some s -> Okra.Masterdb.string_of_status s
-  in
-  (* FIXME: fix the DB *)
-  let db = if db = "Wontfix" then "Dropped" else db in
-  if String.starts_with ~prefix:db old then [] else status ~card:t db ~old
 
 let diff_state t =
   let closed = Card.issue_closed t in
@@ -167,26 +94,12 @@ let diff_state t =
   | true, `Closed | false, `Open -> []
   | _ -> card_state t ~set
 
-let diff_funder ~(db : Okra.Masterdb.elt_t) t =
-  let old = Card.funder t in
-  let db = db.funder in
-  if same_title db old then [] else funder ~card:t db ~old
-
-let of_card ?db ?heatmap ?goals card =
+let of_card ?heatmap card =
   diff_state card
-  @ (match heatmap with
-    | None -> []
-    | Some heatmap -> diff_starts ~heatmap card @ diff_ends ~heatmap card)
   @
-  match db with
+  match heatmap with
   | None -> []
-  | Some db -> (
-      match Okra.Masterdb.find_kr_opt db (Card.id card) with
-      | None -> []
-      | Some db ->
-          diff_schedule ~db card @ diff_status ~db card @ diff_funder ~db card
-          @ diff_title ~db card
-          @ diff_objective ?goals ~db card)
+  | Some heatmap -> diff_starts ~heatmap card @ diff_ends ~heatmap card
 
 let of_goal cards goal =
   let tracks = Issue.tracks goal in
@@ -262,18 +175,6 @@ let apply diff =
                 (Card.title card);
               let+ _ = Github.run s in
               ())
-        | Card (Tracked_by { url; set = Some issue; github = None; _ }) ->
-            let tracks = Issue.tracks issue in
-            let issue' = Issue.with_tracks issue (url :: tracks) in
-            if dry_run then Lwt.return ()
-            else (
-              Fmt.pr "APPLY %a\n%!" pp_item item;
-              let+ _res = Issue.update issue' in
-              Issue.copy_tracks ~dst:issue ~src:issue';
-              ())
-        | Card (Tracked_by _) ->
-            Fmt.pr "SKIP: %a\n%!" pp_item item;
-            Lwt.return ()
         | Card (Column { column = Objective; _ })
         | Card (Column { column = Title; _ })
         | Card (Column { column = Status; _ }) ->
