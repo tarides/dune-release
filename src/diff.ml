@@ -88,7 +88,7 @@ let diff_ends ~heatmap t =
   else []
 
 let diff_state t =
-  let closed = Card.issue_closed t in
+  let closed = Card.state t = `Closed in
   let set = if Card.should_be_open t then `Open else `Closed in
   match (closed, set) with
   | true, `Closed | false, `Open -> []
@@ -114,7 +114,12 @@ let of_goal cards goal =
   match tracks with
   | [] -> []
   | _ ->
-      let active = List.exists (fun i -> not (Card.issue_closed i)) tracks in
+      let active =
+        List.exists
+          (fun i ->
+            match Card.state i with `Open | `Draft -> true | `Closed -> false)
+          tracks
+      in
       let set = if active then `Open else `Closed in
       if active <> Issue.closed goal then [] else issue_state goal ~set
 

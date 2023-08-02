@@ -21,7 +21,7 @@ val v :
   ?card_id:string ->
   ?issue_id:string ->
   ?issue_url:string ->
-  ?issue_closed:bool ->
+  ?state:[ `Open | `Closed | `Draft ] ->
   ?tracked_by:string ->
   string ->
   t
@@ -30,7 +30,7 @@ val id : t -> string
 val card_id : t -> string
 val issue_id : t -> string
 val issue_url : t -> string
-val issue_closed : t -> bool
+val state : t -> [ `Open | `Closed | `Draft ]
 val tracked_by : t -> string
 val starts : t -> string
 val ends : t -> string

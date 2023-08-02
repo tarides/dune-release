@@ -1,6 +1,10 @@
 module U = Yojson.Safe.Util
 
-let ( / ) a b = U.member b a
+let ( / ) a b =
+  try U.member b a
+  with Yojson.Safe.Util.Type_error _ as e ->
+    Fmt.epr "Cannot find field %S in %a\n%!" b Yojson.Safe.pp a;
+    raise e
 
 type t = {
   title : string;
@@ -25,7 +29,7 @@ type t = {
   card_id : string;
   issue_id : string; (* the issue the card points to *)
   issue_url : string;
-  issue_closed : bool;
+  state : [ `Open | `Closed | `Draft ];
   tracked_by : string; (* the ID of the [objective] field *)
   fields : Fields.t;
 }
@@ -34,7 +38,7 @@ let v ?(title = "") ?(objective = "") ?(status = "") ?(labels = []) ?(team = "")
     ?(pillar = "") ?(assignees = []) ?(quarter = "") ?(funder = "")
     ?(stakeholder = "") ?(size = "") ?(tracks = []) ?(category = "")
     ?(other_fields = []) ?(starts = "") ?(ends = "") ?(project_id = "")
-    ?(card_id = "") ?(issue_id = "") ?(issue_url = "") ?(issue_closed = false)
+    ?(card_id = "") ?(issue_id = "") ?(issue_url = "") ?(state = `Open)
     ?(tracked_by = "") id =
   {
     title;
@@ -59,7 +63,7 @@ let v ?(title = "") ?(objective = "") ?(status = "") ?(labels = []) ?(team = "")
     card_id;
     issue_id;
     issue_url;
-    issue_closed;
+    state;
     tracked_by;
   }
 
@@ -104,6 +108,17 @@ let json_fields =
   "issue_id" :: "issue_url" :: "issue_closed" :: "tracked-by"
   :: List.map String.lowercase_ascii csv_headers
 
+let state_of_string = function
+  | "open" -> `Open
+  | "closed" -> `Closed
+  | "draft" -> `Draft
+  | s -> Fmt.failwith "invalid state: %s" s
+
+let string_of_state = function
+  | `Open -> "open"
+  | `Closed -> "closed"
+  | `Draft -> "draft"
+
 let to_json t =
   let columns =
     List.map (fun c -> (Column.to_string c, get_json t c)) Column.all
@@ -119,7 +134,7 @@ let to_json t =
         ("card-id", `String t.card_id);
         ("issue-id", `String t.issue_id);
         ("issue-url", `String t.issue_url);
-        ("issue-closed", `Bool t.issue_closed);
+        ("state", `String (string_of_state t.state));
         ("tracked-by", `String t.tracked_by);
       ])
 
@@ -143,7 +158,7 @@ let of_json ~project_id ~fields json =
   let card_id = json / "card-id" |> U.to_string in
   let issue_id = json / "issue-id" |> U.to_string in
   let issue_url = json / "issue-url" |> U.to_string in
-  let issue_closed = json / "issue-closed" |> U.to_bool in
+  let state = json / "state" |> U.to_string |> state_of_string in
   let other_fields = json / "other-fields" |> U.to_assoc in
   let tracked_by = json / "tracked-by" |> U.to_string in
   let other_fields =
@@ -172,7 +187,7 @@ let of_json ~project_id ~fields json =
     fields;
     issue_id;
     issue_url;
-    issue_closed;
+    state;
     pillar;
     stakeholder;
     category;
@@ -184,7 +199,7 @@ let id t = t.id
 let tracked_by t = t.tracked_by
 let issue_url t = t.issue_url
 let issue_id t = t.issue_id
-let issue_closed t = t.issue_closed
+let state t = t.state
 let team t = t.team
 let pillar t = t.pillar
 let stakeholder t = t.stakeholder
@@ -215,6 +230,9 @@ let graphql_query =
   {|
             id
             content {
+               ... on DraftIssue {
+                 id
+              }
               ... on Issue {
                 id
                 url
@@ -273,26 +291,18 @@ let id_of_url s =
 
 let parse_github_query ~project_id ~fields json =
   let card_id = json / "id" |> U.to_string in
-  let issue_id =
-    try json / "content" / "id" |> U.to_string
-    with _ ->
-      Fmt.epr "XXX %a\n" Yojson.Safe.pp json;
-      Fmt.epr "XXX missing ID for %s:" card_id;
-      ""
+  let state =
+    match json / "content" / "state" |> U.to_string with
+    | "CLOSED" -> `Closed
+    | "OPEN" -> `Open
+    | s -> Fmt.failwith "invalid state received from the Github API: %S" s
+    | exception Yojson.Safe.Util.Type_error _ -> `Draft
   in
+  let issue_id = json / "content" / "id" |> U.to_string in
   let issue_url =
-    try json / "content" / "url" |> U.to_string
-    with _ ->
-      Fmt.epr "XXX %a\n" Yojson.Safe.pp json;
-      Fmt.epr "XXX missing url for %s:" card_id;
-      ""
-  in
-  let issue_closed =
-    try json / "content" / "state" |> U.to_string |> ( = ) "CLOSED"
-    with _ ->
-      Fmt.epr "XXX %a\n" Yojson.Safe.pp json;
-      Fmt.epr "XXX missing state for %s:" card_id;
-      false
+    match state with
+    | `Draft -> ""
+    | `Open | `Closed -> json / "content" / "url" |> U.to_string
   in
   let t =
     let json = json / "fieldValues" / "nodes" |> U.to_list in
@@ -325,28 +335,19 @@ let parse_github_query ~project_id ~fields json =
             | Other_field k ->
                 { acc with other_fields = (k, one a) :: acc.other_fields })
         | _ -> acc)
-      {
-        empty with
-        fields;
-        card_id;
-        issue_id;
-        issue_url;
-        issue_closed;
-        project_id;
-      }
+      { empty with fields; card_id; issue_id; issue_url; state; project_id }
       json
   in
   let objective, tracked_by =
-    match json / "content" / "trackedInIssues" with
-    | exception _ -> ("", "")
-    | json -> json / "nodes" |> parse_objective
+    match state with
+    | `Draft -> ("", "")
+    | `Open | `Closed -> (
+        match json / "content" / "trackedInIssues" with
+        | exception _ -> ("", "")
+        | json -> json / "nodes" |> parse_objective)
   in
   let id = match t.id with "" -> id_of_url t.issue_url | s -> s in
   { t with objective; tracked_by; id }
-
-let pp_state ppf = function
-  | true -> Fmt.string ppf "closed"
-  | false -> Fmt.string ppf "open"
 
 let pp ppf t =
   let em = Fmt.(styled `Italic string) in
@@ -358,7 +359,7 @@ let pp ppf t =
     let k = String.of_bytes buf in
     match v with "" -> () | _ -> Fmt.pf ppf "    %a: %s\n" em k v
   in
-  Fmt.pf ppf "  [%7s] %a (%a)\n" t.id bold t.title pp_state t.issue_closed;
+  Fmt.pf ppf "  [%7s] %a (%s)\n" t.id bold t.title (string_of_state t.state);
   pf_field "Objective" t.objective;
   pf_field "Status" t.status;
   pf_field "Quarter" t.quarter;
