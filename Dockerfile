@@ -5,8 +5,8 @@ COPY caretaker.opam .
 RUN opam install . --depext-only
 RUN opam install . --deps-only --with-test
 COPY . .
-RUN opam exec -- dune build --profile=release
+RUN opam exec -- dune build
 
-FROM scratch
+FROM alpine
 COPY --from=build /src/_build/install/default/bin/caretaker /caretaker
 ENTRYPOINT ["/caretaker"]
