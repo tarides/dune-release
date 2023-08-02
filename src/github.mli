@@ -1,4 +1,5 @@
 module Token : sig
+  val set : string -> unit
   val t : string Lazy.t
 end
 
