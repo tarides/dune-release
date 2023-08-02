@@ -4,7 +4,7 @@ IMAGE=tarides/caretaker
 PLATFORM=linux/amd64
 
 all:
-	dune build
+	dune build --display=quiet
 
 build:
 	docker build --platform=${PLATFORM} -t ${IMAGE} .
