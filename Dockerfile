@@ -9,4 +9,5 @@ RUN opam exec -- dune build
 
 FROM alpine
 COPY --from=build /src/_build/install/default/bin/caretaker /caretaker
+WORKDIR /src
 ENTRYPOINT ["/caretaker"]

@@ -26,9 +26,9 @@ let write_file f data =
      let _ = Fmt.kstr Sys.command "mkdir -p %S" dir in
      ());
   let oc = open_out f in
-  let s = output_string oc data in
-  close_out oc;
-  s
+  output_string oc data;
+  flush oc;
+  close_out oc
 
 let read_timesheets ~years ~weeks ~users ~ids ~lint root =
   let weeks = Weeks.to_ints weeks in
