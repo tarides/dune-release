@@ -76,7 +76,7 @@ let write ~dir t =
   write_file file data
 
 let lint_project ?heatmap t = Project.lint ?heatmap t.project
-let out_timesheets t = Fmt.pr "%a\n%!" pp_csv_ts t
+let out_timesheets t = Fmt.pr "%a%!" pp_csv_ts t
 
 let out_heatmap ~format t =
   match format with
@@ -85,7 +85,7 @@ let out_heatmap ~format t =
 
 let write_timesheets ~dir t =
   let file = dir / "timesheets.csv" in
-  let data = Fmt.str "%a\n" pp_csv_ts t in
+  let data = Fmt.str "%a" pp_csv_ts t in
   write_file file data
 
 open Cmdliner
