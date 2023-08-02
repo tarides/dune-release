@@ -204,14 +204,25 @@ let timesheets_term =
 let heatmap_term =
   Arg.(value @@ flag @@ info ~doc:"Display heatmap reports" [ "heatmap" ])
 
+let token =
+  Arg.(
+    value
+    @@ opt (some string) None
+    @@ info ~docs:common_options
+         ~doc:
+           "The Github token to use. By default it will try to read the okra \
+            one, stored under `/.github/github-activity-token`."
+         [ "token" ])
+
 let setup =
   let style_renderer = Fmt_cli.style_renderer ~docs:common_options () in
   Term.(
-    const (fun style_renderer level ->
+    const (fun style_renderer level token ->
         Fmt_tty.setup_std_outputs ?style_renderer ();
         Logs.set_level level;
-        Logs.set_reporter (Logs_fmt.reporter ()))
-    $ style_renderer $ Logs_cli.level ())
+        Logs.set_reporter (Logs_fmt.reporter ());
+        match token with None -> () | Some t -> Github.Token.set t)
+    $ style_renderer $ Logs_cli.level () $ token)
 
 let err_okr_updates_dir () =
   invalid_arg

@@ -1,4 +1,6 @@
 module Token = struct
+  let token = ref None
+  let set x = token := Some x
   let github_token_env () = Sys.getenv_opt "GITHUB_TOKEN"
 
   let github_token_file () =
@@ -9,9 +11,12 @@ module Token = struct
 
   let t =
     lazy
-      (match github_token_env () with
+      (match !token with
       | Some x -> x
-      | None -> github_token_file ())
+      | None -> (
+          match github_token_env () with
+          | Some x -> x
+          | None -> github_token_file ()))
 end
 
 module U = Yojson.Safe.Util
