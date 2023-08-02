@@ -102,14 +102,20 @@ let org_term =
     value @@ pos 0 string "tarides"
     @@ info ~doc:"The organisation to get projects from" ~docv:"ORG" [])
 
-type source = Sync | Okr_updates | Admin
+type source = Github | Okr_updates | Admin | Local
 
 let source_term =
   let sources =
-    Arg.enum [ ("sync", Sync); ("okr-updates", Okr_updates); ("admin", Admin) ]
+    Arg.enum
+      [
+        ("github", Github);
+        ("okr-updates", Okr_updates);
+        ("admin", Admin);
+        ("local", Local);
+      ]
   in
   Arg.(
-    value @@ opt sources Sync
+    value @@ opt sources Github
     @@ info ~doc:"The data-source to read data from." ~docv:"SOURCE"
          [ "source"; "s" ])
 
@@ -249,7 +255,7 @@ let get_data_dir = function None -> err_data_dir () | Some dir -> dir
 
 let get_timesheets ~years ~weeks ~users ~ids ~lint ~data_dir ~okr_updates_dir
     ~admin_dir = function
-  | Sync ->
+  | Local ->
       let dir = get_data_dir data_dir in
       let file = dir / "timesheets.csv" in
       let data = read_file file in
@@ -260,6 +266,7 @@ let get_timesheets ~years ~weeks ~users ~ids ~lint ~data_dir ~okr_updates_dir
   | Admin ->
       let dir = get_admin_dir admin_dir in
       read_timesheets_from_admin ~years ~weeks ~users ~ids ~lint dir
+  | Github -> failwith "invalid source: cannot read timesheets on Github"
 
 let get_goals org repo =
   let+ issues = Issue.list ~org ~repo () in
@@ -288,26 +295,31 @@ let fetch =
     Lwt_main.run
     @@
     let data_dir = get_data_dir data_dir in
-    let timesheets =
-      get_timesheets ~years ~weeks ~users ~ids ~admin_dir ~okr_updates_dir
-        ~data_dir:None ~lint:false
-        (if source = Sync then Okr_updates else source)
-    in
-    let* goals =
-      match source with Sync -> get_goals org goals | _ -> Lwt.return []
-    in
-    let+ project =
+    let () =
+      (* fetch timesheets *)
       match source with
-      | Sync ->
-          let+ p = Project.get ~goals ~org ~project_number () in
-          Fmt.epr "Found %d cards in %s/%d.\n%!"
-            (List.length (Project.cards p))
-            org project_number;
-          p
-      | _ -> Lwt.return Project.empty
+      | Local -> ()
+      | _ ->
+          let report =
+            get_timesheets ~years ~weeks ~users ~ids ~admin_dir ~okr_updates_dir
+              ~data_dir:None ~lint:false
+              (if source = Github then Okr_updates else source)
+          in
+          write_timesheets ~dir:data_dir report
     in
-    write_timesheets ~dir:data_dir timesheets;
-    match source with Sync -> write ~dir:data_dir { org; project } | _ -> ()
+    let+ () =
+      (* fetch project boards *)
+      match source with
+      | Github ->
+          let* goals = get_goals org goals in
+          let+ project = Project.get ~goals ~org ~project_number () in
+          Fmt.epr "Found %d cards in %s/%d.\n%!"
+            (List.length (Project.cards project))
+            org project_number;
+          write ~dir:data_dir { org; project }
+      | _ -> Lwt.return ()
+    in
+    ()
   in
   Cmd.v (Cmd.info "fetch")
     Term.(
@@ -359,12 +371,12 @@ let show = Cmd.v (Cmd.info "show") default
 
 let sync =
   let run () org goals project_numbers okr_updates_dir admin_dir data_dir years
-      weeks users ids sources =
+      weeks users ids source =
     Lwt_main.run
     @@ let* project = get_project org goals project_numbers data_dir in
        let timesheets =
          get_timesheets ~years ~weeks ~users ~ids ~okr_updates_dir ~data_dir
-           ~admin_dir ~lint:false sources
+           ~admin_dir ~lint:false source
        in
        let heatmap = Heatmap.of_report timesheets in
        let filter_out =
@@ -381,12 +393,12 @@ let sync =
 
 let lint =
   let run () org goals project_numbers okr_updates_dir admin_dir data_dir years
-      weeks users ids sources =
+      weeks users ids source =
     Lwt_main.run
     @@ let+ project = get_project org goals project_numbers data_dir in
        let timesheets =
          get_timesheets ~years ~weeks ~users ~ids ~okr_updates_dir ~data_dir
-           ~lint:true ~admin_dir sources
+           ~lint:true ~admin_dir source
        in
        let heatmap = Heatmap.of_report timesheets in
        lint_project ~heatmap { org; project }
