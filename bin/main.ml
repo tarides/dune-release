@@ -21,6 +21,10 @@ let read_file f =
 
 let write_file f data =
   Fmt.pr "Writing %s\n%!" f;
+  let dir = Filename.dirname f in
+  (if not (Sys.file_exists dir) then
+     let _ = Fmt.kstr Sys.command "mkdir -p %S" dir in
+     ());
   let oc = open_out f in
   let s = output_string oc data in
   close_out oc;
@@ -69,10 +73,6 @@ let write ~dir t =
   in
   let json = Project.to_json t.project in
   let data = Yojson.Safe.to_string ~std:true json in
-  write_file file data;
-  (* save what is needed to sync with dashboard *)
-  let file = dir / "projects.csv" in
-  let data = Fmt.str "%a\n" pp_csv t in
   write_file file data
 
 let lint_project ?heatmap t = Project.lint ?heatmap t.project
@@ -104,7 +104,7 @@ let org_term =
 
 type source = Github | Okr_updates | Admin | Local
 
-let source_term =
+let source_term default =
   let sources =
     Arg.enum
       [
@@ -115,9 +115,12 @@ let source_term =
       ]
   in
   Arg.(
-    value @@ opt sources Github
+    value @@ opt sources default
     @@ info ~doc:"The data-source to read data from." ~docv:"SOURCE"
          [ "source"; "s" ])
+
+let dry_run_term =
+  Arg.(value @@ flag @@ info ~doc:"Do not do any network calls." [ "dry-run" ])
 
 let project_number_term =
   Arg.(
@@ -174,8 +177,7 @@ let ids =
 let data_dir_term =
   let env = Cmd.Env.info ~doc:"PATH" "DATA_DIR" in
   Arg.(
-    value
-    @@ opt (some string) None
+    value @@ opt string "data"
     @@ info ~env
          ~doc:"Use data from a local directory instead of querying the web"
          ~docv:"FILE" [ "d"; "data-dir" ])
@@ -236,11 +238,6 @@ let err_okr_updates_dir () =
      or set-up OKR_UPDATES_DIR to point to your local copy of the \n\
      tarides/okr-updates repositories."
 
-let err_data_dir () =
-  invalid_arg
-    "Missing path to local synced data. Please use --data-dir or set-up \n\
-     DATA_DIR to point to your local copy of the local synced data."
-
 let err_admin_dir () =
   invalid_arg
     "Missing path to tarides/admin. Please use --admin-dir or set-up ADMIN_DIR \n\
@@ -251,13 +248,11 @@ let get_okr_updates_dir = function
   | Some dir -> dir
 
 let get_admin_dir = function None -> err_admin_dir () | Some dir -> dir
-let get_data_dir = function None -> err_data_dir () | Some dir -> dir
 
 let get_timesheets ~years ~weeks ~users ~ids ~lint ~data_dir ~okr_updates_dir
     ~admin_dir = function
   | Local ->
-      let dir = get_data_dir data_dir in
-      let file = dir / "timesheets.csv" in
+      let file = data_dir / "timesheets.csv" in
       let data = read_file file in
       Report.of_csv ~years ~weeks ~users ~ids data
   | Okr_updates ->
@@ -273,44 +268,61 @@ let get_goals org repo =
   Fmt.pr "Found %d goals in %s/%s.\n%!" (List.length issues) org repo;
   issues
 
-let get_project org goals project_number data_dir =
-  match data_dir with
-  | None ->
+let get_project org goals project_number data_dir dry_run source =
+  match (source, dry_run) with
+  | Github, true -> Lwt.return (Project.empty org project_number)
+  | Github, false ->
       let* goals = get_goals org goals in
       let+ project = Project.get ~org ~project_number ~goals () in
       Fmt.epr "Found %d cards in %s/%d.\n%!"
         (List.length (Project.cards project))
         org project_number;
       project
-  | Some dir ->
-      let file = dir / Fmt.str "%s-%d.json" org project_number in
+  | Local, _ ->
+      let file = data_dir / Fmt.str "%s-%d.json" org project_number in
       if not (Sys.file_exists file) then failwith "Run `caretaker fetch' first";
       let data = read_file file in
       let json = Yojson.Safe.from_string data in
       Lwt.return (Project.of_json json)
+  | _ -> failwith "invalid source"
 
 let fetch =
   let run () org goals project_number okr_updates_dir admin_dir data_dir years
-      weeks users ids source =
+      weeks users ids dry_run source =
     Lwt_main.run
     @@
-    let data_dir = get_data_dir data_dir in
     let () =
+      let source =
+        match (source, okr_updates_dir, admin_dir) with
+        | Github, Some dir, _ ->
+            Fmt.epr "Reading timesheets from `%s'.\n%!" dir;
+            Okr_updates
+        | Github, _, Some dir ->
+            Fmt.epr "Reading timesheets from `%s'.\n%!" dir;
+            Admin
+        | Github, _, _ ->
+            Fmt.epr "Skipping timesheets.\n%!";
+            source
+        | _ -> source
+      in
       (* fetch timesheets *)
       match source with
-      | Local -> ()
+      | Local | Github -> ()
       | _ ->
           let report =
             get_timesheets ~years ~weeks ~users ~ids ~admin_dir ~okr_updates_dir
-              ~data_dir:None ~lint:false
-              (if source = Github then Okr_updates else source)
+              ~data_dir ~lint:false source
           in
           write_timesheets ~dir:data_dir report
     in
     let+ () =
       (* fetch project boards *)
-      match source with
-      | Github ->
+      match (source, dry_run) with
+      | Github, true ->
+          let project = Project.empty org project_number in
+          write ~dir:data_dir { org; project };
+          Lwt.return ()
+      | Github, false ->
           let* goals = get_goals org goals in
           let+ project = Project.get ~goals ~org ~project_number () in
           Fmt.epr "Found %d cards in %s/%d.\n%!"
@@ -325,17 +337,17 @@ let fetch =
     Term.(
       const run $ setup $ org_term $ project_goals_term $ project_number_term
       $ okr_updates_dir_term $ admin_dir_term $ data_dir_term $ years $ weeks
-      $ users $ ids $ source_term)
+      $ users $ ids $ dry_run_term $ source_term Github)
 
 let default =
   let run () format org goals project_numbers okr_updates_dir admin_dir data_dir
-      timesheets heatmap years weeks users ids sources all =
+      timesheets heatmap years weeks users ids source dry_run all =
     Lwt_main.run
     @@
     if timesheets || heatmap then (
       let ts =
         get_timesheets ~years ~weeks ~users ~ids ~admin_dir ~okr_updates_dir
-          ~data_dir ~lint:false sources
+          ~data_dir ~lint:false source
       in
       (if heatmap then
          let heatmap = Heatmap.of_report ts in
@@ -343,7 +355,9 @@ let default =
       if timesheets then out_timesheets ts;
       Lwt.return ())
     else
-      let+ project = get_project org goals project_numbers data_dir in
+      let+ project =
+        get_project org goals project_numbers data_dir dry_run source
+      in
       let data =
         if all then { org; project }
         else
@@ -365,15 +379,17 @@ let default =
     const run $ setup $ format $ org_term $ project_goals_term
     $ project_number_term $ okr_updates_dir_term $ admin_dir_term
     $ data_dir_term $ timesheets_term $ heatmap_term $ years $ weeks $ users
-    $ ids $ source_term $ all)
+    $ ids $ source_term Local $ dry_run_term $ all)
 
 let show = Cmd.v (Cmd.info "show") default
 
 let sync =
   let run () org goals project_numbers okr_updates_dir admin_dir data_dir years
-      weeks users ids source =
+      weeks users ids dry_run source =
     Lwt_main.run
-    @@ let* project = get_project org goals project_numbers data_dir in
+    @@ let* project =
+         get_project org goals project_numbers data_dir dry_run source
+       in
        let timesheets =
          get_timesheets ~years ~weeks ~users ~ids ~okr_updates_dir ~data_dir
            ~admin_dir ~lint:false source
@@ -389,13 +405,15 @@ let sync =
     Term.(
       const run $ setup $ org_term $ project_goals_term $ project_number_term
       $ okr_updates_dir_term $ admin_dir_term $ data_dir_term $ years $ weeks
-      $ users $ ids $ source_term)
+      $ users $ ids $ dry_run_term $ source_term Local)
 
 let lint =
   let run () org goals project_numbers okr_updates_dir admin_dir data_dir years
-      weeks users ids source =
+      weeks users ids dry_run source =
     Lwt_main.run
-    @@ let+ project = get_project org goals project_numbers data_dir in
+    @@ let+ project =
+         get_project org goals project_numbers data_dir dry_run source
+       in
        let timesheets =
          get_timesheets ~years ~weeks ~users ~ids ~okr_updates_dir ~data_dir
            ~lint:true ~admin_dir source
@@ -407,7 +425,7 @@ let lint =
     Term.(
       const run $ setup $ org_term $ project_goals_term $ project_number_term
       $ okr_updates_dir_term $ admin_dir_term $ data_dir_term $ years $ weeks
-      $ users $ ids $ source_term)
+      $ users $ ids $ dry_run_term $ source_term Local)
 
 let cmd = Cmd.group ~default (Cmd.info "caretaker") [ show; lint; sync; fetch ]
 
