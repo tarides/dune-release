@@ -63,16 +63,13 @@ let g2 s = Issue.v ~body:body2 ~closed:(state s) 2
 let g3 s = Issue.v ~body:body3 ~closed:(state s) 3
 
 let c1 s =
-  Card.v ~issue_url:issue1 ~issue_closed:(state s) ~title:"TITLE1"
-    ~objective:"OBJB1" "ID1"
+  Card.v ~issue_url:issue1 ~state:s ~title:"TITLE1" ~objective:"OBJB1" "ID1"
 
 let c2 s =
-  Card.v ~issue_url:issue2 ~issue_closed:(state s) ~title:"TITLE2"
-    ~objective:"OBJ2" "ID2"
+  Card.v ~issue_url:issue2 ~state:s ~title:"TITLE2" ~objective:"OBJ2" "ID2"
 
 let c3 s =
-  Card.v ~issue_url:issue3 ~issue_closed:(state s) ~title:"TITLE3"
-    ~objective:"OBJ3" "ID3"
+  Card.v ~issue_url:issue3 ~state:s ~title:"TITLE3" ~objective:"OBJ3" "ID3"
 
 let diff = Alcotest.testable Diff.pp ( = )
 
@@ -100,8 +97,8 @@ let test_goals () =
 
 let test_status () =
   let card s status =
-    Card.v ~issue_url:issue1 ~issue_closed:(state s) ~title:"TITLE1"
-      ~objective:"OBJB1" "ID1" ~status
+    Card.v ~issue_url:issue1 ~state:s ~title:"TITLE1" ~objective:"OBJB1" "ID1"
+      ~status
   in
 
   let c = card `Closed "" in

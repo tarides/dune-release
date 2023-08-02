@@ -1,47 +1,79 @@
 type t =
-  | Id
   | Title
+  | Id
   | Objective
   | Status
-  | Schedule
-  | Starts
-  | Ends
-  | Funder
+  | Labels
   | Team
   | Pillar
+  | Assignees
+  | Quarter
+  | Funder
   | Stakeholder
+  | Size
   | Category
+  | Starts
+  | Ends
+  | Tracks
   | Other_field of string
 
+let all =
+  [
+    Title;
+    Id;
+    Objective;
+    Status;
+    Labels;
+    Team;
+    Pillar;
+    Assignees;
+    Quarter;
+    Funder;
+    Stakeholder;
+    Size;
+    Category;
+    Tracks;
+    Starts;
+    Ends;
+  ]
+
 let to_string = function
-  | Id -> "id"
   | Title -> "title"
+  | Id -> "id"
   | Objective -> "objective"
   | Status -> "status"
-  | Schedule -> "schedule"
-  | Starts -> "starts"
-  | Ends -> "ends"
-  | Funder -> "funder"
+  | Labels -> "labels"
   | Team -> "team"
   | Pillar -> "pillar"
+  | Assignees -> "assignees"
+  | Quarter -> "quarter"
+  | Funder -> "funder"
   | Stakeholder -> "stakeholder"
+  | Size -> "size"
   | Category -> "category"
+  | Starts -> "starts"
+  | Ends -> "ends"
+  | Tracks -> "tracks"
   | Other_field f -> f
 
 let pp = Fmt.of_to_string to_string
 
 let of_string x =
   match String.lowercase_ascii x with
-  | "id" -> Id
   | "title" -> Title
+  | "id" -> Id
   | "objective" -> Objective
   | "status" -> Status
-  | "schedule" -> Schedule
-  | "start date" | "starts" -> Starts
-  | "target date" | "ends" | "end date" -> Ends
-  | "funder" -> Funder
+  | "labels" -> Labels
   | "team" -> Team
   | "pillar" -> Pillar
+  | "assignees" -> Assignees
+  | "quarter" -> Quarter
+  | "funder" -> Funder
   | "stakeholder" -> Stakeholder
+  | "size" -> Size
   | "category" -> Category
+  | "tracks" -> Tracks
+  | "start date" | "starts" -> Starts
+  | "target date" | "ends" | "end date" -> Ends
   | f -> Other_field f

@@ -1,24 +1,28 @@
 type t
 
 val v :
-  title:string ->
-  objective:string ->
+  ?title:string ->
+  ?objective:string ->
   ?status:string ->
+  ?labels:string list ->
   ?team:string ->
-  ?funder:string ->
   ?pillar:string ->
+  ?assignees:string list ->
+  ?quarter:string ->
+  ?funder:string ->
   ?stakeholder:string ->
+  ?size:string ->
+  ?tracks:string list ->
   ?category:string ->
-  ?schedule:string ->
+  ?other_fields:(string * string) list ->
   ?starts:string ->
   ?ends:string ->
   ?project_id:string ->
   ?card_id:string ->
   ?issue_id:string ->
   ?issue_url:string ->
-  ?issue_closed:bool ->
+  ?state:[ `Open | `Closed | `Draft ] ->
   ?tracked_by:string ->
-  ?other_fields:(string * string) list ->
   string ->
   t
 
@@ -26,7 +30,7 @@ val id : t -> string
 val card_id : t -> string
 val issue_id : t -> string
 val issue_url : t -> string
-val issue_closed : t -> bool
+val state : t -> [ `Open | `Closed | `Draft ]
 val tracked_by : t -> string
 val starts : t -> string
 val ends : t -> string
@@ -34,7 +38,7 @@ val title : t -> string
 val objective : t -> string
 val status : t -> string
 val funder : t -> string
-val schedule : t -> string
+val quarter : t -> string
 val team : t -> string
 val pillar : t -> string
 val stakeholder : t -> string
@@ -42,10 +46,12 @@ val category : t -> string
 val is_complete : t -> bool
 val is_dropped : t -> bool
 val should_be_open : t -> bool
+val tracks : t -> string list
 
 (* other stuff *)
 
-val get : t -> Column.t -> string
+val get_string : t -> Column.t -> string
+val get_json : t -> Column.t -> Yojson.Safe.t
 val other_fields : t -> (string * string) list
 val graphql_query : string
 val graphql_mutate : t -> Column.t -> string -> string

@@ -231,15 +231,14 @@ let pp ?(order_by = Column.Objective) ?(filter_out = Filter.default_out) ppf t =
         List.iter (Card.pp ppf) section)
       sections
 
-let diff ?heatmap ?db (t : t) =
-  let goals = goals t.goals in
-  let diffs = List.map (Diff.of_card ?heatmap ?db ~goals) t.cards in
+let diff ?heatmap (t : t) =
+  let diffs = List.map (Diff.of_card ?heatmap) t.cards in
   let goals = List.map (Diff.of_goal t.cards) t.goals in
   let diffs = Diff.concat (goals @ diffs) in
   diffs
 
-let sync ?heatmap ?db t = Diff.apply (diff ?heatmap ?db t)
-let lint ?heatmap ~db t = Diff.lint (diff ?heatmap ~db t)
+let sync ?heatmap t = Diff.apply (diff ?heatmap t)
+let lint ?heatmap t = Diff.lint (diff ?heatmap t)
 
 let get ~goals ~org ~project_number () =
   find_duplicates goals;

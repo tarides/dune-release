@@ -75,7 +75,7 @@ let write ~dir t =
   let data = Fmt.str "%a\n" pp_csv t in
   write_file file data
 
-let lint_project ?heatmap ~db t = Project.lint ?heatmap ~db t.project
+let lint_project ?heatmap t = Project.lint ?heatmap t.project
 let out_timesheets t = Fmt.pr "%a\n%!" pp_csv_ts t
 
 let out_heatmap ~format t =
@@ -271,22 +271,6 @@ let get_project org goals project_number data_dir =
       let json = Yojson.Safe.from_string data in
       Lwt.return (Project.of_json json)
 
-let get_db ~okr_updates_dir ~data_dir () =
-  let file =
-    match data_dir with
-    | None ->
-        let dir = get_okr_updates_dir okr_updates_dir in
-        dir / "team-weeklies" / "db.csv"
-    | Some dir -> dir / "db.csv"
-  in
-  Okra.Masterdb.load_csv file
-
-let copy_db ~src ~dst =
-  (* FIXME: no Okra.Masterdb.write_csv *)
-  Fmt.pr "Writing %s/db.csv\n" dst;
-  let x : int = Fmt.kstr Sys.command "cp %s/team-weeklies/db.csv %s/" src dst in
-  if x <> 0 then failwith "invalid cp"
-
 let fetch =
   let run () org goals project_number okr_updates_dir admin_dir data_dir years
       weeks users ids source =
@@ -312,11 +296,7 @@ let fetch =
       | _ -> Lwt.return Project.empty
     in
     write_timesheets ~dir:data_dir timesheets;
-    let () =
-      match source with Sync -> write ~dir:data_dir { org; project } | _ -> ()
-    in
-    let dir = get_okr_updates_dir okr_updates_dir in
-    copy_db ~src:dir ~dst:data_dir
+    match source with Sync -> write ~dir:data_dir { org; project } | _ -> ()
   in
   Cmd.v (Cmd.info "fetch")
     Term.(
@@ -375,13 +355,12 @@ let sync =
          get_timesheets ~years ~weeks ~users ~ids ~okr_updates_dir ~data_dir
            ~admin_dir ~lint:false sources
        in
-       let db = get_db ~okr_updates_dir ~data_dir () in
        let heatmap = Heatmap.of_report timesheets in
        let filter_out =
          [ (Column.Id, Filter.is "New KR"); (Id, Filter.is "") ]
        in
        let data = filter ~filter_out { org; project } in
-       Project.sync ~db ~heatmap data.project
+       Project.sync ~heatmap data.project
   in
   Cmd.v (Cmd.info "sync")
     Term.(
@@ -394,13 +373,12 @@ let lint =
       weeks users ids sources =
     Lwt_main.run
     @@ let+ project = get_project org goals project_numbers data_dir in
-       let db = get_db ~okr_updates_dir ~data_dir () in
        let timesheets =
          get_timesheets ~years ~weeks ~users ~ids ~okr_updates_dir ~data_dir
            ~lint:true ~admin_dir sources
        in
        let heatmap = Heatmap.of_report timesheets in
-       lint_project ~heatmap ~db { org; project }
+       lint_project ~heatmap { org; project }
   in
   Cmd.v (Cmd.info "lint")
     Term.(
