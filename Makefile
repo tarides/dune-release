@@ -1,13 +1,13 @@
 .PHONY: all build push
 
 IMAGE=tarides/caretaker
-PLATFORM=linux/amd64
+PLATFORMS=linux/amd64,linux/arm64
 
 all:
 	dune build --display=quiet
 
 build:
-	docker build --platform=${PLATFORM} -t ${IMAGE} .
+	docker build -t ${IMAGE} .
 
-push: build
-	docker push ${IMAGE}
+push:
+	docker buildx build --platform=${PLATFORMS} -t ${IMAGE} . --push
