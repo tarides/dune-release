@@ -362,7 +362,7 @@ let parse_github_query ~project_id ~fields json =
             let k = json / "field" / "name" |> U.to_string in
             let one () =
               match Fields.kind_of_string typename with
-              | Number -> json / "number" |> U.to_string
+              | Number -> json / "number" |> U.to_float |> string_of_float
               | Text -> json / "text" |> U.to_string
               | Single_select _ -> json / "name" |> U.to_string
               | Date -> json / "date" |> U.to_string
