@@ -23,6 +23,7 @@ type t = {
   category : string;
   starts : string;
   ends : string;
+  progress : string;
   other_fields : (string * string) list;
   (* for mutations *)
   project_id : string;
@@ -39,7 +40,7 @@ let v ?(title = "") ?(objective = "") ?(status = "") ?(labels = []) ?(team = "")
     ?(stakeholder = "") ?(size = "") ?(tracks = []) ?(category = "")
     ?(other_fields = []) ?(starts = "") ?(ends = "") ?(project_id = "")
     ?(card_id = "") ?(issue_id = "") ?(issue_url = "") ?(state = `Open)
-    ?(tracked_by = "") id =
+    ?(tracked_by = "") ?(progress = "") id =
   {
     title;
     id;
@@ -65,6 +66,7 @@ let v ?(title = "") ?(objective = "") ?(status = "") ?(labels = []) ?(team = "")
     issue_url;
     state;
     tracked_by;
+    progress;
   }
 
 let empty = v ""
@@ -86,6 +88,7 @@ let get ~one ~many t = function
   | Assignees -> many t.assignees
   | Size -> one t.size
   | Tracks -> many t.tracks
+  | Progress -> one t.progress
   | Other_field f -> (
       match List.assoc_opt f t.other_fields with
       | None -> one ""
@@ -98,7 +101,19 @@ let get_json =
   get ~one ~many:(fun s -> `List (List.map one s))
 
 let default_csv_headers =
-  Column.[ Id; Title; Status; Quarter; Team; Pillar; Objective; Funder ]
+  Column.
+    [
+      Id;
+      Title;
+      Status;
+      Quarter;
+      Team;
+      Pillar;
+      Objective;
+      Funder;
+      Labels;
+      Progress;
+    ]
 
 let to_csv ~headers t = List.map (get_string t) headers
 
@@ -152,6 +167,7 @@ let of_json ~project_id ~fields json =
   let card_id = json / "card-id" |> U.to_string in
   let issue_id = json / "issue-id" |> U.to_string in
   let issue_url = json / "issue-url" |> U.to_string in
+  let progress = json / "progress" |> U.to_string in
   let state = json / "state" |> U.to_string |> state_of_string in
   let other_fields =
     json / "other-fields" |> U.to_assoc
@@ -183,6 +199,7 @@ let of_json ~project_id ~fields json =
     stakeholder;
     category;
     tracked_by;
+    progress;
   }
 
 let other_fields t = t.other_fields
@@ -393,6 +410,7 @@ let parse_github_query ~project_id ~fields json =
             | Tracks -> { acc with tracks = many () }
             | Stakeholder -> { acc with stakeholder = one () }
             | Category -> { acc with category = one () }
+            | Progress -> { acc with progress = one () }
             | Other_field k ->
                 { acc with other_fields = (k, one ()) :: acc.other_fields })
         | _ -> acc)

@@ -23,6 +23,7 @@ val v :
   ?issue_url:string ->
   ?state:[ `Open | `Closed | `Draft ] ->
   ?tracked_by:string ->
+  ?progress:string ->
   string ->
   t
 

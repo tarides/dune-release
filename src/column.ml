@@ -15,6 +15,7 @@ type t =
   | Starts
   | Ends
   | Tracks
+  | Progress
   | Other_field of string
 
 let all =
@@ -35,6 +36,7 @@ let all =
     Tracks;
     Starts;
     Ends;
+    Progress;
   ]
 
 let to_string = function
@@ -54,6 +56,7 @@ let to_string = function
   | Starts -> "starts"
   | Ends -> "ends"
   | Tracks -> "tracks"
+  | Progress -> "progress"
   | Other_field f -> f
 
 let pp = Fmt.of_to_string to_string
@@ -76,4 +79,5 @@ let of_string x =
   | "tracks" -> Tracks
   | "start date" | "starts" -> Starts
   | "target date" | "ends" | "end date" -> Ends
+  | "progress" -> Progress
   | f -> Other_field f
