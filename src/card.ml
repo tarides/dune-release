@@ -357,8 +357,6 @@ let parse_github_query ~project_id ~fields json =
         | `Assoc [] -> acc
         | `Assoc _ -> (
             let typename = json / "__typename" |> U.to_string in
-            Fmt.epr "XXX __typename=%s\n%!" typename;
-            Fmt.epr "XXX json=%a\n%!" Yojson.Safe.pp json;
             let k = json / "field" / "name" |> U.to_string in
             let one () =
               match Fields.kind_of_string typename with
@@ -372,7 +370,8 @@ let parse_github_query ~project_id ~fields json =
                   Fmt.epr "Ignoring field %s (kind: iteration)" k;
                   ""
               | Users | Labels -> assert false
-              | _ -> Fmt.failwith "%s: unsupported field kind" typename
+              | _ ->
+                  Fmt.failwith "%s: %s is not a supported field kind" k typename
             in
             let many () =
               let to_names json =
