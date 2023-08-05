@@ -48,11 +48,7 @@ let replace_no_case t k v = Hashtbl.replace t (String.uppercase_ascii k) v
 let remove_no_case t k = Hashtbl.remove t (String.uppercase_ascii k)
 let is_new_kr kr = kr.KR.id = New_KR
 let is_no_kr kr = kr.KR.id = No_KR
-
-let iter_krs f t =
-  Hashtbl.iter (fun _ kr -> f kr) t.ids;
-  Hashtbl.iter (fun _ kr -> if is_new_kr kr then f kr) t.titles
-
+let iter_krs f t = Hashtbl.iter (fun _ kr -> f kr) t.ids
 let iter_objective f t = iter_krs f t.krs
 let skip _ _ = ()
 
