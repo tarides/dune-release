@@ -205,18 +205,6 @@ let funder t = t.funder
 let quarter t = t.quarter
 let tracks t = t.tracks
 
-let trace_assoc f a =
-  match List.assoc_opt f a with
-  | Some v -> v
-  | None ->
-      Fmt.failwith "assoc(%s): %a -> Not found\n" f
-        Fmt.Dump.(list (pair string Yojson.Safe.pp))
-        a
-
-let first_assoc = function
-  | [] -> failwith "empty assoc list"
-  | (_, v) :: _ -> v
-
 let graphql_query =
   {|
             id
@@ -238,6 +226,55 @@ let graphql_query =
             }
             fieldValues(first: 100) {
               nodes {
+                __typename
+                ... on ProjectV2ItemFieldMilestoneValue {
+                  milestone { url }
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
+                ... on ProjectV2ItemFieldRepositoryValue {
+                  repository { name }
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
+                ... on ProjectV2ItemFieldLabelValue {
+                  labels(first: 10) {
+                    nodes {
+                      name
+                    }
+                  }
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
+                ... on ProjectV2ItemFieldUserValue {
+                  users (first: 10) {
+                    nodes  {
+                      name
+                    }
+                  }
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
+                ... on ProjectV2ItemFieldNumberValue {
+                  number
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
                 ... on ProjectV2ItemFieldTextValue {
                   text
                   field {
@@ -301,30 +338,63 @@ let parse_github_query ~project_id ~fields json =
       (fun acc (json : Yojson.Safe.t) ->
         match json with
         | `Assoc [] -> acc
-        | `Assoc a -> (
-            let k = trace_assoc "field" a / "name" |> U.to_string in
-            let one a = first_assoc a |> U.to_string in
-            let many a = first_assoc a |> U.to_list |> List.map U.to_string in
+        | `Assoc _ -> (
+            let typename = json / "__typename" |> U.to_string in
+            Fmt.epr "XXX __typename=%s\n%!" typename;
+            Fmt.epr "XXX json=%a\n%!" Yojson.Safe.pp json;
+            let k = json / "field" / "name" |> U.to_string in
+            let one () =
+              match Fields.kind_of_string typename with
+              | Number -> json / "number" |> U.to_string
+              | Text -> json / "text" |> U.to_string
+              | Single_select _ -> json / "name" |> U.to_string
+              | Date -> json / "date" |> U.to_string
+              | Repository -> json / "repository" / "name" |> U.to_string
+              | Milestones -> json / "milestone" / "url" |> U.to_string
+              | Iteration ->
+                  Fmt.epr "Ignoring field %s (kind: iteration)" k;
+                  ""
+              | Users | Labels -> assert false
+              | _ -> Fmt.failwith "%s: unsupported field kind" typename
+            in
+            let many () =
+              let to_names json =
+                json |> U.to_list
+                |> List.fold_left
+                     (fun acc json ->
+                       match json / "name" with
+                       | `String s -> s :: acc
+                       | `Null -> acc
+                       | _ -> assert false)
+                     []
+                |> List.rev
+              in
+              match Fields.kind_of_string typename with
+              | Users -> json / "users" / "nodes" |> to_names
+              | Labels -> json / "labels" / "nodes" |> to_names
+              | _ -> Fmt.failwith "%s: unsupported field kind" typename
+            in
+
             let c = Column.of_string k in
             match c with
-            | Title -> { acc with title = one a }
-            | Id -> { acc with id = one a }
-            | Objective -> { acc with objective = one a }
-            | Status -> { acc with status = one a }
-            | Quarter -> { acc with quarter = one a }
-            | Labels -> { acc with labels = many a }
-            | Starts -> { acc with starts = one a }
-            | Size -> { acc with size = one a }
-            | Assignees -> { acc with assignees = many a }
-            | Ends -> { acc with ends = one a }
-            | Funder -> { acc with funder = one a }
-            | Team -> { acc with team = one a }
-            | Pillar -> { acc with pillar = one a }
-            | Tracks -> { acc with tracks = many a }
-            | Stakeholder -> { acc with stakeholder = one a }
-            | Category -> { acc with category = one a }
+            | Title -> { acc with title = one () }
+            | Id -> { acc with id = one () }
+            | Objective -> assert false
+            | Status -> { acc with status = one () }
+            | Quarter -> { acc with quarter = one () }
+            | Labels -> { acc with labels = many () }
+            | Starts -> { acc with starts = one () }
+            | Size -> { acc with size = one () }
+            | Assignees -> { acc with assignees = many () }
+            | Ends -> { acc with ends = one () }
+            | Funder -> { acc with funder = one () }
+            | Team -> { acc with team = one () }
+            | Pillar -> { acc with pillar = one () }
+            | Tracks -> { acc with tracks = many () }
+            | Stakeholder -> { acc with stakeholder = one () }
+            | Category -> { acc with category = one () }
             | Other_field k ->
-                { acc with other_fields = (k, one a) :: acc.other_fields })
+                { acc with other_fields = (k, one ()) :: acc.other_fields })
         | _ -> acc)
       { empty with fields; card_id; issue_id; issue_url; state; project_id }
       json
@@ -422,13 +492,22 @@ module Raw = struct
   |}
           name project_id card_id field_id
     | _ ->
+        let err_update () =
+          failwith
+            "Currently only single-select, text, number, date, and iteration \
+             fields are supported for updates. (see \
+             https://studio.apollographql.com/public/github/variant/current/schema/reference/objects/Mutation?query=updateprojectv2itemfieldvalue)"
+        in
         let text =
           match field_kind with
           | Text -> Fmt.str "text: %S" v
+          | Number -> Fmt.str "number: %s" v
           | Date -> Fmt.str "date: %S" v
+          | Iteration -> Fmt.str "iterationId: %S" v
           | Single_select options ->
               let id = Fields.get_id options ~name:v in
               Fmt.str "singleSelectOptionId: %S" id
+          | _ -> err_update ()
         in
         Fmt.str
           {|

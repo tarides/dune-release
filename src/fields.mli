@@ -1,11 +1,26 @@
 type option
-type kind = Text | Date | Single_select of option list
+
+type kind =
+  | Users
+  | Pull_requests
+  | Reviewers
+  | Labels
+  | Milestones
+  | Repository
+  | Title
+  | Text
+  | Single_select of option list
+  | Number
+  | Date
+  | Iteration
+  | Tracks
+  | Tracked_by
+
 type t
 
 val empty : unit -> t
 val option : id:string -> name:string -> option
 val kind_of_string : string -> kind
-val string_of_kind : kind -> string
 val find : t -> Column.t -> kind * string
 val add : t -> Column.t -> kind -> string -> unit
 val pp : t Fmt.t

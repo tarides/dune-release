@@ -3,7 +3,23 @@ module U = Yojson.Safe.Util
 let ( / ) a b = U.member b a
 
 type option = { id : string; name : string }
-type kind = Text | Date | Single_select of option list
+
+type kind =
+  | Users
+  | Pull_requests
+  | Reviewers
+  | Labels
+  | Milestones
+  | Repository
+  | Title
+  | Text
+  | Single_select of option list
+  | Number
+  | Date
+  | Iteration
+  | Tracks
+  | Tracked_by
+
 type t = (Column.t, kind * string) Hashtbl.t
 
 let option ~id ~name = { id; name }
@@ -11,9 +27,20 @@ let pp_option ppf { id; name } = Fmt.pf ppf "%s:%s" id name
 let pp_options = Fmt.Dump.(list pp_option)
 
 let pp_kind ppf = function
-  | Text -> Fmt.string ppf "Text"
-  | Date -> Fmt.string ppf "Date"
-  | Single_select l -> Fmt.pf ppf "Single_select %a" pp_options l
+  | Users -> Fmt.string ppf "users"
+  | Pull_requests -> Fmt.string ppf "pull-requests"
+  | Reviewers -> Fmt.string ppf "reviewers"
+  | Labels -> Fmt.string ppf "labels"
+  | Milestones -> Fmt.string ppf "milestones"
+  | Repository -> Fmt.string ppf "repository"
+  | Title -> Fmt.string ppf "title"
+  | Text -> Fmt.string ppf "text"
+  | Single_select l -> Fmt.pf ppf "single-select@ %a" pp_options l
+  | Number -> Fmt.string ppf "number"
+  | Date -> Fmt.string ppf "date"
+  | Iteration -> Fmt.string ppf "iteration"
+  | Tracks -> Fmt.string ppf "tracks"
+  | Tracked_by -> Fmt.string ppf "tracked_by"
 
 let pp ppf t =
   let l = Hashtbl.fold (fun k v acc -> (k, v) :: acc) t [] in
@@ -51,28 +78,25 @@ let get_id ~name l =
       Fmt.epr "Cannot find name %s in %a\n" name pp_options l;
       failwith "boo"
 
-let string_of_kind = function
-  | Text -> "Text"
-  | Single_select _ -> "SingleSelect"
-  | Date -> "Date"
-
-let kind_of_string = function
-  | "ProjectV2ItemFieldDateValue" -> Date
-  | "ProjectV2ItemFieldTextValue" -> Text
-  | "ProjectV2ItemFieldSingleSelectValue" -> Single_select []
-  | "DATE" -> Date
-  | "TITLE" -> Text
-  | "ASSIGNEES" -> Text
-  | "LABELS" -> Text
-  | "SINGLE_SELECT" -> Single_select []
-  | "LINKED_PULL_REQUESTS" -> Text
-  | "REPOSITORY" -> Text
-  | "REVIEWERS" -> Text
-  | "MILESTONE" -> Text
-  | "TEXT" -> Text
-  | "NUMBER" -> Text
-  | "TRACKS" -> Text
-  | "TRACKED_BY" -> Text
+let kind_of_string s =
+  match String.lowercase_ascii s with
+  | "projectv2itemfielddatevalue" | "date" -> Date
+  | "title" -> Title
+  | "projectv2itemfielduservalue" | "assignees" | "users" -> Users
+  | "projectv2itemfieldlabelvalue" | "labels" -> Labels
+  | "projectv2itemfieldsingleselectvalue" | "single_select" | "single-select" ->
+      Single_select []
+  | "projectv2itemfieldpullrequestvalue" | "linked_pull_requests"
+  | "pull-requests" ->
+      Pull_requests
+  | "projectv2itemfieldrepositoryvalue" | "repository" -> Repository
+  | "projectv2itemfieldreviewervalue" | "reviewers" -> Reviewers
+  | "projectv2itemfieldmilestonevalue" | "milestone" | "milestones" ->
+      Milestones
+  | "projectv2itemfieldtextvalue" | "text" -> Text
+  | "projectv2itemfieldnumbervalue" | "number" -> Number
+  | "tracks" -> Tracks
+  | "tracked_by" | "tracked-by" -> Tracked_by
   | s -> Fmt.failwith "%s: invalid field kind" s
 
 let find t k = Hashtbl.find t k
@@ -84,11 +108,10 @@ let to_json t =
     `Assoc [ ("id", `String id); ("name", `String name) ]
   in
   let kind = function
-    | Text -> `String "Text"
-    | Date -> `String "Date"
     | Single_select l ->
         let l = List.map option l in
-        `Assoc [ ("SingleSelect", `List l) ]
+        `Assoc [ ("single-select", `List l) ]
+    | k -> `String (Fmt.to_to_string pp_kind k)
   in
   let column c = `String (Column.to_string c) in
   let field c k v =
@@ -103,9 +126,8 @@ let option_of_json json =
   { id; name }
 
 let kind_of_json = function
-  | `String "Text" -> Text
-  | `String "Date" -> Date
-  | `Assoc [ ("SingleSelect", `List l) ] ->
+  | `String s -> kind_of_string s
+  | `Assoc [ ("single-select", `List l) ] ->
       let l = List.map option_of_json l in
       Single_select l
   | json -> Fmt.failwith "invalid kind: %a\n" Yojson.Safe.pp json
