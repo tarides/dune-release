@@ -15,6 +15,7 @@ type t =
   | Starts
   | Ends
   | Tracks
+  | Progress
   | Other_field of string
 
 val all : t list

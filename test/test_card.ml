@@ -7,7 +7,7 @@ let card =
     ~stakeholder:"STAKEHOLDER" ~size:"SIZE" ~tracks:[ "T1"; "T2" ]
     ~category:"CATEGORY" ~starts:"STARTS" ~ends:"ENDS" ~card_id:"CARD-ID"
     ~issue_id:"ISSUE-ID" ~project_id:"PROJECT-ID" ~issue_url:"ISSUE_URL"
-    ~tracked_by:"TRACKED-BY"
+    ~tracked_by:"TRACKED-BY" ~progress:"PROGRESS"
     ~other_fields:[ ("K", "V"); ("A", "BC") ]
     "CARD"
 

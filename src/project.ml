@@ -83,7 +83,6 @@ query {
         let id = json / "id" |> U.to_string in
         let kind = json / "dataType" |> U.to_string |> Fields.kind_of_string in
         match kind with
-        | Text | Date -> Fields.add fields key kind id
         | Single_select _ ->
             let options = json / "options" |> U.to_list in
             let options =
@@ -94,7 +93,8 @@ query {
                   Fields.option ~name ~id)
                 options
             in
-            Fields.add fields key (Single_select options) id)
+            Fields.add fields key (Single_select options) id
+        | _ -> Fields.add fields key kind id)
       json;
     fields
 
