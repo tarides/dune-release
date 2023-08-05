@@ -141,12 +141,12 @@ end
 let filter ?(filter_out = Filter.default_out) data =
   { data with cards = Card.filter_out filter_out data.cards }
 
-let to_csv t =
-  let headers = Card.csv_headers in
-  let rows = List.map (fun card -> Card.to_csv card) t.cards in
+let to_csv ~headers t =
+  let first = List.map Column.to_string headers in
+  let rows = List.map (fun card -> Card.to_csv ~headers card) t.cards in
   let buffer = Buffer.create 10 in
   let out = Csv.to_buffer ~quote_all:true buffer in
-  Csv.output_all out (headers :: rows);
+  Csv.output_all out (first :: rows);
   Csv.close_out out;
   Buffer.contents buffer
 
