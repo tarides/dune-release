@@ -10,7 +10,7 @@ let pp ppf t =
   Fmt.pf ppf "org: %s\n" t.org;
   Project.pp ppf t.project
 
-let pp_csv ppf t = Fmt.string ppf (Project.to_csv t.project)
+let pp_csv headers ppf t = Fmt.string ppf (Project.to_csv ~headers t.project)
 let pp_csv_ts ppf t = Fmt.string ppf (Report.to_csv t)
 
 let read_file f =
@@ -60,10 +60,12 @@ let filter ?filter_out data =
   let filter = Project.filter ?filter_out in
   { data with project = filter data.project }
 
+type format = { style : [ `Plain | `CSV ]; fields : Column.t list }
+
 let out ~format t =
-  match format with
+  match format.style with
   | `Plain -> Fmt.pr "%a\n%!" pp t
-  | `CSV -> Fmt.pr "%a%!" pp_csv t
+  | `CSV -> Fmt.pr "%a%!" (pp_csv format.fields) t
 
 let write ~dir t =
   (* save what is needed to update offline *)
@@ -79,7 +81,7 @@ let lint_project ?heatmap t = Project.lint ?heatmap t.project
 let out_timesheets t = Fmt.pr "%a%!" pp_csv_ts t
 
 let out_heatmap ~format t =
-  match format with
+  match format.style with
   | `Plain -> Fmt.pr "%a\n%!" Heatmap.pp t
   | `CSV -> Fmt.pr "%s%!" (Heatmap.to_csv t)
 
@@ -182,11 +184,22 @@ let data_dir_term =
          ~doc:"Use data from a local directory instead of querying the web"
          ~docv:"FILE" [ "d"; "data-dir" ])
 
-let format =
+let style =
   Arg.(
     value
     @@ opt (enum [ ("plain", `Plain); ("csv", `CSV) ]) `Plain
     @@ info ~doc:"The output format" [ "format"; "f" ])
+
+let fields =
+  let default = Card.default_csv_headers in
+  let column = Arg.conv ((fun str -> Ok (Column.of_string str)), Column.pp) in
+  Arg.(
+    value
+    @@ opt (list column) default
+    @@ info ~doc:"What fields to use (in the CSV file)." [ "fields" ])
+
+let format =
+  Term.(const (fun style fields -> { style; fields }) $ style $ fields)
 
 let common_options = "COMMON OPTIONS"
 

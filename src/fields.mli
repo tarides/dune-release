@@ -9,6 +9,7 @@ val string_of_kind : kind -> string
 val find : t -> Column.t -> kind * string
 val add : t -> Column.t -> kind -> string -> unit
 val pp : t Fmt.t
+val pp_names : t Fmt.t
 val get_id : name:string -> option list -> string
 val to_json : t -> Yojson.Safe.t
 val of_json : Yojson.Safe.t -> t

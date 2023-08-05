@@ -69,16 +69,6 @@ let v ?(title = "") ?(objective = "") ?(status = "") ?(labels = []) ?(team = "")
 
 let empty = v ""
 
-let csv_headers =
-  [
-    "id"; "title"; "status"; "quarter"; "team"; "pillar"; "objective"; "funder";
-  ]
-
-let to_csv t =
-  [
-    t.id; t.title; t.status; t.quarter; t.team; t.pillar; t.objective; t.funder;
-  ]
-
 let get ~one ~many t = function
   | Column.Id -> one t.id
   | Title -> one t.title
@@ -96,7 +86,10 @@ let get ~one ~many t = function
   | Assignees -> many t.assignees
   | Size -> one t.size
   | Tracks -> many t.tracks
-  | Other_field f -> one (List.assoc f t.other_fields)
+  | Other_field f -> (
+      match List.assoc_opt f t.other_fields with
+      | None -> one ""
+      | Some s -> one s)
 
 let get_string = get ~one:(fun s -> s) ~many:(fun s -> String.concat "," s)
 
@@ -104,9 +97,10 @@ let get_json =
   let one s = `String s in
   get ~one ~many:(fun s -> `List (List.map one s))
 
-let json_fields =
-  "issue_id" :: "issue_url" :: "issue_closed" :: "tracked-by"
-  :: List.map String.lowercase_ascii csv_headers
+let default_csv_headers =
+  Column.[ Id; Title; Status; Quarter; Team; Pillar; Objective; Funder ]
+
+let to_csv ~headers t = List.map (get_string t) headers
 
 let state_of_string = function
   | "open" -> `Open
@@ -159,14 +153,11 @@ let of_json ~project_id ~fields json =
   let issue_id = json / "issue-id" |> U.to_string in
   let issue_url = json / "issue-url" |> U.to_string in
   let state = json / "state" |> U.to_string |> state_of_string in
-  let other_fields = json / "other-fields" |> U.to_assoc in
-  let tracked_by = json / "tracked-by" |> U.to_string in
   let other_fields =
-    List.fold_left
-      (fun acc (x, y) ->
-        if List.mem x json_fields then acc else (x, U.to_string y) :: acc)
-      [] other_fields
+    json / "other-fields" |> U.to_assoc
+    |> List.map (fun (x, y) -> (x, U.to_string y))
   in
+  let tracked_by = json / "tracked-by" |> U.to_string in
   {
     id;
     objective;
@@ -181,7 +172,7 @@ let of_json ~project_id ~fields json =
     size;
     assignees;
     labels;
-    other_fields = List.rev other_fields;
+    other_fields;
     card_id;
     project_id;
     fields;

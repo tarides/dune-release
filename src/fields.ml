@@ -19,6 +19,15 @@ let pp ppf t =
   let l = Hashtbl.fold (fun k v acc -> (k, v) :: acc) t [] in
   Fmt.Dump.(list (pair Column.pp (pair pp_kind string))) ppf l
 
+let pp_names ppf (t : t) =
+  let l =
+    Hashtbl.fold
+      (fun k (v, _) acc -> Fmt.str "- %a:%a" Column.pp k pp_kind v :: acc)
+      t []
+  in
+  let l = List.sort String.compare l in
+  Fmt.(list ~sep:(any "@.") string) ppf l
+
 let drop_color s =
   match String.split_on_char ':' s with
   | [] -> s

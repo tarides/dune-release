@@ -13,7 +13,7 @@ val empty : string -> int -> t
 val org : t -> string
 val number : t -> int
 val pp : ?order_by:Column.t -> ?filter_out:Filter.t -> t Fmt.t
-val to_csv : t -> string
+val to_csv : headers:Column.t list -> t -> string
 val filter : ?filter_out:Filter.t -> t -> t
 val sync : ?heatmap:Heatmap.t -> t -> unit Lwt.t
 val lint : ?heatmap:Heatmap.t -> t -> unit
