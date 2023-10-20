@@ -42,8 +42,9 @@ type t =
 
 type markdown = (string * string) list Omd.block list
 
-let okr_re = Str.regexp "\\(.+\\) (\\([a-zA-Z]+[0-9]+\\))$"
-(* Header: This is a KR (KR12) *)
+let okr_re = Str.regexp "\\(.+\\) (\\([a-zA-Z#]+[0-9]+\\))$"
+(* Header: This is a legacy KR (KR12) *)
+(* Header: This is a GitHub WI (12) *)
 
 let obj_re = Str.regexp "\\(.+\\) (\\([a-zA-Z ]+\\))$"
 (* Header: This is an objective (Tech lead name) *)
