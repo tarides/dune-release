@@ -48,7 +48,7 @@ module Query = struct
       }
     |}
 
-  let make ~org ~project_number ~after =
+  let make ~org ~project_number ~after ~items_per_page =
     Printf.sprintf
       {|
 query {
@@ -56,7 +56,7 @@ query {
     projectV2(number: %d) {
       id
       title%s
-      items(first: 100 %s) {
+      items(first: %d %s) {
         edges {
           cursor
           node { %s
@@ -69,6 +69,7 @@ query {
 |}
       org project_number
       (match after with None -> fields | Some _ -> "")
+      items_per_page
       (match after with
       | None -> ""
       | Some s -> Printf.sprintf ", after: \"%s\" " s)
@@ -244,7 +245,9 @@ let get ~goals ~org ~project_number () =
   find_duplicates goals;
   let open Lwt.Syntax in
   let rec aux fields cursor acc =
-    let query = Query.make ~org ~project_number ~after:cursor in
+    let query =
+      Query.make ~org ~project_number ~after:cursor ~items_per_page:80
+    in
     let* json = Github.run query in
     let cursor, project =
       Query.parse ?fields ~project_number ~org ~goals json
@@ -259,7 +262,7 @@ let get ~goals ~org ~project_number () =
 
 let get_project_id_and_fields ~org ~project_number =
   let open Lwt.Syntax in
-  let query = Query.make ~org ~project_number ~after:None in
+  let query = Query.make ~org ~project_number ~after:None ~items_per_page:100 in
   let+ json = Github.run query in
   let _, project = Query.parse ~project_number ~org ~goals:[] json in
   (project.project_id, project.fields)
