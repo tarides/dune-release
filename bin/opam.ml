@@ -6,6 +6,7 @@
 
 open Bos_setup
 open Dune_release
+open Stdext.Result.Let_syntax
 
 let get_pkg_dir pkg =
   Pkg.build_dir pkg >>= fun bdir ->
@@ -166,19 +167,16 @@ let open_pr ~dry_run ~changes ~remote_repo ~fork_owner ~branch ~token ~title
 
 (** Get the value from the [user] config, if it is unset try to parse it from
     the [remote_repo]. *)
-let get_fork_owner ~fork_owner ~remote_repo =
-  match fork_owner with
-  | Some o -> Ok o
-  | None -> (
-      match Github_repo.from_uri remote_repo with
-      | Some repo -> Ok repo.owner
-      | None ->
-          R.error_msgf
-            "The owner of the opam-repository fork on Github is needed but \
-             couldn't be parsed from the remote fork.\n\
-             Please configure your Github user name with `dune-release config \
-             set user <owner>` or providing it via the\n\
-            \             `--user` option.")
+let get_fork_owner ~remote_repo =
+  match Github_repo.from_uri remote_repo with
+  | Some repo -> Ok repo.owner
+  | None ->
+      R.error_msgf
+        "The owner of the opam-repository fork on Github is needed but \
+         couldn't be parsed from the remote fork.\n\
+         Please configure your Github user name with `dune-release config set \
+         user <owner>` or providing it via the\n\
+        \             `--user` option."
 
 let submit ~token ~dry_run ~yes ~opam_repo ~pkgs_to_submit
     {
@@ -224,7 +222,10 @@ let submit ~token ~dry_run ~yes ~opam_repo ~pkgs_to_submit
     | Some { owner; repo } -> Text.rewrite_github_refs ~user:owner ~repo changes
     | None -> changes
   in
-  get_fork_owner ~fork_owner ~remote_repo >>= fun fork_owner ->
+  let* fork_owner =
+    Bos_setup.R.of_option fork_owner ~none:(fun () ->
+        get_fork_owner ~remote_repo)
+  in
   let msg = strf "%s\n\n%s\n" title changes in
   App_log.status (fun l ->
       l "Preparing %a to %a" Text.Pp.maybe_draft (draft, "pull request")

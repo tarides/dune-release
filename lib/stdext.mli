@@ -73,4 +73,14 @@ module Result : sig
     (** [iter ~f l] applies [f] on each element of list [l] until an error
         occurs. *)
   end
+
+  module Let_syntax : sig
+    val ( let+ ) :
+      ('a, 'b) Result.result -> ('a -> 'c) -> ('c, 'b) Result.result
+
+    val ( let* ) :
+      ('a, 'b) Result.result ->
+      ('a -> ('c, 'b) Result.result) ->
+      ('c, 'b) Result.result
+  end
 end
