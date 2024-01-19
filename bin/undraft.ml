@@ -43,7 +43,7 @@ let undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo:local
     ?remote_repo:remote ?build_dir ?pkg_names ~dry_run ~yes:_ () =
   Config.token ~token ~dry_run () >>= fun token ->
   let pkg = Pkg.v ?opam ?distrib_file ?build_dir ~dry_run:false () in
-  Config.opam_repo_fork ~pkgs:[ pkg ] ~local ~remote ()
+  Config.opam_repo_fork ~pkgs:[ pkg ] ~user:None ~local ~remote ()
   >>= fun opam_repo_fork ->
   Pkg.name pkg >>= fun pkg_name ->
   Pkg.build_dir pkg >>= fun build_dir ->

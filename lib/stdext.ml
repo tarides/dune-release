@@ -75,6 +75,11 @@ module Result = struct
     let iter ~f l =
       List.fold_left (fun acc x -> acc >>= fun () -> f x) (Ok ()) l
   end
+
+  module Let_syntax = struct
+    let ( let+ ) = Bos_setup.R.( >>| )
+    let ( let* ) = Bos_setup.R.( >>= )
+  end
 end
 
 module String = struct

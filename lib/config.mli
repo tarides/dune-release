@@ -23,7 +23,7 @@ type t = {
 }
 
 module Opam_repo_fork : sig
-  type t = { remote : string; local : Fpath.t }
+  type t = { remote : string; local : Fpath.t; user : string option }
 end
 
 val create : ?pkgs:Pkg.t list -> unit -> (unit, Bos_setup.R.msg) result
@@ -52,6 +52,7 @@ val auto_open : no_auto_open:bool Cli.t -> (bool, Bos_setup.R.msg) result
 
 val opam_repo_fork :
   ?pkgs:Pkg.t list ->
+  user:string option Cli.t option ->
   remote:string Cli.t option ->
   local:Fpath.t Cli.t option ->
   unit ->

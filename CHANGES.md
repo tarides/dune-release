@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Use the 'user' option as the fork owner, only attempt to decode the remote URL if the user option is not set. (#480, @Julow)
+
 ### Deprecated
 
 ### Fixed

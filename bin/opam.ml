@@ -6,6 +6,7 @@
 
 open Bos_setup
 open Dune_release
+open Stdext.Result.Let_syntax
 
 let get_pkg_dir pkg =
   Pkg.build_dir pkg >>= fun bdir ->
@@ -164,19 +165,25 @@ let open_pr ~dry_run ~changes ~remote_repo ~fork_owner ~branch ~token ~title
         | Ok () -> Ok 0
         | Error _ -> msg ())
 
-let parse_remote_repo remote_repo =
+(** Get the value from the [user] config, if it is unset try to parse it from
+    the [remote_repo]. *)
+let get_fork_owner ~remote_repo =
   match Github_repo.from_uri remote_repo with
-  | Some repo -> Ok repo
+  | Some repo -> Ok repo.owner
   | None ->
       R.error_msgf
-        "The URL to your remote fork of opam-repository %s does not seem to \
-         point to a github repo.\n\
-         Try editing your config with `dune-release config set remote <URL>` \
-         or providing a valid Github repo URL via the --remote-repo option."
-        remote_repo
+        "The owner of the opam-repository fork on Github is needed but \
+         couldn't be parsed from the remote fork.\n\
+         Please configure your Github user name with `dune-release config set \
+         user <owner>` or providing it via the\n\
+        \             `--user` option."
 
-let submit ~token ~dry_run ~yes ~opam_repo ~pkgs_to_submit local_repo
-    remote_repo pkgs auto_open ~draft =
+let submit ~token ~dry_run ~yes ~opam_repo ~pkgs_to_submit
+    {
+      Config.Opam_repo_fork.local = local_repo;
+      remote = remote_repo;
+      user = fork_owner;
+    } pkgs auto_open ~draft =
   List.fold_left
     (fun acc pkg ->
       get_pkg_dir pkg >>= fun pkg_dir ->
@@ -215,7 +222,10 @@ let submit ~token ~dry_run ~yes ~opam_repo ~pkgs_to_submit local_repo
     | Some { owner; repo } -> Text.rewrite_github_refs ~user:owner ~repo changes
     | None -> changes
   in
-  parse_remote_repo remote_repo >>= fun { owner = fork_owner; _ } ->
+  let* fork_owner =
+    Bos_setup.R.of_option fork_owner ~none:(fun () ->
+        get_fork_owner ~remote_repo)
+  in
   let msg = strf "%s\n\n%s\n" title changes in
   App_log.status (fun l ->
       l "Preparing %a to %a" Text.Pp.maybe_draft (draft, "pull request")
@@ -289,11 +299,12 @@ let submit ?local_repo:local ?remote_repo:remote ?opam_repo ?user ?token
   in
   report_user_option_use user;
   Config.token ~token ~dry_run () >>= fun token ->
-  Config.opam_repo_fork ~pkgs ~local ~remote () >>= fun { remote; local } ->
+  Config.opam_repo_fork ~pkgs ~user:None ~local ~remote ()
+  >>= fun remote_config ->
   Config.auto_open ~no_auto_open >>= fun auto_open ->
   App_log.status (fun m ->
       m "Submitting %a" Fmt.(list ~sep:sp Text.Pp.name) pkg_names);
-  submit ~token ~dry_run ~yes ~opam_repo ~pkgs_to_submit:pkg_names local remote
+  submit ~token ~dry_run ~yes ~opam_repo ~pkgs_to_submit:pkg_names remote_config
     pkgs auto_open ~draft
 
 let field ~pkgs ~field_name = field pkgs field_name

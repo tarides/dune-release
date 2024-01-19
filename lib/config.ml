@@ -29,7 +29,7 @@ type t = {
 }
 
 module Opam_repo_fork = struct
-  type t = { remote : string; local : Fpath.t }
+  type t = { remote : string; local : Fpath.t; user : string option }
 end
 
 let of_yaml_exn str =
@@ -249,9 +249,10 @@ let keep_v ~keep_v =
 let auto_open ~no_auto_open =
   if no_auto_open then Ok false else read (fun t -> t.auto_open) ~default:true
 
-let opam_repo_fork ?pkgs ~remote ~local () =
-  match (remote, local) with
-  | Some remote, Some local -> Ok { Opam_repo_fork.remote; local }
+let opam_repo_fork ?pkgs ~user ~remote ~local () =
+  match (remote, local, user) with
+  | Some remote, Some local, Some user ->
+      Ok { Opam_repo_fork.remote; local; user }
   | _ ->
       let config =
         Lazy.force file >>= function
@@ -261,7 +262,8 @@ let opam_repo_fork ?pkgs ~remote ~local () =
       config >>= fun config ->
       let local = Stdext.Option.value ~default:config.local local in
       let remote = Stdext.Option.value ~default:config.remote remote in
-      Ok { Opam_repo_fork.remote; local }
+      let user = Stdext.Option.value ~default:config.user user in
+      Ok { Opam_repo_fork.remote; local; user }
 
 module type S = sig
   val path : build_dir:Fpath.t -> name:string -> version:Version.t -> Fpath.t
