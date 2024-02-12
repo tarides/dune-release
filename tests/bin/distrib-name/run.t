@@ -57,6 +57,7 @@ Run dune-release distrib with the uncommitted name in dune-project.
   dune-release: [WARNING] The repo is dirty. Uncommitted changes to files
                           (including dune-project) will not be included in the
                           distribution archive.
+  File "dune-project", line 1, characters 0-0:
   Error: The project name is not defined, please add a (name <name>) field to
   your dune-project file.
   dune-release: [ERROR] run ['dune' 'subst']: exited with 1
