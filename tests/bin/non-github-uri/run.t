@@ -51,7 +51,7 @@ archive should fail as only publishing to github is supported.
   $ dune-release distrib --dry-run 2>&1 | grep -E "FAIL|ERROR"
   [FAIL] opam fields homepage and dev-repo can be parsed by dune-release
   dune-release: [ERROR] Github development repository URL could not be inferred
-  [FAIL] lint of _build/whatever-0.1.0 and package whatever failure: 1 errors.
+  [FAIL] lint of _build/whatever-0.1.0 and package whatever failure: 2 errors.
 
 (2) publish distrib
 

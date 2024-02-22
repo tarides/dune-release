@@ -41,6 +41,7 @@ We make a dry-run release and check that the opam file is correct:
 (1) Creating the distribution archive
 
   $ dune-release distrib --dry-run > /dev/null
+  [1]
 
 (2) Publishing the distribution
 

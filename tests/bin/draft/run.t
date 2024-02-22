@@ -41,6 +41,7 @@ We do the whole `dune-release` process but create a draft release on GitHub.
 (1) `distrib` as normal
 
   $ dune-release distrib --dry-run > /dev/null
+  [1]
 
 (2) `publish` when asking for the release to be created as a draft should
 create a draft release and submit it as such to GitHub. It should also write a

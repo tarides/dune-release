@@ -10,7 +10,7 @@ open Bos_setup
 
 (** {1:cmd Command} *)
 
-val cmd : Cmd.t
+(* val cmd : Cmd.t *)
 (** [cmd] is a command for [opam]. *)
 
 (** {1:publish Publish} *)

@@ -40,6 +40,7 @@ We need to set up a git project for dune-release to work properly
 We make a dry-run release
 
   $ dune-release distrib --dry-run > /dev/null
+  [1]
 
 We create an opam package:
 

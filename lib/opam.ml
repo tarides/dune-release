@@ -10,42 +10,6 @@ module D = struct
   let fetch_head = "${fetch_head}"
 end
 
-let os_tool_env name os =
-  let pre = match os with `Build_os -> "BUILD_OS_" | `Host_os -> "HOST_OS_" in
-  pre ^ String.Ascii.uppercase name
-
-let os_bin_dir_env = function
-  | `Build_os -> "BUILD_OS_BIN"
-  | `Host_os -> "HOST_OS_XBIN"
-
-let os_suff_env = function
-  | `Build_os -> "BUILD_OS_SUFF"
-  | `Host_os -> "HOST_OS_SUFF"
-
-let ocamlfindable name =
-  match name with
-  | ( "ocamlc" | "ocamlcp" | "ocamlmktop" | "ocamlopt" | "ocamldoc" | "ocamldep"
-    | "ocamlmklib" | "ocamlbrowser" ) as tool ->
-      let toolchain = Cmd.empty in
-      Some Cmd.(v "ocamlfind" %% toolchain % tool)
-  | _ -> None
-
-let tool name os =
-  match OS.Env.var (os_tool_env name os) with
-  | Some cmd -> Cmd.v cmd
-  | None -> (
-      match OS.Env.var (os_bin_dir_env os) with
-      | Some path -> Cmd.v Fpath.(to_string @@ (v path / name))
-      | None -> (
-          match OS.Env.var (os_suff_env os) with
-          | Some suff -> Cmd.v (name ^ suff)
-          | None -> (
-              match ocamlfindable name with
-              | Some cmd -> cmd
-              | None -> Cmd.v name)))
-
-let cmd = Cmd.of_list @@ Cmd.to_list @@ tool "opam" `Host_os
-
 (* Publish *)
 
 let shortest x =
