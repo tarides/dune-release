@@ -152,6 +152,17 @@ Running that line once will configure git to always push over https - either for
 
 In more detail: `dune-release publish` always pushes to github over ssh by explicitly giving git the github uri of your project with ssh prefix (`git@github.com:`). By configuring git as suggested above, git will automatically replace that prefix by the https one when pushing and push over https instead.
 
+Even if you set up ssh, the connection may fail when you cloned your project using a ssh alias (to mannage the ssh key to be used).
+The uri prefix to your github repository can be extracted from the result of the next command:
+```
+git config --get remote.origin.url
+```
+
+In such a case, we suggest that you configure git as follows (where `my-ssh-alias-to-github` is the uri prefix to your github repository) :
+```
+git config [--global] url."git@my-ssh-alias-to-github:".pushInsteadOf "git@github.com:"
+```
+
 ### Create an opam package and submit it to the opam repository
 
 To add the package to OCaml's [opam repository](https://github.com/ocaml/opam-repository), we start by creating an opam file to be used on the opam repository. This file includes the download URI for the distribution tarball and the tarball hash:
