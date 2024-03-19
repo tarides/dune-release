@@ -1,0 +1,5 @@
+(executable
+ (name main)
+ (public_name dune_release)
+ (package dune-release)
+ (libraries dune-release.bin dune-release ))
