@@ -1,0 +1,51 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    # Prime the caches every Monday
+    - cron: 0 1 * * MON
+
+permissions: read-all
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+        ocaml-compiler:
+          - 4.14.x
+          - 5.0.x
+          - 5.1.x
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # Clone the project
+      - uses: actions/checkout@v2
+
+      # Setup
+      - name: Setup OCaml ${{ matrix.ocaml-version }}
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          opam-repositories: |
+            tarides: https://github.com/tarides/opam-repository.git
+            default: https://github.com/ocaml/opam-repository.git
+
+      - name: Opam dependencies
+        run: |
+          opam install --deps-only -t .
+          opam install ocamlformat.0.26.1
+
+      - name: Format
+        run: opam exec -- dune fmt
+
+      - name: Runtest
+        run: opam exec -- dune runtest
