@@ -1,4 +1,22 @@
-# Caretaker - taking care of our technical projects
+<h1 align="center">
+  caretaker
+</h1>
+
+<p align="center">
+  <strong>Taking care of our technical projects.</strong>
+</p>
+
+<p align="center">
+  <!--
+  <a href="https://ocaml.ci.dev/github/tarides/caretaker">
+    <img src="https://img.shields.io/endpoint?url=https://ocaml.ci.dev/badge/tarides/caretaker/main&logo=ocaml" alt="OCaml-CI Build Status" />
+  </a>
+  -->
+
+  <a href="https://github.com/tarides/caretaker/actions/workflows/build.yml">
+    <img src="https://github.com/tarides/caretaker/actions/workflows/build.yml/badge.svg?branch=main" alt="Build Status" />
+  </a>
+</p>
 
 ## Build
 
