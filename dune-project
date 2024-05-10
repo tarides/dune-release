@@ -22,7 +22,6 @@
   cohttp-lwt-unix
   yojson
   cmdliner
-  lwt_ssl
   csv
   conduit-lwt-unix
   (okra-lib (and (>= 0.5.0) (< 1.0.0)))

@@ -13,7 +13,6 @@ depends: [
   "cohttp-lwt-unix"
   "yojson"
   "cmdliner"
-  "lwt_ssl"
   "csv"
   "conduit-lwt-unix"
   "okra-lib" {>= "0.5.0" & < "1.0.0"}

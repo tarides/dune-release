@@ -27,7 +27,6 @@ depends: [
   "conduit-lwt-unix" {= "6.2.0" & ?vendor}
   "conf-gmp" {= "4"}
   "conf-gmp-powm-sec" {= "3"}
-  "conf-libssl" {= "4"}
   "conf-pkg-config" {= "3"}
   "cppo" {= "1.6.9" & ?vendor}
   "csexp" {= "1.5.2" & ?vendor}
@@ -47,7 +46,6 @@ depends: [
   "jsonm" {= "1.0.1+dune" & ?vendor}
   "logs" {= "0.7.0+dune2" & ?vendor}
   "lwt" {= "5.6.1" & ?vendor}
-  "lwt_ssl" {= "1.2.0" & ?vendor}
   "macaddr" {= "5.5.0" & ?vendor}
   "magic-mime" {= "1.3.0" & ?vendor}
   "mirage-crypto" {= "0.11.1" & ?vendor}
@@ -75,7 +73,6 @@ depends: [
   "seq" {= "base+dune" & ?vendor}
   "sexplib" {= "v0.16.0" & ?vendor}
   "sexplib0" {= "v0.16.0" & ?vendor}
-  "ssl" {= "0.7.0" & ?vendor}
   "stdlib-shims" {= "0.3.0" & ?vendor}
   "stringext" {= "1.6.0" & ?vendor}
   "uri" {= "4.2.0" & ?vendor}
@@ -102,18 +99,6 @@ depexts: [
   ["gmp-devel"] {os-family = "suse"}
   ["libgmp-dev"] {os-family = "debian"}
   ["libgmp-dev"] {os-family = "ubuntu"}
-  ["libopenssl-devel"] {os-family = "suse"}
-  ["libssl-dev"] {os-family = "debian"}
-  ["libssl-dev"] {os-family = "ubuntu"}
-  ["openssl"] {os-distribution = "homebrew"}
-  ["openssl"] {os-distribution = "macports"}
-  ["openssl"] {os-distribution = "nixos"}
-  ["openssl"] {os-family = "arch"}
-  ["openssl"] {os = "win32" & os-distribution = "cygwinports"}
-  ["openssl-dev"] {os-family = "alpine"}
-  ["openssl-devel"] {os-distribution = "centos"}
-  ["openssl-devel"] {os-distribution = "fedora"}
-  ["openssl-devel"] {os-distribution = "ol"}
   ["pkg-config"] {os-family = "debian"}
   ["pkg-config"] {os = "macos" & os-distribution = "homebrew"}
   ["pkgconf"] {os = "freebsd"}
@@ -270,10 +255,6 @@ pin-depends: [
   ]
   ["lwt.5.6.1" "https://github.com/ocsigen/lwt/archive/5.6.1.tar.gz"]
   [
-    "lwt_ssl.1.2.0"
-    "https://github.com/ocsigen/lwt_ssl/releases/download/1.2.0/lwt_ssl-1.2.0.tbz"
-  ]
-  [
     "macaddr.5.5.0"
     "https://github.com/mirage/ocaml-ipaddr/releases/download/v5.5.0/ipaddr-5.5.0.tbz"
   ]
@@ -361,10 +342,6 @@ pin-depends: [
   [
     "sexplib0.v0.16.0"
     "https://ocaml.janestreet.com/ocaml-core/v0.16/files/sexplib0-v0.16.0.tar.gz"
-  ]
-  [
-    "ssl.0.7.0"
-    "https://github.com/savonet/ocaml-ssl/archive/refs/tags/v0.7.0.tar.gz"
   ]
   [
     "stdlib-shims.0.3.0"
@@ -804,27 +781,11 @@ x-opam-monorepo-duniverse-dirs: [
     ]
   ]
   [
-    "https://github.com/ocsigen/lwt_ssl/releases/download/1.2.0/lwt_ssl-1.2.0.tbz"
-    "lwt_ssl"
-    [
-      "sha256=b3020ad27aecf377e1c3f2740a08b36dcbba991f843066511357410548889a77"
-      "sha512=cf2ef7d4db26e40c044e743ce85849a10eb57c916cbd7d6291bf4458291689098293bfb4cd7f1023f3ae8bc8e9a68cb2c7470669501a9b44695659405a75aa00"
-    ]
-  ]
-  [
     "https://github.com/rgrinberg/stringext/releases/download/1.6.0/stringext-1.6.0.tbz"
     "stringext"
     [
       "sha256=db41f5d52e9eab17615f110b899dfeb27dd7e7f89cd35ae43827c5119db206ea"
       "sha512=d8ebe40f42b598a9bd99f1ef4b00ba93458385a4accd121af66a0bf3b3f8d7135f576740adf1a43081dd409977c2219fd4bdbb5b3d1308890d301d553ed49900"
-    ]
-  ]
-  [
-    "https://github.com/savonet/ocaml-ssl/archive/refs/tags/v0.7.0.tar.gz"
-    "ocaml-ssl"
-    [
-      "md5=0ced13c2beef2135cd9d3a3743ea0e37"
-      "sha512=969c4d64828449a49bdef26ca5f8faa72d2fe2a2304ccbf589a3ff097c2bf8ae9eb83ae1c90216f6b4d6f359e462ea47e0106a7386e26848d14910138fcb07f8"
     ]
   ]
   [
