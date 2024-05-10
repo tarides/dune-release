@@ -48,7 +48,14 @@ let read_timesheets ~years ~weeks ~users ~ids ~lint root =
               (fun acc file ->
                 let path = dir / file in
                 let str = read_file path in
-                Report.of_markdown ~lint ~acc ~path ~year ~week ~users ~ids str)
+                match
+                  Report.of_markdown ~lint ~acc ~path ~year ~week ~users ~ids
+                    str
+                with
+                | Ok r -> r
+                | Error (`Msg x) ->
+                    Fmt.epr "Error: %s\n%!" x;
+                    acc)
               acc files)
         acc weeks)
     (Hashtbl.create 13) years

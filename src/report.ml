@@ -1,3 +1,4 @@
+module F = Filter
 open Okra
 
 let pp_id ppf = function
@@ -11,14 +12,16 @@ type item = {
   month : int;
   week : int;
   user : string;
-  days : float;
+  days : Time.t;
 }
 
 type t = (string, item) Hashtbl.t
 
+let ( let* ) = Result.bind
+
 let month_of_week ~year week =
-  let cal = Calendar.of_week ~year week in
-  Calendar.month cal
+  let* cal = Calendar.of_week ~year week in
+  Ok (Calendar.month cal)
 
 let ignore_sections =
   [
@@ -43,8 +46,8 @@ let pp_exn path ppf = function
   | Parser.Multiple_time_entries s ->
       Fmt.pf ppf "Cannot parse %s: multiple entries found for entry `%s'." path
         s
-  | Parser.Invalid_time s ->
-      Fmt.pf ppf "Cannot parse %s: invalid time for entry `%s'." path s
+  | Parser.Invalid_time { title = _; entry } ->
+      Fmt.pf ppf "Cannot parse %s: invalid time for entry `%s'." path entry
   | Parser.No_work_found _ -> ()
   | Parser.No_KR_ID_found s ->
       Fmt.pf ppf "Cannot parse %s: missing KR ID for `%s'." path s
@@ -54,7 +57,8 @@ let pp_exn path ppf = function
       Fmt.pf ppf "Cannot parse %s: invalid time maths: %a." path
         Fmt.Dump.(list string)
         ss
-  | e -> Fmt.pf ppf "Cannot parse %s: %a" path Fmt.exn e
+  | Parser.Invalid_markdown_in_work_items s ->
+      Fmt.pf ppf "Cannot parse %s: invalid markdown in work items: %s." path s
 
 let match_user users =
   match users with
@@ -68,14 +72,14 @@ let match_ids ids =
   | None -> fun _ -> true
   | Some ids ->
       let ids = List.map (fun id -> (Column.Id, id)) ids in
-      fun u -> Filter.eval ~get:(function Id -> u | _ -> assert false) ids
+      fun u -> F.eval ~get:(function Id -> u | _ -> assert false) ids
 
 let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids ~lint s
     =
   let md = Omd.of_string s in
   let okrs, exns = Parser.of_markdown ~ignore_sections md in
-  let month = month_of_week ~year week in
-  let report, warms = Report.of_krs okrs in
+  let* month = month_of_week ~year week in
+  let report = Report.of_krs okrs in
   let match_user = match_user users in
   let match_ids = match_ids ids in
   Report.iter
@@ -93,14 +97,13 @@ let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids ~lint s
               Hashtbl.add acc id { id; year; month; week; user; days })
           kr.time_per_engineer)
     report;
-  if lint then (
+  if lint then
     List.iter
       (fun e ->
         let s = String.trim (Fmt.str "%a" (pp_exn path) e) in
         if s <> "" then Logs.warn (fun l -> l "%s" s))
       exns;
-    List.iter (fun s -> Logs.warn (fun l -> l "%s" s)) warms);
-  acc
+  Ok acc
 
 let csv_headers = [ "Id"; "Year"; "Month"; "Week"; "User"; "Days" ]
 
@@ -115,7 +118,7 @@ let rows t =
           Fmt.str "%02d" i.month;
           Fmt.str "%02d" i.week;
           Fmt.str "%s" i.user;
-          Fmt.str "%.1f" i.days;
+          Fmt.str "%.1f" i.days.Time.data;
         ]
         :: !result)
     t;
@@ -127,7 +130,7 @@ let of_row x =
     match x with
     | [ id; year; month; week; user; days ] ->
         let i = int_of_string in
-        let f = float_of_string in
+        let f x = Time.days @@ float_of_string x in
         `Row
           {
             id;

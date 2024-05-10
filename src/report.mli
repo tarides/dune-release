@@ -4,7 +4,7 @@ type item = {
   month : int;
   week : int;
   user : string;
-  days : float;
+  days : Okra.Time.t;
 }
 
 type t = (string, item) Hashtbl.t
@@ -18,7 +18,7 @@ val of_markdown :
   ids:Filter.query list option ->
   lint:bool ->
   string ->
-  t
+  (t, [ `Msg of string ]) result
 
 val csv_headers : string list
 val to_csv : t -> string
