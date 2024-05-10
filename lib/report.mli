@@ -20,7 +20,6 @@ val of_markdown :
   string ->
   (t, [ `Msg of string ]) result
 
-val csv_headers : string list
 val to_csv : t -> string
 
 val of_csv :

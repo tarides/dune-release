@@ -76,14 +76,6 @@ val to_json : t -> Yojson.Safe.t
 val of_json : project_id:string -> fields:Fields.t -> Yojson.Safe.t -> t
 
 module Raw : sig
-  val graphql_update :
-    project_id:string ->
-    card_id:string ->
-    fields:Fields.t ->
-    Column.t ->
-    string ->
-    string
-
   val add :
     Fields.t ->
     project_id:string ->
