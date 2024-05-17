@@ -343,7 +343,11 @@ let parse_github_query ~project_id ~fields json =
     | s -> Fmt.failwith "invalid state received from the Github API: %S" s
     | exception Yojson.Safe.Util.Type_error _ -> `Draft
   in
-  let issue_id = json / "content" / "id" |> U.to_string in
+  let issue_id =
+    match state with
+    | `Draft -> ""
+    | `Open | `Closed -> json / "content" / "id" |> U.to_string
+  in
   let issue_url =
     match state with
     | `Draft -> ""
