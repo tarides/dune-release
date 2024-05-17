@@ -141,6 +141,16 @@ let project_goals_term =
     value @@ opt string "goals"
     @@ info ~doc:"The project goals" ~docv:"REPOSITORY" [ "goals" ])
 
+let items_per_page =
+  Arg.(
+    value
+    @@ opt (some int) None
+    @@ info
+         ~doc:
+           "Number of items per page for the GraphQL pagination calls (default \
+            is 80)"
+         [ "items-per-page" ])
+
 let years =
   let all_years = [ 2021; 2022; 2023 ] in
   Arg.(
@@ -288,12 +298,15 @@ let get_goals org repo =
   Fmt.pr "Found %d goals in %s/%s.\n%!" (List.length issues) org repo;
   issues
 
-let get_project org goals project_number data_dir dry_run source =
+let get_project ?items_per_page org goals project_number data_dir dry_run source
+    =
   match (source, dry_run) with
   | Github, true -> Lwt.return (Project.empty org project_number)
   | Github, false ->
       let* goals = get_goals org goals in
-      let+ project = Project.get ~org ~project_number ~goals () in
+      let+ project =
+        Project.get ~org ~project_number ~goals ?items_per_page ()
+      in
       Fmt.epr "Found %d cards in %s/%d.\n%!"
         (List.length (Project.cards project))
         org project_number;
@@ -308,7 +321,7 @@ let get_project org goals project_number data_dir dry_run source =
 
 let fetch =
   let run () org goals project_number okr_updates_dir admin_dir data_dir years
-      weeks users ids dry_run source =
+      weeks users ids dry_run source items_per_page =
     Lwt_main.run
     @@
     let () =
@@ -344,7 +357,9 @@ let fetch =
           Lwt.return ()
       | Github, false ->
           let* goals = get_goals org goals in
-          let+ project = Project.get ~goals ~org ~project_number () in
+          let+ project =
+            Project.get ~goals ~org ~project_number ?items_per_page ()
+          in
           Fmt.epr "Found %d cards in %s/%d.\n%!"
             (List.length (Project.cards project))
             org project_number;
@@ -357,11 +372,12 @@ let fetch =
     Term.(
       const run $ setup $ org_term $ project_goals_term $ project_number_term
       $ okr_updates_dir_term $ admin_dir_term $ data_dir_term $ years $ weeks
-      $ users $ ids $ dry_run_term $ source_term Github)
+      $ users $ ids $ dry_run_term $ source_term Github $ items_per_page)
 
 let default =
   let run () format org goals project_numbers okr_updates_dir admin_dir data_dir
-      timesheets heatmap years weeks users ids source dry_run all =
+      timesheets heatmap years weeks users ids source dry_run all items_per_page
+      =
     Lwt_main.run
     @@
     if timesheets || heatmap then (
@@ -376,7 +392,8 @@ let default =
       Lwt.return ())
     else
       let+ project =
-        get_project org goals project_numbers data_dir dry_run source
+        get_project ?items_per_page org goals project_numbers data_dir dry_run
+          source
       in
       let data =
         if all then { org; project }
@@ -399,16 +416,17 @@ let default =
     const run $ setup $ format $ org_term $ project_goals_term
     $ project_number_term $ okr_updates_dir_term $ admin_dir_term
     $ data_dir_term $ timesheets_term $ heatmap_term $ years $ weeks $ users
-    $ ids $ source_term Local $ dry_run_term $ all)
+    $ ids $ source_term Local $ dry_run_term $ all $ items_per_page)
 
 let show = Cmd.v (Cmd.info "show") default
 
 let sync =
   let run () org goals project_numbers okr_updates_dir admin_dir data_dir years
-      weeks users ids dry_run source =
+      weeks users ids dry_run source items_per_page =
     Lwt_main.run
     @@ let* project =
-         get_project org goals project_numbers data_dir dry_run source
+         get_project ?items_per_page org goals project_numbers data_dir dry_run
+           source
        in
        let timesheets =
          get_timesheets ~years ~weeks ~users ~ids ~okr_updates_dir ~data_dir
@@ -425,14 +443,15 @@ let sync =
     Term.(
       const run $ setup $ org_term $ project_goals_term $ project_number_term
       $ okr_updates_dir_term $ admin_dir_term $ data_dir_term $ years $ weeks
-      $ users $ ids $ dry_run_term $ source_term Local)
+      $ users $ ids $ dry_run_term $ source_term Local $ items_per_page)
 
 let lint =
   let run () org goals project_numbers okr_updates_dir admin_dir data_dir years
-      weeks users ids dry_run source =
+      weeks users ids dry_run source items_per_page =
     Lwt_main.run
     @@ let+ project =
-         get_project org goals project_numbers data_dir dry_run source
+         get_project ?items_per_page org goals project_numbers data_dir dry_run
+           source
        in
        let timesheets =
          get_timesheets ~years ~weeks ~users ~ids ~okr_updates_dir ~data_dir
@@ -445,7 +464,7 @@ let lint =
     Term.(
       const run $ setup $ org_term $ project_goals_term $ project_number_term
       $ okr_updates_dir_term $ admin_dir_term $ data_dir_term $ years $ weeks
-      $ users $ ids $ dry_run_term $ source_term Local)
+      $ users $ ids $ dry_run_term $ source_term Local $ items_per_page)
 
 let cmd = Cmd.group ~default (Cmd.info "caretaker") [ show; lint; sync; fetch ]
 

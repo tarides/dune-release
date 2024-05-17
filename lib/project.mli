@@ -29,7 +29,12 @@ val of_json : Yojson.Safe.t -> t
 (** Queries *)
 
 val get :
-  goals:Issue.t list -> org:string -> project_number:int -> unit -> t Lwt.t
+  goals:Issue.t list ->
+  org:string ->
+  project_number:int ->
+  ?items_per_page:int ->
+  unit ->
+  t Lwt.t
 
 val get_project_id_and_fields :
   org:string -> project_number:int -> (string * Fields.t) Lwt.t

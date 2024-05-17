@@ -1,3 +1,4 @@
+open Lwt.Syntax
 module U = Yojson.Safe.Util
 
 let ( / ) a b = U.member b a
@@ -241,18 +242,15 @@ let diff ?heatmap (t : t) =
 let sync ?heatmap t = Diff.apply (diff ?heatmap t)
 let lint ?heatmap t = Diff.lint (diff ?heatmap t)
 
-let get ~goals ~org ~project_number () =
+let get ~goals ~org ~project_number ?(items_per_page = 80) () =
   find_duplicates goals;
-  let open Lwt.Syntax in
   let rec aux fields cursor acc =
-    let query =
-      Query.make ~org ~project_number ~after:cursor ~items_per_page:80
-    in
+    let query = Query.make ~org ~project_number ~after:cursor ~items_per_page in
     let* json = Github.run query in
     let cursor, project =
       Query.parse ?fields ~project_number ~org ~goals json
     in
-    if List.length project.cards < 100 then
+    if List.length project.cards < items_per_page then
       Lwt.return { project with cards = acc @ project.cards }
     else aux (Some project.fields) (Some cursor) (acc @ project.cards)
   in
