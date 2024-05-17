@@ -1,10 +1,14 @@
 module U = Yojson.Safe.Util
 
+exception Invalid of Yojson.Safe.t * string
+
+let epr_invalid json a b =
+  Fmt.epr "Cannot find field %S in %a\n%!" b Yojson.Safe.pp a;
+  Fmt.epr "JSON: %a\n%!" Yojson.Safe.pp json
+
 let ( / ) a b =
   try U.member b a
-  with Yojson.Safe.Util.Type_error _ as e ->
-    Fmt.epr "Cannot find field %S in %a\n%!" b Yojson.Safe.pp a;
-    raise e
+  with Yojson.Safe.Util.Type_error _ -> raise (Invalid (a, b))
 
 type t = {
   title : string;
@@ -334,6 +338,62 @@ let id_of_url s =
   | id :: _ -> "#" ^ id
   | _ -> assert false
 
+let update acc json =
+  let typename = json / "__typename" |> U.to_string in
+  let k = json / "field" / "name" |> U.to_string in
+  let one () =
+    match Fields.kind_of_string typename with
+    | Number -> json / "number" |> U.to_float |> string_of_float
+    | Text -> json / "text" |> U.to_string
+    | Single_select _ -> json / "name" |> U.to_string
+    | Date -> json / "date" |> U.to_string
+    | Repository -> (
+        try json / "repository" / "name" |> U.to_string with Invalid _ -> "")
+    | Milestones -> json / "milestone" / "url" |> U.to_string
+    | Iteration ->
+        Fmt.epr "Ignoring field %s (kind: iteration)" k;
+        ""
+    | Users | Labels -> assert false
+    | _ -> Fmt.failwith "%s: %s is not a supported field kind" k typename
+  in
+  let many () =
+    let to_names json =
+      json |> U.to_list
+      |> List.fold_left
+           (fun acc json ->
+             match json / "name" with
+             | `String s -> s :: acc
+             | `Null -> acc
+             | _ -> assert false)
+           []
+      |> List.rev
+    in
+    match Fields.kind_of_string typename with
+    | Users -> json / "users" / "nodes" |> to_names
+    | Labels -> json / "labels" / "nodes" |> to_names
+    | _ -> Fmt.failwith "%s: unsupported field kind" typename
+  in
+  let c = Column.of_string k in
+  match c with
+  | Title -> { acc with title = one () }
+  | Id -> { acc with id = one () }
+  | Objective -> assert false
+  | Status -> { acc with status = one () }
+  | Quarter -> { acc with quarter = one () }
+  | Labels -> { acc with labels = many () }
+  | Starts -> { acc with starts = one () }
+  | Size -> { acc with size = one () }
+  | Assignees -> { acc with assignees = many () }
+  | Ends -> { acc with ends = one () }
+  | Funder -> { acc with funder = one () }
+  | Team -> { acc with team = one () }
+  | Pillar -> { acc with pillar = one () }
+  | Tracks -> { acc with tracks = many () }
+  | Stakeholder -> { acc with stakeholder = one () }
+  | Category -> { acc with category = one () }
+  | Progress -> { acc with progress = one () }
+  | Other_field k -> { acc with other_fields = (k, one ()) :: acc.other_fields }
+
 let parse_github_query ~project_id ~fields json =
   let card_id = json / "id" |> U.to_string in
   let state =
@@ -342,6 +402,7 @@ let parse_github_query ~project_id ~fields json =
     | "OPEN" -> `Open
     | s -> Fmt.failwith "invalid state received from the Github API: %S" s
     | exception Yojson.Safe.Util.Type_error _ -> `Draft
+    | exception Invalid _ -> `Draft
   in
   let issue_id =
     match state with
@@ -360,62 +421,10 @@ let parse_github_query ~project_id ~fields json =
         match json with
         | `Assoc [] -> acc
         | `Assoc _ -> (
-            let typename = json / "__typename" |> U.to_string in
-            let k = json / "field" / "name" |> U.to_string in
-            let one () =
-              match Fields.kind_of_string typename with
-              | Number -> json / "number" |> U.to_float |> string_of_float
-              | Text -> json / "text" |> U.to_string
-              | Single_select _ -> json / "name" |> U.to_string
-              | Date -> json / "date" |> U.to_string
-              | Repository -> json / "repository" / "name" |> U.to_string
-              | Milestones -> json / "milestone" / "url" |> U.to_string
-              | Iteration ->
-                  Fmt.epr "Ignoring field %s (kind: iteration)" k;
-                  ""
-              | Users | Labels -> assert false
-              | _ ->
-                  Fmt.failwith "%s: %s is not a supported field kind" k typename
-            in
-            let many () =
-              let to_names json =
-                json |> U.to_list
-                |> List.fold_left
-                     (fun acc json ->
-                       match json / "name" with
-                       | `String s -> s :: acc
-                       | `Null -> acc
-                       | _ -> assert false)
-                     []
-                |> List.rev
-              in
-              match Fields.kind_of_string typename with
-              | Users -> json / "users" / "nodes" |> to_names
-              | Labels -> json / "labels" / "nodes" |> to_names
-              | _ -> Fmt.failwith "%s: unsupported field kind" typename
-            in
-
-            let c = Column.of_string k in
-            match c with
-            | Title -> { acc with title = one () }
-            | Id -> { acc with id = one () }
-            | Objective -> assert false
-            | Status -> { acc with status = one () }
-            | Quarter -> { acc with quarter = one () }
-            | Labels -> { acc with labels = many () }
-            | Starts -> { acc with starts = one () }
-            | Size -> { acc with size = one () }
-            | Assignees -> { acc with assignees = many () }
-            | Ends -> { acc with ends = one () }
-            | Funder -> { acc with funder = one () }
-            | Team -> { acc with team = one () }
-            | Pillar -> { acc with pillar = one () }
-            | Tracks -> { acc with tracks = many () }
-            | Stakeholder -> { acc with stakeholder = one () }
-            | Category -> { acc with category = one () }
-            | Progress -> { acc with progress = one () }
-            | Other_field k ->
-                { acc with other_fields = (k, one ()) :: acc.other_fields })
+            try update acc json
+            with Invalid (a, b) ->
+              epr_invalid json a b;
+              acc)
         | _ -> acc)
       { empty with fields; card_id; issue_id; issue_url; state; project_id }
       json
@@ -425,7 +434,7 @@ let parse_github_query ~project_id ~fields json =
     | `Draft -> ("", "")
     | `Open | `Closed -> (
         match json / "content" / "trackedInIssues" with
-        | exception _ -> ("", "")
+        | exception Invalid _ -> ("", "")
         | json -> json / "nodes" |> parse_objective)
   in
   let id = match t.id with "" -> id_of_url t.issue_url | s -> s in
