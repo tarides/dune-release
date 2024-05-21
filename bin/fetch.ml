@@ -11,8 +11,19 @@ let write_timesheets ~dir t =
   let data = Fmt.str "%a" pp_csv_ts t in
   Fs.write_file file data
 
-let run () org goals project_number okr_updates_dir admin_dir data_dir years
-    weeks users ids dry_run source items_per_page =
+let run
+    ({
+       Common.data_dir;
+       items_per_page;
+       dry_run;
+       project_goals;
+       org;
+       project_number;
+       source;
+       okr_updates_dir;
+       admin_dir;
+       _;
+     } as t) =
   Lwt_main.run
   @@
   let () =
@@ -33,10 +44,7 @@ let run () org goals project_number okr_updates_dir admin_dir data_dir years
     match source with
     | Local | Github -> ()
     | _ ->
-        let report =
-          Fs.get_timesheets ~years ~weeks ~users ~ids ~admin_dir
-            ~okr_updates_dir ~data_dir ~lint:false source
-        in
+        let report = Fs.get_timesheets ~lint:false t in
         write_timesheets ~dir:data_dir report
   in
   let+ () =
@@ -47,7 +55,7 @@ let run () org goals project_number okr_updates_dir admin_dir data_dir years
         Fs.write ~dir:data_dir project;
         Lwt.return ()
     | Github, false ->
-        let* goals = Fs.get_goals ~org ~repo:goals in
+        let* goals = Fs.get_goals ~org ~repo:project_goals in
         let+ project =
           Project.get ~goals ~org ~project_number ?items_per_page ()
         in
@@ -60,8 +68,4 @@ let run () org goals project_number okr_updates_dir admin_dir data_dir years
   ()
 
 let cmd =
-  Cmd.v (Cmd.info "fetch")
-    Term.(
-      const run $ setup $ org_term $ project_goals_term $ project_number_term
-      $ okr_updates_dir_term $ admin_dir_term $ data_dir_term $ years $ weeks
-      $ users $ ids $ dry_run_term $ source_term Github $ items_per_page)
+  Cmd.v (Cmd.info "fetch") Term.(const run $ Common.term ~default_source:Github)

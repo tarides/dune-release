@@ -77,8 +77,19 @@ let get_okr_updates_dir = function
 
 let get_admin_dir = function None -> err_admin_dir () | Some dir -> dir
 
-let get_timesheets ~years ~weeks ~users ~ids ~lint ~data_dir ~okr_updates_dir
-    ~admin_dir = function
+let get_timesheets ~lint
+    {
+      Common.data_dir;
+      years;
+      weeks;
+      users;
+      ids;
+      source;
+      okr_updates_dir;
+      admin_dir;
+      _;
+    } =
+  match source with
   | Common.Local ->
       let file = data_dir / "timesheets.csv" in
       let data = read_file file in
@@ -96,12 +107,21 @@ let get_goals ~org ~repo =
   Fmt.pr "Found %d goals in %s/%s.\n%!" (List.length issues) org repo;
   issues
 
-let get_project ?items_per_page ~org ~goals ~project_number ~data_dir ~dry_run
-    source =
+let get_project
+    {
+      Common.data_dir;
+      source;
+      dry_run;
+      project_number;
+      items_per_page;
+      org;
+      project_goals;
+      _;
+    } =
   match (source, dry_run) with
   | Common.Github, true -> Lwt.return (Project.empty org project_number)
   | Github, false ->
-      let* goals = get_goals ~org ~repo:goals in
+      let* goals = get_goals ~org ~repo:project_goals in
       let+ project =
         Project.get ~org ~project_number ~goals ?items_per_page ()
       in

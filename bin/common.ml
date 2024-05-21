@@ -124,12 +124,60 @@ let token =
             one, stored under `/.github/github-activity-token`."
          [ "token" ])
 
-let setup =
-  let style_renderer = Fmt_cli.style_renderer ~docs:common_options () in
-  Term.(
-    const (fun style_renderer level token ->
-        Fmt_tty.setup_std_outputs ?style_renderer ();
-        Logs.set_level level;
-        Logs.set_reporter (Logs_fmt.reporter ());
-        match token with None -> () | Some t -> Github.Token.set t)
-    $ style_renderer $ Logs_cli.level () $ token)
+let setup () =
+  let open Let_syntax_cmdliner in
+  let+ style_renderer = Fmt_cli.style_renderer ~docs:common_options ()
+  and+ token = token
+  and+ level = Logs_cli.level () in
+  Logs.set_level level;
+  Logs.set_reporter (Logs_fmt.reporter ());
+  Fmt_tty.setup_std_outputs ?style_renderer ();
+  match token with None -> () | Some t -> Github.Token.set t
+
+type t = {
+  org : string;
+  source : source;
+  dry_run : bool;
+  project_number : int;
+  project_goals : string;
+  items_per_page : int option;
+  years : int list;
+  weeks : Weeks.t;
+  users : string list option;
+  ids : Filter.query list option;
+  data_dir : string;
+  okr_updates_dir : string option;
+  admin_dir : string option;
+}
+
+let term ~default_source =
+  let open Let_syntax_cmdliner in
+  let+ () = setup ()
+  and+ org = org_term
+  and+ source = source_term default_source
+  and+ dry_run = dry_run_term
+  and+ project_number = project_number_term
+  and+ project_goals = project_goals_term
+  and+ items_per_page = items_per_page
+  and+ years = years
+  and+ weeks = weeks
+  and+ users = users
+  and+ ids = ids
+  and+ data_dir = data_dir_term
+  and+ okr_updates_dir = okr_updates_dir_term
+  and+ admin_dir = admin_dir_term in
+  {
+    org;
+    source;
+    dry_run;
+    project_number;
+    project_goals;
+    items_per_page;
+    years;
+    weeks;
+    users;
+    ids;
+    data_dir;
+    okr_updates_dir;
+    admin_dir;
+  }

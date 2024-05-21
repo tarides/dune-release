@@ -60,25 +60,18 @@ let timesheets_term =
 let heatmap_term =
   Arg.(value @@ flag @@ info ~doc:"Display heatmap reports" [ "heatmap" ])
 
-let run () format org goals project_number okr_updates_dir admin_dir data_dir
-    timesheets heatmap years weeks users ids source dry_run all items_per_page =
+let run format timesheets heatmap all ({ org; ids; users; _ } as t) =
   Lwt_main.run
   @@
   if timesheets || heatmap then (
-    let ts =
-      Fs.get_timesheets ~years ~weeks ~users ~ids ~admin_dir ~okr_updates_dir
-        ~data_dir ~lint:false source
-    in
+    let ts = Fs.get_timesheets ~lint:false t in
     (if heatmap then
        let heatmap = Heatmap.of_report ts in
        out_heatmap ~format heatmap);
     if timesheets then out_timesheets ts;
     Lwt.return ())
   else
-    let+ project =
-      Fs.get_project ?items_per_page ~org ~goals ~project_number ~data_dir
-        ~dry_run source
-    in
+    let+ project = Fs.get_project t in
     let data =
       if all then { org; project }
       else
@@ -98,9 +91,7 @@ let run () format org goals project_number okr_updates_dir admin_dir data_dir
 
 let term =
   Term.(
-    const run $ setup $ format $ org_term $ project_goals_term
-    $ project_number_term $ okr_updates_dir_term $ admin_dir_term
-    $ data_dir_term $ timesheets_term $ heatmap_term $ years $ weeks $ users
-    $ ids $ source_term Local $ dry_run_term $ all $ items_per_page)
+    const run $ format $ timesheets_term $ heatmap_term $ all
+    $ Common.term ~default_source:Local)
 
 let cmd = Cmd.v (Cmd.info "show") term
