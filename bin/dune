@@ -1,7 +1,7 @@
 (executable
  (name main)
  (public_name caretaker)
- (modules main common fs lint sync fetch)
+ (modules main common fs lint sync fetch show)
  (libraries caretaker fmt.tty fmt.cli fmt cmdliner logs.cli))
 
 (executable
