@@ -1,7 +1,7 @@
 (executable
  (name main)
  (public_name caretaker)
- (modules main)
+ (modules main common)
  (libraries caretaker fmt.tty fmt.cli fmt cmdliner logs.cli))
 
 (executable
