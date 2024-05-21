@@ -11,3 +11,6 @@ build:
 
 push:
 	docker buildx build --platform=${PLATFORMS} -t ${IMAGE} . --push
+
+run:
+	docker run -it -v ${HOME}/.github:/root/.github tarides/caretaker fetch
