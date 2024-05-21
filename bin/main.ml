@@ -170,33 +170,8 @@ let default =
 
 let show = Cmd.v (Cmd.info "show") default
 
-let sync =
-  let run () org goals project_number okr_updates_dir admin_dir data_dir years
-      weeks users ids dry_run source items_per_page =
-    Lwt_main.run
-    @@ let* project =
-         Fs.get_project ?items_per_page ~org ~goals ~project_number ~data_dir
-           ~dry_run source
-       in
-       let timesheets =
-         Fs.get_timesheets ~years ~weeks ~users ~ids ~okr_updates_dir ~data_dir
-           ~admin_dir ~lint:false source
-       in
-       let heatmap = Heatmap.of_report timesheets in
-       let filter_out =
-         [ (Column.Id, Filter.is "New KR"); (Id, Filter.is "") ]
-       in
-       let data = filter ~filter_out { org; project } in
-       Project.sync ~heatmap data.project
-  in
-  Cmd.v (Cmd.info "sync")
-    Term.(
-      const run $ setup $ org_term $ project_goals_term $ project_number_term
-      $ okr_updates_dir_term $ admin_dir_term $ data_dir_term $ years $ weeks
-      $ users $ ids $ dry_run_term $ source_term Local $ items_per_page)
-
 let cmd =
-  Cmd.group ~default (Cmd.info "caretaker") [ show; Lint.cmd; sync; fetch ]
+  Cmd.group ~default (Cmd.info "caretaker") [ show; Lint.cmd; Sync.cmd; fetch ]
 
 let () =
   let () = Printexc.record_backtrace true in
