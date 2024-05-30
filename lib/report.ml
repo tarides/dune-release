@@ -1,11 +1,6 @@
 module F = Filter
 open Okra
 
-let pp_id ppf = function
-  | KR.New_KR -> Fmt.pf ppf "New KR"
-  | No_KR -> Fmt.pf ppf "No KR"
-  | ID s -> Fmt.pf ppf "%s" s
-
 type item = {
   id : string;
   year : int;
@@ -40,26 +35,6 @@ let ignore_sections =
     "Activity (move these items to last week)";
   ]
 
-let pp_exn path ppf = function
-  | Parser.No_time_found s ->
-      Fmt.pf ppf "Cannot parse %s: no time found for entry `%s'." path s
-  | Parser.Multiple_time_entries s ->
-      Fmt.pf ppf "Cannot parse %s: multiple entries found for entry `%s'." path
-        s
-  | Parser.Invalid_time { title = _; entry } ->
-      Fmt.pf ppf "Cannot parse %s: invalid time for entry `%s'." path entry
-  | Parser.No_work_found _ -> ()
-  | Parser.No_KR_ID_found s ->
-      Fmt.pf ppf "Cannot parse %s: missing KR ID for `%s'." path s
-  | Parser.No_project_found s ->
-      Fmt.pf ppf "Cannot parse %s: missing project for `%s'." path s
-  | Parser.Not_all_includes_accounted_for ss ->
-      Fmt.pf ppf "Cannot parse %s: invalid time maths: %a." path
-        Fmt.Dump.(list string)
-        ss
-  | Parser.Invalid_markdown_in_work_items s ->
-      Fmt.pf ppf "Cannot parse %s: invalid markdown in work items: %s." path s
-
 let match_user users =
   match users with
   | None -> fun _ -> true
@@ -77,18 +52,23 @@ let match_ids ids =
 let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids ~lint s
     =
   let md = Omd.of_string s in
-  let okrs, exns = Parser.of_markdown ~ignore_sections md in
+  let okrs, parser_warnings =
+    Parser.of_markdown ~ignore_sections Parser.Engineer md
+  in
   let* month = month_of_week ~year week in
-  let report = Report.of_krs okrs in
+  let report, kr_warnings = Report.of_krs okrs in
   let match_user = match_user users in
   let match_ids = match_ids ids in
   Report.iter
     (fun (kr : KR.t) ->
       let id =
-        match kr.id with
-        | No_KR -> Fmt.str "(%s)" kr.title
-        | New_KR -> Fmt.str "(new: %s)" kr.title
-        | _ -> Fmt.str "%a" pp_id kr.id
+        match kr.kind with
+        | Meta m -> Fmt.str "%a" KR.Meta.pp m
+        | Work kr -> (
+            match kr.id with
+            | No_KR -> Fmt.str "(%s)" kr.title
+            | New_KR -> Fmt.str "(new: %s)" kr.title
+            | _ -> Fmt.str "%a" KR.Work.Id.pp kr.id)
       in
       if match_ids id then
         Hashtbl.iter
@@ -97,12 +77,15 @@ let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids ~lint s
               Hashtbl.add acc id { id; year; month; week; user; days })
           kr.time_per_engineer)
     report;
-  if lint then
+  if lint then (
     List.iter
       (fun e ->
-        let s = String.trim (Fmt.str "%a" (pp_exn path) e) in
-        if s <> "" then Logs.warn (fun l -> l "%s" s))
-      exns;
+        Logs.warn (fun l ->
+            l "Cannot parse %s: %a" path Parser.Warning.pp_short e))
+      parser_warnings;
+    List.iter
+      (fun e -> Logs.warn (fun l -> l "%a" KR.Warning.pp_short e))
+      kr_warnings);
   Ok acc
 
 let csv_headers = [ "Id"; "Year"; "Month"; "Week"; "User"; "Days" ]
