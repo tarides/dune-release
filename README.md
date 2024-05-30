@@ -21,7 +21,6 @@
 ## Build
 
 ```
-$ opam monorepo pull
 $ dune build
 ```
 
