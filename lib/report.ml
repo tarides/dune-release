@@ -83,9 +83,11 @@ let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids ~lint s
         Logs.warn (fun l ->
             l "Cannot parse %s: %a" path Parser.Warning.pp_short e))
       parser_warnings;
-    List.iter
-      (fun e -> Logs.warn (fun l -> l "%a" KR.Warning.pp_short e))
-      kr_warnings);
+    let pp ppf = function
+      | #KR.Error.t as e -> KR.Error.pp_short ppf e
+      | #KR.Warning.t as w -> KR.Warning.pp_short ppf w
+    in
+    List.iter (fun e -> Logs.warn (fun l -> l "%a" pp e)) kr_warnings);
   Ok acc
 
 let csv_headers = [ "Id"; "Year"; "Month"; "Week"; "User"; "Days" ]
