@@ -64,6 +64,11 @@ let body3 =
 let c666 = "https://github.com/tarides/platform-roadmap/issues/666"
 let c667 = "https://github.com/tarides/platform-roadmap/issues/667"
 
+let lines =
+  let pp = Fmt.lines in
+  let equal = String.equal in
+  Alcotest.testable pp equal
+
 let test_tracked_issues () =
   let t = Issue.v ~body 12 in
   let t0 = Issue.v ~body:body0 12 in
@@ -73,9 +78,9 @@ let test_tracked_issues () =
 
   let x2 = Issue.with_tracks t [ c666 ] in
   let x3 = Issue.with_tracks t [ c666; c667 ] in
-  Alcotest.(check string) __LOC__ (Issue.body t0) (Issue.body x0);
-  Alcotest.(check string) __LOC__ (Issue.body t2) (Issue.body x2);
-  Alcotest.(check string) __LOC__ (Issue.body t3) (Issue.body x3)
+  Alcotest.check lines __LOC__ (Issue.body t0) (Issue.body x0);
+  Alcotest.check lines __LOC__ (Issue.body t2) (Issue.body x2);
+  Alcotest.check lines __LOC__ (Issue.body t3) (Issue.body x3)
 
 let issue_t = Alcotest.testable Issue.pp ( = )
 
