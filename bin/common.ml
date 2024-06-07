@@ -47,7 +47,7 @@ let items_per_page =
          [ "items-per-page" ])
 
 let years =
-  let all_years = [ 2021; 2022; 2023 ] in
+  let all_years = [ 2021; 2022; 2023; 2024 ] in
   Arg.(
     value
     @@ opt (list ~sep:',' int) all_years
