@@ -3,29 +3,24 @@ open Lwt.Syntax
 
 let ( / ) = Filename.concat
 
-let read_file f =
-  let ic = open_in f in
-  let s = really_input_string ic (in_channel_length ic) in
-  close_in ic;
-  s
+let with_in_file path f =
+  let ic = Stdlib.open_in path in
+  Fun.protect ~finally:(fun () -> Stdlib.close_in_noerr ic) (fun () -> f ic)
 
-let write_file f data =
-  Fmt.pr "Writing %s\n%!" f;
-  let dir = Filename.dirname f in
+let with_out_file filename f =
+  Fmt.pr "Writing %s\n%!" filename;
+  let dir = Filename.dirname filename in
   (if not (Sys.file_exists dir) then
      let _ = Fmt.kstr Sys.command "mkdir -p %S" dir in
      ());
-  let oc = open_out f in
-  output_string oc data;
-  flush oc;
-  close_out oc
+  Out_channel.with_open_text filename f
 
 let write ~dir p =
   (* save what is needed to update offline *)
   let file = dir / Fmt.str "%s-%d.json" (Project.org p) (Project.number p) in
   let json = Project.to_json p in
   let data = Yojson.Safe.to_string ~std:true json in
-  write_file file data
+  with_out_file file (fun oc -> output_string oc data)
 
 let read_timesheets ~years ~weeks ~users ~ids ~lint root =
   let weeks = Weeks.to_ints weeks in
@@ -45,10 +40,9 @@ let read_timesheets ~years ~weeks ~users ~ids ~lint root =
             List.fold_left
               (fun acc file ->
                 let path = dir / file in
-                let str = read_file path in
                 match
-                  Report.of_markdown ~lint ~acc ~path ~year ~week ~users ~ids
-                    str
+                  with_in_file path
+                    (Report.of_markdown ~lint ~acc ~path ~year ~week ~users ~ids)
                 with
                 | Ok r -> r
                 | Error (`Msg x) ->
@@ -93,8 +87,7 @@ let get_timesheets ~lint
   match source with
   | Local ->
       let file = data_dir / "timesheets.csv" in
-      let data = read_file file in
-      Report.of_csv ~years ~weeks ~users ~ids data
+      with_in_file file (Report.of_csv ~years ~weeks ~users ~ids)
   | Okr_updates ->
       let dir = get_okr_updates_dir okr_updates_dir in
       read_timesheets_from_okr_updates ~years ~weeks ~users ~ids ~lint dir
@@ -135,8 +128,7 @@ let get_project
   | Local, _ ->
       let file = data_dir / Fmt.str "%s-%d.json" org project_number in
       if not (Sys.file_exists file) then failwith "Run `caretaker fetch' first";
-      let data = read_file file in
-      let json = Yojson.Safe.from_string data in
+      let json = with_in_file file Yojson.Safe.from_channel in
       Lwt.return (Project.of_json json)
   | _ ->
       Fmt.epr "invalid source: cannot read project from %a\n" Common.pp_source

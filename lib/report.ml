@@ -51,7 +51,7 @@ let match_ids ids =
 
 let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids ~lint s
     =
-  let md = Omd.of_string s in
+  let md = Omd.of_channel s in
   let okrs, parser_warnings =
     Parser.of_markdown ~ignore_sections Parser.Engineer md
   in
@@ -128,17 +128,15 @@ let of_row x =
     | [] | [ "" ] -> `Skip
     | _ -> Fmt.failwith "invalid row: %a" Fmt.Dump.(list string) x
 
-let to_csv t =
+let to_csv oc t =
   let rows = rows t in
-  let buffer = Buffer.create 10 in
-  let out = Csv.to_buffer ~quote_all:true buffer in
+  let out = Csv.to_channel ~quote_all:true oc in
   Csv.output_all out (csv_headers :: rows);
-  Csv.close_out out;
-  Buffer.contents buffer
+  Csv.close_out out
 
 let of_csv ~years ~weeks ~users ~ids s =
   let weeks = Weeks.to_ints weeks in
-  let input = Csv.of_string s in
+  let input = Csv.of_channel s in
   let csv = Csv.input_all input in
   let t = Hashtbl.create 13 in
   let match_user = match_user users in

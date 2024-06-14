@@ -17,15 +17,15 @@ val of_markdown :
   users:string list option ->
   ids:Filter.query list option ->
   lint:bool ->
-  string ->
+  in_channel ->
   (t, [ `Msg of string ]) result
 
-val to_csv : t -> string
+val to_csv : out_channel -> t -> unit
 
 val of_csv :
   years:int list ->
   weeks:Weeks.t ->
   users:string list option ->
   ids:Filter.query list option ->
-  string ->
+  in_channel ->
   t

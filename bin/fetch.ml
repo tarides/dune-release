@@ -4,12 +4,10 @@ open Common
 open Caretaker
 
 let ( / ) = Filename.concat
-let pp_csv_ts ppf t = Fmt.string ppf (Report.to_csv t)
 
 let write_timesheets ~dir t =
   let file = dir / "timesheets.csv" in
-  let data = Fmt.str "%a" pp_csv_ts t in
-  IO.write_file file data
+  IO.with_out_file file (fun oc -> Report.to_csv oc t)
 
 let fetch_timesheets ~dir t =
   match t.source with

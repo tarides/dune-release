@@ -10,7 +10,6 @@ let pp ppf t =
   Project.pp ppf t.project
 
 let pp_csv headers ppf t = Fmt.string ppf (Project.to_csv ~headers t.project)
-let pp_csv_ts ppf t = Fmt.string ppf (Report.to_csv t)
 
 let filter ?filter_out data =
   let filter = Project.filter ?filter_out in
@@ -23,7 +22,7 @@ let out ~format t =
   | `Plain -> Fmt.pr "%a\n%!" pp t
   | `CSV -> Fmt.pr "%a%!" (pp_csv format.fields) t
 
-let out_timesheets t = Fmt.pr "%a%!" pp_csv_ts t
+let out_timesheets t = Report.to_csv stdout t
 
 let out_heatmap ~format t =
   match format.style with
