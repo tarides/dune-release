@@ -40,6 +40,7 @@ let read_timesheets ~years ~weeks ~users ~ids ~lint root =
             let files =
               Sys.readdir dir |> Array.to_list
               |> List.filter (fun file -> String.ends_with ~suffix:".md" file)
+              |> List.stable_sort String.compare
             in
             List.fold_left
               (fun acc file ->
@@ -90,7 +91,7 @@ let get_timesheets ~lint
       _;
     } =
   match source with
-  | Common.Local ->
+  | Local ->
       let file = data_dir / "timesheets.csv" in
       let data = read_file file in
       Report.of_csv ~years ~weeks ~users ~ids data
@@ -100,7 +101,9 @@ let get_timesheets ~lint
   | Admin ->
       let dir = get_admin_dir admin_dir in
       read_timesheets_from_admin ~years ~weeks ~users ~ids ~lint dir
-  | Github -> failwith "invalid source: cannot read timesheets on Github"
+  | Github ->
+      Fmt.epr "invalid source: cannot read timesheets on Github\n";
+      exit 1
 
 let get_goals ~org ~repo =
   let+ issues = Issue.list ~org ~repo () in
@@ -119,7 +122,7 @@ let get_project
       _;
     } =
   match (source, dry_run) with
-  | Common.Github, true -> Lwt.return (Project.empty org project_number)
+  | Github, true -> Lwt.return (Project.empty org project_number)
   | Github, false ->
       let* goals = get_goals ~org ~repo:project_goals in
       let+ project =
@@ -135,4 +138,7 @@ let get_project
       let data = read_file file in
       let json = Yojson.Safe.from_string data in
       Lwt.return (Project.of_json json)
-  | _ -> failwith "invalid source"
+  | _ ->
+      Fmt.epr "invalid source: cannot read project from %a\n" Common.pp_source
+        source;
+      exit 1

@@ -8,6 +8,12 @@ let org_term =
 
 type source = Github | Okr_updates | Admin | Local
 
+let pp_source ppf = function
+  | Github -> Fmt.pf ppf "github"
+  | Okr_updates -> Fmt.pf ppf "okr-updates"
+  | Admin -> Fmt.pf ppf "admin"
+  | Local -> Fmt.pf ppf "local"
+
 let source_term default =
   let sources =
     Arg.enum

@@ -25,7 +25,7 @@
   csv
   conduit-lwt-unix
   lwt_ssl
-  (okra-lib (and (>= 2.0.0) (< 3.0.0)))
+  (okra-lib (and (>= 2.0.1) (< 3.0.0)))
   (omd (>= 2.0.0~alpha4))
   calendar
   (alcotest :with-test)))

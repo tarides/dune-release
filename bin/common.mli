@@ -19,3 +19,4 @@ type t = {
 }
 
 val term : default_source:source -> t Term.t
+val pp_source : source Fmt.t
