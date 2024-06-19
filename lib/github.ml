@@ -53,11 +53,11 @@ module Graphql = struct
     let headers = [ ("Authorization", "bearer " ^ token) ] in
     { meth = `POST; url; headers; body }
 
-  let ratelimit_remaining = ref max_int
+  let ratelimit_remaining = ref None
 
   let update_ratelimit_remaining headers =
     match List.assoc_opt "x-ratelimit-remaining" headers with
-    | Some x -> ratelimit_remaining := int_of_string x
+    | Some x -> ratelimit_remaining := Some (int_of_string x)
     | None -> ()
 
   let exec request =
@@ -89,9 +89,13 @@ module Graphql = struct
                Curly.Error.pp e))
 end
 
+let pp_ratelimit_remaining ppf () =
+  match !Graphql.ratelimit_remaining with
+  | None -> ()
+  | Some i -> Fmt.pf ppf "(remaining points: %d)" i
+
 let run query =
-  Fmt.pr "Querying Github (remaining points: %d) ... \n%!"
-    !Graphql.ratelimit_remaining;
+  Fmt.pr "Querying Github %a... \n%!" pp_ratelimit_remaining ();
   if Hashtbl.mem cache query then Lwt.return (Hashtbl.find cache query)
   else (
     if debug then Fmt.epr "QUERY: %s\n%!" query;

@@ -100,7 +100,7 @@ query {
       json;
     fields
 
-  let parse ?fields ~org ~project_number ~goals json =
+  let parse_exn ?fields ~org ~project_number ~goals json =
     let json = json / "data" / "organization" / "projectV2" in
     let project_id = json / "id" |> U.to_string in
     let fields =
@@ -138,6 +138,13 @@ query {
             number = project_number;
             goals;
           } )
+
+  let parse ?fields ~org ~project_number ~goals json =
+    match parse_exn ?fields ~org ~project_number ~goals json with
+    | r -> r
+    | exception (Yojson.Safe.Util.Type_error (e, _) as err) ->
+        Fmt.epr "Error: %s\n%a\n%!" e Yojson.Safe.pp json;
+        raise err
 end
 
 let filter ?(filter_out = Filter.default_out) data =
