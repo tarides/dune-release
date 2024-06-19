@@ -29,15 +29,76 @@ let debug =
   | _ -> true
   | exception Not_found -> false
 
+module Graphql = struct
+  (* copy from get-activity *)
+  let ( / ) a b = Yojson.Safe.Util.member b a
+
+  type request = {
+    meth : Curly.Meth.t;
+    url : string;
+    headers : Curly.Header.t;
+    body : Yojson.Safe.t;
+  }
+
+  let request ?variables ~token ~query () =
+    let body =
+      `Assoc
+        (("query", `String query)
+        ::
+        (match variables with
+        | None -> []
+        | Some v -> [ ("variables", `Assoc v) ]))
+    in
+    let url = "https://api.github.com/graphql" in
+    let headers = [ ("Authorization", "bearer " ^ token) ] in
+    { meth = `POST; url; headers; body }
+
+  let ratelimit_remaining = ref max_int
+
+  let update_ratelimit_remaining headers =
+    match List.assoc_opt "x-ratelimit-remaining" headers with
+    | Some x -> ratelimit_remaining := int_of_string x
+    | None -> ()
+
+  let exec request =
+    let { meth; url; headers; body } = request in
+    let body = Yojson.Safe.to_string body in
+    let request = Curly.Request.make ~headers ~body ~url ~meth () in
+    Logs.debug (fun m -> m "request: @[%a@]@." Curly.Request.pp request);
+    match Curly.run request with
+    | Ok ({ Curly.Response.body; headers; _ } as response) -> (
+        update_ratelimit_remaining headers;
+        Logs.debug (fun m -> m "response: @[%a@]@." Curly.Response.pp response);
+        let json = Yojson.Safe.from_string body in
+        match json / "message" with
+        | `Null -> Ok json
+        | `String e ->
+            Error
+              (`Msg (Format.asprintf "@[<v2>GitHub returned errors: %s@]" e))
+        | _errors ->
+            Error
+              (`Msg
+                (Format.asprintf "@[<v2>GitHub returned errors: %a@]"
+                   (Yojson.Safe.pretty_print ~std:true)
+                   json)))
+    | Error e ->
+        Error
+          (`Msg
+            (Format.asprintf
+               "@[<v2>Error performing GraphQL query on GitHub: %a@]"
+               Curly.Error.pp e))
+end
+
 let run query =
-  Fmt.pr "Querying Github...\n%!";
+  Fmt.pr "Querying Github (remaining points: %d) ... \n%!"
+    !Graphql.ratelimit_remaining;
   if Hashtbl.mem cache query then Lwt.return (Hashtbl.find cache query)
   else (
     if debug then Fmt.epr "QUERY: %s\n%!" query;
     let token = Lazy.force Token.t in
-    let request = Get_activity.Graphql.request ~token ~query () in
+    let request = Graphql.request ~token ~query () in
     let response =
-      match Get_activity.Graphql.exec request with
+      match Graphql.exec request with
       | Ok resp -> resp
       | Error (`Msg msg) ->
           Fmt.failwith "@[<v2>Error performing GraphQL query on GitHub: %s@]"
