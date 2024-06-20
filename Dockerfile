@@ -10,5 +10,6 @@ RUN opam exec -- dune build
 
 FROM alpine
 COPY --from=build /src/_build/install/default/bin/caretaker /caretaker
+RUN apk add curl
 WORKDIR /src
 ENTRYPOINT ["/caretaker"]
