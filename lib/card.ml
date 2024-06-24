@@ -36,7 +36,6 @@ type t = {
   issue_url : string;
   state : [ `Open | `Closed | `Draft ];
   tracked_by : string; (* the ID of the [objective] field *)
-  fields : Fields.t;
 }
 
 let v ?(title = "") ?(objective = "") ?(status = "") ?(labels = []) ?(team = "")
@@ -63,7 +62,6 @@ let v ?(title = "") ?(objective = "") ?(status = "") ?(labels = []) ?(team = "")
     starts;
     ends;
     other_fields;
-    fields = Fields.empty ();
     project_id;
     card_id;
     issue_id;
@@ -151,7 +149,7 @@ let to_json t =
         ("tracked-by", `String t.tracked_by);
       ])
 
-let of_json ~project_id ~fields json =
+let of_json ~project_id json =
   let id = json / "id" |> U.to_string in
   let objective = json / "objective" |> U.to_string in
   let title = json / "title" |> U.to_string in
@@ -195,7 +193,6 @@ let of_json ~project_id ~fields json =
     other_fields;
     card_id;
     project_id;
-    fields;
     issue_id;
     issue_url;
     state;
@@ -394,7 +391,7 @@ let update acc json =
   | Progress -> { acc with progress = one () }
   | Other_field k -> { acc with other_fields = (k, one ()) :: acc.other_fields }
 
-let parse_github_query ~project_id ~fields json =
+let parse_github_query ~project_id json =
   let card_id = json / "id" |> U.to_string in
   let state =
     match json / "content" / "state" |> U.to_string with
@@ -426,7 +423,7 @@ let parse_github_query ~project_id ~fields json =
               epr_invalid json a b;
               acc)
         | _ -> acc)
-      { empty with fields; card_id; issue_id; issue_url; state; project_id }
+      { empty with card_id; issue_id; issue_url; state; project_id }
       json
   in
   let objective, tracked_by =
@@ -604,5 +601,5 @@ module Raw = struct
     update fields ~project_id ~card_id row
 end
 
-let graphql_mutate { project_id; card_id; fields; _ } =
+let graphql_mutate ~fields { project_id; card_id; _ } =
   Raw.graphql_update ~project_id ~card_id ~fields

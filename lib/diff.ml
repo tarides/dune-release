@@ -155,7 +155,7 @@ let lint diff =
       List.iter (fun i -> Fmt.pr "%a\n" pp_item i) items)
     teams
 
-let apply diff =
+let apply ~fields diff =
   Lwt_list.iter_s
     (fun item ->
       if skip item then (
@@ -185,7 +185,7 @@ let apply diff =
         | Card (Column { column = Status; _ }) ->
             assert false
         | Card (Column { card; column; set; _ }) ->
-            let s = Card.graphql_mutate card column set in
+            let s = Card.graphql_mutate ~fields card column set in
             if dry_run then Lwt.return ()
             else (
               Fmt.pr "APPLY: %a\n%!" pp_item item;

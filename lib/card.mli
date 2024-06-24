@@ -55,13 +55,12 @@ val get_string : t -> Column.t -> string
 val get_json : t -> Column.t -> Yojson.Safe.t
 val other_fields : t -> (string * string) list
 val graphql_query : string
-val graphql_mutate : t -> Column.t -> string -> string
+val graphql_mutate : fields:Fields.t -> t -> Column.t -> string -> string
 val pp : t Fmt.t
 val default_csv_headers : Column.t list
 val to_csv : headers:Column.t list -> t -> string list
 
-val parse_github_query :
-  project_id:string -> fields:Fields.t -> Yojson.Safe.t -> t
+val parse_github_query : project_id:string -> Yojson.Safe.t -> t
 (** Read from Github query *)
 
 (** Filters *)
@@ -73,7 +72,7 @@ val order_by : Column.t -> t list -> (string * t list) list
 (** read from local data *)
 
 val to_json : t -> Yojson.Safe.t
-val of_json : project_id:string -> fields:Fields.t -> Yojson.Safe.t -> t
+val of_json : project_id:string -> Yojson.Safe.t -> t
 
 module Raw : sig
   val add :

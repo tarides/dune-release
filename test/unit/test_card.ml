@@ -15,9 +15,7 @@ let card_t = Alcotest.testable Card.pp ( = )
 
 let test_json () =
   let json = Card.to_json card in
-  let x =
-    Card.of_json ~project_id:"PROJECT-ID" ~fields:(Fields.empty ()) json
-  in
+  let x = Card.of_json ~project_id:"PROJECT-ID" json in
   Alcotest.(check card_t) __LOC__ card x
 
 let tests = ("cards", [ Alcotest.test_case "json" `Quick test_json ])

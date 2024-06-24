@@ -124,8 +124,7 @@ query {
         let cursor = (List.rev edges |> List.hd) / "cursor" |> U.to_string in
         let cards =
           List.map
-            (fun edge ->
-              edge / "node" |> Card.parse_github_query ~project_id ~fields)
+            (fun edge -> edge / "node" |> Card.parse_github_query ~project_id)
             edges
         in
         ( cursor,
@@ -220,7 +219,7 @@ let of_json json =
   let project_id = json / "project-id" |> U.to_string in
   let org = json / "org" |> U.to_string in
   let cards =
-    json / "cards" |> U.to_list |> List.map (Card.of_json ~fields ~project_id)
+    json / "cards" |> U.to_list |> List.map (Card.of_json ~project_id)
   in
   let goals = json / "goals" |> U.to_list |> List.map Issue.of_json in
   find_duplicates goals;
@@ -246,7 +245,7 @@ let diff ?heatmap (t : t) =
   let diffs = Diff.concat (goals @ diffs) in
   diffs
 
-let sync ?heatmap t = Diff.apply (diff ?heatmap t)
+let sync ?heatmap t = Diff.apply ~fields:t.fields (diff ?heatmap t)
 let lint ?heatmap t = Diff.lint (diff ?heatmap t)
 
 let get ~goals ~org ~project_number ?(items_per_page = 80) () =
