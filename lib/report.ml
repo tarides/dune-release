@@ -91,23 +91,25 @@ let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids ~lint s
   Ok acc
 
 let csv_headers = [ "Id"; "Year"; "Month"; "Week"; "User"; "Days" ]
+let ( or ) x y = if x = 0 then y else x
+
+let compare_items x y =
+  Int.compare x.year y.year
+  or String.compare x.user y.user
+  or Int.compare x.month y.month
+  or Int.compare x.week y.week or String.compare x.id y.id
 
 let rows t =
-  let result = ref [] in
-  Hashtbl.iter
-    (fun _ i ->
-      result :=
-        [
-          i.id;
-          Fmt.str "%d" i.year;
-          Fmt.str "%02d" i.month;
-          Fmt.str "%02d" i.week;
-          Fmt.str "%s" i.user;
-          Fmt.str "%.1f" i.days.Time.data;
-        ]
-        :: !result)
-    t;
-  !result
+  Hashtbl.to_seq_values t |> List.of_seq |> List.sort compare_items
+  |> List.map (fun i ->
+         [
+           i.id;
+           Fmt.str "%d" i.year;
+           Fmt.str "%02d" i.month;
+           Fmt.str "%02d" i.week;
+           Fmt.str "%s" i.user;
+           Fmt.str "%.1f" i.days.data;
+         ])
 
 let of_row x =
   if x = csv_headers then `Skip
