@@ -11,19 +11,10 @@
   Com19: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : "2021-08-29"
-  Com4: column 'starts' is out-of-sync.
-    - expected(DB): "2024-03-17"
-    - got(GitHub) : "2021-08-29"
   
   
   --- Documentation ---
   
-  #1101: column 'ends' is out-of-sync.
-    - expected(DB): "2024-03-31"
-    - got(GitHub) : ""
-  #1101: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-21"
-    - got(GitHub) : ""
   #1096: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : ""
@@ -43,9 +34,6 @@
   
   --- Irmin ---
   
-  #1073: column 'starts' is out-of-sync.
-    - expected(DB): "2024-03-31"
-    - got(GitHub) : ""
   #1057: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : ""
@@ -63,24 +51,12 @@
   
   --- SpaceOS ---
   
-  #1120: column 'starts' is out-of-sync.
-    - expected(DB): "2024-03-03"
-    - got(GitHub) : ""
   #1119: column 'starts' is out-of-sync.
     - expected(DB): "2024-01-07"
-    - got(GitHub) : ""
-  #1118: column 'starts' is out-of-sync.
-    - expected(DB): "2024-02-04"
-    - got(GitHub) : ""
-  #1117: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-14"
     - got(GitHub) : ""
   https://github.com/tarides/workitems/issues/1117 [#1117]: state is out-of-sync.
     - status: "Active \240\159\143\151"
     - expected: open
-  #1107: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-14"
-    - got(GitHub) : ""
   #1106: column 'starts' is out-of-sync.
     - expected(DB): "2024-01-07"
     - got(GitHub) : ""
@@ -88,15 +64,6 @@
   
   --- Ocaml.org ---
   
-  #1151: column 'starts' is out-of-sync.
-    - expected(DB): "2024-04-07"
-    - got(GitHub) : ""
-  #1085: column 'starts' is out-of-sync.
-    - expected(DB): "2024-02-18"
-    - got(GitHub) : ""
-  #1084: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-28"
-    - got(GitHub) : ""
   #1083: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : ""
@@ -122,14 +89,11 @@
   
   --- Editors ---
   
-  #1097: column 'starts' is out-of-sync.
-    - expected(DB): "2024-03-03"
-    - got(GitHub) : ""
   Mer9: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : "2022-04-03"
   Plat277: column 'ends' is out-of-sync.
-    - expected(DB): "2024-03-24"
+    - expected(DB): "2024-01-14"
     - got(GitHub) : ""
   Plat277: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
@@ -137,15 +101,6 @@
   Mer7: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : "2022-01-16"
-  Plat247: column 'starts' is out-of-sync.
-    - expected(DB): "2024-02-18"
-    - got(GitHub) : "2022-12-11"
-  Plat176: column 'starts' is out-of-sync.
-    - expected(DB): "2024-02-18"
-    - got(GitHub) : "2022-02-27"
-  Plat193: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-28"
-    - got(GitHub) : "2022-07-03"
   Plat156: column 'starts' is out-of-sync.
     - expected(DB): "2024-01-07"
     - got(GitHub) : "2022-01-02"
@@ -177,9 +132,6 @@
   Plat111: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : "2021-08-29"
-  Plat219: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-28"
-    - got(GitHub) : "2023-03-05"
   Plat180: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : "2022-10-09"
@@ -238,12 +190,6 @@
   #1082: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : ""
-  #1074: column 'starts' is out-of-sync.
-    - expected(DB): "2024-05-05"
-    - got(GitHub) : ""
-  #460: column 'starts' is out-of-sync.
-    - expected(DB): "2024-02-25"
-    - got(GitHub) : "2022-03-27"
   Com21: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : "2021-10-31"
@@ -251,27 +197,6 @@
   
   --- Compiler backend ---
   
-  #1158: column 'starts' is out-of-sync.
-    - expected(DB): "2024-04-07"
-    - got(GitHub) : ""
-  #1140: column 'starts' is out-of-sync.
-    - expected(DB): "2024-03-31"
-    - got(GitHub) : ""
-  #1137: column 'starts' is out-of-sync.
-    - expected(DB): "2024-04-07"
-    - got(GitHub) : ""
-  #1132: column 'starts' is out-of-sync.
-    - expected(DB): "2024-03-17"
-    - got(GitHub) : ""
-  #1121: column 'starts' is out-of-sync.
-    - expected(DB): "2024-03-31"
-    - got(GitHub) : ""
-  #1103: column 'ends' is out-of-sync.
-    - expected(DB): "2024-04-21"
-    - got(GitHub) : ""
-  #1103: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-14"
-    - got(GitHub) : ""
   #1102: column 'starts' is out-of-sync.
     - expected(DB): "2024-01-07"
     - got(GitHub) : ""
@@ -279,7 +204,7 @@
     - expected(DB): "2024-01-07"
     - got(GitHub) : ""
   #1063: column 'ends' is out-of-sync.
-    - expected(DB): "2024-03-17"
+    - expected(DB): "2024-01-14"
     - got(GitHub) : ""
   #1063: column 'starts' is out-of-sync.
     - expected(DB): "2024-01-07"
@@ -288,7 +213,7 @@
     - expected(DB): "2023-12-31"
     - got(GitHub) : "2021-08-29"
   Comp108: column 'ends' is out-of-sync.
-    - expected(DB): "2024-03-24"
+    - expected(DB): "2024-01-14"
     - got(GitHub) : ""
   Comp108: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
@@ -306,30 +231,12 @@
   https://github.com/tarides/workitems/issues/244 [Plat267]: state is out-of-sync.
     - status: "Draft"
     - expected: open
-  OD29: column 'ends' is out-of-sync.
-    - expected(DB): "2024-02-04"
-    - got(GitHub) : ""
-  OD29: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-28"
-    - got(GitHub) : "2023-01-15"
   https://github.com/tarides/workitems/issues/27 [OD2]: state is out-of-sync.
     - status: "Blocked"
     - expected: open
   Plat238: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : "2022-10-30"
-  Plat204: column 'starts' is out-of-sync.
-    - expected(DB): "2024-02-04"
-    - got(GitHub) : "2022-07-03"
-  Dune29: column 'ends' is out-of-sync.
-    - expected(DB): "2024-01-21"
-    - got(GitHub) : ""
-  Dune29: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-14"
-    - got(GitHub) : "2021-10-03"
-  Plat259: column 'starts' is out-of-sync.
-    - expected(DB): "2024-03-17"
-    - got(GitHub) : ""
   https://github.com/tarides/workitems/issues/93 [Plat265]: state is out-of-sync.
     - status: "Draft"
     - expected: open
@@ -337,7 +244,7 @@
     - status: "Draft"
     - expected: open
   Plat244: column 'ends' is out-of-sync.
-    - expected(DB): "2024-03-24"
+    - expected(DB): "2024-01-14"
     - got(GitHub) : ""
   Plat244: column 'starts' is out-of-sync.
     - expected(DB): "2024-01-07"
@@ -352,46 +259,10 @@
   https://github.com/tarides/infrastructure/issues/303 [#303]: state is out-of-sync.
     - status: ""
     - expected: open
-  #1170: column 'starts' is out-of-sync.
-    - expected(DB): "2024-05-12"
-    - got(GitHub) : ""
-  #1169: column 'starts' is out-of-sync.
-    - expected(DB): "2024-05-05"
-    - got(GitHub) : ""
-  #1168: column 'starts' is out-of-sync.
-    - expected(DB): "2024-05-05"
-    - got(GitHub) : ""
-  #1167: column 'starts' is out-of-sync.
-    - expected(DB): "2024-05-05"
-    - got(GitHub) : ""
   #1157 was planning to start on 2024-06-02 but hasn't started yet 
-  #1131: column 'starts' is out-of-sync.
-    - expected(DB): "2024-02-18"
-    - got(GitHub) : ""
-  #1125: column 'starts' is out-of-sync.
-    - expected(DB): "2024-05-19"
-    - got(GitHub) : ""
-  #1123: column 'starts' is out-of-sync.
-    - expected(DB): "2024-03-03"
-    - got(GitHub) : ""
-  #1122: column 'starts' is out-of-sync.
-    - expected(DB): "2024-05-05"
-    - got(GitHub) : ""
-  #1115: column 'starts' is out-of-sync.
-    - expected(DB): "2024-02-04"
-    - got(GitHub) : ""
-  #1111: column 'starts' is out-of-sync.
-    - expected(DB): "2024-04-21"
-    - got(GitHub) : ""
   https://github.com/tarides/workitems/issues/1111 [#1111]: state is out-of-sync.
     - status: "Active \240\159\143\151"
     - expected: open
-  #1109: column 'starts' is out-of-sync.
-    - expected(DB): "2024-03-03"
-    - got(GitHub) : ""
-  #1108: column 'starts' is out-of-sync.
-    - expected(DB): "2024-02-04"
-    - got(GitHub) : ""
   https://github.com/tarides/workitems/issues/1099 [#1099]: state is out-of-sync.
     - status: "Scheduled \226\143\177\239\184\143"
     - expected: open
@@ -451,6 +322,9 @@
   PRep3 was planning to start on 2022-01-09 but hasn't started yet 
   Com20 was planning to start on 2021-08-29 but hasn't started yet 
   Com11 was planning to start on 2021-08-29 but hasn't started yet 
+  Com4 was planning to start on 2021-08-29 but hasn't started yet 
+  Comp73 hasn't started by was planning to end on 2021-09-12
+  Comp73 was planning to start on 2021-08-29 but hasn't started yet 
   Comp82 was planning to start on 2021-09-05 but hasn't started yet 
   Comp87 hasn't started by was planning to end on 2022-02-20
   Comp87 was planning to start on 2021-10-10 but hasn't started yet 
@@ -500,6 +374,7 @@
   MOS75 was planning to start on 2021-09-26 but hasn't started yet 
   MOS98 hasn't started by was planning to end on 2022-05-08
   MOS98 was planning to start on 2021-11-14 but hasn't started yet 
+  Comp85 was planning to start on 2021-08-29 but hasn't started yet 
   MC84 hasn't started by was planning to end on 2022-05-15
   MC84 was planning to start on 2021-10-03 but hasn't started yet 
   MC85 hasn't started by was planning to end on 2022-01-30
@@ -599,6 +474,7 @@
   Comp96 was planning to start on 2022-01-02 but hasn't started yet 
   Comp97 hasn't started by was planning to end on 2023-04-02
   Comp97 was planning to start on 2022-01-23 but hasn't started yet 
+  Comp98 was planning to start on 2022-01-30 but hasn't started yet 
   PhD0 hasn't started by was planning to end on 2022-07-03
   PhD0 was planning to start on 2022-01-02 but hasn't started yet 
   Plat171 hasn't started by was planning to end on 2022-08-21
@@ -641,6 +517,7 @@
   Comp104 was planning to start on 2022-05-15 but hasn't started yet 
   Comp105 hasn't started by was planning to end on 2022-04-17
   Comp105 was planning to start on 2022-04-10 but hasn't started yet 
+  #460 was planning to start on 2022-03-27 but hasn't started yet 
   CS01 was planning to start on 2022-06-05 but hasn't started yet 
   Plat197 hasn't started by was planning to end on 2022-07-24
   Plat197 was planning to start on 2022-07-17 but hasn't started yet 
@@ -712,6 +589,7 @@
   Plat213 was planning to start on 2023-03-05 but hasn't started yet 
   Plat135 hasn't started by was planning to end on 2022-10-23
   Plat135 was planning to start on 2021-09-05 but hasn't started yet 
+  OD29 was planning to start on 2023-01-15 but hasn't started yet 
   Plat206 was planning to start on 2023-01-01 but hasn't started yet 
   OD2 was planning to start on 2022-09-25 but hasn't started yet 
   Plat214 was planning to start on 2022-11-27 but hasn't started yet 
@@ -737,11 +615,17 @@
   Plat221 was planning to start on 2022-09-25 but hasn't started yet 
   Plat224 was planning to start on 2023-03-12 but hasn't started yet 
   Plat186 was planning to start on 2022-11-06 but hasn't started yet 
+  Plat247 was planning to start on 2022-12-11 but hasn't started yet 
   CI02 hasn't started by was planning to end on 2023-05-28
   CI02 was planning to start on 2023-01-29 but hasn't started yet 
+  Plat219 was planning to start on 2023-03-05 but hasn't started yet 
   Plat254 was planning to start on 2023-01-08 but hasn't started yet 
   Plat237 hasn't started by was planning to end on 2023-04-09
   Plat237 was planning to start on 2023-01-01 but hasn't started yet 
+  Plat204 was planning to start on 2022-07-03 but hasn't started yet 
+  Plat176 was planning to start on 2022-02-27 but hasn't started yet 
+  Plat193 was planning to start on 2022-07-03 but hasn't started yet 
+  Dune29 was planning to start on 2021-10-03 but hasn't started yet 
   Plat162 was planning to start on 2022-01-30 but hasn't started yet 
   Mdx5 hasn't started by was planning to end on 2023-04-18
   Mdx5 was planning to start on 2023-04-18 but hasn't started yet 
@@ -850,6 +734,7 @@
     - expected: closed
   MC108 hasn't started by was planning to end on 2023-02-19
   MC108 was planning to start on 2023-02-05 but hasn't started yet 
+  MC95 was planning to start on 2022-11-13 but hasn't started yet 
   Com24 was planning to start on 2022-11-06 but hasn't started yet 
   Irm60 was planning to start on 2021-08-29 but hasn't started yet 
   Irm86 hasn't started by was planning to end on 2023-06-26
@@ -883,16 +768,6 @@
     - expected: closed
   
   
-  --- Internal tooling ---
-  
-  #1126: column 'starts' is out-of-sync.
-    - expected(DB): "2024-03-31"
-    - got(GitHub) : ""
-  #1124: column 'starts' is out-of-sync.
-    - expected(DB): "2024-03-31"
-    - got(GitHub) : ""
-  
-  
   --- Infrastructure ---
   
   #1160: column 'ends' is out-of-sync.
@@ -904,24 +779,12 @@
   https://github.com/tarides/workitems/issues/1160 [#1160]: state is out-of-sync.
     - status: "Complete \226\156\133"
     - expected: closed
-  #1156: column 'starts' is out-of-sync.
-    - expected(DB): "2024-03-31"
-    - got(GitHub) : ""
-  #1105: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-28"
-    - got(GitHub) : ""
   #1094: column 'starts' is out-of-sync.
     - expected(DB): "2024-01-07"
     - got(GitHub) : ""
   #1093: column 'starts' is out-of-sync.
     - expected(DB): "2024-01-07"
     - got(GitHub) : ""
-  Comp85: column 'ends' is out-of-sync.
-    - expected(DB): "2024-02-04"
-    - got(GitHub) : ""
-  Comp85: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-28"
-    - got(GitHub) : "2021-08-29"
   Plat174: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : "2022-04-17"
@@ -939,19 +802,16 @@
   
   --- Compiler and language ---
   
-  #1135: column 'starts' is out-of-sync.
-    - expected(DB): "2024-04-28"
-    - got(GitHub) : ""
-  #1130: column 'starts' is out-of-sync.
-    - expected(DB): "2024-03-10"
-    - got(GitHub) : ""
-  #1113: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-14"
-    - got(GitHub) : ""
   #1092: column 'starts' is out-of-sync.
     - expected(DB): "2024-01-07"
     - got(GitHub) : ""
   #1090: column 'starts' is out-of-sync.
+    - expected(DB): "2023-12-31"
+    - got(GitHub) : ""
+  #1072: column 'ends' is out-of-sync.
+    - expected(DB): "2024-01-14"
+    - got(GitHub) : ""
+  #1072: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : ""
   #1062: column 'starts' is out-of-sync.
@@ -961,7 +821,7 @@
     - expected(DB): "2023-12-31"
     - got(GitHub) : ""
   #1060: column 'ends' is out-of-sync.
-    - expected(DB): "2024-01-21"
+    - expected(DB): "2024-01-07"
     - got(GitHub) : ""
   #1060: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
@@ -972,15 +832,6 @@
   https://github.com/tarides/workitems/issues/1059 [#1059]: state is out-of-sync.
     - status: "Active \240\159\143\151"
     - expected: open
-  Comp73: column 'ends' is out-of-sync.
-    - expected(DB): "2024-01-21"
-    - got(GitHub) : "2021-09-12"
-  Comp73: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-14"
-    - got(GitHub) : "2021-08-29"
-  Comp98: column 'starts' is out-of-sync.
-    - expected(DB): "2024-02-25"
-    - got(GitHub) : "2022-01-30"
   Comp120: column 'starts' is out-of-sync.
     - expected(DB): "2024-01-07"
     - got(GitHub) : "2023-01-08"
@@ -1000,29 +851,14 @@
   
   --- Multicore applications ---
   
-  #1114: column 'ends' is out-of-sync.
-    - expected(DB): "2024-05-05"
-    - got(GitHub) : ""
-  #1114: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-28"
-    - got(GitHub) : ""
-  #1089: column 'ends' is out-of-sync.
-    - expected(DB): "2024-05-26"
-    - got(GitHub) : ""
-  #1089: column 'starts' is out-of-sync.
-    - expected(DB): "2024-02-04"
-    - got(GitHub) : ""
   #1088: column 'ends' is out-of-sync.
-    - expected(DB): "2024-03-17"
+    - expected(DB): "2024-01-14"
     - got(GitHub) : ""
   #1088: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : ""
-  #1086: column 'starts' is out-of-sync.
-    - expected(DB): "2024-02-11"
-    - got(GitHub) : ""
   MC98: column 'ends' is out-of-sync.
-    - expected(DB): "2024-02-11"
+    - expected(DB): "2024-01-14"
     - got(GitHub) : ""
   MC98: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
@@ -1030,9 +866,3 @@
   MC104: column 'starts' is out-of-sync.
     - expected(DB): "2023-12-31"
     - got(GitHub) : "2023-01-01"
-  MC95: column 'ends' is out-of-sync.
-    - expected(DB): "2024-01-28"
-    - got(GitHub) : ""
-  MC95: column 'starts' is out-of-sync.
-    - expected(DB): "2024-01-21"
-    - got(GitHub) : "2022-11-13"
