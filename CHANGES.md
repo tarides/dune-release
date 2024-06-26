@@ -2,8 +2,9 @@
 
 ### Changed
 
+- Sort timesheet output (#80, @gpetiot)
 - Add more debug information to debug rate-limiting errors (#75, @samoht)
-- Depend on okra-lib.2.0.0 (#56, #65, #68, @gpetiot)
+- Depend on okra-lib.2.1.0 (#56, #65, #68, @gpetiot)
 
 ### Fixed
 
