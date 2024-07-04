@@ -16,7 +16,7 @@ depends: [
   "csv"
   "conduit-lwt-unix"
   "lwt_ssl"
-  "okra-lib" {>= "2.1.0" & < "3.0.0"}
+  "okra-lib" {>= "3.0.0" & < "4.0.0"}
   "omd" {>= "2.0.0~alpha4"}
   "calendar"
   "alcotest" {with-test}
