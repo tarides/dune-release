@@ -1,4 +1,0 @@
-(env
- (release
-  (flags
-   (:standard -ccopt -static))))

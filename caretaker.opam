@@ -6,8 +6,8 @@ description:
 maintainer: ["Tarides"]
 authors: ["Thomas Gazagnaire"]
 license: "ISC"
-homepage: "https://github.com/tarides/caretake"
-bug-reports: "https://github.com/tarides/caretake/issues"
+homepage: "https://github.com/tarides/caretaker"
+bug-reports: "https://github.com/tarides/caretaker/issues"
 depends: [
   "dune" {>= "3.7"}
   "cohttp-lwt-unix"
@@ -36,4 +36,4 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/tarides/caretake.git"
+dev-repo: "git+https://github.com/tarides/caretaker.git"

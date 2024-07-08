@@ -5,7 +5,7 @@
 (generate_opam_files true)
 
 (source
- (github tarides/caretake))
+ (github tarides/caretaker))
 
 (authors "Thomas Gazagnaire")
 
