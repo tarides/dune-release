@@ -18,15 +18,41 @@
   </a>
 </p>
 
-## Build
+## Getting Started
+
+### Installation
+
+Install opam if you don't already have it, and add [`tarides/opam-repository`](https://github.com/tarides/opam-repository) to your list of opam repositories:
+
+Either only to the current opam switch with the command:
+```sh
+opam repository add tarides https://github.com/tarides/opam-repository.git
+```
+
+Or to the list of opam repositories for all opam switches with the command:
+```sh
+opam repository add --all tarides https://github.com/tarides/opam-repository.git
+```
+
+Update your list of packages:
+```sh
+opam update
+```
+
+Then install caretaker:
+```sh
+opam install caretaker
+```
+
+### Build
 
 ```
-$ dune build
+dune build
 ```
 
-## Usage
+### Usage
 
-### GH Project Boards
+#### GH Project Boards
 
 ```
 $ dune exec -- ./bin/main.exe
@@ -67,7 +93,7 @@ org: tarides
 
 Use `--format=csv` to get an extract to CSV.
 
-### Timesheets
+#### Timesheets
 
 
 ```
@@ -114,7 +140,7 @@ $ dune exec -- bin/main.exe --timesheets
 [...]
 ```
 
-### Upload CSV
+#### Upload CSV
 
 ```
 $ dune exec -- ./bin/upload.exe input.csv
