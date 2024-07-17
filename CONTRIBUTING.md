@@ -18,3 +18,8 @@ dune-release \
   --remote-repo git@github.com:YOU/your-opam-repository \
   --local-repo /path/to/your/opam-repo/fork
 ```
+6. Download the tarball (.tbz) from the last release
+7. Upload the tarball on https://github.com/tarides/opam-repository along the opam file of the last release
+8. Update the field url.src of the opam file to point to the tarball
+9. Update the okra version in github actions:
+   - https://github.com/tarides/admin/blob/main/.github/workflows/update-data.yml
