@@ -1,3 +1,8 @@
+## 0.2.0
+
+- Use a dynamic number of entries per page for GraphQL calls. On errors,
+  retry with a smaller number of entries (#65, @samoht)
+
 ## 0.1.0
 
 ### Changed
