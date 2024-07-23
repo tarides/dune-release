@@ -140,10 +140,10 @@ query {
 
   let parse ?fields ~org ~project_number ~goals json =
     match parse_exn ?fields ~org ~project_number ~goals json with
-    | r -> r
-    | exception (Yojson.Safe.Util.Type_error (e, _) as err) ->
-        Fmt.epr "Error: %s\n%a\n%!" e Yojson.Safe.pp json;
-        raise err
+    | r -> Ok r
+    | exception Yojson.Safe.Util.Type_error (e, _) ->
+        let err = Fmt.str "%s\n%a\n%!" e Yojson.Safe.pp json in
+        Error (`Msg err)
 end
 
 let filter ?(filter_out = Filter.default_out) data =
@@ -248,12 +248,27 @@ let diff ?heatmap (t : t) =
 let sync ?heatmap t = Diff.apply ~fields:t.fields (diff ?heatmap t)
 let lint ?heatmap t = Diff.lint (diff ?heatmap t)
 
+let rec retry items_per_page f =
+  let* r = f items_per_page in
+  match r with
+  | Ok r -> Lwt.return r
+  | Error (`Msg e) ->
+      if items_per_page < 10 then failwith e
+      else
+        let new_items_per_page = items_per_page - Int.div items_per_page 10 in
+        Fmt.pr "Retrying Github query after error (items per page %d -> %d)\n"
+          items_per_page new_items_per_page;
+        retry new_items_per_page f
+
 let get ~goals ~org ~project_number ?(items_per_page = 80) () =
   find_duplicates goals;
   let rec aux fields cursor acc =
-    let query = Query.make ~org ~project_number ~after:cursor ~items_per_page in
-    let* json = Github.run query in
-    let cursor, project =
+    let* cursor, project =
+      retry items_per_page @@ fun items_per_page ->
+      let query =
+        Query.make ~org ~project_number ~after:cursor ~items_per_page
+      in
+      let+ json = Github.run query in
       Query.parse ?fields ~project_number ~org ~goals json
     in
     if List.length project.cards < items_per_page then
@@ -266,7 +281,10 @@ let get ~goals ~org ~project_number ?(items_per_page = 80) () =
 
 let get_project_id_and_fields ~org ~project_number =
   let open Lwt.Syntax in
-  let query = Query.make ~org ~project_number ~after:None ~items_per_page:100 in
-  let+ json = Github.run query in
-  let _, project = Query.parse ~project_number ~org ~goals:[] json in
+  let+ _, project =
+    retry 100 @@ fun items_per_page ->
+    let query = Query.make ~org ~project_number ~after:None ~items_per_page in
+    let+ json = Github.run query in
+    Query.parse ~project_number ~org ~goals:[] json
+  in
   (project.project_id, project.fields)
