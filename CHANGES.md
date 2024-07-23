@@ -1,5 +1,6 @@
 ## 0.2.0
 
+- Use anonymous data in cram tests (#86, @samoht)
 - Use a dynamic number of entries per page for GraphQL calls. On errors,
   retry with a smaller number of entries (#65, @samoht)
 

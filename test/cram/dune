@@ -1,5 +1,6 @@
 (cram
  (deps
   %{bin:caretaker}
-  (source_tree ../../data))
+  (source_tree admin)
+  (source_tree data))
  (applies_to :whole_subtree))

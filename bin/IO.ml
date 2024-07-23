@@ -127,7 +127,8 @@ let get_project
       project
   | Local, _ ->
       let file = data_dir / Fmt.str "%s-%d.json" org project_number in
-      if not (Sys.file_exists file) then failwith "Run `caretaker fetch' first";
+      if not (Sys.file_exists file) then
+        Fmt.failwith "Cannot find %s. Run `caretaker fetch' first" file;
       let json = with_in_file file Yojson.Safe.from_channel in
       Lwt.return (Project.of_json json)
   | _ ->
