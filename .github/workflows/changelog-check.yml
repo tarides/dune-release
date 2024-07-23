@@ -1,13 +1,11 @@
-name: Changelog check
+runs-on: ubuntu-latest
 
-on:
-  pull_request:
-    branches: [ main ]
-    types: [ opened, synchronize, reopened, labeled, unlabeled ]
+steps:
+- uses: actions/checkout@v4
 
-jobs:
-  Changelog-Entry-Check:
-    name: Check Changelog Action
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: tarides/changelog-check-action@v2
+- name: git diff
+  if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-changelog-needed') }}
+  env:
+    BASE_REF: ${{ github.event.pull_request.base.ref }}
+  run: |
+    ! git diff --exit-code origin/$BASE_REF -- CHANGES.md
