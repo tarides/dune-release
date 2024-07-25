@@ -66,18 +66,18 @@ let pp ppf (t : t) =
   let ids = List.sort (fun (_, a) (_, b) -> compare b a) ids in
   List.iter
     (fun (id, total) ->
-      Fmt.pf ppf "%-12s [%.1f] %a => %a\n" id total.Okra.Time.data
+      Fmt.pf ppf "%-12s [%g] %a => %a\n" id total.Okra.Time.data
         (pp_opt pp_start_date) (start_date t id) (pp_opt pp_end_date)
         (end_date t id))
     ids;
   Fmt.pf ppf "-----------\n";
-  Fmt.pf ppf "%-12s [%.1f]\n" "Total" (total t).data
+  Fmt.pf ppf "%-12s [%g]\n" "Total" (total t).data
 
 let to_csv (t : t) =
   let csv_headers = [ "ID"; "Days" ] in
   let ids =
     Hashtbl.fold
-      (fun id { total; _ } acc -> (id, Fmt.str "%.1f" total.data) :: acc)
+      (fun id { total; _ } acc -> (id, Fmt.str "%g" total.data) :: acc)
       t []
   in
   let rows = List.sort (fun (a, _) (b, _) -> String.compare a b) ids in
