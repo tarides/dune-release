@@ -17,12 +17,20 @@ run:
 
 
 OPAM_REPO=$(HOME)/git/tarides/opam-repository
-TARBALL=$(dune-release delegate-info tarball)
-VERSION=$(dune-release delegate-info tarball | cut -d'-' -f2 | cut -d'.' -f '-3')
+TARBALL=$(shell dune-release delegate-info tarball)
+VERSION=$(shell dune-release delegate-info tarball | cut -d'-' -f2 | cut -d'.' -f '-3')
+
+tag:
+	dune-release tag
+	git push --tags
+
+info:
+	@echo "OPAM_REPO: $(OPAM_REPO)"
+	@echo "TARBALL: $(TARBALL)"
+	@echo "VERSION: $(VERSION)"
 
 release:
-	dune-release check
 	dune-release distrib
 	dune-release opam pkg
-	cp _build/caretaker.$(VERSION) $(OPAM_REPO)/caretaker
-	cp $(TARBALL) $(OPAM_REPO)/caretaker/caretaker.$(VERSION/
+	cp -R _build/caretaker.$(VERSION) $(OPAM_REPO)/caretaker/
+	cp $(TARBALL) $(OPAM_REPO)/caretaker/caretaker.$(VERSION)/
