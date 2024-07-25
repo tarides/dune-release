@@ -108,7 +108,7 @@ let rows t =
            Fmt.str "%02d" i.month;
            Fmt.str "%02d" i.week;
            Fmt.str "%s" i.user;
-           Fmt.str "%.1f" i.days.data;
+           Fmt.str "%g" i.days.data;
          ])
 
 let of_row x =
