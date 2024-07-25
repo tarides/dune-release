@@ -1,8 +1,15 @@
+## 0.3.0
+
+- Fix incomplete queries when we retry with a smaller number of items per page.
+  Follow up of #65. (#89, @samoht)
+- Fix floating point number precision when printing days in CSV files.
+  (#89, @samoht)
+
 ## 0.2.0
 
 - Use anonymous data in cram tests (#86, @samoht)
 - Use a dynamic number of entries per page for GraphQL calls. On errors,
-  retry with a smaller number of entries (#65, @samoht)
+  retry with a smaller number of entries (#85, @samoht)
 
 ## 0.1.0
 
