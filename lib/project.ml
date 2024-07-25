@@ -251,7 +251,7 @@ let lint ?heatmap t = Diff.lint (diff ?heatmap t)
 let rec retry items_per_page f =
   let* r = f items_per_page in
   match r with
-  | Ok r -> Lwt.return r
+  | Ok r -> Lwt.return (r, items_per_page)
   | Error (`Msg e) ->
       if items_per_page < 10 then failwith e
       else
@@ -263,7 +263,7 @@ let rec retry items_per_page f =
 let get ~goals ~org ~project_number ?(items_per_page = 80) () =
   find_duplicates goals;
   let rec aux fields cursor acc =
-    let* cursor, project =
+    let* (cursor, project), items_per_page =
       retry items_per_page @@ fun items_per_page ->
       let query =
         Query.make ~org ~project_number ~after:cursor ~items_per_page
@@ -281,7 +281,7 @@ let get ~goals ~org ~project_number ?(items_per_page = 80) () =
 
 let get_project_id_and_fields ~org ~project_number =
   let open Lwt.Syntax in
-  let+ _, project =
+  let+ (_, project), _ =
     retry 100 @@ fun items_per_page ->
     let query = Query.make ~org ~project_number ~after:None ~items_per_page in
     let+ json = Github.run query in
