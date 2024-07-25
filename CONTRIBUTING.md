@@ -12,14 +12,6 @@
      - `dune-release tag`
      - `git push --tags upstream main`
 5. Create the release
-```
-dune-release \
-  --opam-repo ORG/opam-repository \
-  --remote-repo git@github.com:YOU/your-opam-repository \
-  --local-repo /path/to/your/opam-repo/fork
-```
-6. Download the tarball (.tbz) from the last release
-7. Upload the tarball on https://github.com/tarides/opam-repository along the opam file of the last release
-8. Update the field url.src of the opam file to point to the tarball
-9. Update the okra version in github actions:
-   - https://github.com/tarides/admin/blob/main/.github/workflows/update-data.yml
+     - `make release`
+6. Commit the changes in git/tarides/opam-repository
+7. update git/tarides/admin/.github/workflows/build.yml to use the new carataker version
