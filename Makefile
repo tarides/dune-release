@@ -32,5 +32,5 @@ info:
 release:
 	dune-release distrib
 	dune-release opam pkg
-	cp -R _build/caretaker.$(VERSION) $(OPAM_REPO)/caretaker/
-	cp $(TARBALL) $(OPAM_REPO)/caretaker/caretaker.$(VERSION)/
+	cp -R _build/caretaker.$(VERSION) $(OPAM_REPO)/packages/caretaker/
+	cp $(TARBALL) $(OPAM_REPO)/packages/caretaker/caretaker.$(VERSION)/
