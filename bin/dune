@@ -1,4 +1,4 @@
-(executable
- (name main)
- (public_name dune-release)
- (libraries dune-release re logs.fmt fmt.tty logs.cli fmt.cli))
+(library
+ (name dune_release_bin)
+ (public_name dune-release.bin)
+ (libraries dune_release re logs.fmt fmt.tty logs.cli fmt.cli))
