@@ -48,7 +48,7 @@ a github URI to publish the documentation to.
   [FAIL] opam fields homepage and dev-repo can be parsed by dune-release
   dune-release: [ERROR] Github development repository URL could not be inferred
   [FAIL] opam field doc cannot be parsed by dune-release
-  [FAIL] lint of _build/whatever-0.1.0 and package whatever failure: 1 errors.
+  [FAIL] lint of _build/whatever-0.1.0 and package whatever failure: 2 errors.
 
 (2) publish doc
 

@@ -46,32 +46,6 @@ let lint_std_files ~dry_run pkg =
   in
   List.fold_left go 0 std_files
 
-let lint_file_with_cmd ~dry_run ~file_kind ~cmd ~handle_exit file errs =
-  let run_linter cmd file ~exists =
-    if not (exists || dry_run) then
-      Ok (`Fail (strf "%a: No such file" Fpath.pp file))
-    else
-      Sos.run_out ~dry_run ~err:OS.Cmd.err_run_out
-        Cmd.(cmd % p file)
-        ~default:(Sos.out "") OS.Cmd.out_string
-      >>| fun (out, status) -> handle_exit (snd status) out
-  in
-  Logs.on_error_msg
-    ~use:(fun () -> errs + 1)
-    ( OS.File.exists file >>= fun exists ->
-      run_linter cmd file ~exists >>| function
-      | `Ok ->
-          Logs.app (fun m ->
-              m "%a @[lint@ %s %a.@]" Text.Pp.status `Ok file_kind Text.Pp.path
-                file);
-          errs
-      | `Fail msgs ->
-          Logs.app (fun m ->
-              m "%a @[<v>@[lint@ %s %a:@]@,@[%a messages:@]@,%a@]"
-                Text.Pp.status `Fail file_kind Text.Pp.path file Cmd.pp cmd
-                Fmt.lines msgs);
-          errs + 1 )
-
 let lint_res ~msgf = function
   | Ok _ ->
       App_log.report_status `Ok msgf;
@@ -104,31 +78,69 @@ let lint_opam_home_and_dev pkg =
 
 let lint_opam_github_fields pkg = lint_opam_doc pkg + lint_opam_home_and_dev pkg
 
-let opam_lint_cmd ~opam_file_version =
-  let lint_older_format =
-    match opam_file_version with
-    | Some "1.2" ->
-        let _ = Deprecate.Opam_1_x.remove_me in
-        true
-    | _ -> false
+let lint () =
+  let opam_files_in_dir d =
+    match OpamPinned.files_in_source d with
+    | [] ->
+        OpamConsole.warning "No opam files found in %s"
+          (OpamFilename.Dir.to_string d);
+        []
+    | l -> List.map (fun (_name, f, _) -> Some f) l
   in
-  Cmd.(Opam.cmd % "lint" %% on lint_older_format (v "--warn=-21-32-48"))
-
-(* We first run opam lint with -s and if there's something beyond 5
-   we rerun it without it for the error messages. It's ugly since 5
-   will still but opam lint's cli is broken. *)
-let handle_opam_lint_exit ~dry_run ~verbose_lint_cmd ~opam_file status output =
-  match (status, output) with
-  | `Exited 0, ("" | "5") -> `Ok
-  | _ -> (
-      let default = Sos.out "" in
-      let err = OS.Cmd.err_run_out in
-      let cmd = Cmd.(verbose_lint_cmd % p opam_file) in
-      let verbose_lint_output =
-        Sos.run_out ~dry_run ~err ~default cmd OS.Cmd.out_string
-      in
-      match verbose_lint_output with
-      | Ok (out, _) | Error (`Msg out) -> `Fail out)
+  let files = opam_files_in_dir (OpamFilename.cwd ()) in
+  let msg = OpamConsole.msg in
+  let json = None in
+  let err, json =
+    List.fold_left
+      (fun (err, json) opam_f ->
+        try
+          let warnings, _ =
+            match opam_f with
+            | Some f ->
+                OpamFileTools.lint_file ~check_upstream:false
+                  ~handle_dirname:true f
+            | None ->
+                OpamFileTools.lint_channel ~check_upstream:false
+                  ~handle_dirname:false
+                  (OpamFile.make (OpamFilename.of_string "-"))
+                  stdin
+          in
+          let failed =
+            List.exists (function _, `Error, _ -> true | _ -> false) warnings
+          in
+          if warnings = [] then
+            msg "%s%s\n"
+              (OpamStd.Option.to_string
+                 (fun f -> OpamFile.to_string f ^ ": ")
+                 opam_f)
+              (OpamConsole.colorise `green "Linting passed.")
+          else
+            msg "%s%s\n%s\n"
+              (OpamStd.Option.to_string
+                 (fun f -> OpamFile.to_string f ^ ": ")
+                 opam_f)
+              (if failed then OpamConsole.colorise `red "Errors."
+              else OpamConsole.colorise `yellow "Warnings.")
+              (OpamFileTools.warns_to_string warnings);
+          let json =
+            OpamStd.Option.map
+              (OpamStd.List.cons
+                 (OpamFileTools.warns_to_json
+                    ?filename:(OpamStd.Option.map OpamFile.to_string opam_f)
+                    warnings))
+              json
+          in
+          (err || failed, json)
+        with
+        | Parsing.Parse_error | OpamLexer.Error _ | OpamPp.Bad_version _
+        | OpamPp.Bad_format _
+        ->
+          msg "File format error\n";
+          (true, json))
+      (false, json) files
+  in
+  OpamStd.Option.iter (fun json -> OpamJson.append "lint" (`A json)) json;
+  if err then 1 else 0
 
 let check_has_synopsis ~opam_file pkg =
   Pkg.opam_field_hd pkg "synopsis" >>= function
@@ -140,14 +152,6 @@ let lint_descr ~opam_file pkg =
   lint_res
     ~msgf:(fun l -> l "opam field %a is present" pp_field "synopsis")
     (check_has_synopsis ~opam_file pkg)
-
-let opam_lint ~dry_run ~opam_file_version opam_file =
-  let base_lint_cmd = opam_lint_cmd ~opam_file_version in
-  let short_lint_cmd = Cmd.(base_lint_cmd % "-s") in
-  let verbose_lint_cmd = base_lint_cmd in
-  lint_file_with_cmd ~dry_run ~file_kind:"opam file" ~cmd:short_lint_cmd
-    ~handle_exit:(handle_opam_lint_exit ~dry_run ~verbose_lint_cmd ~opam_file)
-    opam_file 0
 
 let extra_opam_lint ~opam_file_version ~opam_file pkg =
   let is_2_0_format =
@@ -166,14 +170,14 @@ let opam_file_format_major opam_file_version =
   | Some (major, _) -> int_of_string_opt major
   | _ -> None
 
-let lint_opam ~dry_run pkg =
+let lint_opam ~dry_run:_ pkg =
   Pkg.opam_field_hd pkg "opam-version" >>= fun opam_file_version ->
   (match Stdext.Option.bind ~f:opam_file_format_major opam_file_version with
   | Some 1 ->
       App_log.unhappy (fun l -> l "%s" Deprecate.Opam_1_x.file_format_warning)
   | _ -> ());
   Pkg.opam pkg >>= fun opam_file ->
-  let opam_lint_errors = opam_lint ~dry_run ~opam_file_version opam_file in
+  let opam_lint_errors = lint () in
   let extra_errors = extra_opam_lint ~opam_file_version ~opam_file pkg in
   Ok (opam_lint_errors + extra_errors)
 

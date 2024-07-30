@@ -43,7 +43,7 @@ Test that the lint check produces an error if the change log is missing:
   [FAIL] File LICENSE is missing.
   [FAIL] File CHANGES is missing.
   [ OK ] File opam is present.
-  [ OK ] lint opam file my_pkg.opam.
+  <test_directory>/my_pkg.opam: Linting passed.
   [ OK ] opam field synopsis is present
   [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
   [ OK ] Skipping doc field linting, no doc field found
@@ -119,7 +119,8 @@ In multi package projects, the whole lint process (including the file lints, eve
   [FAIL] File LICENSE is missing.
   [ OK ] File CHANGES is present.
   [ OK ] File opam is present.
-  [ OK ] lint opam file my_pkg.opam.
+  <test_directory>/my_pkg.opam: Linting passed.
+  <test_directory>/my_pkg-sub.opam: Linting passed.
   [ OK ] opam field synopsis is present
   [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
   [ OK ] Skipping doc field linting, no doc field found
@@ -130,7 +131,8 @@ In multi package projects, the whole lint process (including the file lints, eve
   [FAIL] File LICENSE is missing.
   [ OK ] File CHANGES is present.
   [ OK ] File opam is present.
-  [ OK ] lint opam file my_pkg-sub.opam.
+  <test_directory>/my_pkg.opam: Linting passed.
+  <test_directory>/my_pkg-sub.opam: Linting passed.
   [ OK ] opam field synopsis is present
   [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
   [ OK ] Skipping doc field linting, no doc field found
