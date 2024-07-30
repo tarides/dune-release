@@ -205,7 +205,7 @@ let prompt_for_token () =
       l "and create a token with the %a scope only."
         Fmt.(styled `Bold string)
         "public_repo");
-  App_log.question (fun l -> l "Please copy the token here:");
+  App_log.question (fun l -> l "Please paste the token here:");
   get_valid_token ()
 
 let config_token ~dry_run () =
