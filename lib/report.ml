@@ -2,12 +2,21 @@ module F = Filter
 open Okra
 
 type item = {
+  number : string;
   id : string;
   year : int;
   month : int;
   week : int;
-  user : string;
   days : Time.t;
+  hours : Time.t;
+  user : string;
+  full_name : string;
+  funder : string;
+  entity_funder : string;
+  work_item : string;
+  team : string;
+  category : string;
+  objective : string;
 }
 
 type t = (string, item) Hashtbl.t
@@ -74,7 +83,24 @@ let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids ~lint s
         Hashtbl.iter
           (fun user days ->
             if match_user user then
-              Hashtbl.add acc id { id; year; month; week; user; days })
+              Hashtbl.add acc id
+                {
+                  (* TODO *) number = "";
+                  id;
+                  year;
+                  month;
+                  week;
+                  days;
+                  (* TODO *) hours = Time.nil;
+                  user;
+                  (* TODO *) full_name = "";
+                  (* TODO *) funder = "";
+                  (* TODO *) entity_funder = "";
+                  (* TODO *) work_item = "";
+                  (* TODO *) team = "";
+                  (* TODO *) category = "";
+                  (* TODO *) objective = "";
+                })
           kr.time_per_engineer)
     report;
   if lint then (
@@ -90,7 +116,25 @@ let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids ~lint s
     List.iter (fun e -> Logs.warn (fun l -> l "%a" pp e)) kr_warnings);
   Ok acc
 
-let csv_headers = [ "Id"; "Year"; "Month"; "Week"; "User"; "Days" ]
+let csv_headers =
+  [
+    "Number";
+    "Id";
+    "Year";
+    "Month";
+    "Week";
+    "Days";
+    "Hours";
+    "User";
+    "Full Name";
+    "Funder";
+    "Entity Funder";
+    "Work Item";
+    "Team";
+    "Category";
+    "Objective";
+  ]
+
 let ( or ) x y = if x = 0 then y else x
 
 let compare_items x y =
@@ -103,32 +147,47 @@ let rows t =
   Hashtbl.to_seq_values t |> List.of_seq |> List.sort compare_items
   |> List.map (fun i ->
          [
+           i.number;
            i.id;
            Fmt.str "%d" i.year;
            Fmt.str "%02d" i.month;
            Fmt.str "%02d" i.week;
-           Fmt.str "%s" i.user;
            Fmt.str "%g" i.days.data;
+           (* TODO: Fmt.str "%g" i.hours.data*)
+           "";
+           i.user;
+           i.full_name;
+           i.funder;
+           i.entity_funder;
+           i.work_item;
+           i.team;
+           i.category;
+           i.objective;
          ])
 
-let of_row x =
-  if x = csv_headers then `Skip
-  else
-    match x with
-    | [ id; year; month; week; user; days ] ->
-        let i = int_of_string in
-        let f x = Time.days @@ float_of_string x in
-        `Row
-          {
-            id;
-            year = i year;
-            month = i month;
-            week = i week;
-            user;
-            days = f days;
-          }
-    | [] | [ "" ] -> `Skip
-    | _ -> Fmt.failwith "invalid row: %a" Fmt.Dump.(list string) x
+let of_row header x =
+  let time x =
+    x |> Float.of_string_opt |> Option.map Time.days
+    |> Option.value ~default:Time.nil
+  in
+  let x = Csv.Row.with_header x header in
+  {
+    number = Csv.Row.find x "Number";
+    id = Csv.Row.find x "Id";
+    year = int_of_string @@ Csv.Row.find x "Year";
+    month = int_of_string @@ Csv.Row.find x "Month";
+    week = int_of_string @@ Csv.Row.find x "Week";
+    days = time @@ Csv.Row.find x "Days";
+    hours = time @@ Csv.Row.find x "Hours";
+    user = Csv.Row.find x "User";
+    full_name = Csv.Row.find x "Full Name";
+    funder = Csv.Row.find x "Funder";
+    entity_funder = Csv.Row.find x "Entity Funder";
+    work_item = Csv.Row.find x "Work Item";
+    team = Csv.Row.find x "Team";
+    category = Csv.Row.find x "Category";
+    objective = Csv.Row.find x "Objective";
+  }
 
 let to_csv oc t =
   let rows = rows t in
@@ -139,18 +198,25 @@ let to_csv oc t =
 let of_csv ~years ~weeks ~users ~ids s =
   let weeks = Weeks.to_ints weeks in
   let input = Csv.of_channel s in
-  let csv = Csv.input_all input in
+  let csv = Csv.Rows.input_all input in
   let t = Hashtbl.create 13 in
   let match_user = match_user users in
   let match_ids = match_ids ids in
-  List.iter
-    (fun x ->
-      match of_row x with
-      | `Skip -> ()
-      | `Row x ->
-          if
-            List.mem x.year years && List.mem x.week weeks && match_user x.user
-            && match_ids x.id
-          then Hashtbl.add t x.id x)
-    csv;
+  let () =
+    match csv with
+    | [] -> ()
+    | header :: data ->
+        let header = Csv.Row.to_list header in
+        List.iter
+          (fun r ->
+            match Csv.Row.to_list r with
+            | [] | [ "" ] -> ()
+            | _ ->
+                let i = of_row header r in
+                if
+                  List.mem i.year years && List.mem i.week weeks
+                  && match_user i.user && match_ids i.id
+                then Hashtbl.add t i.id i)
+          data
+  in
   t

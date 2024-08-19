@@ -1,3 +1,9 @@
+## unreleased
+
+### Changed
+
+- Change the layout of timesheet output according to the existing spreadsheet (#81, @gpetiot)
+
 ## 0.3.0
 
 - Fix incomplete queries when we retry with a smaller number of items per page.
