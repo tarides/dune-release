@@ -208,7 +208,7 @@ let rec create n org repo title body_str =
         | None -> n * 10
         | Some d -> int_of_string d
       in
-      Fmt.pr "...SLEEP FOR %ds...\n%!" retry_after;
+      Logs.debug (fun m -> m "...SLEEP FOR %ds..." retry_after);
       Unix.sleep retry_after;
       create (n + 1) org repo title body_str
   | e ->

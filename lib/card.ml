@@ -3,8 +3,8 @@ module U = Yojson.Safe.Util
 exception Invalid of Yojson.Safe.t * string
 
 let epr_invalid json a b =
-  Fmt.epr "Cannot find field %S in %a\n%!" b Yojson.Safe.pp a;
-  Fmt.epr "JSON: %a\n%!" Yojson.Safe.pp json
+  Logs.err (fun m -> m "Cannot find field %S in %a" b Yojson.Safe.pp a);
+  Logs.err (fun m -> m "JSON: %a" Yojson.Safe.pp json)
 
 let ( / ) a b =
   try U.member b a
@@ -348,7 +348,7 @@ let update acc json =
         try json / "repository" / "name" |> U.to_string with Invalid _ -> "")
     | Milestones -> json / "milestone" / "url" |> U.to_string
     | Iteration ->
-        Fmt.epr "Ignoring field %s (kind: iteration)" k;
+        Logs.debug (fun m -> m "Ignoring field %s (kind: iteration)" k);
         ""
     | Users | Labels -> assert false
     | _ -> Fmt.failwith "%s: %s is not a supported field kind" k typename

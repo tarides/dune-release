@@ -92,7 +92,7 @@ let of_csv ~goals file =
             }
           in
           res := e :: !res
-      | l -> Fmt.epr "Warning; invalid line: %a\n" Fmt.(Dump.list string) l)
+      | l -> Logs.warn (fun m -> m "Invalid line: %a" Fmt.(Dump.list string) l))
     rows;
   close_in ic;
   !res
@@ -146,9 +146,10 @@ let card_is_up_to_date c e =
          e c
        |> List.flatten
      in
-     Fmt.epr "DIFF(%s): %a\n%!" id
-       Fmt.Dump.(list (pair Column.pp (pair string string)))
-       diff);
+     Logs.debug (fun m ->
+         m "DIFF(%s): %a" id
+           Fmt.Dump.(list (pair Column.pp (pair string string)))
+           diff));
   same
 
 let update_project fields ~project_id ~card_id e =
@@ -178,7 +179,7 @@ let find_duplicate_cards l =
     | [] | [ _ ] -> ()
     | a :: b :: t ->
         if Card.id a = Card.id b then (
-          Fmt.pr "DUPLICATE: %s\n%!" (Card.id b);
+          Logs.debug (fun m -> m "DUPLICATE: %s" (Card.id b));
           aux (a :: t))
         else aux (b :: t)
   in
@@ -196,8 +197,9 @@ let find_duplicate_objectives ~org ~repo l =
     | a :: b :: t ->
         if Issue.title a = Issue.title b then (
           assert (Issue.number b > Issue.number a);
-          Fmt.pr "DUPLICATE: https://github.com/%s/%s/issues/%d\n%!" org repo
-            (Issue.number b);
+          Logs.debug (fun m ->
+              m "DUPLICATE: https://github.com/%s/%s/issues/%d" org repo
+                (Issue.number b));
           aux (a :: t))
         else aux (b :: t)
   in
@@ -249,9 +251,10 @@ let update_tracked_by tracked_by =
   let+ () =
     Lwt_list.iter_s
       (fun i ->
-        Fmt.epr "XXX UPDATE TRACKED BY: %a -> %a\n%!" Issue.pp i
-          Fmt.(Dump.list string)
-          (Issue.tracks i);
+        Logs.debug (fun m ->
+            m "XXX UPDATE TRACKED BY: %a -> %a" Issue.pp i
+              Fmt.(Dump.list string)
+              (Issue.tracks i));
         Issue.update i)
       to_update
   in
@@ -259,7 +262,7 @@ let update_tracked_by tracked_by =
 
 let run ~force () =
   let file = "roadmap.csv" in
-  Fmt.pr "Reading %s..\n%!" file;
+  Logs.debug (fun m -> m "Reading %s.." file);
   let* goals = goals () in
   let entries = of_csv ~goals file in
   let org = "tarides" in
@@ -280,7 +283,7 @@ let run ~force () =
       0 entries
   in
   let count = ref 0 in
-  Fmt.pr "Adding %d new cards...\n%!" n_add;
+  Logs.debug (fun m -> m "Adding %d new cards..." n_add);
   let* () =
     Lwt_list.iter_s
       (fun (e, c) ->
@@ -292,7 +295,7 @@ let run ~force () =
               let _ = e.tracked_by in
               if card_is_up_to_date c e then Lwt.return ()
               else (
-                Fmt.pr "UPDATE: [%s] %s\n%!" e.id e.title;
+                Logs.debug (fun m -> m "UPDATE: [%s] %s" e.id e.title);
                 let _ =
                   update_project
                   (* fields ~project_id ~card_id:(Card.uuid c) e *)
@@ -301,7 +304,8 @@ let run ~force () =
             else Lwt.return ()
         | None ->
             incr count;
-            Fmt.pr "ADD(%d/%d): [%s] %s\n%!" !count n_add e.id e.title;
+            Logs.debug (fun m ->
+                m "ADD(%d/%d): [%s] %s" !count n_add e.id e.title);
             let* issue =
               match find_same_issue issues e with
               | Some i -> Lwt.return i
@@ -317,7 +321,7 @@ let run ~force () =
         | None, _ -> acc
         | Some _, None ->
             (* FIXME: need to run that stuff twice...*)
-            Fmt.epr "XXX please  run that command once more...\n%!";
+            Logs.debug (fun m -> m "XXX please run that command once more...");
             acc
         | Some i, Some c -> (i, Card.issue_url c) :: acc)
       [] entries

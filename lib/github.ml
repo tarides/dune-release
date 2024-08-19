@@ -95,10 +95,10 @@ let pp_ratelimit_remaining ppf () =
   | Some i -> Fmt.pf ppf "(remaining points: %d)" i
 
 let run query =
-  Fmt.pr "Querying Github %a... \n%!" pp_ratelimit_remaining ();
+  Logs.debug (fun m -> m "Querying Github %a..." pp_ratelimit_remaining ());
   if Hashtbl.mem cache query then Lwt.return (Hashtbl.find cache query)
   else (
-    if debug then Fmt.epr "QUERY: %s\n%!" query;
+    if debug then Logs.debug (fun m -> m "QUERY: %s" query);
     let token = Lazy.force Token.t in
     let request = Graphql.request ~token ~query () in
     let response =

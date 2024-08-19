@@ -8,7 +8,7 @@ let with_in_file path f =
   Fun.protect ~finally:(fun () -> Stdlib.close_in_noerr ic) (fun () -> f ic)
 
 let with_out_file filename f =
-  Fmt.pr "Writing %s\n%!" filename;
+  Logs.debug (fun m -> m "Writing %s" filename);
   let dir = Filename.dirname filename in
   (if not (Sys.file_exists dir) then
      let _ = Fmt.kstr Sys.command "mkdir -p %S" dir in
@@ -94,13 +94,12 @@ let get_timesheets ~lint
   | Admin ->
       let dir = get_admin_dir admin_dir in
       read_timesheets_from_admin ~years ~weeks ~users ~ids ~lint dir
-  | Github ->
-      Fmt.epr "invalid source: cannot read timesheets on Github\n";
-      exit 1
+  | Github -> Fmt.failwith "invalid source: cannot read timesheets on Github\n"
 
 let get_goals ~org ~repo =
   let+ issues = Issue.list ~org ~repo () in
-  Fmt.pr "Found %d goals in %s/%s.\n%!" (List.length issues) org repo;
+  Logs.debug (fun m ->
+      m "Found %d goals in %s/%s." (List.length issues) org repo);
   issues
 
 let get_project
@@ -121,9 +120,10 @@ let get_project
       let+ project =
         Project.get ~org ~project_number ~goals ?items_per_page ()
       in
-      Fmt.epr "Found %d cards in %s/%d.\n%!"
-        (List.length (Project.cards project))
-        org project_number;
+      Logs.debug (fun m ->
+          m "Found %d cards in %s/%d."
+            (List.length (Project.cards project))
+            org project_number);
       project
   | Local, _ ->
       let file = data_dir / Fmt.str "%s-%d.json" org project_number in
@@ -132,6 +132,5 @@ let get_project
       let json = with_in_file file Yojson.Safe.from_channel in
       Lwt.return (Project.of_json json)
   | _ ->
-      Fmt.epr "invalid source: cannot read project from %a\n" Common.pp_source
-        source;
-      exit 1
+      Fmt.failwith "invalid source: cannot read project from %a"
+        Common.pp_source source

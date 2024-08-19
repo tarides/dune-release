@@ -9,9 +9,12 @@ let () =
   match Cmd.eval ~catch:false cmd with
   | i -> exit i
   | exception Invalid_argument s ->
-      Fmt.epr "\n%a %s\n%!" Fmt.(styled `Red string) "[ERROR]" s;
+      Logs.err (fun m -> m "%s" s);
       exit Cmd.Exit.cli_error
+  | exception Failure s ->
+      Logs.err (fun m -> m "%s" s);
+      exit 1
   | exception e ->
       Printexc.print_backtrace stderr;
-      Fmt.epr "\n%a\n%!" Fmt.exn e;
+      Logs.err (fun m -> m "%a" Fmt.exn e);
       exit Cmd.Exit.some_error

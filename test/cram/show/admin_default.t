@@ -1,4 +1,4 @@
 
   $ caretaker show --admin-dir ../admin --source admin
-  invalid source: cannot read project from admin
+  caretaker: [ERROR] invalid source: cannot read project from admin
   [1]

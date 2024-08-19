@@ -24,7 +24,7 @@ let of_csv file =
             }
           in
           res := e :: !res
-      | l -> Fmt.epr "Warning; invalid line: %a\n" Fmt.(Dump.list string) l)
+      | l -> Logs.warn (fun m -> m "Invalid line: %a" Fmt.(Dump.list string) l))
     rows;
   close_in ic;
   !res
@@ -57,8 +57,9 @@ let find_duplicates ~org ~repo l =
     | a :: b :: t ->
         if Issue.title a = Issue.title b then (
           assert (Issue.number b > Issue.number a);
-          Fmt.pr "DUPLICATE: https://github.com/%s/%s/issues/%d\n%!" org repo
-            (Issue.number b);
+          Logs.debug (fun m ->
+              m "DUPLICATE: https://github.com/%s/%s/issues/%d" org repo
+                (Issue.number b));
           aux (a :: t))
         else aux (b :: t)
   in

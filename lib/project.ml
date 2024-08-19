@@ -186,7 +186,7 @@ let find_duplicates l =
     | a :: b :: t ->
         if title a = title b then (
           assert (Issue.number b > Issue.number a);
-          Fmt.pr "DUPLICATE GOAL: %s\n%!" (Issue.url b);
+          Logs.debug (fun m -> m "DUPLICATE GOAL: %s" (Issue.url b));
           aux (a :: t))
         else aux (b :: t)
   in
@@ -207,8 +207,8 @@ let find_non_existing_goals g cards =
       | s -> (
           match Hashtbl.find_opt goals s with
           | None ->
-              Fmt.pr "GOAL NOT FOUND: %s (%s)\n%!" (Card.objective c)
-                (Card.id c)
+              Logs.debug (fun m ->
+                  m "GOAL NOT FOUND: %s (%s)" (Card.objective c) (Card.id c))
           | Some _ -> ()))
     cards
 

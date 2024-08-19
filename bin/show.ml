@@ -82,7 +82,7 @@ let run format timesheets heatmap all ({ org; ids; users; _ } as t) =
         let () =
           match users with
           | None -> ()
-          | Some _ -> Fmt.epr "warning: ignoring filter --users\n%!"
+          | Some _ -> Logs.warn (fun m -> m "Ignoring filter --users")
         in
         filter ?filter_out { org; project }
     in

@@ -4,7 +4,6 @@
   [1]
 
   $ caretaker fetch --source admin --admin-dir ../admin
-  Writing data/timesheets.csv
 
   $ cat data/timesheets.csv
   "Number","Id","Year","Month","Week","Days","Hours","User","Full Name","Funder","Entity Funder","Work Item","Team","Category","Objective"

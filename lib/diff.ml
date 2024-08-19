@@ -159,7 +159,7 @@ let apply ~fields diff =
   Lwt_list.iter_s
     (fun item ->
       if skip item then (
-        Fmt.pr "SKIP: %a\n%!" pp_item item;
+        Logs.debug (fun m -> m "SKIP: %a" pp_item item);
         Lwt.return ())
       else
         match item with
@@ -176,8 +176,9 @@ let apply ~fields diff =
             let s = Issue.update_state ~issue_id set in
             if dry_run then Lwt.return ()
             else (
-              Fmt.pr "SKIP: update %s (%s)\n" (Card.issue_url card)
-                (Card.title card);
+              Logs.debug (fun m ->
+                  m "SKIP: update %s (%s)" (Card.issue_url card)
+                    (Card.title card));
               let+ _ = Github.run s in
               ())
         | Card (Column { column = Objective; _ })
@@ -188,7 +189,7 @@ let apply ~fields diff =
             let s = Card.graphql_mutate ~fields card column set in
             if dry_run then Lwt.return ()
             else (
-              Fmt.pr "APPLY: %a\n%!" pp_item item;
+              Logs.debug (fun m -> m "APPLY: %a" pp_item item);
               let+ _res = Github.run s in
               ()))
     diff

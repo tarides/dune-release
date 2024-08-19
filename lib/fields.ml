@@ -66,8 +66,7 @@ let get_id ~name l =
   match List.find (fun x -> same name x.name) l with
   | x -> x.id
   | exception Not_found ->
-      Fmt.epr "Cannot find name %s in %a\n" name pp_options l;
-      failwith "boo"
+      Fmt.failwith "Cannot find name %s in %a\n" name pp_options l
 
 let kind_of_string s =
   match String.lowercase_ascii s with
