@@ -1,5 +1,4 @@
 type item = {
-  number : string;
   id : string;
   year : int;
   month : int;
@@ -7,10 +6,7 @@ type item = {
   days : Okra.Time.t;
   hours : Okra.Time.t;
   user : string;
-  full_name : string;
   funder : string;
-  entity_funder : string;
-  work_item : string;
   team : string;
   category : string;
   objective : string;
@@ -19,6 +15,7 @@ type item = {
 type t = (string, item) Hashtbl.t
 
 val of_markdown :
+  ?cards:Card.t list ->
   ?acc:t ->
   path:string ->
   year:int ->

@@ -22,7 +22,7 @@ let write ~dir p =
   let data = Yojson.Safe.to_string ~std:true json in
   with_out_file file (fun oc -> output_string oc data)
 
-let read_timesheets ~years ~weeks ~users ~ids ~lint root =
+let read_timesheets ?cards ~years ~weeks ~users ~ids ~lint root =
   let weeks = Weeks.to_ints weeks in
   List.fold_left
     (fun acc year ->
@@ -42,7 +42,8 @@ let read_timesheets ~years ~weeks ~users ~ids ~lint root =
                 let path = dir / file in
                 match
                   with_in_file path
-                    (Report.of_markdown ~lint ~acc ~path ~year ~week ~users ~ids)
+                    (Report.of_markdown ?cards ~lint ~acc ~path ~year ~week
+                       ~users ~ids)
                 with
                 | Ok r -> r
                 | Error (`Msg x) ->
@@ -52,8 +53,10 @@ let read_timesheets ~years ~weeks ~users ~ids ~lint root =
         acc weeks)
     (Hashtbl.create 13) years
 
-let read_timesheets_from_okr_updates d = read_timesheets (d / "team-weeklies")
-let read_timesheets_from_admin d = read_timesheets (d / "weekly")
+let read_timesheets_from_okr_updates ?cards d =
+  read_timesheets ?cards (d / "team-weeklies")
+
+let read_timesheets_from_admin ?cards d = read_timesheets ?cards (d / "weekly")
 
 let err_okr_updates_dir () =
   invalid_arg
@@ -71,30 +74,6 @@ let get_okr_updates_dir = function
   | Some dir -> dir
 
 let get_admin_dir = function None -> err_admin_dir () | Some dir -> dir
-
-let get_timesheets ~lint
-    {
-      Common.data_dir;
-      years;
-      weeks;
-      users;
-      ids;
-      source;
-      okr_updates_dir;
-      admin_dir;
-      _;
-    } =
-  match source with
-  | Local ->
-      let file = data_dir / "timesheets.csv" in
-      with_in_file file (Report.of_csv ~years ~weeks ~users ~ids)
-  | Okr_updates ->
-      let dir = get_okr_updates_dir okr_updates_dir in
-      read_timesheets_from_okr_updates ~years ~weeks ~users ~ids ~lint dir
-  | Admin ->
-      let dir = get_admin_dir admin_dir in
-      read_timesheets_from_admin ~years ~weeks ~users ~ids ~lint dir
-  | Github -> Fmt.failwith "invalid source: cannot read timesheets on Github\n"
 
 let get_goals ~org ~repo =
   let+ issues = Issue.list ~org ~repo () in
@@ -134,3 +113,37 @@ let get_project
   | _ ->
       Fmt.failwith "invalid source: cannot read project from %a"
         Common.pp_source source
+
+let get_timesheets ?(fetch_project = false) ~lint
+    ({
+       Common.data_dir;
+       years;
+       weeks;
+       users;
+       ids;
+       source;
+       okr_updates_dir;
+       admin_dir;
+       _;
+     } as t) =
+  let get_cards () =
+    if fetch_project then
+      match get_project { t with source = Local; project_number = 27 } with
+      | exception _ -> Lwt.return []
+      | x -> Lwt.map Project.cards x
+    else Lwt.return []
+  in
+  match source with
+  | Local ->
+      let file = data_dir / "timesheets.csv" in
+      Lwt.return @@ with_in_file file (Report.of_csv ~years ~weeks ~users ~ids)
+  | Okr_updates ->
+      let dir = get_okr_updates_dir okr_updates_dir in
+      let+ cards = get_cards () in
+      read_timesheets_from_okr_updates ~cards ~years ~weeks ~users ~ids ~lint
+        dir
+  | Admin ->
+      let dir = get_admin_dir admin_dir in
+      let+ cards = get_cards () in
+      read_timesheets_from_admin ~cards ~years ~weeks ~users ~ids ~lint dir
+  | Github -> Fmt.failwith "invalid source: cannot read timesheets on Github\n"

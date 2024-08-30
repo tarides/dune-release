@@ -6,7 +6,7 @@ open Caretaker
 let run t =
   Lwt_main.run
   @@ let* project = IO.get_project t in
-     let timesheets = IO.get_timesheets ~lint:false t in
+     let* timesheets = IO.get_timesheets ~lint:false t in
      let heatmap = Heatmap.of_report timesheets in
      let filter_out = [ (Column.Id, Filter.is "New KR"); (Id, Filter.is "") ] in
      let project = Project.filter ~filter_out project in

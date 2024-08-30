@@ -3,6 +3,7 @@
 ### Changed
 
 - Change the layout of timesheet output according to the existing spreadsheet (#81, @gpetiot)
+- Add project fields (funder, team, category, objectives) to the timesheet csv output (#92, @gpetiot)
 - Use Logs for warning/debug/error messages (#84, @gpetiot)
 
 ## 0.3.0

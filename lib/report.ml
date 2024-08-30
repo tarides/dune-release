@@ -2,7 +2,6 @@ module F = Filter
 open Okra
 
 type item = {
-  number : string;
   id : string;
   year : int;
   month : int;
@@ -10,10 +9,7 @@ type item = {
   days : Time.t;
   hours : Time.t;
   user : string;
-  full_name : string;
   funder : string;
-  entity_funder : string;
-  work_item : string;
   team : string;
   category : string;
   objective : string;
@@ -58,8 +54,8 @@ let match_ids ids =
       let ids = List.map (fun id -> (Column.Id, id)) ids in
       fun u -> F.eval ~get:(function Id -> u | _ -> assert false) ids
 
-let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids ~lint s
-    =
+let of_markdown ?(cards = []) ?(acc = Hashtbl.create 13) ~path ~year ~week
+    ~users ~ids ~lint s =
   let md = Omd.of_channel s in
   let okrs, parser_warnings =
     Parser.of_markdown ~ignore_sections Parser.Engineer md
@@ -79,13 +75,17 @@ let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids ~lint s
             | New_KR -> Fmt.str "(new: %s)" kr.title
             | _ -> Fmt.str "%a" KR.Work.Id.pp kr.id)
       in
+      let get_card_field f =
+        match List.find_opt (fun x -> Card.id x = id) cards with
+        | Some c -> f c
+        | None -> ""
+      in
       if match_ids id then
         Hashtbl.iter
           (fun user days ->
             if match_user user then
               Hashtbl.add acc id
                 {
-                  (* TODO *) number = "";
                   id;
                   year;
                   month;
@@ -93,13 +93,10 @@ let of_markdown ?(acc = Hashtbl.create 13) ~path ~year ~week ~users ~ids ~lint s
                   days;
                   (* TODO *) hours = Time.nil;
                   user;
-                  (* TODO *) full_name = "";
-                  (* TODO *) funder = "";
-                  (* TODO *) entity_funder = "";
-                  (* TODO *) work_item = "";
-                  (* TODO *) team = "";
-                  (* TODO *) category = "";
-                  (* TODO *) objective = "";
+                  funder = get_card_field Card.funder;
+                  team = get_card_field Card.team;
+                  category = get_card_field Card.category;
+                  objective = get_card_field Card.title;
                 })
           kr.time_per_engineer)
     report;
@@ -129,10 +126,9 @@ let csv_headers =
     "Full Name";
     "Funder";
     "Entity Funder";
-    "Work Item";
+    "Objective";
     "Team";
     "Category";
-    "Objective";
   ]
 
 let ( or ) x y = if x = 0 then y else x
@@ -144,10 +140,11 @@ let compare_items x y =
   or Int.compare x.week y.week or String.compare x.id y.id
 
 let rows t =
+  let todo_import_from_another_table _name = "" in
   Hashtbl.to_seq_values t |> List.of_seq |> List.sort compare_items
   |> List.map (fun i ->
          [
-           i.number;
+           todo_import_from_another_table "number";
            i.id;
            Fmt.str "%d" i.year;
            Fmt.str "%02d" i.month;
@@ -156,13 +153,12 @@ let rows t =
            (* TODO: Fmt.str "%g" i.hours.data*)
            "";
            i.user;
-           i.full_name;
+           todo_import_from_another_table "full_name";
            i.funder;
-           i.entity_funder;
-           i.work_item;
+           todo_import_from_another_table "entity_funder";
+           i.objective;
            i.team;
            i.category;
-           i.objective;
          ])
 
 let of_row header x =
@@ -172,7 +168,6 @@ let of_row header x =
   in
   let x = Csv.Row.with_header x header in
   {
-    number = Csv.Row.find x "Number";
     id = Csv.Row.find x "Id";
     year = int_of_string @@ Csv.Row.find x "Year";
     month = int_of_string @@ Csv.Row.find x "Month";
@@ -180,10 +175,7 @@ let of_row header x =
     days = time @@ Csv.Row.find x "Days";
     hours = time @@ Csv.Row.find x "Hours";
     user = Csv.Row.find x "User";
-    full_name = Csv.Row.find x "Full Name";
     funder = Csv.Row.find x "Funder";
-    entity_funder = Csv.Row.find x "Entity Funder";
-    work_item = Csv.Row.find x "Work Item";
     team = Csv.Row.find x "Team";
     category = Csv.Row.find x "Category";
     objective = Csv.Row.find x "Objective";

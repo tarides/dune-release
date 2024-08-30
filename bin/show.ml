@@ -63,7 +63,7 @@ let run format timesheets heatmap all ({ org; ids; users; _ } as t) =
   Lwt_main.run
   @@
   if timesheets || heatmap then (
-    let ts = IO.get_timesheets ~lint:false t in
+    let* ts = IO.get_timesheets ~lint:false ~fetch_project:true t in
     (if heatmap then
        let heatmap = Heatmap.of_report ts in
        out_heatmap ~format heatmap);

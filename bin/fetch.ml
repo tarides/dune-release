@@ -11,9 +11,9 @@ let write_timesheets ~dir t =
 
 let fetch_timesheets ~dir t =
   match t.source with
-  | Local | Github -> ()
+  | Local | Github -> Lwt.return ()
   | Okr_updates | Admin ->
-      let report = IO.get_timesheets ~lint:false t in
+      let+ report = IO.get_timesheets ~lint:false ~fetch_project:true t in
       write_timesheets ~dir report
 
 let fetch_project_board ~dir t =
@@ -39,7 +39,7 @@ let run ({ Common.data_dir; source; okr_updates_dir; admin_dir; _ } as t) =
         source
     | _ -> source
   in
-  let () = fetch_timesheets ~dir:data_dir { t with source } in
+  let* () = fetch_timesheets ~dir:data_dir { t with source } in
   let+ () = fetch_project_board ~dir:data_dir t in
   ()
 
