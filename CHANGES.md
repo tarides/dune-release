@@ -48,6 +48,8 @@
 - Removed support for the OPAM 1.2.2 client. This means `dune-release` expects
   the `opam` binary to be version 2.0 at least. (#406, #411,
   @Leonidas-from-XIV)
+- Removed `bistro` subcommand, it is equivalent to calling `dune-release`
+  without arguments (#241, #392, @Leonidas-from-XIV)
 
 ## 1.6.1
 
