@@ -107,14 +107,23 @@ let default_csv_headers =
     [
       Id;
       Title;
-      Status;
-      Quarter;
-      Team;
-      Pillar;
-      Objective;
+      Other_field "proposal link";
       Funder;
-      Labels;
-      Progress;
+      Status;
+      Pillar;
+      Other_field "owner";
+      Other_field "contact";
+      Other_field "js bucket";
+      Other_field "start on quarter";
+      Other_field "duration (weeks)";
+      Other_field "end on quarter";
+      Starts;
+      Ends;
+      Other_field "priority";
+      Other_field "principal fte";
+      Other_field "senior fte";
+      Other_field "junior fte";
+      Other_field "effort days";
     ]
 
 let to_csv ~headers t = List.map (get_string t) headers

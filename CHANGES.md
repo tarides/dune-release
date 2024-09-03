@@ -2,6 +2,7 @@
 
 ### Changed
 
+- Add missing fields (proposal link, owner, contact, JS bucket, start/end quarter, start/end dates, priority, FTE, effort) to the project csv output (#91, @gpetiot)
 - Change the layout of timesheet output according to the existing spreadsheet (#81, @gpetiot)
 - Add project fields (funder, team, category, objectives) to the timesheet csv output (#92, @gpetiot)
 - Use Logs for warning/debug/error messages (#84, @gpetiot)
