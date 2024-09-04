@@ -13,5 +13,5 @@
      - `git push --tags upstream main`
 5. Create the release
      - `make release`
-6. Commit the changes in git/tarides/opam-repository
-7. update git/tarides/admin/.github/workflows/build.yml to use the new carataker version
+6. Commit the changes in [tarides/opam-repository](https://github.com/tarides/opam-repository)
+7. Update [update-data.yml](https://github.com/tarides/admin/blob/main/.github/workflows/update-data.yml) to use the new caretaker version
