@@ -1,7 +1,15 @@
 open Cmdliner
 
+let root_info =
+  let version =
+    match Build_info.V1.version () with
+    | None -> "dev"
+    | Some v -> Build_info.V1.Version.to_string v
+  in
+  Cmd.info "caretaker" ~version
+
 let cmd =
-  Cmd.group ~default:Show.term (Cmd.info "caretaker")
+  Cmd.group ~default:Show.term root_info
     [ Show.cmd; Lint.cmd; Sync.cmd; Fetch.cmd ]
 
 let () =

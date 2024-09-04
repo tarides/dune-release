@@ -1,3 +1,9 @@
+## unreleased
+
+### Added
+
+- Enable the `--version` option (#95, @gpetiot)
+
 ## 1.0.0
 
 ### Changed

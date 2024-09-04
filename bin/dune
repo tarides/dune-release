@@ -2,7 +2,7 @@
  (name main)
  (public_name caretaker)
  (modules main common IO lint sync fetch show let_syntax_cmdliner)
- (libraries caretaker fmt.tty fmt.cli fmt cmdliner logs.cli))
+ (libraries caretaker dune-build-info fmt.tty fmt.cli fmt cmdliner logs.cli))
 
 (executable
  (name upload_team_objectives)

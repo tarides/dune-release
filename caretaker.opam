@@ -11,6 +11,7 @@ bug-reports: "https://github.com/tarides/caretaker/issues"
 depends: [
   "dune" {>= "3.7"}
   "cohttp-lwt-unix"
+  "dune-build-info"
   "yojson"
   "cmdliner"
   "csv"

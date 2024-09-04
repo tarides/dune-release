@@ -20,6 +20,7 @@
   "A tool to interface with the different sources we use for project management.")
  (depends
   cohttp-lwt-unix
+  dune-build-info
   yojson
   cmdliner
   csv
