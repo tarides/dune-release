@@ -1,5 +1,9 @@
 type t
 
+module State : sig
+  type t = [ `Open | `Closed | `Draft ]
+end
+
 val v :
   ?title:string ->
   ?objective:string ->
@@ -21,7 +25,7 @@ val v :
   ?card_id:string ->
   ?issue_id:string ->
   ?issue_url:string ->
-  ?state:[ `Open | `Closed | `Draft ] ->
+  ?state:State.t ->
   ?tracked_by:string ->
   ?progress:string ->
   string ->
@@ -31,7 +35,7 @@ val id : t -> string
 val card_id : t -> string
 val issue_id : t -> string
 val issue_url : t -> string
-val state : t -> [ `Open | `Closed | `Draft ]
+val state : t -> State.t
 val tracked_by : t -> string
 val starts : t -> string
 val ends : t -> string

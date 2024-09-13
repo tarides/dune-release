@@ -10,6 +10,21 @@ let ( / ) a b =
   try U.member b a
   with Yojson.Safe.Util.Type_error _ -> raise (Invalid (a, b))
 
+module State = struct
+  type t = [ `Open | `Closed | `Draft ]
+
+  let of_string = function
+    | "open" -> `Open
+    | "closed" -> `Closed
+    | "draft" -> `Draft
+    | s -> Fmt.failwith "invalid state: %s" s
+
+  let to_string = function
+    | `Open -> "open"
+    | `Closed -> "closed"
+    | `Draft -> "draft"
+end
+
 type t = {
   title : string;
   id : string;
@@ -34,7 +49,7 @@ type t = {
   card_id : string;
   issue_id : string; (* the issue the card points to *)
   issue_url : string;
-  state : [ `Open | `Closed | `Draft ];
+  state : State.t;
   tracked_by : string; (* the ID of the [objective] field *)
 }
 
@@ -128,17 +143,6 @@ let default_csv_headers =
 
 let to_csv ~headers t = List.map (get_string t) headers
 
-let state_of_string = function
-  | "open" -> `Open
-  | "closed" -> `Closed
-  | "draft" -> `Draft
-  | s -> Fmt.failwith "invalid state: %s" s
-
-let string_of_state = function
-  | `Open -> "open"
-  | `Closed -> "closed"
-  | `Draft -> "draft"
-
 let to_json t =
   let columns =
     List.map (fun c -> (Column.to_string c, get_json t c)) Column.all
@@ -154,7 +158,7 @@ let to_json t =
         ("card-id", `String t.card_id);
         ("issue-id", `String t.issue_id);
         ("issue-url", `String t.issue_url);
-        ("state", `String (string_of_state t.state));
+        ("state", `String (State.to_string t.state));
         ("tracked-by", `String t.tracked_by);
       ])
 
@@ -179,7 +183,7 @@ let of_json ~project_id json =
   let issue_id = json / "issue-id" |> U.to_string in
   let issue_url = json / "issue-url" |> U.to_string in
   let progress = json / "progress" |> U.to_string in
-  let state = json / "state" |> U.to_string |> state_of_string in
+  let state = json / "state" |> U.to_string |> State.of_string in
   let other_fields =
     json / "other-fields" |> U.to_assoc
     |> List.map (fun (x, y) -> (x, U.to_string y))
@@ -456,7 +460,7 @@ let pp ppf t =
     let k = String.of_bytes buf in
     match v with "" -> () | _ -> Fmt.pf ppf "    %a: %s\n" em k v
   in
-  Fmt.pf ppf "  [%7s] %a (%s)\n" t.id bold t.title (string_of_state t.state);
+  Fmt.pf ppf "  [%7s] %a (%s)\n" t.id bold t.title (State.to_string t.state);
   pf_field "Objective" t.objective;
   pf_field "Status" t.status;
   pf_field "Iteration" t.iteration;
