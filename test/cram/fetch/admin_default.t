@@ -66,6 +66,7 @@ so we copy the files in a temporary [tmp] directory.
           "js bucket": "<js-bucket>",
           "contact": "<contact>",
           "owner": "<owner>",
+          "slack channel": "<slack-channel>",
           "proposal link": "<proposal-link>",
           "proposal status": "Active",
           "repository": "<repository>"

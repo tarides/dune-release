@@ -3,6 +3,7 @@
 ### Changed
 
 - Rename field 'Quarter' to 'Iteration' according to Github dashboard (#98, @gpetiot)
+- Add 'Slack Channel' field to the project export (#100, @gpetiot)
 
 ### Added
 

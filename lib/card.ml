@@ -139,6 +139,7 @@ let default_csv_headers =
       Other_field "senior fte";
       Other_field "junior fte";
       Other_field "effort days";
+      Other_field "slack channel";
     ]
 
 let to_csv ~headers t = List.map (get_string t) headers

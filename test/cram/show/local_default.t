@@ -31,6 +31,7 @@
       js bucket*: <js-bucket>
       contact*  : <contact>
       owner*    : <owner>
+      slack channel*: <slack-channel>
       proposal link*: <proposal-link>
       proposal status*: Active
       repository*: <repository>
@@ -40,5 +41,5 @@
   >   --data-dir ../data \
   >   --number 27 \
   >   --format csv
-  "id","title","proposal link","funder","status","pillar","owner","contact","js bucket","start on quarter","duration (weeks)","end on quarter","starts","ends","priority","principal fte","senior fte","junior fte","effort days"
-  "KR123","<title>","<proposal-link>","<funder>","<status>","<pillar>","<owner>","<contact>","<js-bucket>","<start-on-quarter>","24.","<end-on-quarter>","<starts>","<ends>","<priority>","7.8","10.4","2.6","117."
+  "id","title","proposal link","funder","status","pillar","owner","contact","js bucket","start on quarter","duration (weeks)","end on quarter","starts","ends","priority","principal fte","senior fte","junior fte","effort days","slack channel"
+  "KR123","<title>","<proposal-link>","<funder>","<status>","<pillar>","<owner>","<contact>","<js-bucket>","<start-on-quarter>","24.","<end-on-quarter>","<starts>","<ends>","<priority>","7.8","10.4","2.6","117.","<slack-channel>"
