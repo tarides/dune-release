@@ -19,7 +19,7 @@ type t = {
   team : string;
   pillar : string;
   assignees : string list;
-  quarter : string;
+  iteration : string;
   funder : string;
   stakeholder : string;
   size : string;
@@ -39,7 +39,7 @@ type t = {
 }
 
 let v ?(title = "") ?(objective = "") ?(status = "") ?(labels = []) ?(team = "")
-    ?(pillar = "") ?(assignees = []) ?(quarter = "") ?(funder = "")
+    ?(pillar = "") ?(assignees = []) ?(iteration = "") ?(funder = "")
     ?(stakeholder = "") ?(size = "") ?(tracks = []) ?(category = "")
     ?(other_fields = []) ?(starts = "") ?(ends = "") ?(project_id = "")
     ?(card_id = "") ?(issue_id = "") ?(issue_url = "") ?(state = `Open)
@@ -53,7 +53,7 @@ let v ?(title = "") ?(objective = "") ?(status = "") ?(labels = []) ?(team = "")
     team;
     pillar;
     assignees;
-    quarter;
+    iteration;
     funder;
     stakeholder;
     size;
@@ -78,7 +78,7 @@ let get ~one ~many t = function
   | Title -> one t.title
   | Objective -> one t.objective
   | Status -> one t.status
-  | Quarter -> one t.quarter
+  | Iteration -> one t.iteration
   | Starts -> one t.starts
   | Ends -> one t.ends
   | Funder -> one t.funder
@@ -171,7 +171,7 @@ let of_json ~project_id json =
   let team = json / "team" |> U.to_string in
   let size = json / "size" |> U.to_string in
   let pillar = json / "pillar" |> U.to_string in
-  let quarter = json / "quarter" |> U.to_string in
+  let iteration = json / "iteration" |> U.to_string in
   let category = json / "category" |> U.to_string in
   let assignees = json / "assignees" |> U.to_list |> List.map U.to_string in
   let labels = json / "labels" |> U.to_list |> List.map U.to_string in
@@ -190,7 +190,7 @@ let of_json ~project_id json =
     objective;
     title;
     status;
-    quarter;
+    iteration;
     starts;
     tracks;
     ends;
@@ -229,7 +229,7 @@ let objective t = t.objective
 let title t = t.title
 let status t = t.status
 let funder t = t.funder
-let quarter t = t.quarter
+let iteration t = t.iteration
 let tracks t = t.tracks
 
 let graphql_query =
@@ -385,7 +385,7 @@ let update acc json =
   | Id -> { acc with id = one () }
   | Objective -> assert false
   | Status -> { acc with status = one () }
-  | Quarter -> { acc with quarter = one () }
+  | Iteration -> { acc with iteration = one () }
   | Labels -> { acc with labels = many () }
   | Starts -> { acc with starts = one () }
   | Size -> { acc with size = one () }
@@ -459,7 +459,7 @@ let pp ppf t =
   Fmt.pf ppf "  [%7s] %a (%s)\n" t.id bold t.title (string_of_state t.state);
   pf_field "Objective" t.objective;
   pf_field "Status" t.status;
-  pf_field "Quarter" t.quarter;
+  pf_field "Iteration" t.iteration;
   pf_field "Starts" t.starts;
   pf_field "Ends" t.ends;
   pf_field "Team" t.team;

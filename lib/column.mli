@@ -7,7 +7,7 @@ type t =
   | Team
   | Pillar
   | Assignees
-  | Quarter
+  | Iteration
   | Funder
   | Stakeholder
   | Size

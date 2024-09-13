@@ -1,5 +1,9 @@
 ## unreleased
 
+### Changed
+
+- Rename field 'Quarter' to 'Iteration' according to Github dashboard (#98, @gpetiot)
+
 ### Added
 
 - Enable the `--version` option (#95, @gpetiot)

@@ -15,7 +15,7 @@
   == <title> (27) ==
     [  KR123] <title> (open)
       Status    : <status>
-      Quarter   : <quarter>
+      Iteration : <iteration>
       Starts    : <starts>
       Ends      : <ends>
       Team      : <team>

@@ -8,7 +8,7 @@ val v :
   ?team:string ->
   ?pillar:string ->
   ?assignees:string list ->
-  ?quarter:string ->
+  ?iteration:string ->
   ?funder:string ->
   ?stakeholder:string ->
   ?size:string ->
@@ -39,7 +39,7 @@ val title : t -> string
 val objective : t -> string
 val status : t -> string
 val funder : t -> string
-val quarter : t -> string
+val iteration : t -> string
 val team : t -> string
 val pillar : t -> string
 val stakeholder : t -> string

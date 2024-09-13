@@ -28,7 +28,7 @@ so we copy the files in a temporary [tmp] directory.
         "team": "<team>",
         "pillar": "<pillar>",
         "assignees": ["<assignee>"],
-        "quarter": "<quarter>",
+        "iteration": "<iteration>",
         "funder": "<funder>",
         "stakeholder": "",
         "size": "",

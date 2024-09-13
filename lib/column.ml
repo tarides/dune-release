@@ -7,7 +7,7 @@ type t =
   | Team
   | Pillar
   | Assignees
-  | Quarter
+  | Iteration
   | Funder
   | Stakeholder
   | Size
@@ -28,7 +28,7 @@ let all =
     Team;
     Pillar;
     Assignees;
-    Quarter;
+    Iteration;
     Funder;
     Stakeholder;
     Size;
@@ -48,7 +48,7 @@ let to_string = function
   | Team -> "team"
   | Pillar -> "pillar"
   | Assignees -> "assignees"
-  | Quarter -> "quarter"
+  | Iteration -> "iteration"
   | Funder -> "funder"
   | Stakeholder -> "stakeholder"
   | Size -> "size"
@@ -71,7 +71,7 @@ let of_string x =
   | "team" -> Team
   | "pillar" -> Pillar
   | "assignees" -> Assignees
-  | "quarter" -> Quarter
+  | "iteration" -> Iteration
   | "funder" -> Funder
   | "stakeholder" -> Stakeholder
   | "size" -> Size

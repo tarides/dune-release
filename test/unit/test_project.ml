@@ -3,7 +3,7 @@ open Caretaker
 let card x =
   Card.v ~title:"TITLE" ~objective:"OBEJCTIVE" ~status:"STATUS"
     ~labels:[ "LABEL1"; "LABEL2" ] ~team:"TEAM" ~pillar:"PILLAR"
-    ~assignees:[ "A1"; "A2" ] ~quarter:"QUARTER" ~funder:"FUNDER"
+    ~assignees:[ "A1"; "A2" ] ~iteration:"ITERATION" ~funder:"FUNDER"
     ~stakeholder:"STAKEHOLDER" ~size:"SIZE" ~tracks:[ "T1"; "T2" ]
     ~category:"CATEGORY" ~starts:"STARTS" ~ends:"ENDS" ~card_id:"CARD-ID"
     ~issue_id:"ISSUE-ID" ~project_id:"PROJECT-ID" ~issue_url:"ISSUE_URL"

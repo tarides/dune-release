@@ -119,7 +119,7 @@ let row_of_card c =
     (Column.of_string "team", Card.team c);
     (Column.of_string "pillar", Card.pillar c);
     (Column.of_string "status", Card.status c);
-    (Column.of_string "quarter", Card.quarter c);
+    (Column.of_string "iteration", Card.iteration c);
     (Column.of_string "funder", Card.funder c);
     (Column.of_string "stakeholder", Card.stakeholder c);
     (Column.of_string "Tracked by", Card.tracked_by c);
