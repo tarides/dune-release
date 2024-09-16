@@ -8,7 +8,7 @@ let with_in_file path f =
   Fun.protect ~finally:(fun () -> Stdlib.close_in_noerr ic) (fun () -> f ic)
 
 let with_out_file filename f =
-  Logs.debug (fun m -> m "Writing %s" filename);
+  Logs.info (fun m -> m "Writing %s" filename);
   let dir = Filename.dirname filename in
   (if not (Sys.file_exists dir) then
      let _ = Fmt.kstr Sys.command "mkdir -p %S" dir in
@@ -77,7 +77,7 @@ let get_admin_dir = function None -> err_admin_dir () | Some dir -> dir
 
 let get_goals ~org ~repo =
   let+ issues = Issue.list ~org ~repo () in
-  Logs.debug (fun m ->
+  Logs.info (fun m ->
       m "Found %d goals in %s/%s." (List.length issues) org repo);
   issues
 
@@ -99,7 +99,7 @@ let get_project
       let+ project =
         Project.get ~org ~project_number ~goals ?items_per_page ()
       in
-      Logs.debug (fun m ->
+      Logs.info (fun m ->
           m "Found %d cards in %s/%d."
             (List.length (Project.cards project))
             org project_number);

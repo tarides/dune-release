@@ -29,13 +29,13 @@ let run ({ Common.data_dir; source; okr_updates_dir; admin_dir; _ } as t) =
   let source =
     match (source, okr_updates_dir, admin_dir) with
     | Github, Some dir, _ ->
-        Logs.debug (fun m -> m "Reading timesheets from `%s'." dir);
+        Logs.info (fun m -> m "Reading timesheets from `%s'." dir);
         Okr_updates
     | Github, _, Some dir ->
-        Logs.debug (fun m -> m "Reading timesheets from `%s'." dir);
+        Logs.info (fun m -> m "Reading timesheets from `%s'." dir);
         Admin
     | (Github | Local), _, _ ->
-        Logs.debug (fun m -> m "Skipping timesheets.");
+        Logs.info (fun m -> m "Skipping timesheets.");
         source
     | _ -> source
   in

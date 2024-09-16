@@ -262,7 +262,7 @@ let update_tracked_by tracked_by =
 
 let run ~force () =
   let file = "roadmap.csv" in
-  Logs.debug (fun m -> m "Reading %s.." file);
+  Logs.info (fun m -> m "Reading %s.." file);
   let* goals = goals () in
   let entries = of_csv ~goals file in
   let org = "tarides" in
@@ -283,7 +283,7 @@ let run ~force () =
       0 entries
   in
   let count = ref 0 in
-  Logs.debug (fun m -> m "Adding %d new cards..." n_add);
+  Logs.info (fun m -> m "Adding %d new cards..." n_add);
   let* () =
     Lwt_list.iter_s
       (fun (e, c) ->

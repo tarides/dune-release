@@ -135,9 +135,8 @@ let token =
 let setup () =
   let open Let_syntax_cmdliner in
   let+ style_renderer = Fmt_cli.style_renderer ~docs:common_options ()
-  and+ token = token
-  and+ level = Logs_cli.level () in
-  Logs.set_level level;
+  and+ token = token in
+  Logs.set_level (Some Logs.Info);
   Logs.set_reporter (Logs_fmt.reporter ());
   Fmt_tty.setup_std_outputs ?style_renderer ();
   match token with None -> () | Some t -> Github.Token.set t

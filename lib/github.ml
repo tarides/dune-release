@@ -95,7 +95,7 @@ let pp_ratelimit_remaining ppf () =
   | Some i -> Fmt.pf ppf "(remaining points: %d)" i
 
 let run query =
-  Logs.debug (fun m -> m "Querying Github %a..." pp_ratelimit_remaining ());
+  Logs.info (fun m -> m "Querying Github %a..." pp_ratelimit_remaining ());
   if Hashtbl.mem cache query then Lwt.return (Hashtbl.find cache query)
   else (
     if debug then Logs.debug (fun m -> m "QUERY: %s" query);

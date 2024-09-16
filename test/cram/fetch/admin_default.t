@@ -2,6 +2,7 @@
   $ caretaker fetch \
   >   --source admin \
   >   --admin-dir ../admin
+  caretaker: [INFO] Writing data/timesheets.csv
 
   $ cat data/timesheets.csv
   "Number","Id","Year","Month","Week","Days","Hours","User","Full Name","Funder","Entity Funder","Objective","Team","Category"
@@ -21,6 +22,7 @@ so we copy the files in a temporary [tmp] directory.
   >   --source admin \
   >   --admin-dir ../admin \
   >   --data-dir tmp
+  caretaker: [INFO] Writing tmp/timesheets.csv
 
   $ cat tmp/timesheets.csv
   "Number","Id","Year","Month","Week","Days","Hours","User","Full Name","Funder","Entity Funder","Objective","Team","Category"

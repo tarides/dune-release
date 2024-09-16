@@ -8,6 +8,7 @@ so we copy the files in a temporary [tmp] directory.
   $ caretaker fetch \
   >   --source local \
   >   --data-dir tmp
+  caretaker: [INFO] Skipping timesheets.
 
   $ cat tmp/timesheets.csv
   cat: tmp/timesheets.csv: No such file or directory
