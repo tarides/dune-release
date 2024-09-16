@@ -484,15 +484,15 @@ let order_by (pivot : Column.t) cards =
   Hashtbl.fold (fun k v acc -> (k, v) :: acc) sections []
 
 let matches q t = Filter.eval ~get:(get_string t) q
-let is_complete t = matches [ (Status, Filter.starts_with "complete") ] t
-let is_dropped t = matches [ (Status, Filter.starts_with "dropped") ] t
+let is_complete t = matches [ (Status, Filter.Query.starts_with "complete") ] t
+let is_dropped t = matches [ (Status, Filter.Query.starts_with "dropped") ] t
 
 let should_be_closed t =
   matches
     [
-      (Status, Filter.starts_with "complete");
-      (Status, Filter.starts_with "closed");
-      (Status, Filter.starts_with "dropped");
+      (Status, Filter.Query.starts_with "complete");
+      (Status, Filter.Query.starts_with "closed");
+      (Status, Filter.Query.starts_with "dropped");
     ]
     t
 

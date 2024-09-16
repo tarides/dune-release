@@ -12,7 +12,7 @@ type t = {
   years : int list;
   weeks : Caretaker.Weeks.t;
   users : string list option;
-  ids : Caretaker.Filter.query list option;
+  ids : Caretaker.Filter.Query.t list option;
   data_dir : string;
   okr_updates_dir : string option;
   admin_dir : string option;

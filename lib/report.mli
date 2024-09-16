@@ -21,7 +21,7 @@ val of_markdown :
   year:int ->
   week:int ->
   users:string list option ->
-  ids:Filter.query list option ->
+  ids:Filter.Query.t list option ->
   lint:bool ->
   in_channel ->
   (t, [ `Msg of string ]) result
@@ -32,6 +32,6 @@ val of_csv :
   years:int list ->
   weeks:Weeks.t ->
   users:string list option ->
-  ids:Filter.query list option ->
+  ids:Filter.Query.t list option ->
   in_channel ->
   t

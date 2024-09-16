@@ -10,7 +10,7 @@ let card = Alcotest.testable Card.pp ( = )
 let cards = [ c1; c2; c3; c4 ]
 
 let f1 =
-  let open Filter in
+  let open Filter.Query in
   [ (Column.Id, is ""); (Id, is "New KR") ]
 
 let default_filter () =
@@ -18,7 +18,7 @@ let default_filter () =
   Alcotest.(check (list card)) __LOC__ [ c1; c2 ] x
 
 let test_is () =
-  let filter = [ (Column.Objective, Filter.is o1) ] in
+  let filter = [ (Column.Objective, Filter.Query.is o1) ] in
   Alcotest.(check bool) "matches" true (Card.matches filter c1);
   let x = Card.filter_out filter cards in
   Alcotest.(check (list card)) __LOC__ [ c3 ] x

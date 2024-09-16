@@ -90,7 +90,9 @@ let ids =
            ~docv:"IDs" [ "ids" ])
   in
   let f ids =
-    match ids with None -> None | Some ids -> Some (List.map Filter.query ids)
+    match ids with
+    | None -> None
+    | Some ids -> Some (List.map Filter.Query.make ids)
   in
   Term.(const f $ arg)
 
@@ -150,7 +152,7 @@ type t = {
   years : int list;
   weeks : Weeks.t;
   users : string list option;
-  ids : Filter.query list option;
+  ids : Filter.Query.t list option;
   data_dir : string;
   okr_updates_dir : string option;
   admin_dir : string option;
