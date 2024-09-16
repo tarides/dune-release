@@ -43,3 +43,14 @@
   >   --format csv
   "id","title","proposal link","funder","status","pillar","owner","contact","js bucket","start on quarter","duration (weeks)","end on quarter","starts","ends","priority","principal fte","senior fte","junior fte","effort days","slack channel"
   "KR123","<title>","<proposal-link>","<funder>","<status>","<pillar>","<owner>","<contact>","<js-bucket>","<start-on-quarter>","24.","<end-on-quarter>","<starts>","<ends>","<priority>","7.8","10.4","2.6","117.","<slack-channel>"
+
+Filtering out legacy objectives:
+
+  $ caretaker show \
+  >   --source local \
+  >   --data-dir ../data \
+  >   --number 27 \
+  >   --fields id,labels \
+  >   --format csv
+  "id","labels"
+  "KR123","<label-1>,<label-2>"

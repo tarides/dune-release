@@ -4,6 +4,7 @@
 
 - Rename field 'Quarter' to 'Iteration' according to Github dashboard (#98, @gpetiot)
 - Add 'Slack Channel' field to the project export (#100, @gpetiot)
+- Filter out legacy objectives by default (#103, @gpetiot)
 
 ### Added
 

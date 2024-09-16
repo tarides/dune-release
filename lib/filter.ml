@@ -12,10 +12,11 @@ module Query = struct
 
   let rec eval ~get k q =
     let v = String.lowercase_ascii (get k) in
+    let lv = String.split_on_char ',' v in
     match q with
-    | Is x -> String.equal x v
+    | Is x -> List.exists (String.equal x) lv
     | Not x -> Stdlib.not (eval ~get k x)
-    | Starts_with prefix -> String.starts_with ~prefix v
+    | Starts_with prefix -> List.exists (String.starts_with ~prefix) lv
 
   let make id =
     let check_is id =
@@ -32,7 +33,9 @@ type t = (Column.t * Query.t) list
 
 let default_out : t =
   [
-    (Status, Query.starts_with "complete"); (Status, Query.starts_with "dropped");
+    (Status, Query.starts_with "complete");
+    (Status, Query.starts_with "dropped");
+    (Labels, Query.is "legacy");
   ]
 
 let eval ~get t =
