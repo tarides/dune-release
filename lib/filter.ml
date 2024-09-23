@@ -32,11 +32,7 @@ end
 type t = (Column.t * Query.t) list
 
 let default_out : t =
-  [
-    (Status, Query.starts_with "complete");
-    (Status, Query.starts_with "dropped");
-    (Labels, Query.is "legacy");
-  ]
+  [ (Status, Query.starts_with "dropped"); (Labels, Query.is "legacy") ]
 
 let eval ~get t =
   List.exists

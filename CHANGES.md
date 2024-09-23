@@ -1,3 +1,9 @@
+## unreleased
+
+### Changed
+
+- show: Don't filter out 'Complete' objectives by default (#<PR_NUMBER>, @gpetiot)
+
 ## 1.1.0
 
 ### Changed
