@@ -1,17 +1,27 @@
 (executable
  (name main)
  (public_name caretaker)
+ (package caretaker)
  (modules main common IO lint sync fetch show let_syntax_cmdliner)
- (libraries caretaker dune-build-info fmt.tty fmt.cli fmt cmdliner logs.cli))
+ (libraries
+  caretaker-lib
+  dune-build-info
+  fmt.tty
+  fmt.cli
+  fmt
+  cmdliner
+  logs.cli))
 
 (executable
  (name upload_team_objectives)
  (public_name upload-team-objectives)
+ (package caretaker)
  (modules upload_team_objectives)
- (libraries caretaker fmt.tty fmt.cli fmt cmdliner))
+ (libraries caretaker-lib fmt.tty fmt.cli fmt cmdliner))
 
 (executable
  (name upload_roadmap)
  (public_name upload-roadmap)
+ (package caretaker)
  (modules upload_roadmap)
- (libraries caretaker fmt.tty fmt.cli fmt cmdliner))
+ (libraries caretaker-lib fmt.tty fmt.cli fmt cmdliner))

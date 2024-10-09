@@ -1,3 +1,4 @@
 (library
- (public_name caretaker)
+ (name caretaker)
+ (public_name caretaker-lib)
  (libraries cohttp-lwt-unix yojson csv omd okra-lib))

@@ -2,7 +2,7 @@
 opam-version: "2.0"
 synopsis: "Taking care of our technical projects"
 description:
-  "A tool to interface with the different sources we use for project management."
+  "A library to interface with the different sources we use for project management."
 maintainer: ["Tarides"]
 authors: ["Thomas Gazagnaire"]
 license: "ISC"
@@ -11,9 +11,14 @@ bug-reports: "https://github.com/tarides/caretaker/issues"
 depends: [
   "dune" {>= "3.7"}
   "alcotest" {with-test}
-  "cmdliner"
-  "caretaker-lib" {= version}
-  "dune-build-info"
+  "calendar"
+  "cohttp-lwt-unix"
+  "conduit-lwt-unix"
+  "csv"
+  "lwt_ssl"
+  "okra-lib" {>= "3.0.0" & < "4.0.0"}
+  "omd" {>= "2.0.0~alpha4"}
+  "yojson"
   "odoc" {with-doc}
 ]
 build: [

@@ -1,3 +1,9 @@
+## unreleased
+
+### Added
+
+- Expose the caretaker-lib package (#107, @gpetiot)
+
 ## 1.1.1
 
 ### Changed
