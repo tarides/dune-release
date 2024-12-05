@@ -12,7 +12,7 @@ depends: [
   "dune" {>= "3.7"}
   "alcotest" {with-test}
   "calendar"
-  "cohttp-lwt-unix"
+  "cohttp-lwt-unix" {< "6.0"}
   "conduit-lwt-unix"
   "csv"
   "lwt_ssl"
