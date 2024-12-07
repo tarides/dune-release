@@ -26,7 +26,7 @@ val of_markdown :
   in_channel ->
   (t, [ `Msg of string ]) result
 
-val to_csv : out_channel -> t -> unit
+val to_csv : ?fields:Column.t list -> out_channel -> t -> unit
 
 val of_csv :
   years:int list ->

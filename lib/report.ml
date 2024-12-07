@@ -113,24 +113,27 @@ let of_markdown ?(cards = []) ?(acc = Hashtbl.create 13) ~path ~year ~week
     List.iter (fun e -> Logs.warn (fun l -> l "%a" pp e)) kr_warnings);
   Ok acc
 
-let csv_headers =
+let todo_import_from_another_table _name = ""
+
+let schema =
   [
-    "Number";
-    "Id";
-    "Year";
-    "Month";
-    "Week";
-    "Days";
-    "Hours";
-    "User";
-    "Full Name";
-    "Funder";
-    "Entity Funder";
-    "Objective";
-    "Team";
-    "Category";
+    ("Number", fun _ -> todo_import_from_another_table "number");
+    ("Id", fun i -> i.id);
+    ("Year", fun i -> Fmt.str "%d" i.year);
+    ("Month", fun i -> Fmt.str "%02d" i.month);
+    ("Week", fun i -> Fmt.str "%02d" i.week);
+    ("Days", fun i -> Fmt.str "%g" i.days.data);
+    ("Hours", fun _ -> "");
+    ("User", fun i -> i.user);
+    ("Full Name", fun _ -> todo_import_from_another_table "full_name");
+    ("Funder", fun i -> i.funder);
+    ("Entity Funder", fun _ -> todo_import_from_another_table "entity_funder");
+    ("Objective", fun i -> i.objective);
+    ("Team", fun i -> i.team);
+    ("Category", fun i -> i.category);
   ]
 
+let csv_headers = List.map fst schema
 let ( or ) x y = if x = 0 then y else x
 
 let compare_items x y =
@@ -139,27 +142,22 @@ let compare_items x y =
   or Int.compare x.month y.month
   or Int.compare x.week y.week or String.compare x.id y.id
 
-let rows t =
-  let todo_import_from_another_table _name = "" in
+let rows ?fields t =
+  let schema =
+    match fields with
+    | None -> schema
+    | Some fs ->
+        List.map
+          (fun f ->
+            let f =
+              Column.to_string f |> String.lowercase_ascii
+              |> String.capitalize_ascii
+            in
+            (f, List.assoc f schema))
+          fs
+  in
   Hashtbl.to_seq_values t |> List.of_seq |> List.sort compare_items
-  |> List.map (fun i ->
-         [
-           todo_import_from_another_table "number";
-           i.id;
-           Fmt.str "%d" i.year;
-           Fmt.str "%02d" i.month;
-           Fmt.str "%02d" i.week;
-           Fmt.str "%g" i.days.data;
-           (* TODO: Fmt.str "%g" i.hours.data*)
-           "";
-           i.user;
-           todo_import_from_another_table "full_name";
-           i.funder;
-           todo_import_from_another_table "entity_funder";
-           i.objective;
-           i.team;
-           i.category;
-         ])
+  |> List.map (fun i -> List.map (fun (_, f) -> f i) schema)
 
 let of_row header x =
   let time x =
@@ -181,9 +179,15 @@ let of_row header x =
     objective = Csv.Row.find x "Objective";
   }
 
-let to_csv oc t =
-  let rows = rows t in
+let to_csv ?fields oc t =
+  let rows = rows ?fields t in
   let out = Csv.to_channel ~quote_all:true oc in
+  let csv_headers =
+    match fields with
+    | None -> csv_headers
+    | Some fs ->
+        fs |> List.map Column.to_string |> List.map String.capitalize_ascii
+  in
   Csv.output_all out (csv_headers :: rows);
   Csv.close_out out
 

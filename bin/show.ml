@@ -15,14 +15,20 @@ let filter ?filter_out data =
   let filter = Project.filter ?filter_out in
   { data with project = filter data.project }
 
-type format = { style : [ `Plain | `CSV ]; fields : Column.t list }
+type format = { style : [ `Plain | `CSV ]; fields : Column.t list option }
 
 let out ~format t =
   match format.style with
   | `Plain -> Fmt.pr "%a\n%!" pp t
-  | `CSV -> Fmt.pr "%a%!" (pp_csv format.fields) t
+  | `CSV ->
+      let fields =
+        match format.fields with
+        | None -> Card.default_csv_headers
+        | Some fs -> fs
+      in
+      Fmt.pr "%a%!" (pp_csv fields) t
 
-let out_timesheets t = Report.to_csv stdout t
+let out_timesheets ?fields t = Report.to_csv ?fields stdout t
 
 let out_heatmap ~format t =
   match format.style with
@@ -43,11 +49,10 @@ let style =
     @@ info ~doc:"The output format" [ "format"; "f" ])
 
 let fields =
-  let default = Card.default_csv_headers in
   let column = Arg.conv ((fun str -> Ok (Column.of_string str)), Column.pp) in
   Arg.(
     value
-    @@ opt (list column) default
+    @@ opt (some (list column)) None
     @@ info ~doc:"What fields to use (in the CSV file)." [ "fields" ])
 
 let format =
@@ -67,7 +72,7 @@ let run format timesheets heatmap all ({ org; ids; users; _ } as t) =
     (if heatmap then
        let heatmap = Heatmap.of_report ts in
        out_heatmap ~format heatmap);
-    if timesheets then out_timesheets ts;
+    if timesheets then out_timesheets ?fields:format.fields ts;
     Lwt.return ())
   else
     let+ project = IO.get_project t in
