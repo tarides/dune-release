@@ -1,3 +1,7 @@
+## 1.3.0
+
+- Support custom fields for timesheet exports (#108, @samoht)
+
 ## 1.2.0
 
 ### Added
