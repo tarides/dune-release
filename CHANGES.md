@@ -1,3 +1,7 @@
+## 1.4.0
+
+- Use `login` instead of `name` when reading user info (#112, @samoht)
+
 ## 1.3.0
 
 - Support custom fields for timesheet exports (#108, @samoht)
