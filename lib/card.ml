@@ -290,7 +290,7 @@ let graphql_query =
                 ... on ProjectV2ItemFieldUserValue {
                   users (first: 10) {
                     nodes  {
-                      name
+                      login
                     }
                   }
                   field {
@@ -368,11 +368,11 @@ let update acc json =
     | _ -> Fmt.failwith "%s: %s is not a supported field kind" k typename
   in
   let many () =
-    let to_names json =
+    let to_strings key json =
       json |> U.to_list
       |> List.fold_left
            (fun acc json ->
-             match json / "name" with
+             match json / key with
              | `String s -> s :: acc
              | `Null -> acc
              | _ -> assert false)
@@ -380,8 +380,8 @@ let update acc json =
       |> List.rev
     in
     match Fields.kind_of_string typename with
-    | Users -> json / "users" / "nodes" |> to_names
-    | Labels -> json / "labels" / "nodes" |> to_names
+    | Users -> json / "users" / "nodes" |> to_strings "login"
+    | Labels -> json / "labels" / "nodes" |> to_strings "name"
     | _ -> Fmt.failwith "%s: unsupported field kind" typename
   in
   let c = Column.of_string k in
