@@ -1,6 +1,6 @@
 open Lwt.Syntax
-open Cohttp_lwt_unix
 open Cohttp_lwt
+open Cohttp_lwt_unix
 module U = Yojson.Safe.Util
 
 let ( / ) a b = U.member b a
