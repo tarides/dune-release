@@ -30,7 +30,8 @@ let pp_card_item ppf = function
       Fmt.pf ppf
         "%s: column '%a' is out-of-sync.\n\
         \  - expected(DB): %S\n\
-        \  - got(GitHub) : %S" id Column.pp column set old
+        \  - got(GitHub) : %S"
+        id Column.pp column set old
   | State { card; set; _ } ->
       let status = Card.status card in
       Fmt.pf ppf

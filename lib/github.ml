@@ -78,15 +78,15 @@ module Graphql = struct
         | _errors ->
             Error
               (`Msg
-                (Format.asprintf "@[<v2>GitHub returned errors: %a@]"
-                   (Yojson.Safe.pretty_print ~std:true)
-                   json)))
+                 (Format.asprintf "@[<v2>GitHub returned errors: %a@]"
+                    (Yojson.Safe.pretty_print ~std:true)
+                    json)))
     | Error e ->
         Error
           (`Msg
-            (Format.asprintf
-               "@[<v2>Error performing GraphQL query on GitHub: %a@]"
-               Curly.Error.pp e))
+             (Format.asprintf
+                "@[<v2>Error performing GraphQL query on GitHub: %a@]"
+                Curly.Error.pp e))
 end
 
 let pp_ratelimit_remaining ppf () =
