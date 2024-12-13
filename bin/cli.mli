@@ -87,13 +87,17 @@ val local_repo :
 (** A [--local-repo] option to define the location of the local fork of
     opam-repository. *)
 
+val dev_repo : [ `Dev_repo of string option ] Term.t
+(** A [--dev-repo] option to define the Github opam-repository to which packages
+    should be released. *)
+
 val remote_repo :
   [ `Remote_repo of string Dune_release.Config.Cli.t option ] Term.t
 (** A [--remote-repo] option to define the location of the remote fork of
     opam-repository. *)
 
 val opam_repo : [ `Opam_repo of (string * string) option ] Term.t
-(** A [--opam_repo] option to define the Github opam-repository to which
+(** A [--opam-repo] option to define the Github opam-repository to which
     packages should be released. *)
 
 val skip_lint : [> `Skip_lint of bool ] Term.t

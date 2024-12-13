@@ -13,6 +13,7 @@ val publish :
   ?distrib_file:Fpath.t ->
   ?publish_msg:string ->
   ?token:string Dune_release.Config.Cli.t ->
+  ?dev_repo:string ->
   pkg_names:string list ->
   version:Dune_release.Version.t option ->
   tag:Dune_release.Vcs.Tag.t option ->
