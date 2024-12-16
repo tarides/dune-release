@@ -10,6 +10,8 @@ let run var =
          Pkg.distrib_archive_path pkg >>| fun distrib_file ->
          Format.printf "%a\n" Fpath.pp distrib_file
      | "docdir" -> Ok (Format.printf "%a\n" Fpath.pp Pkg.doc_dir)
+     | "version" ->
+         Pkg.version pkg >>| fun v -> Format.printf "%a\n%!" Version.pp v
      | "publication-message" ->
          Pkg.publish_msg pkg >>| fun msg -> Format.printf "%s\n" msg
      | _ -> Rresult.R.error_msgf "Unknown variable %S" var
