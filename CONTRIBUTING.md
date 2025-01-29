@@ -6,7 +6,7 @@ You can do it via `opam`:
 ```sh
 $ git clone git@github.com:tarides/dune-release.git
 $ cd dune-release
-$ opam switch create ./ ocaml-base-compiler.4.14.0 --deps-only -t
+$ opam switch create ./ ocaml-base-compiler.4.14.0 --deps-only -t --with-dev-setup
 ```
 
 This will create a local switch with a fresh compiler, the dependencies of
