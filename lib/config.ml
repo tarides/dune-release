@@ -73,23 +73,7 @@ let of_yaml_exn str =
   }
 
 let of_yaml str = try of_yaml_exn str with Failure s -> R.error_msg s
-
-let config_dir () =
-  let cfg = Fpath.(v Xdg.config_dir / "dune") in
-  let upgrade () =
-    (* Upgrade from 0.2 to 0.3 format *)
-    let old_d = Fpath.(v Xdg.home / ".dune") in
-    OS.Dir.exists old_d >>= function
-    | false -> Ok ()
-    | true ->
-        App_log.status (fun m ->
-            m "Upgrading configuration files: %a => %a" Fpath.pp old_d Fpath.pp
-              cfg);
-        OS.Dir.create ~path:true cfg >>= fun _ ->
-        OS.Path.move old_d Fpath.(cfg / "release.yml")
-  in
-  upgrade () >>= fun () -> Ok cfg
-
+let config_dir () = Ok Fpath.(v Xdg.config_dir / "dune")
 let get_path () = config_dir () >>| fun cfg -> Fpath.(cfg / "release.yml")
 
 let load () =
