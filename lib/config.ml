@@ -73,11 +73,11 @@ let of_yaml_exn str =
   }
 
 let of_yaml str = try of_yaml_exn str with Failure s -> R.error_msg s
-let config_dir () = Ok Fpath.(v Xdg.config_dir / "dune")
-let get_path () = config_dir () >>| fun cfg -> Fpath.(cfg / "release.yml")
+let config_dir () = Fpath.(v Xdg.config_dir / "dune")
+let get_path () = Fpath.(config_dir () / "release.yml")
 
 let load () =
-  get_path () >>= fun file ->
+  let file = get_path () in
   OS.File.exists file >>= fun exists ->
   if exists then OS.File.read file >>= of_yaml >>| fun x -> Some x else Ok None
 
@@ -91,7 +91,7 @@ let pretty_fields { user; remote; local; keep_v; auto_open } =
   ]
 
 let save t =
-  get_path () >>= fun file ->
+  let file = get_path () in
   let fields = pretty_fields t in
   let content =
     let open Stdext in
@@ -139,15 +139,15 @@ let create_config ?(pkgs = []) file =
   save config >>= fun () -> Ok config
 
 let create ?pkgs () =
-  get_path () >>= fun file ->
+  let file = get_path () in
   create_config ?pkgs file >>= fun _ -> Ok ()
 
 let find () =
-  get_path () >>= fun file ->
+  let file = get_path () in
   OS.File.exists file >>= fun exists ->
   if exists then OS.File.read file >>= of_yaml >>| fun x -> Some x else Ok None
 
-let token_file () = config_dir () >>= fun cfg -> Ok Fpath.(cfg / "github.token")
+let token_file () = Fpath.(config_dir () / "github.token")
 
 let get_token () =
   let rec aux () =
@@ -193,7 +193,7 @@ let prompt_for_token () =
   get_valid_token ()
 
 let config_token ~dry_run () =
-  token_file () >>= fun file ->
+  let file = token_file () in
   OS.File.exists file >>= fun exists ->
   let is_valid =
     if exists then Sos.read_file ~dry_run file >>= validate_token
@@ -241,7 +241,7 @@ let opam_repo_fork ?pkgs ~user ~remote ~local () =
       let config =
         Lazy.force file >>= function
         | Some x -> Ok x
-        | None -> get_path () >>= create_config ?pkgs
+        | None -> create_config ?pkgs (get_path ())
       in
       config >>= fun config ->
       let local = Stdext.Option.value ~default:config.local local in
