@@ -39,13 +39,6 @@ We need to set up a git project for dune-release to work properly
   $ git commit -m "Initial commit" > /dev/null
   $ dune-release tag -y > /dev/null
 
-Trying to publish the documentation explicitly should fail:
+Trying to publish should be ok:
 
-  $ dune-release publish doc -y --dry-run > /dev/null
-  dune-release: [ERROR] directory contents _build/whatever-0.1.0: No such file or directory
-  [3]
-
-By default it should skip the documentation generation:
-
-  $ dune-release publish -y --dry-run | grep Skipping
-  [-] Skipping documentation publication for package whatever: no doc field in whatever.opam
+  $ dune-release publish -y --dry-run > /dev/null

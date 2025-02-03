@@ -30,7 +30,7 @@ We also need a dummy distrib file to keep the test simple:
   $ mkdir _build
   $ touch _build/whatever-0.1.0.tbz
 
-And a url file as if we just successfully ran dune-release publish distrib:
+And a url file as if we just successfully ran dune-release publish:
 
   $ echo "https://some.fake.url/mytarball.tbz" > _build/whatever-0.1.0.url
 

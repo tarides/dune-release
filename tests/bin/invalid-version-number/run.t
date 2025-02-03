@@ -63,9 +63,9 @@ We do the whole dune-release process
   [+] Distribution for whatever 3.3.4~4.10preview1
   [+] Archive _build/whatever-3.3.4~4.10preview1.tbz
 
-(2) publish distrib
+(2) publish
 
-  $ dune-release publish distrib --dry-run --yes | grep preview1
+  $ dune-release publish --dry-run --yes | grep preview1
   => must exists _build/whatever-3.3.4~4.10preview1.tbz
   -: exec: git --git-dir .git rev-parse --verify refs/tags/3.3.4_4.10preview1
   -: exec: git --git-dir .git rev-parse --verify refs/tags/3.3.4_4.10preview1

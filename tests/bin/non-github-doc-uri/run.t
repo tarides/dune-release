@@ -49,9 +49,3 @@ a github URI to publish the documentation to.
   dune-release: [ERROR] Github development repository URL could not be inferred
   [FAIL] opam field doc cannot be parsed by dune-release
   [FAIL] lint of _build/whatever-0.1.0 and package whatever failure: 1 errors.
-
-(2) publish doc
-
-  $ dune-release publish doc --dry-run > /dev/null
-  dune-release: [ERROR] Could not derive publication directory $PATH from opam doc field value "https://whatever.io/doc/main.html"; expected the pattern $SCHEME://$USER.github.io/$REPO/$PATH
-  [3]

@@ -113,29 +113,13 @@ dune-release help distrib
 
 ### Publish the distribution and documentation online
 
-Once the distribution archive is created you can now publish it and its documentation online.
-
-You can publish the archive only with:
-
-```
-dune-release publish distrib
-```
-
-This means creating a Github release associated with the tag and upload the distribution tarball as a release artifact.
-
-You can publish the documentation only with:
-
-```
-dune-release publish doc
-```
-
-This means publishing the dune generated documentation to `gh-pages` to be served as a static website on github.io.
-
-If neither `distrib` neither `doc` is specified, `dune-release` publishes both:
+Once the distribution archive is created you can now publish it with:
 
 ```
 dune-release publish
 ```
+
+This means creating a Github release associated with the tag and upload the distribution tarball as a release artifact.
 
 The full documentation of this command is available with
 ```
