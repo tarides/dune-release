@@ -11,6 +11,8 @@
 
 - Use the 'user' option as the fork owner, only attempt to decode the remote URL
   if the user option is not set. (#480, @Julow)
+- `dune-release` no longer publishes docs to github pages. Instead, we rely on
+  the docs published under `ocaml.org/packages` (#499 #500, @v-gb @samoht)
 
 ### Deprecated
 
