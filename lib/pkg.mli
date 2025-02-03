@@ -125,11 +125,7 @@ val distrib_opam_path : t -> (Fpath.t, R.msg) result
 
 (** {1 Uri} *)
 
-val doc_uri : t -> (string, Bos_setup.R.msg) result
 val doc_dir : Fpath.t
-
-val github_doc_owner_repo_and_path :
-  t -> (string * string * Fpath.t, R.msg) result
 
 type f =
   dry_run:bool ->

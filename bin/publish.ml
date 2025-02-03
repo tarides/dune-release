@@ -47,21 +47,12 @@ let man_xrefs = [ `Main; `Cmd "distrib" ]
 let man =
   [
     `S Manpage.s_synopsis;
-    `P "$(mname) $(tname) [$(i,OPTION)]... [$(i,ARTEFACT)]...";
+    `P "$(mname) $(tname) [$(i,OPTION)]...";
     `S Manpage.s_description;
-    `P
-      "The $(tname) command publishes package distribution archives and/or \
-       documentation.";
+    `P "The $(tname) command publishes package distribution archives.";
     `P
       "Artefact publication always relies on a distribution archive having \
        been generated before with dune-release-distrib(1).";
-    `S "ARTEFACTS";
-    `I
-      ( "$(b,distrib)",
-        "Publishes a distribution archive as part of a Github release." );
-    `I
-      ( "$(b,doc)",
-        "Publishes the documentation of a distribution archive to gh-pages." );
   ]
 
 let term =

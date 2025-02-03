@@ -27,7 +27,7 @@ dune-release help         # for more help
 
 Calling `dune-release` without any argument will start the automated release process, composed of the following steps:
 - create the distribution archive;
-- publish it online with its documentation;
+- publish it online;
 - create an opam package;
 - submit it to OCaml's opam repository.
 
@@ -111,7 +111,7 @@ dune-release help distrib
 ```
 
 
-### Publish the distribution and documentation online
+### Publish the distribution online
 
 Once the distribution archive is created you can now publish it with:
 

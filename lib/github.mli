@@ -28,14 +28,6 @@ val publish_distrib :
 (** Push the tag, create a Github release, upload the distribution archive and
     return the release archive download URL *)
 
-val publish_doc :
-  dry_run:bool ->
-  msg:string ->
-  docdir:Fpath.t ->
-  yes:bool ->
-  Pkg.t ->
-  (unit, R.msg) Result.result
-
 val undraft_release :
   token:string ->
   dry_run:bool ->

@@ -221,20 +221,7 @@ let distrib_file ~dry_run p =
       |> R.reword_error_msg (fun _ ->
              R.msgf "Did you forget to call 'dune-release distrib' ?")
 
-let doc_uri p =
-  opam_field_hd p "doc" >>| function None -> "" | Some uri -> uri
-
 let doc_dir = Fpath.(v "_build" / "default" / "_doc" / "_html")
-
-let github_doc_owner_repo_and_path p =
-  doc_uri p >>= fun doc_uri ->
-  match Github_repo.from_gh_pages doc_uri with
-  | Some ({ owner; repo }, path) -> Ok (owner, repo, path)
-  | None ->
-      R.error_msgf
-        "Could not derive publication directory $PATH from opam doc field \
-         value %a; expected the pattern $SCHEME://$USER.github.io/$REPO/$PATH"
-        String.dump doc_uri
 
 let publish_msg p =
   match p.publish_msg with
