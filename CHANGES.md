@@ -10,6 +10,9 @@
 
 ### Fixed
 
+- Make `dune-release` not fail in the presence of `~/.dune/bin/dune` (which is present
+  when using dune package management)
+
 ### Removed
 
 ### Security
