@@ -14,12 +14,10 @@ val publish :
   ?publish_msg:string ->
   ?token:string Dune_release.Config.Cli.t ->
   ?dev_repo:string ->
-  pkg_names:string list ->
   version:Dune_release.Version.t option ->
   tag:Dune_release.Vcs.Tag.t option ->
   keep_v:bool Dune_release.Config.Cli.t ->
   dry_run:bool ->
-  publish_artefacts:[ `Distrib | `Doc ] list ->
   yes:bool ->
   draft:bool ->
   unit ->

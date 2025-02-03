@@ -21,8 +21,8 @@ let bistro () (`Dry_run dry_run) (`Package_names pkg_names)
       Distrib.distrib ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir
         ~skip_lint ~skip_build ~skip_tests ~include_submodules ()
       >! fun () ->
-      Publish.publish ~token ~pkg_names ~version ~tag ~keep_v ~dry_run ?dev_repo
-        ~publish_artefacts:[] ~yes:false ~draft ()
+      Publish.publish ~token ~version ~tag ~keep_v ~dry_run ?dev_repo ~yes:false
+        ~draft ()
       >! fun () ->
       Opam.get_pkgs ~dry_run ~keep_v ~tag ~pkg_names ~version () >>= fun pkgs ->
       Opam.pkg ~dry_run ~pkgs () >! fun () ->
