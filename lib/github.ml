@@ -7,9 +7,6 @@
 open Bos_setup
 
 module D = struct
-  let user = "${user}"
-  let dir = Fpath.v "${dir}"
-  let fetch_head = "${fetch_head}"
   let pr_url = "${pr_url}"
   let pr_node_id = "${pr_node_id}"
   let download_url = "${download_url}"
@@ -35,126 +32,6 @@ module Parse = struct
         path_from_regexp_opt uri "https://github\\.com/\\(.+\\)"
     | _ -> None
 end
-
-(* Publish documentation *)
-
-let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
-    ~yes =
-  let pp_distrib ppf (name, version) =
-    Fmt.pf ppf "%a %a" Text.Pp.name name Text.Pp.version version
-  in
-  let log_publish_result msg distrib dir =
-    App_log.success (fun m ->
-        m "%s %a in directory %a of gh-pages branch" msg pp_distrib distrib
-          Fpath.pp dir)
-  in
-  let delete dir =
-    if not (Fpath.is_current_dir dir) then Sos.delete_dir ~dry_run dir
-    else
-      let delete acc p = acc >>= fun () -> Sos.delete_path ~dry_run p in
-      let gitdir = Fpath.v ".git" in
-      let not_git p = not (Fpath.equal p gitdir) in
-      OS.Dir.contents dir >>= fun files ->
-      List.fold_left delete (Ok ()) (List.filter not_git files)
-  in
-  let replace_dir_and_push docdir dir =
-    let msg = strf "Update %s doc to %a." name Version.pp version in
-    Vcs.get () >>= fun repo ->
-    Vcs.run_git_quiet repo ~dry_run ~force:(dir <> D.dir)
-      Cmd.(v "checkout" % branch)
-    >>= fun () ->
-    delete dir >>= fun () ->
-    Sos.cp ~dry_run ~rec_:true ~force:true ~src:Fpath.(docdir / ".") ~dst:dir
-    >>= fun () ->
-    (if dry_run then Ok true else Vcs.is_dirty repo) >>= function
-    | false -> Ok false
-    | true ->
-        Vcs.run_git_quiet repo ~dry_run Cmd.(v "add" % p dir) >>= fun () ->
-        Vcs.run_git_quiet repo ~dry_run Cmd.(v "commit" % "-m" % msg)
-        >>= fun () ->
-        Vcs.run_git_quiet repo ~dry_run Cmd.(v "push") >>= fun () -> Ok true
-  in
-  if not (Fpath.is_rooted ~root:Fpath.(v ".") dir) then
-    R.error_msgf "%a directory is not rooted in the repository or not relative"
-      Fpath.pp dir
-  else
-    let clonedir = Fpath.(parent (parent (parent docdir)) / "gh-pages") in
-    Sos.delete_dir ~dry_run ~force:true clonedir >>= fun () ->
-    Vcs.get () >>= fun repo ->
-    Vcs.clone ~dry_run ~force:true ~dir:clonedir repo >>= fun () ->
-    Sos.relativize ~src:clonedir ~dst:docdir >>= fun rel_docdir ->
-    App_log.status (fun l ->
-        l "Updating local %a branch" Text.Pp.commit "gh-pages");
-    Sos.with_dir ~dry_run clonedir (replace_dir_and_push rel_docdir) dir
-    >>= fun res ->
-    res >>= function
-    | false (* no changes *) ->
-        log_publish_result "No documentation changes for" (name, version) dir;
-        Ok ()
-    | true ->
-        let push_spec = strf "%s:%s" branch branch in
-        Prompt.(
-          confirm_or_abort ~yes
-            ~question:(fun l ->
-              l "Push new documentation to %a?" Text.Pp.url
-                (remote ^ "#gh-pages"))
-            ~default_answer:Yes)
-        >>= fun () ->
-        App_log.status (fun l ->
-            l "Pushing new documentation to %a" Text.Pp.url
-              (remote ^ "#gh-pages"));
-        Vcs.run_git_quiet repo ~dry_run Cmd.(v "push" % remote % push_spec)
-        >>= fun () ->
-        Sos.delete_dir ~dry_run clonedir >>= fun () ->
-        log_publish_result "Published documentation for" (name, version) dir;
-        Ok ()
-
-let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
-  Pkg.github_doc_owner_repo_and_path p >>= fun (user, repo, dir) ->
-  Pkg.name p >>= fun name ->
-  Pkg.version p >>= fun version ->
-  let remote = strf "git@@github.com:%s/%s.git" user repo in
-  Vcs.get () >>= fun vcs ->
-  let force = user <> D.user in
-  let create_empty_gh_pages () =
-    let msg = "Initial commit by dune-release." in
-    let create () =
-      Vcs.run_git_quiet vcs ~dry_run Cmd.(v "init") >>= fun () ->
-      Vcs.run_git_quiet vcs ~dry_run
-        Cmd.(v "checkout" % "--orphan" % "gh-pages")
-      >>= fun () ->
-      Sos.write_file ~dry_run (Fpath.v "README") ""
-      (* need some file *) >>= fun () ->
-      Vcs.run_git_quiet vcs ~dry_run Cmd.(v "add" % "README") >>= fun () ->
-      Vcs.run_git_quiet vcs ~dry_run Cmd.(v "commit" % "README" % "-m" % msg)
-    in
-    OS.Dir.with_tmp "gh-pages-%s.tmp"
-      (fun dir () ->
-        Sos.with_dir ~dry_run dir create () |> R.join >>= fun () ->
-        Vcs.run_git_quiet vcs ~dry_run ~force
-          Cmd.(v "fetch" % Fpath.to_string dir % "gh-pages"))
-      ()
-    |> R.join
-  in
-  (match
-     Vcs.run_git_quiet vcs ~dry_run ~force Cmd.(v "fetch" % remote % "gh-pages")
-   with
-  | Ok () -> Ok ()
-  | Error _ ->
-      App_log.status (fun l ->
-          l "Creating new gh-pages branch with initial commit on %s/%s" user
-            repo);
-      create_empty_gh_pages ())
-  >>= fun () ->
-  Vcs.run_git_string vcs ~dry_run ~force
-    Cmd.(v "rev-parse" % "FETCH_HEAD")
-    ~default:(Sos.out D.fetch_head)
-  >>= fun id ->
-  Vcs.run_git_quiet vcs ~dry_run ~force
-    Cmd.(v "branch" % "-f" % "gh-pages" % id)
-  >>= fun () ->
-  publish_in_git_branch ~dry_run ~remote ~branch:"gh-pages" ~name ~version
-    ~docdir ~dir ~yes
 
 (* Publish releases *)
 

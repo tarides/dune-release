@@ -46,7 +46,6 @@ Test that the lint check produces an error if the change log is missing:
   [ OK ] lint opam file my_pkg.opam.
   [ OK ] opam field synopsis is present
   [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
-  [ OK ] Skipping doc field linting, no doc field found
   [FAIL] lint of <project_dir> and package my_pkg failure: 3 errors.
 
 Add a change log:
@@ -81,7 +80,6 @@ If the condition described above is fulfilled, there are 5 checks to be performe
   [ OK ] lint opam file my_pkg.opam.
   [ OK ] opam field synopsis is present
   [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
-  [ OK ] Skipping doc field linting, no doc field found
   [FAIL] lint of <project_dir> and package my_pkg failure: 2 errors.
   
   [-] Validating change log.
@@ -122,7 +120,6 @@ In multi package projects, the whole lint process (including the file lints, eve
   [ OK ] lint opam file my_pkg.opam.
   [ OK ] opam field synopsis is present
   [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
-  [ OK ] Skipping doc field linting, no doc field found
   [FAIL] lint of <project_dir> and package my_pkg failure: 2 errors.
   
   [-] Performing lint for package my_pkg-sub in <test_directory>
@@ -133,7 +130,6 @@ In multi package projects, the whole lint process (including the file lints, eve
   [ OK ] lint opam file my_pkg-sub.opam.
   [ OK ] opam field synopsis is present
   [ OK ] opam fields homepage and dev-repo can be parsed by dune-release
-  [ OK ] Skipping doc field linting, no doc field found
   [FAIL] lint of <project_dir> and package my_pkg-sub failure: 2 errors.
   
   [-] Validating change log.

@@ -44,7 +44,7 @@ let man =
     `P "The $(tname) command (quick in Russian) is equivalent to invoke:";
     `Pre
       "dune-release distrib       # Create the distribution archive\n\
-       dune-release publish       # Publish it to Github with its documentation\n\
+       dune-release publish       # Publish it to Github\n\
        dune-release opam pkg      # Create an opam package\n\
        dune-release opam submit   # Submit it to OCaml's opam repository";
     `P "See dune-release(7) for more information.";
