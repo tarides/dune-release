@@ -4,6 +4,8 @@
 
 - Add `dune-release delegate-info version` to show the current version as infered
   by the tool (#495, @samoht)
+- Add `--dev-repo` to `dune-release` and `dune-release publish` to overwrite
+  the `dev-repo` field specified in the opam file (#494, @samoht)
 
 ### Changed
 
