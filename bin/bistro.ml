@@ -14,14 +14,14 @@ let bistro () (`Dry_run dry_run) (`Package_names pkg_names)
     (`Include_submodules include_submodules) (`Draft draft)
     (`Keep_build_dir keep_dir) (`Skip_lint skip_lint) (`Skip_build skip_build)
     (`Skip_tests skip_tests) (`Local_repo local_repo) (`Remote_repo remote_repo)
-    (`Opam_repo opam_repo) (`No_auto_open no_auto_open) =
+    (`Opam_repo opam_repo) (`No_auto_open no_auto_open) (`Dev_repo dev_repo) =
   Cli.handle_error
     ( Dune_release.Config.token ~token ~dry_run () >>= fun token ->
       let token = Dune_release.Config.Cli.make token in
       Distrib.distrib ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir
         ~skip_lint ~skip_build ~skip_tests ~include_submodules ()
       >! fun () ->
-      Publish.publish ~token ~pkg_names ~version ~tag ~keep_v ~dry_run
+      Publish.publish ~token ~pkg_names ~version ~tag ~keep_v ~dry_run ?dev_repo
         ~publish_artefacts:[] ~yes:false ~draft ()
       >! fun () ->
       Opam.get_pkgs ~dry_run ~keep_v ~tag ~pkg_names ~version () >>= fun pkgs ->
@@ -55,7 +55,8 @@ let term =
     const bistro $ Cli.setup $ Cli.dry_run $ Cli.pkg_names $ Cli.pkg_version
     $ Cli.dist_tag $ Cli.keep_v $ Cli.token $ Cli.include_submodules $ Cli.draft
     $ Cli.keep_build_dir $ Cli.skip_lint $ Cli.skip_build $ Cli.skip_tests
-    $ Cli.local_repo $ Cli.remote_repo $ Cli.opam_repo $ Cli.no_auto_open)
+    $ Cli.local_repo $ Cli.remote_repo $ Cli.opam_repo $ Cli.no_auto_open
+    $ Cli.dev_repo)
 
 let info = Cmd.info "bistro" ~doc ~sdocs ~exits ~man ~man_xrefs
 let cmd = Cmd.v info term

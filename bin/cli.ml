@@ -227,6 +227,15 @@ let remote_repo =
   in
   named (fun x -> `Remote_repo x) (config_opt arg)
 
+let dev_repo =
+  let doc = "Location of the dev repo of the current package" in
+  let env = Cmd.Env.info "DUNE_RELEASE_DEV_REPO" in
+  let arg =
+    Arg.(
+      value & opt (some string) None & info ~env [ "dev-repo" ] ~doc ~docv:"URI")
+  in
+  named (fun x -> `Dev_repo x) arg
+
 let opam_repo =
   let doc =
     "The Github opam-repository to which packages should be released. Use this \

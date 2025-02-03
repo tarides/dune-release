@@ -51,20 +51,20 @@ let publish_doc ~specific ~dry_run ~yes pkg_names pkg =
       Ok ()
   | Ok _ -> publish_doc ~dry_run ~yes pkg_names pkg
 
-let publish_distrib ?token ~dry_run ~yes ~draft pkg =
+let publish_distrib ?token ~dry_run ~yes ~draft ?dev_repo pkg =
   App_log.status (fun l -> l "Publishing distribution");
   Pkg.distrib_file ~dry_run pkg >>= fun archive ->
   Pkg.publish_msg pkg >>= fun msg ->
   App_log.status (fun l -> l "Publishing to github");
   Config.token ~token ~dry_run () >>= fun token ->
-  Github.publish_distrib ~token ~dry_run ~yes ~msg ~archive ~draft pkg
+  Github.publish_distrib ~token ~dry_run ~yes ~msg ~archive ~draft ?dev_repo pkg
   >>= fun url ->
   Pkg.archive_url_path pkg >>= fun url_file ->
   Sos.write_file ~dry_run url_file url >>= fun () -> Ok ()
 
 let publish ?build_dir ?opam ?change_log ?distrib_file ?publish_msg ?token
-    ~pkg_names ~version ~tag ~keep_v ~dry_run ~publish_artefacts ~yes ~draft ()
-    =
+    ?dev_repo ~pkg_names ~version ~tag ~keep_v ~dry_run ~publish_artefacts ~yes
+    ~draft () =
   let specific_doc =
     List.exists (function `Doc -> true | _ -> false) publish_artefacts
   in
@@ -80,7 +80,7 @@ let publish ?build_dir ?opam ?change_log ?distrib_file ?publish_msg ?token
     acc >>= fun () ->
     match artefact with
     | `Doc -> publish_doc ~specific:specific_doc ~dry_run ~yes pkg_names pkg
-    | `Distrib -> publish_distrib ?token ~dry_run ~yes ~draft pkg
+    | `Distrib -> publish_distrib ?token ~dry_run ~yes ~draft ?dev_repo pkg
   in
   List.fold_left publish_artefact (Ok ()) publish_artefacts >>= fun () -> Ok 0
 
@@ -89,9 +89,10 @@ let publish_cli () (`Build_dir build_dir) (`Package_names pkg_names)
     (`Dist_opam opam) (`Change_log change_log) (`Dist_file distrib_file)
     (`Publish_msg publish_msg) (`Dry_run dry_run)
     (`Publish_artefacts publish_artefacts) (`Yes yes) (`Token token)
-    (`Draft draft) =
+    (`Draft draft) (`Dev_repo dev_repo) =
   publish ?build_dir ?opam ?change_log ?distrib_file ?publish_msg ?token
-    ~pkg_names ~version ~tag ~keep_v ~dry_run ~publish_artefacts ~yes ~draft ()
+    ~pkg_names ~version ~tag ~keep_v ~dry_run ~publish_artefacts ~yes ~draft
+    ?dev_repo ()
   |> Cli.handle_error
 
 (* Command line interface *)
@@ -149,7 +150,7 @@ let term =
     const publish_cli $ Cli.setup $ Cli.build_dir $ Cli.pkg_names
     $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ Cli.dist_opam
     $ Cli.change_log $ Cli.dist_file $ Cli.publish_msg $ Cli.dry_run $ artefacts
-    $ Cli.yes $ Cli.token $ Cli.draft)
+    $ Cli.yes $ Cli.token $ Cli.draft $ Cli.dev_repo)
 
 let info = Cmd.info "publish" ~doc ~sdocs ~exits ~man ~man_xrefs
 let cmd = Cmd.v info term

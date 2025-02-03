@@ -283,7 +283,7 @@ let undraft_pr ~token ~dry_run ~opam_repo:(user, repo) ~pr_id =
   run_with_auth ~dry_run ~default_body curl_t
   >>= Github_v4_api.Pull_request.Response.url
 
-let dev_repo p =
+let pkg_dev_repo p =
   Pkg.dev_repo p >>= function
   | Some r -> Ok r
   | None ->
@@ -432,13 +432,16 @@ let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
       App_log.status (fun l -> l "Release with id %d already exists" id);
       Ok id
 
-let publish_distrib ~token ~dry_run ~msg ~archive ~yes ~draft p =
+let publish_distrib ~token ?dev_repo ~dry_run ~msg ~archive ~yes ~draft p =
   Pkg.infer_github_repo p >>= fun { owner; repo } ->
   Pkg.tag p >>= fun tag ->
   assert_tag_exists ~dry_run tag >>= fun () ->
   Vcs.get () >>= fun vcs ->
   check_tag ~dry_run vcs tag >>= fun () ->
-  dev_repo p >>= fun dev_repo ->
+  let dev_repo =
+    match dev_repo with Some d -> Ok d | None -> pkg_dev_repo p
+  in
+  dev_repo >>= fun dev_repo ->
   Pkg.build_dir p >>= fun build_dir ->
   Pkg.name p >>= fun name ->
   Pkg.version p >>= fun version ->

@@ -17,6 +17,7 @@ end
 
 val publish_distrib :
   token:string ->
+  ?dev_repo:string ->
   dry_run:bool ->
   msg:string ->
   archive:Fpath.t ->
