@@ -2,9 +2,13 @@
 
 ### Added
 
+- Add `dune-release delegate-info version` to show the current version as infered
+  by the tool (#495, @samoht)
+
 ### Changed
 
-- Use the 'user' option as the fork owner, only attempt to decode the remote URL if the user option is not set. (#480, @Julow)
+- Use the 'user' option as the fork owner, only attempt to decode the remote URL
+  if the user option is not set. (#480, @Julow)
 
 ### Deprecated
 
@@ -123,7 +127,7 @@
   (#248, @gpetiot)
 - Add a new command `check` to check the prerequisites of dune-release and
   avoid starting a release process that couldn't be finished (#318, #351, @pitag-ha)
-- When preparing the opam-repository PR and pushing the local branch to 
+- When preparing the opam-repository PR and pushing the local branch to
   the user's remote opam-repository fork, use `--set-upstream` to ease any further
   update of the PR (#350, @gpetiot)
 
