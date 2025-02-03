@@ -22,7 +22,7 @@ let bistro () (`Dry_run dry_run) (`Package_names pkg_names)
         ~skip_lint ~skip_build ~skip_tests ~include_submodules ()
       >! fun () ->
       Publish.publish ~token ~pkg_names ~version ~tag ~keep_v ~dry_run
-        ~publish_artefacts:[] ~yes:false ~draft ()
+        ~publish_artefacts:[ `Distrib ] ~yes:false ~draft ()
       >! fun () ->
       Opam.get_pkgs ~dry_run ~keep_v ~tag ~pkg_names ~version () >>= fun pkgs ->
       Opam.pkg ~dry_run ~pkgs () >! fun () ->
@@ -43,10 +43,10 @@ let man =
     `S Manpage.s_description;
     `P "The $(tname) command (quick in Russian) is equivalent to invoke:";
     `Pre
-      "dune-release distrib       # Create the distribution archive\n\
-       dune-release publish       # Publish it to Github with its documentation\n\
-       dune-release opam pkg      # Create an opam package\n\
-       dune-release opam submit   # Submit it to OCaml's opam repository";
+      "dune-release distrib         # Create the distribution archive\n\
+       dune-release publish distrib # Publish it to Github\n\
+       dune-release opam pkg        # Create an opam package\n\
+       dune-release opam submit     # Submit it to OCaml's opam repository";
     `P "See dune-release(7) for more information.";
   ]
 
