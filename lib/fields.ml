@@ -19,6 +19,8 @@ type kind =
   | Iteration
   | Tracks
   | Tracked_by
+  | Parent_issue
+  | Sub_issues_progress
 
 type t = (Column.t, kind * string) Hashtbl.t
 
@@ -41,6 +43,8 @@ let pp_kind ppf = function
   | Iteration -> Fmt.string ppf "iteration"
   | Tracks -> Fmt.string ppf "tracks"
   | Tracked_by -> Fmt.string ppf "tracked_by"
+  | Parent_issue -> Fmt.string ppf "parent_issue"
+  | Sub_issues_progress -> Fmt.string ppf "sub_issues_progress"
 
 let pp ppf t =
   let l = Hashtbl.fold (fun k v acc -> (k, v) :: acc) t [] in
@@ -87,6 +91,8 @@ let kind_of_string s =
   | "projectv2itemfieldnumbervalue" | "number" -> Number
   | "tracks" -> Tracks
   | "tracked_by" | "tracked-by" -> Tracked_by
+  | "parent_issue" -> Parent_issue
+  | "sub_issues_progress" -> Sub_issues_progress
   | s -> Fmt.failwith "%s: invalid field kind" s
 
 let find t k = Hashtbl.find t k

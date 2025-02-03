@@ -15,6 +15,8 @@ type kind =
   | Iteration
   | Tracks
   | Tracked_by
+  | Parent_issue
+  | Sub_issues_progress
 
 type t
 

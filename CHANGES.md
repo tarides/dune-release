@@ -1,3 +1,8 @@
+## 1.5.0
+
+- Support the newly added `parent_issue` and `sub_issues_progress` for reading
+  Github sub-issues (#113, @samoht)
+
 ## 1.4.0
 
 - Use `login` instead of `name` when reading user info (#112, @samoht)
