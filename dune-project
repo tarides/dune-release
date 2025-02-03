@@ -45,6 +45,8 @@ with [Dune](https://github.com/ocaml/dune) and hosted on
   logs
   odoc
   (alcotest :with-test)
-  (yojson (>= 1.6)))
+  (yojson (>= 1.6))
+  (ocamlformat (and (= 0.26.0) :with-dev-setup))
+ )
  (conflicts
    (result (< 1.5))))
