@@ -14,11 +14,6 @@ open Rresult
 val path_arg : Fpath.t Arg.conv
 (** [path_arg] is a path argument converter. *)
 
-val named : ('a -> 'b) -> 'a Cmdliner.Term.t -> 'b Cmdliner.Term.t
-(** Use this to wrap your arguments in a polymorphic variant constructor to
-    avoid confusion when they are later passed to your main function. Example:
-    [named (fun x -> `My_arg x) Arg.(value ...)] *)
-
 val no_auto_open : bool Dune_release.Config.Cli.t Term.t
 (** A [--no-auto-open] option to disable opening of the opam-repository PR in
     the browser. *)

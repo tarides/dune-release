@@ -19,7 +19,6 @@ let dir_path_arg =
   let parse s = dir_parse s >>= Fpath.of_string in
   Arg.conv ~docv:"DIR" (parse, Fpath.pp)
 
-let named f = Cmdliner.Term.(app (const f))
 let config term = Cmdliner.Term.(app (const Dune_release.Config.Cli.make)) term
 
 let config_opt term =
@@ -201,11 +200,8 @@ let remote_repo =
 let dev_repo =
   let doc = "Location of the dev repo of the current package" in
   let env = Cmd.Env.info "DUNE_RELEASE_DEV_REPO" in
-  let arg =
-    Arg.(
-      value & opt (some string) None & info ~env [ "dev-repo" ] ~doc ~docv:"URI")
-  in
-  arg
+  Arg.(
+    value & opt (some string) None & info ~env [ "dev-repo" ] ~doc ~docv:"URI")
 
 let opam_repo =
   let doc =
