@@ -7,14 +7,6 @@
 open Bos_setup
 open Dune_release
 
-let lint () (`Dry_run dry_run) (`Package_names pkg_names)
-    (`Package_version version) (`Dist_tag tag) (`Keep_v keep_v) (`Lints lints) =
-  Cli.handle_error
-    ( Config.keep_v ~keep_v >>= fun keep_v ->
-      let pkg = Pkg.v ~dry_run ?version ~keep_v ?tag () in
-      OS.Dir.current () >>= fun dir ->
-      Lint.lint_packages ~dry_run ~dir ~todo:lints pkg pkg_names )
-
 (* Command line interface *)
 
 open Cmdliner
@@ -54,8 +46,19 @@ let man =
 
 let term =
   Term.(
-    const lint $ Cli.setup $ Cli.dry_run $ Cli.pkg_names $ Cli.pkg_version
-    $ Cli.dist_tag $ Cli.keep_v $ lints)
+    let open Syntax in
+    let+ () = Cli.setup
+    and+ (`Dry_run dry_run) = Cli.dry_run
+    and+ (`Package_names pkg_names) = Cli.pkg_names
+    and+ (`Package_version version) = Cli.pkg_version
+    and+ (`Dist_tag tag) = Cli.dist_tag
+    and+ (`Keep_v keep_v) = Cli.keep_v
+    and+ (`Lints lints) = lints in
+    Cli.handle_error
+      ( Config.keep_v ~keep_v >>= fun keep_v ->
+        let pkg = Pkg.v ~dry_run ?version ~keep_v ?tag () in
+        OS.Dir.current () >>= fun dir ->
+        Lint.lint_packages ~dry_run ~dir ~todo:lints pkg pkg_names ))
 
 let info = Cmd.info "lint" ~doc ~sdocs ~exits ~man ~man_xrefs
 let cmd = Cmd.v info term

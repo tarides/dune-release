@@ -243,24 +243,6 @@ let files =
 let pages =
   [ ("release", release); ("troubleshoot", troubleshoot); ("files", files) ]
 
-let help man_format topic commands =
-  match topic with
-  | None -> `Help (man_format, None)
-  | Some topic -> (
-      let topics = ("topics" :: commands) @ List.map fst pages in
-      let topics = List.sort compare topics in
-      let conv, _ = Cmdliner.Arg.enum (List.rev_map (fun s -> (s, s)) topics) in
-      match conv topic with
-      | `Error e -> `Error (false, e)
-      | `Ok t when List.mem t commands -> `Help (man_format, Some t)
-      | `Ok t when t = "topics" ->
-          Fmt.pr "@[<v>%a@]@." Fmt.(list string) topics;
-          `Ok 0
-      | `Ok t ->
-          let man = try List.assoc t pages with Not_found -> assert false in
-          Fmt.pr "%a" (Cmdliner.Manpage.print man_format) man;
-          `Ok 0)
-
 (* Command line interface *)
 
 open Cmdliner
@@ -280,7 +262,32 @@ let man =
     `P "Use `topics' as $(i,TOPIC) to get a list of topics.";
   ]
 
-let term = Term.(ret (const help $ Arg.man_format $ topic $ Term.choice_names))
+let term =
+  Term.(
+    ret
+      (let open Syntax in
+       let+ man_format = Arg.man_format
+       and+ topic = topic
+       and+ commands = Term.choice_names in
+       match topic with
+       | None -> `Help (man_format, None)
+       | Some topic -> (
+           let topics = ("topics" :: commands) @ List.map fst pages in
+           let topics = List.sort compare topics in
+           let conv, _ = Arg.enum (List.rev_map (fun s -> (s, s)) topics) in
+           match conv topic with
+           | `Error e -> `Error (false, e)
+           | `Ok t when List.mem t commands -> `Help (man_format, Some t)
+           | `Ok t when t = "topics" ->
+               Fmt.pr "@[<v>%a@]@." Fmt.(list string) topics;
+               `Ok 0
+           | `Ok t ->
+               let man =
+                 try List.assoc t pages with Not_found -> assert false
+               in
+               Fmt.pr "%a" (Manpage.print man_format) man;
+               `Ok 0)))
+
 let info = Cmd.info "help" ~doc ~exits ~man ~man_xrefs
 let cmd = Cmd.v info term
 

@@ -52,15 +52,6 @@ let distrib ?build_dir ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir
   >>= fun errs ->
   log_footprint pkg ar >>= fun () -> Ok errs
 
-let distrib_cli () (`Dry_run dry_run) (`Build_dir build_dir)
-    (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
-    (`Keep_v keep_v) (`Keep_build_dir keep_dir) (`Skip_lint skip_lint)
-    (`Skip_build skip_build) (`Skip_tests skip_tests)
-    (`Include_submodules include_submodules) =
-  distrib ?build_dir ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir
-    ~skip_lint ~skip_build ~skip_tests ~include_submodules ()
-  |> Cli.handle_error
-
 (* Command line interface *)
 
 open Cmdliner
@@ -138,9 +129,22 @@ let man =
 
 let term =
   Term.(
-    const distrib_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.pkg_names
-    $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v $ Cli.keep_build_dir
-    $ Cli.skip_lint $ Cli.skip_build $ Cli.skip_tests $ Cli.include_submodules)
+    let open Syntax in
+    let+ () = Cli.setup
+    and+ (`Dry_run dry_run) = Cli.dry_run
+    and+ (`Build_dir build_dir) = Cli.build_dir
+    and+ (`Package_names pkg_names) = Cli.pkg_names
+    and+ (`Package_version version) = Cli.pkg_version
+    and+ (`Dist_tag tag) = Cli.dist_tag
+    and+ (`Keep_v keep_v) = Cli.keep_v
+    and+ (`Keep_build_dir keep_dir) = Cli.keep_build_dir
+    and+ (`Skip_lint skip_lint) = Cli.skip_lint
+    and+ (`Skip_build skip_build) = Cli.skip_build
+    and+ (`Skip_tests skip_tests) = Cli.skip_tests
+    and+ (`Include_submodules include_submodules) = Cli.include_submodules in
+    distrib ?build_dir ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir
+      ~skip_lint ~skip_build ~skip_tests ~include_submodules ()
+    |> Cli.handle_error)
 
 let info = Cmd.info "distrib" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
 let cmd = Cmd.v info term

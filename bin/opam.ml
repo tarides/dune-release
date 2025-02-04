@@ -309,26 +309,6 @@ let submit ?local_repo:local ?remote_repo:remote ?opam_repo ?user ?token
 
 let field ~pkgs ~field_name = field pkgs field_name
 
-let opam_cli () (`Dry_run dry_run) (`Build_dir build_dir)
-    (`Local_repo local_repo) (`Remote_repo remote_repo) (`Opam_repo opam_repo)
-    (`User user) (`Keep_v keep_v) (`Dist_opam opam) (`Dist_uri distrib_uri)
-    (`Dist_file distrib_file) (`Dist_tag tag) (`Package_names pkg_names)
-    (`Package_version version) (`Pkg_descr pkg_descr) (`Readme readme)
-    (`Change_log change_log) (`Publish_msg publish_msg) (`Action action)
-    (`Field_name field_name) (`No_auto_open no_auto_open) (`Yes yes)
-    (`Token token) (`Draft draft) =
-  get_pkgs ?build_dir ?opam ?distrib_file ?pkg_descr ?readme ?change_log
-    ?publish_msg ~dry_run ~keep_v ~tag ~pkg_names ~version ()
-  >>= (fun pkgs ->
-        match action with
-        | `Descr -> descr ~pkgs
-        | `Pkg -> pkg ~dry_run ?distrib_uri ~pkgs ()
-        | `Submit ->
-            submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run
-              ~pkgs ~pkg_names ~no_auto_open ~yes ~draft ()
-        | `Field -> field ~pkgs ~field_name)
-  |> Cli.handle_error
-
 (* Command line interface *)
 
 open Cmdliner
@@ -407,12 +387,42 @@ let info = Cmd.info "opam" ~doc ~sdocs ~envs ~man ~man_xrefs
 
 let term =
   Term.(
-    const opam_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.local_repo
-    $ Cli.remote_repo $ Cli.opam_repo $ Cli.user $ Cli.keep_v $ Cli.dist_opam
-    $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $ Cli.pkg_names
-    $ Cli.pkg_version $ pkg_descr $ Cli.readme $ Cli.change_log
-    $ Cli.publish_msg $ action $ field_arg $ Cli.no_auto_open $ Cli.yes
-    $ Cli.token $ Cli.draft)
+    let open Syntax in
+    let+ () = Cli.setup
+    and+ (`Dry_run dry_run) = Cli.dry_run
+    and+ (`Build_dir build_dir) = Cli.build_dir
+    and+ (`Local_repo local_repo) = Cli.local_repo
+    and+ (`Remote_repo remote_repo) = Cli.remote_repo
+    and+ (`Opam_repo opam_repo) = Cli.opam_repo
+    and+ (`User user) = Cli.user
+    and+ (`Keep_v keep_v) = Cli.keep_v
+    and+ (`Dist_opam opam) = Cli.dist_opam
+    and+ (`Dist_uri distrib_uri) = Cli.dist_uri
+    and+ (`Dist_file distrib_file) = Cli.dist_file
+    and+ (`Dist_tag tag) = Cli.dist_tag
+    and+ (`Package_names pkg_names) = Cli.pkg_names
+    and+ (`Package_version version) = Cli.pkg_version
+    and+ (`Pkg_descr pkg_descr) = pkg_descr
+    and+ (`Readme readme) = Cli.readme
+    and+ (`Change_log change_log) = Cli.change_log
+    and+ (`Publish_msg publish_msg) = Cli.publish_msg
+    and+ (`Action action) = action
+    and+ (`Field_name field_name) = field_arg
+    and+ (`No_auto_open no_auto_open) = Cli.no_auto_open
+    and+ (`Yes yes) = Cli.yes
+    and+ (`Token token) = Cli.token
+    and+ (`Draft draft) = Cli.draft in
+    get_pkgs ?build_dir ?opam ?distrib_file ?pkg_descr ?readme ?change_log
+      ?publish_msg ~dry_run ~keep_v ~tag ~pkg_names ~version ()
+    >>= (fun pkgs ->
+          match action with
+          | `Descr -> descr ~pkgs
+          | `Pkg -> pkg ~dry_run ?distrib_uri ~pkgs ()
+          | `Submit ->
+              submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run
+                ~pkgs ~pkg_names ~no_auto_open ~yes ~draft ()
+          | `Field -> field ~pkgs ~field_name)
+    |> Cli.handle_error)
 
 let cmd = Cmd.v info term
 

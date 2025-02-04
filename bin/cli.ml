@@ -281,18 +281,6 @@ let keep_build_dir =
 
 (* Terms *)
 
-let setup style_renderer log_level cwd =
-  Fmt_tty.setup_std_outputs ?style_renderer ();
-  Logs.set_level log_level;
-  Logs.set_reporter (Logs_fmt.reporter ~app:Fmt.stdout ());
-  Logs.info (fun m -> m "dune-release %%VERSION%% running");
-  match cwd with
-  | None -> `Ok ()
-  | Some dir -> (
-      match OS.Dir.set_current dir with
-      | Ok () -> `Ok ()
-      | Error (`Msg m) -> `Error (false, m))
-
 (* use cmdliner evaluation error *)
 
 let setup =
@@ -312,7 +300,22 @@ let setup =
       & opt (some path_arg) None
       & info [ "C"; "pkg-dir" ] ~docs:Manpage.s_common_options ~doc ~docv)
   in
-  Term.(ret (const setup $ style_renderer $ log_level $ cwd))
+  Term.(
+    ret
+      (let open Syntax in
+       let+ style_renderer = style_renderer
+       and+ log_level = log_level
+       and+ cwd = cwd in
+       Fmt_tty.setup_std_outputs ?style_renderer ();
+       Logs.set_level log_level;
+       Logs.set_reporter (Logs_fmt.reporter ~app:Fmt.stdout ());
+       Logs.info (fun m -> m "dune-release %%VERSION%% running");
+       match cwd with
+       | None -> `Ok ()
+       | Some dir -> (
+           match OS.Dir.set_current dir with
+           | Ok () -> `Ok ()
+           | Error (`Msg m) -> `Error (false, m))))
 
 (* Error handling *)
 

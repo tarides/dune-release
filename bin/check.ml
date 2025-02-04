@@ -12,48 +12,6 @@ let clone_and_checkout_tag repo ~dir ~tag =
   Vcs.checkout ~dry_run:false clone_vcs ~branch:"dune-release-check"
     ~commit_ish:tag
 
-let check (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
-    (`Keep_v keep_v) (`Build_dir build_dir) (`Skip_lint skip_lint)
-    (`Skip_build skip_build) (`Skip_tests skip_tests)
-    (`Skip_change_log skip_change_log) (`Working_tree on_working_tree) =
-  (let dir, clean_up =
-     if on_working_tree then (OS.Dir.current (), fun _ -> ())
-     else
-       let dir =
-         let pkg = Pkg.v ~dry_run:true ?tag ?version ?build_dir () in
-         Pkg.tag pkg >>= fun inferred_tag ->
-         Vcs.get () >>= fun repo ->
-         assert_tag_exists repo inferred_tag >>= fun () ->
-         (match build_dir with
-         | Some dir -> Ok dir
-         | None -> Fpath.of_string "_build")
-         >>= fun build_directory ->
-         let dir = Fpath.(build_directory // v ".dune-release-check") in
-         clone_and_checkout_tag repo ~dir ~tag:(Tag inferred_tag) >>| fun () ->
-         dir
-       in
-       let clean_up dir =
-         match Sos.delete_dir ~dry_run:false ~force:true dir with
-         | Ok _ -> ()
-         | Error (`Msg err) ->
-             App_log.unhappy (fun l ->
-                 l "Auxiliary directory %a could not be deleted: %s"
-                   Text.Pp.path dir err)
-       in
-       (dir, clean_up)
-   in
-   dir >>= fun dir ->
-   Config.keep_v ~keep_v >>= fun keep_v ->
-   let check_result =
-     Check.check_project ~pkg_names ?tag ?version ~keep_v ?build_dir ~skip_lint
-       ~skip_build ~skip_tests ~skip_change_log ~dir ()
-   in
-   let () = clean_up dir in
-   check_result)
-  |> R.reword_error_msg (fun err ->
-         R.msgf "Error while running `check`: %s" err)
-  |> Cli.handle_error
-
 open Cmdliner
 
 let working_tree =
@@ -78,9 +36,54 @@ let man =
 
 let term =
   Term.(
-    const check $ Cli.pkg_names $ Cli.pkg_version $ Cli.dist_tag $ Cli.keep_v
-    $ Cli.build_dir $ Cli.skip_lint $ Cli.skip_build $ Cli.skip_tests
-    $ Cli.skip_change_log $ working_tree)
+    let open Syntax in
+    let+ (`Package_names pkg_names) = Cli.pkg_names
+    and+ (`Package_version version) = Cli.pkg_version
+    and+ (`Dist_tag tag) = Cli.dist_tag
+    and+ (`Keep_v keep_v) = Cli.keep_v
+    and+ (`Build_dir build_dir) = Cli.build_dir
+    and+ (`Skip_lint skip_lint) = Cli.skip_lint
+    and+ (`Skip_build skip_build) = Cli.skip_build
+    and+ (`Skip_tests skip_tests) = Cli.skip_tests
+    and+ (`Skip_change_log skip_change_log) = Cli.skip_change_log
+    and+ (`Working_tree on_working_tree) = working_tree in
+    (let dir, clean_up =
+       if on_working_tree then (OS.Dir.current (), fun _ -> ())
+       else
+         let dir =
+           let pkg = Pkg.v ~dry_run:true ?tag ?version ?build_dir () in
+           Pkg.tag pkg >>= fun inferred_tag ->
+           Vcs.get () >>= fun repo ->
+           assert_tag_exists repo inferred_tag >>= fun () ->
+           (match build_dir with
+           | Some dir -> Ok dir
+           | None -> Fpath.of_string "_build")
+           >>= fun build_directory ->
+           let dir = Fpath.(build_directory // v ".dune-release-check") in
+           clone_and_checkout_tag repo ~dir ~tag:(Tag inferred_tag)
+           >>| fun () -> dir
+         in
+         let clean_up dir =
+           match Sos.delete_dir ~dry_run:false ~force:true dir with
+           | Ok _ -> ()
+           | Error (`Msg err) ->
+               App_log.unhappy (fun l ->
+                   l "Auxiliary directory %a could not be deleted: %s"
+                     Text.Pp.path dir err)
+         in
+         (dir, clean_up)
+     in
+     dir >>= fun dir ->
+     Config.keep_v ~keep_v >>= fun keep_v ->
+     let check_result =
+       Check.check_project ~pkg_names ?tag ?version ~keep_v ?build_dir
+         ~skip_lint ~skip_build ~skip_tests ~skip_change_log ~dir ()
+     in
+     let () = clean_up dir in
+     check_result)
+    |> R.reword_error_msg (fun err ->
+           R.msgf "Error while running `check`: %s" err)
+    |> Cli.handle_error)
 
 let info = Cmd.info "check" ~doc ~man
 let cmd = Cmd.v info term

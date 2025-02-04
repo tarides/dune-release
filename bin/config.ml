@@ -111,18 +111,6 @@ let invalid_usage () =
     "Invalid dune-release config invocation. Usage:\n%s\n%s\n%s"
     (default_usage ~raw:() ()) (show_usage ~raw:() ()) (set_usage ~raw:() ())
 
-let run action key_opt value_opt =
-  let open Rresult in
-  (let res =
-     match (action, key_opt, value_opt) with
-     | "show", key, None -> show key
-     | "set", Some key, Some value -> set key value
-     | "create", None, None -> create ()
-     | _ -> invalid_usage ()
-   in
-   res >>= fun () -> Ok 0)
-  |> Cli.handle_error
-
 let man =
   let open Cmdliner in
   [
@@ -174,7 +162,20 @@ let value =
   let doc = "The new field value" in
   Cmdliner.Arg.(value & pos 2 (some string) None & info ~doc ~docv [])
 
-let term = Cmdliner.Term.(const run $ action $ key $ value)
+let term =
+  Cmdliner.Term.(
+    let open Syntax in
+    let+ action = action and+ key_opt = key and+ value_opt = value in
+    let open Rresult in
+    (let res =
+       match (action, key_opt, value_opt) with
+       | "show", key, None -> show key
+       | "set", Some key, Some value -> set key value
+       | "create", None, None -> create ()
+       | _ -> invalid_usage ()
+     in
+     res >>= fun () -> Ok 0)
+    |> Cli.handle_error)
 
 let info =
   let doc = "Displays or update dune-release global configuration" in

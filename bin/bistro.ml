@@ -9,26 +9,6 @@ open Bos_setup.R.Infix
 (* Only carry on when the first operation returns 0 *)
 let ( >! ) x f = match x with Ok 0 -> f () | _ -> x
 
-let bistro () (`Dry_run dry_run) (`Package_names pkg_names)
-    (`Package_version version) (`Dist_tag tag) (`Keep_v keep_v) (`Token token)
-    (`Include_submodules include_submodules) (`Draft draft)
-    (`Keep_build_dir keep_dir) (`Skip_lint skip_lint) (`Skip_build skip_build)
-    (`Skip_tests skip_tests) (`Local_repo local_repo) (`Remote_repo remote_repo)
-    (`Opam_repo opam_repo) (`No_auto_open no_auto_open) (`Dev_repo dev_repo) =
-  Cli.handle_error
-    ( Dune_release.Config.token ~token ~dry_run () >>= fun token ->
-      let token = Dune_release.Config.Cli.make token in
-      Distrib.distrib ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir
-        ~skip_lint ~skip_build ~skip_tests ~include_submodules ()
-      >! fun () ->
-      Publish.publish ~token ~version ~tag ~keep_v ~dry_run ?dev_repo ~yes:false
-        ~draft ()
-      >! fun () ->
-      Opam.get_pkgs ~dry_run ~keep_v ~tag ~pkg_names ~version () >>= fun pkgs ->
-      Opam.pkg ~dry_run ~pkgs () >! fun () ->
-      Opam.submit ~token ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes:false
-        ~draft () ?local_repo ?remote_repo ?opam_repo )
-
 (* Command line interface *)
 
 open Cmdliner
@@ -52,11 +32,39 @@ let man =
 
 let term =
   Term.(
-    const bistro $ Cli.setup $ Cli.dry_run $ Cli.pkg_names $ Cli.pkg_version
-    $ Cli.dist_tag $ Cli.keep_v $ Cli.token $ Cli.include_submodules $ Cli.draft
-    $ Cli.keep_build_dir $ Cli.skip_lint $ Cli.skip_build $ Cli.skip_tests
-    $ Cli.local_repo $ Cli.remote_repo $ Cli.opam_repo $ Cli.no_auto_open
-    $ Cli.dev_repo)
+    let open Syntax in
+    let+ () = Cli.setup
+    and+ (`Dry_run dry_run) = Cli.dry_run
+    and+ (`Package_names pkg_names) = Cli.pkg_names
+    and+ (`Package_version version) = Cli.pkg_version
+    and+ (`Dist_tag tag) = Cli.dist_tag
+    and+ (`Keep_v keep_v) = Cli.keep_v
+    and+ (`Token token) = Cli.token
+    and+ (`Include_submodules include_submodules) = Cli.include_submodules
+    and+ (`Draft draft) = Cli.draft
+    and+ (`Keep_build_dir keep_dir) = Cli.keep_build_dir
+    and+ (`Skip_lint skip_lint) = Cli.skip_lint
+    and+ (`Skip_build skip_build) = Cli.skip_build
+    and+ (`Skip_tests skip_tests) = Cli.skip_tests
+    and+ (`Local_repo local_repo) = Cli.local_repo
+    and+ (`Remote_repo remote_repo) = Cli.remote_repo
+    and+ (`Opam_repo opam_repo) = Cli.opam_repo
+    and+ (`No_auto_open no_auto_open) = Cli.no_auto_open
+    and+ (`Dev_repo dev_repo) = Cli.dev_repo in
+    Cli.handle_error
+      ( Dune_release.Config.token ~token ~dry_run () >>= fun token ->
+        let token = Dune_release.Config.Cli.make token in
+        Distrib.distrib ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir
+          ~skip_lint ~skip_build ~skip_tests ~include_submodules ()
+        >! fun () ->
+        Publish.publish ~token ~version ~tag ~keep_v ~dry_run ?dev_repo
+          ~yes:false ~draft ()
+        >! fun () ->
+        Opam.get_pkgs ~dry_run ~keep_v ~tag ~pkg_names ~version ()
+        >>= fun pkgs ->
+        Opam.pkg ~dry_run ~pkgs () >! fun () ->
+        Opam.submit ~token ~dry_run ~pkgs ~pkg_names ~no_auto_open ~yes:false
+          ~draft () ?local_repo ?remote_repo ?opam_repo ))
 
 let info = Cmd.info "bistro" ~doc ~sdocs ~exits ~man ~man_xrefs
 let cmd = Cmd.v info term

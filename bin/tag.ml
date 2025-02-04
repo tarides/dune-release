@@ -71,27 +71,6 @@ let vcs_tag repo pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete ~msg
           m "Tagged %a with version %a" Text.Pp.commit commit_ish Text.Pp.tag
             tag)
 
-let tag () (`Dry_run dry_run) (`Change_log change_log) (`Keep_v keep_v)
-    (`Version version) (`Commit_ish commit_ish) (`Force force) (`Sign sign)
-    (`Delete delete) (`Msg msg) (`Yes yes) =
-  Config.keep_v ~keep_v
-  >>= (fun keep_v ->
-        let pkg = Pkg.v ~dry_run ~keep_v ?change_log () in
-        Vcs.get () >>= fun vcs ->
-        (match version with
-        | Some v -> Ok (v, Version.to_tag vcs v)
-        | None ->
-            Pkg.change_log pkg >>= fun changelog ->
-            App_log.status (fun l ->
-                l "Extracting tag from first entry in %a" Text.Pp.path changelog);
-            Pkg.extract_version pkg >>= fun cl ->
-            Ok (Pkg.version_of_changelog pkg cl, Version.Changelog.to_tag vcs cl))
-        >>= fun (version, tag) ->
-        vcs_tag vcs pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete
-          ~msg ~yes
-        >>= fun () -> Ok 0)
-  |> Cli.handle_error
-
 (* Command line interface *)
 
 open Cmdliner
@@ -151,8 +130,38 @@ let man =
 
 let term =
   Term.(
-    const tag $ Cli.setup $ Cli.dry_run $ Cli.change_log $ Cli.keep_v $ version
-    $ commit $ force $ sign $ delete $ msg $ Cli.yes)
+    let open Syntax in
+    let+ () = Cli.setup
+    and+ (`Dry_run dry_run) = Cli.dry_run
+    and+ (`Change_log change_log) = Cli.change_log
+    and+ (`Keep_v keep_v) = Cli.keep_v
+    and+ (`Version version) = version
+    and+ (`Commit_ish commit_ish) = commit
+    and+ (`Force force) = force
+    and+ (`Sign sign) = sign
+    and+ (`Delete delete) = delete
+    and+ (`Msg msg) = msg
+    and+ (`Yes yes) = Cli.yes in
+    Config.keep_v ~keep_v
+    >>= (fun keep_v ->
+          let pkg = Pkg.v ~dry_run ~keep_v ?change_log () in
+          Vcs.get () >>= fun vcs ->
+          (match version with
+          | Some v -> Ok (v, Version.to_tag vcs v)
+          | None ->
+              Pkg.change_log pkg >>= fun changelog ->
+              App_log.status (fun l ->
+                  l "Extracting tag from first entry in %a" Text.Pp.path
+                    changelog);
+              Pkg.extract_version pkg >>= fun cl ->
+              Ok
+                ( Pkg.version_of_changelog pkg cl,
+                  Version.Changelog.to_tag vcs cl ))
+          >>= fun (version, tag) ->
+          vcs_tag vcs pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete
+            ~msg ~yes
+          >>= fun () -> Ok 0)
+    |> Cli.handle_error)
 
 let info = Cmd.info "tag" ~doc ~sdocs ~exits ~man ~man_xrefs
 let cmd = Cmd.v info term

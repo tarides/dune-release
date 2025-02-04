@@ -120,14 +120,6 @@ let undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo:local
         Text.Pp.name pkg_name Text.Pp.version version url);
   Ok 0
 
-let undraft_cli () (`Dist_opam opam) (`Dist_file distrib_file)
-    (`Opam_repo opam_repo) (`Token token) (`Local_repo local_repo)
-    (`Remote_repo remote_repo) (`Build_dir build_dir) (`Package_names pkg_names)
-    (`Dry_run dry_run) (`Yes yes) =
-  undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo ?remote_repo
-    ?build_dir ~pkg_names ~dry_run ~yes ()
-  |> Cli.handle_error
-
 (* Command line interface *)
 
 open Cmdliner
@@ -158,9 +150,21 @@ let man =
 
 let term =
   Term.(
-    const undraft_cli $ Cli.setup $ Cli.dist_opam $ Cli.dist_file
-    $ Cli.opam_repo $ Cli.token $ Cli.local_repo $ Cli.remote_repo
-    $ Cli.build_dir $ Cli.pkg_names $ Cli.dry_run $ Cli.yes)
+    let open Syntax in
+    let+ () = Cli.setup
+    and+ (`Dist_opam opam) = Cli.dist_opam
+    and+ (`Dist_file distrib_file) = Cli.dist_file
+    and+ (`Opam_repo opam_repo) = Cli.opam_repo
+    and+ (`Token token) = Cli.token
+    and+ (`Local_repo local_repo) = Cli.local_repo
+    and+ (`Remote_repo remote_repo) = Cli.remote_repo
+    and+ (`Build_dir build_dir) = Cli.build_dir
+    and+ (`Package_names pkg_names) = Cli.pkg_names
+    and+ (`Dry_run dry_run) = Cli.dry_run
+    and+ (`Yes yes) = Cli.yes in
+    undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo ?remote_repo
+      ?build_dir ~pkg_names ~dry_run ~yes ()
+    |> Cli.handle_error)
 
 let info = Cmd.info "undraft" ~doc ~sdocs ~exits ~man ~man_xrefs
 let cmd = Cmd.v info term
