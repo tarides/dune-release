@@ -75,37 +75,6 @@ let vcs_tag repo pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete ~msg
 
 open Cmdliner
 
-let version =
-  let doc =
-    "The version tag to use. If absent, automatically extracted from the \
-     package's change log."
-  in
-  Arg.(value & pos 0 (some Cli.version) None & info [] ~doc ~docv:"VERSION")
-
-let commit =
-  let doc = "Commit-ish $(docv) to tag." in
-  Arg.(value & opt string "HEAD" & info [ "commit" ] ~doc ~docv:"COMMIT-ISH")
-
-let msg =
-  let doc =
-    "Commit message for the tag. If absent, the message 'Distribution \
-     $(i,VERSION)' is used."
-  in
-  Arg.(
-    value & opt (some string) None & info [ "m"; "message" ] ~doc ~docv:"MSG")
-
-let sign =
-  let doc = "Sign the tag using the VCS's default signing key." in
-  Arg.(value & flag & info [ "s"; "sign" ] ~doc)
-
-let force =
-  let doc = "If the tag exists, replace it rather than fail." in
-  Arg.(value & flag & info [ "f"; "force" ] ~doc)
-
-let delete =
-  let doc = "Delete the specified tag rather than create it." in
-  Arg.(value & flag & info [ "d"; "delete" ] ~doc)
-
 let doc = "Tag the package's source repository with a version"
 let sdocs = Manpage.s_common_options
 let exits = Cli.exits
@@ -127,12 +96,34 @@ let term =
     and+ dry_run = Cli.dry_run
     and+ change_log = Cli.change_log
     and+ keep_v = Cli.keep_v
-    and+ version = version
-    and+ commit_ish = commit
-    and+ force = force
-    and+ sign = sign
-    and+ delete = delete
-    and+ msg = msg
+    and+ version =
+      let doc =
+        "The version tag to use. If absent, automatically extracted from the \
+         package's change log."
+      in
+      Arg.(value & pos 0 (some Cli.version) None & info [] ~doc ~docv:"VERSION")
+    and+ commit_ish =
+      let doc = "Commit-ish $(docv) to tag." in
+      Arg.(
+        value & opt string "HEAD" & info [ "commit" ] ~doc ~docv:"COMMIT-ISH")
+    and+ force =
+      let doc = "If the tag exists, replace it rather than fail." in
+      Arg.(value & flag & info [ "f"; "force" ] ~doc)
+    and+ sign =
+      let doc = "Sign the tag using the VCS's default signing key." in
+      Arg.(value & flag & info [ "s"; "sign" ] ~doc)
+    and+ delete =
+      let doc = "Delete the specified tag rather than create it." in
+      Arg.(value & flag & info [ "d"; "delete" ] ~doc)
+    and+ msg =
+      let doc =
+        "Commit message for the tag. If absent, the message 'Distribution \
+         $(i,VERSION)' is used."
+      in
+      Arg.(
+        value
+        & opt (some string) None
+        & info [ "m"; "message" ] ~doc ~docv:"MSG")
     and+ yes = Cli.yes in
     Config.keep_v ~keep_v
     >>= (fun keep_v ->

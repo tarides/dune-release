@@ -313,37 +313,6 @@ let field ~pkgs ~field_name = field pkgs field_name
 
 open Cmdliner
 
-let action =
-  let action =
-    [ ("descr", `Descr); ("pkg", `Pkg); ("submit", `Submit); ("field", `Field) ]
-  in
-  let doc =
-    strf "The action to perform. $(docv) must be one of %s."
-      (Arg.doc_alts_enum action)
-  in
-  let action = Arg.enum action in
-  Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
-
-let field_arg =
-  let doc = "the field to output ($(b,field) action)" in
-  Arg.(value & pos 1 (some string) None & info [] ~doc ~docv:"FIELD")
-
-let pkg_descr =
-  let doc =
-    "The opam descr file to use for the opam package. If absent and the opam \
-     file name (see $(b,--pkg-opam)) has a `.opam` extension, uses an existing \
-     file with the same path but a `.descr` extension. If the opam file name \
-     is `opam` uses a `descr` file in the same directory. If these files are \
-     not found a description is extracted from the the readme (see option \
-     $(b,--readme)) as follow: the first marked up section of the readme is \
-     extracted, its title is parsed according to the pattern '\\$(NAME) \
-     \\$(SEP) \\$(SYNOPSIS)', the body of the section is the long description. \
-     A few lines are filtered out: lines that start with either 'Home page:', \
-     'Contact:' or '%%VERSION'."
-  in
-  let docv = "FILE" in
-  Arg.(value & opt (some Cli.path_arg) None & info [ "pkg-descr" ] ~doc ~docv)
-
 let doc = "Interaction with opam and the OCaml opam repository"
 let sdocs = Manpage.s_common_options
 let envs = []
@@ -396,12 +365,43 @@ let term =
     and+ tag = Cli.dist_tag
     and+ pkg_names = Cli.pkg_names
     and+ version = Cli.pkg_version
-    and+ pkg_descr = pkg_descr
+    and+ pkg_descr =
+      let doc =
+        "The opam descr file to use for the opam package. If absent and the \
+         opam file name (see $(b,--pkg-opam)) has a `.opam` extension, uses an \
+         existing file with the same path but a `.descr` extension. If the \
+         opam file name is `opam` uses a `descr` file in the same directory. \
+         If these files are not found a description is extracted from the the \
+         readme (see option $(b,--readme)) as follow: the first marked up \
+         section of the readme is extracted, its title is parsed according to \
+         the pattern '\\$(NAME) \\$(SEP) \\$(SYNOPSIS)', the body of the \
+         section is the long description. A few lines are filtered out: lines \
+         that start with either 'Home page:', 'Contact:' or '%%VERSION'."
+      in
+      let docv = "FILE" in
+      Arg.(
+        value & opt (some Cli.path_arg) None & info [ "pkg-descr" ] ~doc ~docv)
     and+ readme = Cli.readme
     and+ change_log = Cli.change_log
     and+ publish_msg = Cli.publish_msg
-    and+ action = action
-    and+ field_name = field_arg
+    and+ action =
+      let action =
+        [
+          ("descr", `Descr);
+          ("pkg", `Pkg);
+          ("submit", `Submit);
+          ("field", `Field);
+        ]
+      in
+      let doc =
+        strf "The action to perform. $(docv) must be one of %s."
+          (Arg.doc_alts_enum action)
+      in
+      let action = Arg.enum action in
+      Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
+    and+ field_name =
+      let doc = "the field to output ($(b,field) action)" in
+      Arg.(value & pos 1 (some string) None & info [] ~doc ~docv:"FIELD")
     and+ no_auto_open = Cli.no_auto_open
     and+ yes = Cli.yes
     and+ token = Cli.token

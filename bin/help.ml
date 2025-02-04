@@ -247,10 +247,6 @@ let pages =
 
 open Cmdliner
 
-let topic =
-  let doc = "The topic to get help on, `topics' lists the topic." in
-  Arg.(value & pos 0 (some string) None & info [] ~docv:"TOPIC" ~doc)
-
 let doc = "Show help about dune-release"
 let exits = Cli.exits
 let man_xrefs = [ `Main ]
@@ -267,7 +263,9 @@ let term =
     ret
       (let open Syntax in
        let+ man_format = Arg.man_format
-       and+ topic = topic
+       and+ topic =
+         let doc = "The topic to get help on, `topics' lists the topic." in
+         Arg.(value & pos 0 (some string) None & info [] ~docv:"TOPIC" ~doc)
        and+ commands = Term.choice_names in
        match topic with
        | None -> `Help (man_format, None)

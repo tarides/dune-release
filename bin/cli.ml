@@ -244,28 +244,23 @@ let keep_build_dir =
 (* use cmdliner evaluation error *)
 
 let setup =
-  let style_renderer =
-    let env = Cmd.Env.info "DUNE_RELEASE_COLOR" in
-    Fmt_cli.style_renderer ~docs:Manpage.s_common_options ~env ()
-  in
-  let log_level =
-    let env = Cmd.Env.info "DUNE_RELEASE_VERBOSITY" in
-    Logs_cli.level ~docs:Manpage.s_common_options ~env ()
-  in
-  let cwd =
-    let doc = "Change to directory $(docv) before doing anything." in
-    let docv = "DIR" in
-    Arg.(
-      value
-      & opt (some path_arg) None
-      & info [ "C"; "pkg-dir" ] ~docs:Manpage.s_common_options ~doc ~docv)
-  in
   Term.(
     ret
       (let open Syntax in
-       let+ style_renderer = style_renderer
-       and+ log_level = log_level
-       and+ cwd = cwd in
+       let+ style_renderer =
+         let env = Cmd.Env.info "DUNE_RELEASE_COLOR" in
+         Fmt_cli.style_renderer ~docs:Manpage.s_common_options ~env ()
+       and+ log_level =
+         let env = Cmd.Env.info "DUNE_RELEASE_VERBOSITY" in
+         Logs_cli.level ~docs:Manpage.s_common_options ~env ()
+       and+ cwd =
+         let doc = "Change to directory $(docv) before doing anything." in
+         let docv = "DIR" in
+         Arg.(
+           value
+           & opt (some path_arg) None
+           & info [ "C"; "pkg-dir" ] ~docs:Manpage.s_common_options ~doc ~docv)
+       in
        Fmt_tty.setup_std_outputs ?style_renderer ();
        Logs.set_level log_level;
        Logs.set_reporter (Logs_fmt.reporter ~app:Fmt.stdout ());
