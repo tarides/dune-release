@@ -33,10 +33,7 @@ let dist_tag =
   let doc =
     "The tag from which the distribution archive is or will be built."
   in
-  named
-    (fun x -> `Dist_tag x)
-    Arg.(
-      value & opt (some tag) None & info [ "t"; "tag" ] ~doc ~docv:"DIST_TAG")
+  Arg.(value & opt (some tag) None & info [ "t"; "tag" ] ~doc ~docv:"DIST_TAG")
 
 let pkg_names =
   let doc =
@@ -44,9 +41,7 @@ let pkg_names =
      the $(b,*.opam) files present in the current directory."
   in
   let docv = "PKG_NAMES" in
-  named
-    (fun x -> `Package_names x)
-    Arg.(value & opt (list string) [] & info [ "p"; "pkg-names" ] ~doc ~docv)
+  Arg.(value & opt (list string) [] & info [ "p"; "pkg-names" ] ~doc ~docv)
 
 let version =
   Arg.conv ~docv:"An OPAM compatible version string"
@@ -58,10 +53,7 @@ let pkg_version =
      tag."
   in
   let docv = "PKG_VERSION" in
-  named
-    (fun x -> `Package_version x)
-    Arg.(
-      value & opt (some version) None & info [ "V"; "pkg-version" ] ~doc ~docv)
+  Arg.(value & opt (some version) None & info [ "V"; "pkg-version" ] ~doc ~docv)
 
 let opam =
   let doc =
@@ -69,9 +61,7 @@ let opam =
      the package description."
   in
   let docv = "FILE" in
-  named
-    (fun x -> `Opam x)
-    Arg.(value & opt (some path_arg) None & info [ "opam" ] ~doc ~docv)
+  Arg.(value & opt (some path_arg) None & info [ "opam" ] ~doc ~docv)
 
 let token =
   let doc =
@@ -86,17 +76,17 @@ let token =
   let arg =
     Arg.(value & opt (some string) None & info [ "token" ] ~doc ~docv ~env)
   in
-  named (fun x -> `Token x) (config_opt arg)
+  config_opt arg
 
 let keep_v =
   let doc = "Do not drop the initial 'v' in the version string." in
   let arg = Arg.(value & flag & info [ "keep-v" ] ~doc) in
-  named (fun x -> `Keep_v x) (config arg)
+  config arg
 
 let no_auto_open =
   let doc = "Do not open a browser to view the new pull-request." in
   let arg = Arg.(value & flag & info [ "no-auto-open" ] ~doc) in
-  named (fun x -> `No_auto_open x) (config arg)
+  config arg
 
 let dist_file =
   let doc =
@@ -105,9 +95,7 @@ let dist_file =
      $(b,--dist-name) and $(b,--dist-version))."
   in
   let docv = "FILE" in
-  named
-    (fun x -> `Dist_file x)
-    Arg.(value & opt (some path_arg) None & info [ "dist-file" ] ~doc ~docv)
+  Arg.(value & opt (some path_arg) None & info [ "dist-file" ] ~doc ~docv)
 
 let dist_opam =
   let doc =
@@ -116,9 +104,7 @@ let dist_opam =
      package name $(i,NAME) (see option $(b,--dist-name))."
   in
   let docv = "FILE" in
-  named
-    (fun x -> `Dist_opam x)
-    Arg.(value & opt (some path_arg) None & info [ "dist-opam" ] ~doc ~docv)
+  Arg.(value & opt (some path_arg) None & info [ "dist-opam" ] ~doc ~docv)
 
 let dist_uri =
   let doc =
@@ -129,27 +115,21 @@ let dist_uri =
      hosted on Github for example."
   in
   let docv = "URI" in
-  named
-    (fun x -> `Dist_uri x)
-    Arg.(value & opt (some string) None & info [ "dist-uri" ] ~doc ~docv)
+  Arg.(value & opt (some string) None & info [ "dist-uri" ] ~doc ~docv)
 
 let readme =
   let doc =
     "The readme to use. If absent, provided by the package description."
   in
   let docv = "FILE" in
-  named
-    (fun x -> `Readme x)
-    Arg.(value & opt (some path_arg) None & info [ "readme" ] ~doc ~docv)
+  Arg.(value & opt (some path_arg) None & info [ "readme" ] ~doc ~docv)
 
 let change_log =
   let doc =
     "The change log to use. If absent, provided by the package description."
   in
   let docv = "FILE" in
-  named
-    (fun x -> `Change_log x)
-    Arg.(value & opt (some path_arg) None & info [ "change-log" ] ~doc ~docv)
+  Arg.(value & opt (some path_arg) None & info [ "change-log" ] ~doc ~docv)
 
 let build_dir =
   let doc =
@@ -157,9 +137,7 @@ let build_dir =
      description."
   in
   let docv = "BUILD_DIR" in
-  named
-    (fun x -> `Build_dir x)
-    Arg.(value & opt (some path_arg) None & info [ "build-dir" ] ~doc ~docv)
+  Arg.(value & opt (some path_arg) None & info [ "build-dir" ] ~doc ~docv)
 
 let publish_msg =
   let doc =
@@ -167,15 +145,13 @@ let publish_msg =
      version (see $(b,dune-release log -l))."
   in
   let docv = "MSG" in
-  named
-    (fun x -> `Publish_msg x)
-    Arg.(value & opt (some string) None & info [ "m"; "message" ] ~doc ~docv)
+  Arg.(value & opt (some string) None & info [ "m"; "message" ] ~doc ~docv)
 
 let dry_run =
   let doc =
     "Don't actually perform any action, just show what would be done."
   in
-  named (fun x -> `Dry_run x) Arg.(value & flag & info [ "dry-run" ] ~doc)
+  Arg.(value & flag & info [ "dry-run" ] ~doc)
 
 let draft =
   let doc =
@@ -183,27 +159,22 @@ let draft =
      undrafted before proceeding with the actual release. $(b,Warning:) This \
      feature is experimental."
   in
-  named (fun x -> `Draft x) Arg.(value & flag & info [ "draft" ] ~doc)
+  Arg.(value & flag & info [ "draft" ] ~doc)
 
 let yes =
   let doc = "Do not prompt for confirmation and keep going instead" in
-  named (fun x -> `Yes x) Arg.(value & flag & info [ "y"; "yes" ] ~doc)
+  Arg.(value & flag & info [ "y"; "yes" ] ~doc)
 
 let include_submodules =
   let doc = "Include git submodules into the distribution archive" in
-  named
-    (fun x -> `Include_submodules x)
-    Arg.(value & flag & info [ "include-submodules" ] ~doc)
+  Arg.(value & flag & info [ "include-submodules" ] ~doc)
 
 let user =
   let doc =
     "the name of the GitHub account where to push new opam-repository \
      branches. " ^ Deprecate.Config_user.option_doc
   in
-  named
-    (fun x -> `User x)
-    Arg.(
-      value & opt (some string) None & info [ "u"; "user" ] ~doc ~docv:"USER")
+  Arg.(value & opt (some string) None & info [ "u"; "user" ] ~doc ~docv:"USER")
 
 let local_repo =
   let doc = "Location of the local fork of opam-repository" in
@@ -214,7 +185,7 @@ let local_repo =
       & opt (some dir_path_arg) None
       & info ~env [ "l"; "local-repo" ] ~doc ~docv:"PATH")
   in
-  named (fun x -> `Local_repo x) (config_opt arg)
+  config_opt arg
 
 let remote_repo =
   let doc = "Location of the remote fork of opam-repository" in
@@ -225,7 +196,7 @@ let remote_repo =
       & opt (some string) None
       & info ~env [ "r"; "remote-repo" ] ~doc ~docv:"URI")
   in
-  named (fun x -> `Remote_repo x) (config_opt arg)
+  config_opt arg
 
 let dev_repo =
   let doc = "Location of the dev repo of the current package" in
@@ -234,7 +205,7 @@ let dev_repo =
     Arg.(
       value & opt (some string) None & info ~env [ "dev-repo" ] ~doc ~docv:"URI")
   in
-  named (fun x -> `Dev_repo x) arg
+  arg
 
 let opam_repo =
   let doc =
@@ -243,41 +214,35 @@ let opam_repo =
   in
   let docv = "GITHUB_USER_OR_ORG/REPO_NAME" in
   let env = Cmd.Env.info "DUNE_RELEASE_OPAM_REPO" in
-  named
-    (fun x -> `Opam_repo x)
-    Arg.(
-      value
-      & opt (some (pair ~sep:'/' string string)) None
-      & info ~env [ "opam-repo" ] ~doc ~docv)
+  Arg.(
+    value
+    & opt (some (pair ~sep:'/' string string)) None
+    & info ~env [ "opam-repo" ] ~doc ~docv)
 
 let skip_lint =
   let doc = "Do not lint the archive distribution." in
-  named (fun x -> `Skip_lint x) Arg.(value & flag & info [ "skip-lint" ] ~doc)
+  Arg.(value & flag & info [ "skip-lint" ] ~doc)
 
 let skip_build =
   let doc = "Do not try to build the package from the archive." in
-  named (fun x -> `Skip_build x) Arg.(value & flag & info [ "skip-build" ] ~doc)
+  Arg.(value & flag & info [ "skip-build" ] ~doc)
 
 let skip_tests =
   let doc =
     "Do not try to build and run the package tests from the archive. Implied \
      by $(b,--skip-build)."
   in
-  named (fun x -> `Skip_tests x) Arg.(value & flag & info [ "skip-tests" ] ~doc)
+  Arg.(value & flag & info [ "skip-tests" ] ~doc)
 
 let skip_change_log =
   let doc = "Do not check that the change log can be parsed" in
-  named
-    (fun x -> `Skip_change_log x)
-    Arg.(value & flag & info [ "skip-change-log" ] ~doc)
+  Arg.(value & flag & info [ "skip-change-log" ] ~doc)
 
 let keep_build_dir =
   let doc =
     "Keep the distribution build directory after successful archival."
   in
-  named
-    (fun x -> `Keep_build_dir x)
-    Arg.(value & flag & info [ "keep-build-dir" ] ~doc)
+  Arg.(value & flag & info [ "keep-build-dir" ] ~doc)
 
 (* Terms *)
 

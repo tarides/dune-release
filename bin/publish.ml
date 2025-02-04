@@ -51,19 +51,19 @@ let term =
   Term.(
     let open Syntax in
     let+ () = Cli.setup
-    and+ (`Build_dir build_dir) = Cli.build_dir
-    and+ (`Package_version version) = Cli.pkg_version
-    and+ (`Dist_tag tag) = Cli.dist_tag
-    and+ (`Keep_v keep_v) = Cli.keep_v
-    and+ (`Dist_opam opam) = Cli.dist_opam
-    and+ (`Change_log change_log) = Cli.change_log
-    and+ (`Dist_file distrib_file) = Cli.dist_file
-    and+ (`Publish_msg publish_msg) = Cli.publish_msg
-    and+ (`Dry_run dry_run) = Cli.dry_run
-    and+ (`Yes yes) = Cli.yes
-    and+ (`Token token) = Cli.token
-    and+ (`Draft draft) = Cli.draft
-    and+ (`Dev_repo dev_repo) = Cli.dev_repo in
+    and+ build_dir = Cli.build_dir
+    and+ version = Cli.pkg_version
+    and+ tag = Cli.dist_tag
+    and+ keep_v = Cli.keep_v
+    and+ opam = Cli.dist_opam
+    and+ change_log = Cli.change_log
+    and+ distrib_file = Cli.dist_file
+    and+ publish_msg = Cli.publish_msg
+    and+ dry_run = Cli.dry_run
+    and+ yes = Cli.yes
+    and+ token = Cli.token
+    and+ draft = Cli.draft
+    and+ dev_repo = Cli.dev_repo in
     publish ?build_dir ?opam ?change_log ?distrib_file ?publish_msg ?token
       ~version ~tag ~keep_v ~dry_run ~yes ~draft ?dev_repo ()
     |> Cli.handle_error)

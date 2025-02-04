@@ -19,100 +19,98 @@ val named : ('a -> 'b) -> 'a Cmdliner.Term.t -> 'b Cmdliner.Term.t
     avoid confusion when they are later passed to your main function. Example:
     [named (fun x -> `My_arg x) Arg.(value ...)] *)
 
-val no_auto_open : [ `No_auto_open of bool Dune_release.Config.Cli.t ] Term.t
+val no_auto_open : bool Dune_release.Config.Cli.t Term.t
 (** A [--no-auto-open] option to disable opening of the opam-repository PR in
     the browser. *)
 
 val version : Dune_release.Version.t Arg.conv
 (** [version] is a converter for parsing version specifiers *)
 
-val pkg_names : [ `Package_names of string list ] Term.t
+val pkg_names : string list Term.t
 (** A [--pkg-names] option to specify the packages to release. *)
 
-val pkg_version : [ `Package_version of Dune_release.Version.t option ] Term.t
+val pkg_version : Dune_release.Version.t option Term.t
 (** A [--pkg-version] option to specify the packages version. *)
 
-val keep_v : [ `Keep_v of bool Dune_release.Config.Cli.t ] Term.t
+val keep_v : bool Dune_release.Config.Cli.t Term.t
 (** A [--keep-v] option to not drop the 'v' at the beginning of version strings. *)
 
-val dist_tag : [ `Dist_tag of Dune_release.Vcs.Tag.t option ] Term.t
+val dist_tag : Dune_release.Vcs.Tag.t option Term.t
 (** A [--tag] option to define the tag from which the distribution is or will be
     built. *)
 
-val dist_file : [ `Dist_file of Fpath.t option ] Term.t
+val dist_file : Fpath.t option Term.t
 (** A [--dist-file] option to define the distribution archive file. *)
 
-val dist_uri : [ `Dist_uri of string option ] Term.t
+val dist_uri : string option Term.t
 (** A [--dist-uri] option to define the distribution archive URI on the WWW. *)
 
-val dist_opam : [ `Dist_opam of Fpath.t option ] Term.t
+val dist_opam : Fpath.t option Term.t
 (** An [--dist-opam] option to define the opam file. *)
 
-val readme : [ `Readme of Fpath.t option ] Term.t
+val readme : Fpath.t option Term.t
 (** A [--readme] option to define the readme. *)
 
-val change_log : [ `Change_log of Fpath.t option ] Term.t
+val change_log : Fpath.t option Term.t
 (** A [--change-log] option to define the change log. *)
 
-val opam : [ `Opam of Fpath.t option ] Term.t
+val opam : Fpath.t option Term.t
 (** An [--opam] option to define an opam file. *)
 
-val build_dir : [ `Build_dir of Fpath.t option ] Term.t
+val build_dir : Fpath.t option Term.t
 (** A [--build-dir] option to define the build directory. *)
 
-val publish_msg : [ `Publish_msg of string option ] Term.t
+val publish_msg : string option Term.t
 (** A [--msg] option to define a publication message. *)
 
-val token : [ `Token of string Dune_release.Config.Cli.t option ] Term.t
+val token : string Dune_release.Config.Cli.t option Term.t
 (** A [--token] option to define the github token. *)
 
-val dry_run : [ `Dry_run of bool ] Term.t
+val dry_run : bool Term.t
 (** A [--dry-run] option to do not perform any action. *)
 
-val draft : [ `Draft of bool ] Term.t
+val draft : bool Term.t
 (** A [--draft] option to produce a draft release. *)
 
-val yes : [ `Yes of bool ] Term.t
+val yes : bool Term.t
 (** A [--yes] option to skip confirmation prompts. *)
 
-val include_submodules : [ `Include_submodules of bool ] Term.t
+val include_submodules : bool Term.t
 (** A [--include-submodules] flag to include submodules in the distrib tarball *)
 
-val user : [ `User of string option ] Term.t
+val user : string option Term.t
 (** A [--user] option to define the name of the GitHub account where to push new
     opam-repository branches. *)
 
-val local_repo :
-  [ `Local_repo of Fpath.t Dune_release.Config.Cli.t option ] Term.t
+val local_repo : Fpath.t Dune_release.Config.Cli.t option Term.t
 (** A [--local-repo] option to define the location of the local fork of
     opam-repository. *)
 
-val dev_repo : [ `Dev_repo of string option ] Term.t
+val dev_repo : string option Term.t
 (** A [--dev-repo] option to define the Github opam-repository to which packages
     should be released. *)
 
-val remote_repo :
-  [ `Remote_repo of string Dune_release.Config.Cli.t option ] Term.t
+val remote_repo : string Dune_release.Config.Cli.t option Term.t
 (** A [--remote-repo] option to define the location of the remote fork of
     opam-repository. *)
 
-val opam_repo : [ `Opam_repo of (string * string) option ] Term.t
+val opam_repo : (string * string) option Term.t
 (** A [--opam-repo] option to define the Github opam-repository to which
     packages should be released. *)
 
-val skip_lint : [> `Skip_lint of bool ] Term.t
+val skip_lint : bool Term.t
 (** a [--skip-lint] option to skip the linting *)
 
-val skip_build : [> `Skip_build of bool ] Term.t
+val skip_build : bool Term.t
 (** a [--skip-build] option to skip checking the build *)
 
-val skip_tests : [> `Skip_tests of bool ] Term.t
+val skip_tests : bool Term.t
 (** a [--skip-test] option to skip checking the tests *)
 
-val skip_change_log : [> `Skip_change_log of bool ] Term.t
+val skip_change_log : bool Term.t
 (** a [--skip-change-log] option to skip validation of change-log *)
 
-val keep_build_dir : [> `Keep_build_dir of bool ] Term.t
+val keep_build_dir : bool Term.t
 (** a [--keep-build-dir] flag to keep the build directory used for the archive
     check. *)
 

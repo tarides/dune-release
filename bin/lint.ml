@@ -21,9 +21,7 @@ let lints =
   in
   let test = Arg.enum test in
   let docv = "TEST" in
-  Cli.named
-    (fun x -> `Lints x)
-    Arg.(value & pos_all test Lint.all & info [] ~doc ~docv)
+  Arg.(value & pos_all test Lint.all & info [] ~doc ~docv)
 
 let doc = "Check package distribution consistency and conventions"
 let sdocs = Manpage.s_common_options
@@ -48,12 +46,12 @@ let term =
   Term.(
     let open Syntax in
     let+ () = Cli.setup
-    and+ (`Dry_run dry_run) = Cli.dry_run
-    and+ (`Package_names pkg_names) = Cli.pkg_names
-    and+ (`Package_version version) = Cli.pkg_version
-    and+ (`Dist_tag tag) = Cli.dist_tag
-    and+ (`Keep_v keep_v) = Cli.keep_v
-    and+ (`Lints lints) = lints in
+    and+ dry_run = Cli.dry_run
+    and+ pkg_names = Cli.pkg_names
+    and+ version = Cli.pkg_version
+    and+ tag = Cli.dist_tag
+    and+ keep_v = Cli.keep_v
+    and+ lints = lints in
     Cli.handle_error
       ( Config.keep_v ~keep_v >>= fun keep_v ->
         let pkg = Pkg.v ~dry_run ?version ~keep_v ?tag () in

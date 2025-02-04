@@ -16,9 +16,7 @@ open Cmdliner
 
 let working_tree =
   let doc = "Perform the check on the current working tree." in
-  Cli.named
-    (fun x -> `Working_tree x)
-    Arg.(value & flag & info [ "working-tree" ] ~doc)
+  Arg.(value & flag & info [ "working-tree" ] ~doc)
 
 let doc = "Check dune-release compatibility"
 
@@ -37,16 +35,16 @@ let man =
 let term =
   Term.(
     let open Syntax in
-    let+ (`Package_names pkg_names) = Cli.pkg_names
-    and+ (`Package_version version) = Cli.pkg_version
-    and+ (`Dist_tag tag) = Cli.dist_tag
-    and+ (`Keep_v keep_v) = Cli.keep_v
-    and+ (`Build_dir build_dir) = Cli.build_dir
-    and+ (`Skip_lint skip_lint) = Cli.skip_lint
-    and+ (`Skip_build skip_build) = Cli.skip_build
-    and+ (`Skip_tests skip_tests) = Cli.skip_tests
-    and+ (`Skip_change_log skip_change_log) = Cli.skip_change_log
-    and+ (`Working_tree on_working_tree) = working_tree in
+    let+ pkg_names = Cli.pkg_names
+    and+ version = Cli.pkg_version
+    and+ tag = Cli.dist_tag
+    and+ keep_v = Cli.keep_v
+    and+ build_dir = Cli.build_dir
+    and+ skip_lint = Cli.skip_lint
+    and+ skip_build = Cli.skip_build
+    and+ skip_tests = Cli.skip_tests
+    and+ skip_change_log = Cli.skip_change_log
+    and+ on_working_tree = working_tree in
     (let dir, clean_up =
        if on_working_tree then (OS.Dir.current (), fun _ -> ())
        else
