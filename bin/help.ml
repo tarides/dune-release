@@ -269,7 +269,6 @@ let term =
        let+ man_format = Arg.man_format
        and+ topic = topic
        and+ commands = Term.choice_names in
-
        match topic with
        | None -> `Help (man_format, None)
        | Some topic -> (

@@ -412,7 +412,6 @@ let term =
     and+ (`Yes yes) = Cli.yes
     and+ (`Token token) = Cli.token
     and+ (`Draft draft) = Cli.draft in
-
     get_pkgs ?build_dir ?opam ?distrib_file ?pkg_descr ?readme ?change_log
       ?publish_msg ~dry_run ~keep_v ~tag ~pkg_names ~version ()
     >>= (fun pkgs ->

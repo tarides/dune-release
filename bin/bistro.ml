@@ -51,7 +51,6 @@ let term =
     and+ (`Opam_repo opam_repo) = Cli.opam_repo
     and+ (`No_auto_open no_auto_open) = Cli.no_auto_open
     and+ (`Dev_repo dev_repo) = Cli.dev_repo in
-
     Cli.handle_error
       ( Dune_release.Config.token ~token ~dry_run () >>= fun token ->
         let token = Dune_release.Config.Cli.make token in

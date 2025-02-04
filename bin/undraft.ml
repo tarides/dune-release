@@ -162,7 +162,6 @@ let term =
     and+ (`Package_names pkg_names) = Cli.pkg_names
     and+ (`Dry_run dry_run) = Cli.dry_run
     and+ (`Yes yes) = Cli.yes in
-
     undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo ?remote_repo
       ?build_dir ~pkg_names ~dry_run ~yes ()
     |> Cli.handle_error)

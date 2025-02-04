@@ -142,7 +142,6 @@ let term =
     and+ (`Skip_build skip_build) = Cli.skip_build
     and+ (`Skip_tests skip_tests) = Cli.skip_tests
     and+ (`Include_submodules include_submodules) = Cli.include_submodules in
-
     distrib ?build_dir ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir
       ~skip_lint ~skip_build ~skip_tests ~include_submodules ()
     |> Cli.handle_error)

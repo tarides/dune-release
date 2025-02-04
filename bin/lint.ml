@@ -54,7 +54,6 @@ let term =
     and+ (`Dist_tag tag) = Cli.dist_tag
     and+ (`Keep_v keep_v) = Cli.keep_v
     and+ (`Lints lints) = lints in
-
     Cli.handle_error
       ( Config.keep_v ~keep_v >>= fun keep_v ->
         let pkg = Pkg.v ~dry_run ?version ~keep_v ?tag () in

@@ -306,7 +306,6 @@ let setup =
        let+ style_renderer = style_renderer
        and+ log_level = log_level
        and+ cwd = cwd in
-
        Fmt_tty.setup_std_outputs ?style_renderer ();
        Logs.set_level log_level;
        Logs.set_reporter (Logs_fmt.reporter ~app:Fmt.stdout ());

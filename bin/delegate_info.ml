@@ -9,7 +9,6 @@ let term =
   Term.(
     let open Syntax in
     let+ var = var in
-
     let open Rresult in
     (let pkg = Pkg.v ~dry_run:false () in
      let result =

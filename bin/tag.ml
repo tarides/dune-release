@@ -142,7 +142,6 @@ let term =
     and+ (`Delete delete) = delete
     and+ (`Msg msg) = msg
     and+ (`Yes yes) = Cli.yes in
-
     Config.keep_v ~keep_v
     >>= (fun keep_v ->
           let pkg = Pkg.v ~dry_run ~keep_v ?change_log () in

@@ -64,7 +64,6 @@ let term =
     and+ (`Token token) = Cli.token
     and+ (`Draft draft) = Cli.draft
     and+ (`Dev_repo dev_repo) = Cli.dev_repo in
-
     publish ?build_dir ?opam ?change_log ?distrib_file ?publish_msg ?token
       ~version ~tag ~keep_v ~dry_run ~yes ~draft ?dev_repo ()
     |> Cli.handle_error)

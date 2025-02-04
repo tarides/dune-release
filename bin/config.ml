@@ -166,7 +166,6 @@ let term =
   Cmdliner.Term.(
     let open Syntax in
     let+ action = action and+ key_opt = key and+ value_opt = value in
-
     let open Rresult in
     (let res =
        match (action, key_opt, value_opt) with

@@ -47,7 +47,6 @@ let term =
     and+ (`Skip_tests skip_tests) = Cli.skip_tests
     and+ (`Skip_change_log skip_change_log) = Cli.skip_change_log
     and+ (`Working_tree on_working_tree) = working_tree in
-
     (let dir, clean_up =
        if on_working_tree then (OS.Dir.current (), fun _ -> ())
        else
