@@ -11,18 +11,6 @@ open Dune_release
 
 open Cmdliner
 
-let lints =
-  let test = [ ("std-files", `Std_files); ("opam", `Opam) ] in
-  let doc =
-    strf
-      "Test to perform. $(docv) must be one of %s. If unspecified all tests \
-       are performed."
-      (Arg.doc_alts_enum test)
-  in
-  let test = Arg.enum test in
-  let docv = "TEST" in
-  Arg.(value & pos_all test Lint.all & info [] ~doc ~docv)
-
 let doc = "Check package distribution consistency and conventions"
 let sdocs = Manpage.s_common_options
 let exits = Cmd.Exit.info 1 ~doc:"on lint failure" :: Cli.exits
@@ -51,7 +39,18 @@ let term =
     and+ version = Cli.pkg_version
     and+ tag = Cli.dist_tag
     and+ keep_v = Cli.keep_v
-    and+ lints = lints in
+    and+ lints =
+      let test = [ ("std-files", `Std_files); ("opam", `Opam) ] in
+      let doc =
+        strf
+          "Test to perform. $(docv) must be one of %s. If unspecified all \
+           tests are performed."
+          (Arg.doc_alts_enum test)
+      in
+      let test = Arg.enum test in
+      let docv = "TEST" in
+      Arg.(value & pos_all test Lint.all & info [] ~doc ~docv)
+    in
     Cli.handle_error
       ( Config.keep_v ~keep_v >>= fun keep_v ->
         let pkg = Pkg.v ~dry_run ?version ~keep_v ?tag () in

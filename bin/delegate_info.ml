@@ -1,14 +1,13 @@
 open Cmdliner
 open Dune_release
 
-let var =
-  let doc = "The variable to print." in
-  Arg.(required & pos 0 (some string) None & info [] ~doc ~docv:"VAR")
-
 let term =
   Term.(
     let open Syntax in
-    let+ var = var in
+    let+ var =
+      let doc = "The variable to print." in
+      Arg.(required & pos 0 (some string) None & info [] ~doc ~docv:"VAR")
+    in
     let open Rresult in
     (let pkg = Pkg.v ~dry_run:false () in
      let result =

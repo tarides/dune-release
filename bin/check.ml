@@ -14,10 +14,6 @@ let clone_and_checkout_tag repo ~dir ~tag =
 
 open Cmdliner
 
-let working_tree =
-  let doc = "Perform the check on the current working tree." in
-  Arg.(value & flag & info [ "working-tree" ] ~doc)
-
 let doc = "Check dune-release compatibility"
 
 let man =
@@ -44,7 +40,10 @@ let term =
     and+ skip_build = Cli.skip_build
     and+ skip_tests = Cli.skip_tests
     and+ skip_change_log = Cli.skip_change_log
-    and+ on_working_tree = working_tree in
+    and+ on_working_tree =
+      let doc = "Perform the check on the current working tree." in
+      Arg.(value & flag & info [ "working-tree" ] ~doc)
+    in
     (let dir, clean_up =
        if on_working_tree then (OS.Dir.current (), fun _ -> ())
        else
