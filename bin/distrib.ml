@@ -131,17 +131,17 @@ let term =
   Term.(
     let open Syntax in
     let+ () = Cli.setup
-    and+ (`Dry_run dry_run) = Cli.dry_run
-    and+ (`Build_dir build_dir) = Cli.build_dir
-    and+ (`Package_names pkg_names) = Cli.pkg_names
-    and+ (`Package_version version) = Cli.pkg_version
-    and+ (`Dist_tag tag) = Cli.dist_tag
-    and+ (`Keep_v keep_v) = Cli.keep_v
-    and+ (`Keep_build_dir keep_dir) = Cli.keep_build_dir
-    and+ (`Skip_lint skip_lint) = Cli.skip_lint
-    and+ (`Skip_build skip_build) = Cli.skip_build
-    and+ (`Skip_tests skip_tests) = Cli.skip_tests
-    and+ (`Include_submodules include_submodules) = Cli.include_submodules in
+    and+ dry_run = Cli.dry_run
+    and+ build_dir = Cli.build_dir
+    and+ pkg_names = Cli.pkg_names
+    and+ version = Cli.pkg_version
+    and+ tag = Cli.dist_tag
+    and+ keep_v = Cli.keep_v
+    and+ keep_dir = Cli.keep_build_dir
+    and+ skip_lint = Cli.skip_lint
+    and+ skip_build = Cli.skip_build
+    and+ skip_tests = Cli.skip_tests
+    and+ include_submodules = Cli.include_submodules in
     distrib ?build_dir ~dry_run ~pkg_names ~version ~tag ~keep_v ~keep_dir
       ~skip_lint ~skip_build ~skip_tests ~include_submodules ()
     |> Cli.handle_error)

@@ -152,16 +152,16 @@ let term =
   Term.(
     let open Syntax in
     let+ () = Cli.setup
-    and+ (`Dist_opam opam) = Cli.dist_opam
-    and+ (`Dist_file distrib_file) = Cli.dist_file
-    and+ (`Opam_repo opam_repo) = Cli.opam_repo
-    and+ (`Token token) = Cli.token
-    and+ (`Local_repo local_repo) = Cli.local_repo
-    and+ (`Remote_repo remote_repo) = Cli.remote_repo
-    and+ (`Build_dir build_dir) = Cli.build_dir
-    and+ (`Package_names pkg_names) = Cli.pkg_names
-    and+ (`Dry_run dry_run) = Cli.dry_run
-    and+ (`Yes yes) = Cli.yes in
+    and+ opam = Cli.dist_opam
+    and+ distrib_file = Cli.dist_file
+    and+ opam_repo = Cli.opam_repo
+    and+ token = Cli.token
+    and+ local_repo = Cli.local_repo
+    and+ remote_repo = Cli.remote_repo
+    and+ build_dir = Cli.build_dir
+    and+ pkg_names = Cli.pkg_names
+    and+ dry_run = Cli.dry_run
+    and+ yes = Cli.yes in
     undraft ?opam ?distrib_file ?opam_repo ?token ?local_repo ?remote_repo
       ?build_dir ~pkg_names ~dry_run ~yes ()
     |> Cli.handle_error)

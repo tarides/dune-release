@@ -80,39 +80,31 @@ let version =
     "The version tag to use. If absent, automatically extracted from the \
      package's change log."
   in
-  Cli.named
-    (fun x -> `Version x)
-    Arg.(value & pos 0 (some Cli.version) None & info [] ~doc ~docv:"VERSION")
+  Arg.(value & pos 0 (some Cli.version) None & info [] ~doc ~docv:"VERSION")
 
 let commit =
   let doc = "Commit-ish $(docv) to tag." in
-  Cli.named
-    (fun x -> `Commit_ish x)
-    Arg.(value & opt string "HEAD" & info [ "commit" ] ~doc ~docv:"COMMIT-ISH")
+  Arg.(value & opt string "HEAD" & info [ "commit" ] ~doc ~docv:"COMMIT-ISH")
 
 let msg =
   let doc =
     "Commit message for the tag. If absent, the message 'Distribution \
      $(i,VERSION)' is used."
   in
-  Cli.named
-    (fun x -> `Msg x)
-    Arg.(
-      value & opt (some string) None & info [ "m"; "message" ] ~doc ~docv:"MSG")
+  Arg.(
+    value & opt (some string) None & info [ "m"; "message" ] ~doc ~docv:"MSG")
 
 let sign =
   let doc = "Sign the tag using the VCS's default signing key." in
-  Cli.named (fun x -> `Sign x) Arg.(value & flag & info [ "s"; "sign" ] ~doc)
+  Arg.(value & flag & info [ "s"; "sign" ] ~doc)
 
 let force =
   let doc = "If the tag exists, replace it rather than fail." in
-  Cli.named (fun x -> `Force x) Arg.(value & flag & info [ "f"; "force" ] ~doc)
+  Arg.(value & flag & info [ "f"; "force" ] ~doc)
 
 let delete =
   let doc = "Delete the specified tag rather than create it." in
-  Cli.named
-    (fun x -> `Delete x)
-    Arg.(value & flag & info [ "d"; "delete" ] ~doc)
+  Arg.(value & flag & info [ "d"; "delete" ] ~doc)
 
 let doc = "Tag the package's source repository with a version"
 let sdocs = Manpage.s_common_options
@@ -132,16 +124,16 @@ let term =
   Term.(
     let open Syntax in
     let+ () = Cli.setup
-    and+ (`Dry_run dry_run) = Cli.dry_run
-    and+ (`Change_log change_log) = Cli.change_log
-    and+ (`Keep_v keep_v) = Cli.keep_v
-    and+ (`Version version) = version
-    and+ (`Commit_ish commit_ish) = commit
-    and+ (`Force force) = force
-    and+ (`Sign sign) = sign
-    and+ (`Delete delete) = delete
-    and+ (`Msg msg) = msg
-    and+ (`Yes yes) = Cli.yes in
+    and+ dry_run = Cli.dry_run
+    and+ change_log = Cli.change_log
+    and+ keep_v = Cli.keep_v
+    and+ version = version
+    and+ commit_ish = commit
+    and+ force = force
+    and+ sign = sign
+    and+ delete = delete
+    and+ msg = msg
+    and+ yes = Cli.yes in
     Config.keep_v ~keep_v
     >>= (fun keep_v ->
           let pkg = Pkg.v ~dry_run ~keep_v ?change_log () in

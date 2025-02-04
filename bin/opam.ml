@@ -322,15 +322,11 @@ let action =
       (Arg.doc_alts_enum action)
   in
   let action = Arg.enum action in
-  Cli.named
-    (fun x -> `Action x)
-    Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
+  Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
 
 let field_arg =
   let doc = "the field to output ($(b,field) action)" in
-  Cli.named
-    (fun x -> `Field_name x)
-    Arg.(value & pos 1 (some string) None & info [] ~doc ~docv:"FIELD")
+  Arg.(value & pos 1 (some string) None & info [] ~doc ~docv:"FIELD")
 
 let pkg_descr =
   let doc =
@@ -346,9 +342,7 @@ let pkg_descr =
      'Contact:' or '%%VERSION'."
   in
   let docv = "FILE" in
-  Cli.named
-    (fun x -> `Pkg_descr x)
-    Arg.(value & opt (some Cli.path_arg) None & info [ "pkg-descr" ] ~doc ~docv)
+  Arg.(value & opt (some Cli.path_arg) None & info [ "pkg-descr" ] ~doc ~docv)
 
 let doc = "Interaction with opam and the OCaml opam repository"
 let sdocs = Manpage.s_common_options
@@ -389,29 +383,29 @@ let term =
   Term.(
     let open Syntax in
     let+ () = Cli.setup
-    and+ (`Dry_run dry_run) = Cli.dry_run
-    and+ (`Build_dir build_dir) = Cli.build_dir
-    and+ (`Local_repo local_repo) = Cli.local_repo
-    and+ (`Remote_repo remote_repo) = Cli.remote_repo
-    and+ (`Opam_repo opam_repo) = Cli.opam_repo
-    and+ (`User user) = Cli.user
-    and+ (`Keep_v keep_v) = Cli.keep_v
-    and+ (`Dist_opam opam) = Cli.dist_opam
-    and+ (`Dist_uri distrib_uri) = Cli.dist_uri
-    and+ (`Dist_file distrib_file) = Cli.dist_file
-    and+ (`Dist_tag tag) = Cli.dist_tag
-    and+ (`Package_names pkg_names) = Cli.pkg_names
-    and+ (`Package_version version) = Cli.pkg_version
-    and+ (`Pkg_descr pkg_descr) = pkg_descr
-    and+ (`Readme readme) = Cli.readme
-    and+ (`Change_log change_log) = Cli.change_log
-    and+ (`Publish_msg publish_msg) = Cli.publish_msg
-    and+ (`Action action) = action
-    and+ (`Field_name field_name) = field_arg
-    and+ (`No_auto_open no_auto_open) = Cli.no_auto_open
-    and+ (`Yes yes) = Cli.yes
-    and+ (`Token token) = Cli.token
-    and+ (`Draft draft) = Cli.draft in
+    and+ dry_run = Cli.dry_run
+    and+ build_dir = Cli.build_dir
+    and+ local_repo = Cli.local_repo
+    and+ remote_repo = Cli.remote_repo
+    and+ opam_repo = Cli.opam_repo
+    and+ user = Cli.user
+    and+ keep_v = Cli.keep_v
+    and+ opam = Cli.dist_opam
+    and+ distrib_uri = Cli.dist_uri
+    and+ distrib_file = Cli.dist_file
+    and+ tag = Cli.dist_tag
+    and+ pkg_names = Cli.pkg_names
+    and+ version = Cli.pkg_version
+    and+ pkg_descr = pkg_descr
+    and+ readme = Cli.readme
+    and+ change_log = Cli.change_log
+    and+ publish_msg = Cli.publish_msg
+    and+ action = action
+    and+ field_name = field_arg
+    and+ no_auto_open = Cli.no_auto_open
+    and+ yes = Cli.yes
+    and+ token = Cli.token
+    and+ draft = Cli.draft in
     get_pkgs ?build_dir ?opam ?distrib_file ?pkg_descr ?readme ?change_log
       ?publish_msg ~dry_run ~keep_v ~tag ~pkg_names ~version ()
     >>= (fun pkgs ->
