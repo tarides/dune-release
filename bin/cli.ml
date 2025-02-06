@@ -19,11 +19,10 @@ let dir_path_arg =
   let parse s = dir_parse s >>= Fpath.of_string in
   Arg.conv ~docv:"DIR" (parse, Fpath.pp)
 
-let config term = Cmdliner.Term.(app (const Dune_release.Config.Cli.make)) term
+let config term = Cmdliner.Term.map Dune_release.Config.Cli.make term
 
 let config_opt term =
-  let open Cmdliner.Term in
-  app (const (Stdext.Option.map ~f:Dune_release.Config.Cli.make)) term
+  Cmdliner.Term.map (Stdext.Option.map ~f:Dune_release.Config.Cli.make) term
 
 let tag =
   Arg.conv ~docv:"VCS_TAG" ((fun s -> Ok (Vcs.Tag.of_string s)), Vcs.Tag.pp)
