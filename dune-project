@@ -34,7 +34,7 @@ with [Dune](https://github.com/ocaml/dune) and hosted on
   (fmt (>= 0.8.7))
   (fpath (>= 0.7.3))
   (bos (>= 0.1.3))
-  (cmdliner (>= 1.1.0))
+  (cmdliner (>= 1.3.0))
   (re (>= 1.7.2))
   astring
   (opam-file-format (>= 2.1.2))

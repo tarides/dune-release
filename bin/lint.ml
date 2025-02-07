@@ -7,31 +7,9 @@
 open Bos_setup
 open Dune_release
 
-let lint () (`Dry_run dry_run) (`Package_names pkg_names)
-    (`Package_version version) (`Dist_tag tag) (`Keep_v keep_v) (`Lints lints) =
-  Cli.handle_error
-    ( Config.keep_v ~keep_v >>= fun keep_v ->
-      let pkg = Pkg.v ~dry_run ?version ~keep_v ?tag () in
-      OS.Dir.current () >>= fun dir ->
-      Lint.lint_packages ~dry_run ~dir ~todo:lints pkg pkg_names )
-
 (* Command line interface *)
 
 open Cmdliner
-
-let lints =
-  let test = [ ("std-files", `Std_files); ("opam", `Opam) ] in
-  let doc =
-    strf
-      "Test to perform. $(docv) must be one of %s. If unspecified all tests \
-       are performed."
-      (Arg.doc_alts_enum test)
-  in
-  let test = Arg.enum test in
-  let docv = "TEST" in
-  Cli.named
-    (fun x -> `Lints x)
-    Arg.(value & pos_all test Lint.all & info [] ~doc ~docv)
 
 let doc = "Check package distribution consistency and conventions"
 let sdocs = Manpage.s_common_options
@@ -54,8 +32,30 @@ let man =
 
 let term =
   Term.(
-    const lint $ Cli.setup $ Cli.dry_run $ Cli.pkg_names $ Cli.pkg_version
-    $ Cli.dist_tag $ Cli.keep_v $ lints)
+    let open Syntax in
+    let+ () = Cli.setup
+    and+ dry_run = Cli.dry_run
+    and+ pkg_names = Cli.pkg_names
+    and+ version = Cli.pkg_version
+    and+ tag = Cli.dist_tag
+    and+ keep_v = Cli.keep_v
+    and+ lints =
+      let test = [ ("std-files", `Std_files); ("opam", `Opam) ] in
+      let doc =
+        strf
+          "Test to perform. $(docv) must be one of %s. If unspecified all \
+           tests are performed."
+          (Arg.doc_alts_enum test)
+      in
+      let test = Arg.enum test in
+      let docv = "TEST" in
+      Arg.(value & pos_all test Lint.all & info [] ~doc ~docv)
+    in
+    Cli.handle_error
+      ( Config.keep_v ~keep_v >>= fun keep_v ->
+        let pkg = Pkg.v ~dry_run ?version ~keep_v ?tag () in
+        OS.Dir.current () >>= fun dir ->
+        Lint.lint_packages ~dry_run ~dir ~todo:lints pkg pkg_names ))
 
 let info = Cmd.info "lint" ~doc ~sdocs ~exits ~man ~man_xrefs
 let cmd = Cmd.v info term

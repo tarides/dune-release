@@ -309,66 +309,9 @@ let submit ?local_repo:local ?remote_repo:remote ?opam_repo ?user ?token
 
 let field ~pkgs ~field_name = field pkgs field_name
 
-let opam_cli () (`Dry_run dry_run) (`Build_dir build_dir)
-    (`Local_repo local_repo) (`Remote_repo remote_repo) (`Opam_repo opam_repo)
-    (`User user) (`Keep_v keep_v) (`Dist_opam opam) (`Dist_uri distrib_uri)
-    (`Dist_file distrib_file) (`Dist_tag tag) (`Package_names pkg_names)
-    (`Package_version version) (`Pkg_descr pkg_descr) (`Readme readme)
-    (`Change_log change_log) (`Publish_msg publish_msg) (`Action action)
-    (`Field_name field_name) (`No_auto_open no_auto_open) (`Yes yes)
-    (`Token token) (`Draft draft) =
-  get_pkgs ?build_dir ?opam ?distrib_file ?pkg_descr ?readme ?change_log
-    ?publish_msg ~dry_run ~keep_v ~tag ~pkg_names ~version ()
-  >>= (fun pkgs ->
-        match action with
-        | `Descr -> descr ~pkgs
-        | `Pkg -> pkg ~dry_run ?distrib_uri ~pkgs ()
-        | `Submit ->
-            submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run
-              ~pkgs ~pkg_names ~no_auto_open ~yes ~draft ()
-        | `Field -> field ~pkgs ~field_name)
-  |> Cli.handle_error
-
 (* Command line interface *)
 
 open Cmdliner
-
-let action =
-  let action =
-    [ ("descr", `Descr); ("pkg", `Pkg); ("submit", `Submit); ("field", `Field) ]
-  in
-  let doc =
-    strf "The action to perform. $(docv) must be one of %s."
-      (Arg.doc_alts_enum action)
-  in
-  let action = Arg.enum action in
-  Cli.named
-    (fun x -> `Action x)
-    Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
-
-let field_arg =
-  let doc = "the field to output ($(b,field) action)" in
-  Cli.named
-    (fun x -> `Field_name x)
-    Arg.(value & pos 1 (some string) None & info [] ~doc ~docv:"FIELD")
-
-let pkg_descr =
-  let doc =
-    "The opam descr file to use for the opam package. If absent and the opam \
-     file name (see $(b,--pkg-opam)) has a `.opam` extension, uses an existing \
-     file with the same path but a `.descr` extension. If the opam file name \
-     is `opam` uses a `descr` file in the same directory. If these files are \
-     not found a description is extracted from the the readme (see option \
-     $(b,--readme)) as follow: the first marked up section of the readme is \
-     extracted, its title is parsed according to the pattern '\\$(NAME) \
-     \\$(SEP) \\$(SYNOPSIS)', the body of the section is the long description. \
-     A few lines are filtered out: lines that start with either 'Home page:', \
-     'Contact:' or '%%VERSION'."
-  in
-  let docv = "FILE" in
-  Cli.named
-    (fun x -> `Pkg_descr x)
-    Arg.(value & opt (some Cli.path_arg) None & info [ "pkg-descr" ] ~doc ~docv)
 
 let doc = "Interaction with opam and the OCaml opam repository"
 let sdocs = Manpage.s_common_options
@@ -407,12 +350,73 @@ let info = Cmd.info "opam" ~doc ~sdocs ~envs ~man ~man_xrefs
 
 let term =
   Term.(
-    const opam_cli $ Cli.setup $ Cli.dry_run $ Cli.build_dir $ Cli.local_repo
-    $ Cli.remote_repo $ Cli.opam_repo $ Cli.user $ Cli.keep_v $ Cli.dist_opam
-    $ Cli.dist_uri $ Cli.dist_file $ Cli.dist_tag $ Cli.pkg_names
-    $ Cli.pkg_version $ pkg_descr $ Cli.readme $ Cli.change_log
-    $ Cli.publish_msg $ action $ field_arg $ Cli.no_auto_open $ Cli.yes
-    $ Cli.token $ Cli.draft)
+    let open Syntax in
+    let+ () = Cli.setup
+    and+ dry_run = Cli.dry_run
+    and+ build_dir = Cli.build_dir
+    and+ local_repo = Cli.local_repo
+    and+ remote_repo = Cli.remote_repo
+    and+ opam_repo = Cli.opam_repo
+    and+ user = Cli.user
+    and+ keep_v = Cli.keep_v
+    and+ opam = Cli.dist_opam
+    and+ distrib_uri = Cli.dist_uri
+    and+ distrib_file = Cli.dist_file
+    and+ tag = Cli.dist_tag
+    and+ pkg_names = Cli.pkg_names
+    and+ version = Cli.pkg_version
+    and+ pkg_descr =
+      let doc =
+        "The opam descr file to use for the opam package. If absent and the \
+         opam file name (see $(b,--pkg-opam)) has a `.opam` extension, uses an \
+         existing file with the same path but a `.descr` extension. If the \
+         opam file name is `opam` uses a `descr` file in the same directory. \
+         If these files are not found a description is extracted from the the \
+         readme (see option $(b,--readme)) as follow: the first marked up \
+         section of the readme is extracted, its title is parsed according to \
+         the pattern '\\$(NAME) \\$(SEP) \\$(SYNOPSIS)', the body of the \
+         section is the long description. A few lines are filtered out: lines \
+         that start with either 'Home page:', 'Contact:' or '%%VERSION'."
+      in
+      let docv = "FILE" in
+      Arg.(
+        value & opt (some Cli.path_arg) None & info [ "pkg-descr" ] ~doc ~docv)
+    and+ readme = Cli.readme
+    and+ change_log = Cli.change_log
+    and+ publish_msg = Cli.publish_msg
+    and+ action =
+      let action =
+        [
+          ("descr", `Descr);
+          ("pkg", `Pkg);
+          ("submit", `Submit);
+          ("field", `Field);
+        ]
+      in
+      let doc =
+        strf "The action to perform. $(docv) must be one of %s."
+          (Arg.doc_alts_enum action)
+      in
+      let action = Arg.enum action in
+      Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
+    and+ field_name =
+      let doc = "the field to output ($(b,field) action)" in
+      Arg.(value & pos 1 (some string) None & info [] ~doc ~docv:"FIELD")
+    and+ no_auto_open = Cli.no_auto_open
+    and+ yes = Cli.yes
+    and+ token = Cli.token
+    and+ draft = Cli.draft in
+    get_pkgs ?build_dir ?opam ?distrib_file ?pkg_descr ?readme ?change_log
+      ?publish_msg ~dry_run ~keep_v ~tag ~pkg_names ~version ()
+    >>= (fun pkgs ->
+          match action with
+          | `Descr -> descr ~pkgs
+          | `Pkg -> pkg ~dry_run ?distrib_uri ~pkgs ()
+          | `Submit ->
+              submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run
+                ~pkgs ~pkg_names ~no_auto_open ~yes ~draft ()
+          | `Field -> field ~pkgs ~field_name)
+    |> Cli.handle_error)
 
 let cmd = Cmd.v info term
 

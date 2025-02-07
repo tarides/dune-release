@@ -71,69 +71,9 @@ let vcs_tag repo pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete ~msg
           m "Tagged %a with version %a" Text.Pp.commit commit_ish Text.Pp.tag
             tag)
 
-let tag () (`Dry_run dry_run) (`Change_log change_log) (`Keep_v keep_v)
-    (`Version version) (`Commit_ish commit_ish) (`Force force) (`Sign sign)
-    (`Delete delete) (`Msg msg) (`Yes yes) =
-  Config.keep_v ~keep_v
-  >>= (fun keep_v ->
-        let pkg = Pkg.v ~dry_run ~keep_v ?change_log () in
-        Vcs.get () >>= fun vcs ->
-        (match version with
-        | Some v -> Ok (v, Version.to_tag vcs v)
-        | None ->
-            Pkg.change_log pkg >>= fun changelog ->
-            App_log.status (fun l ->
-                l "Extracting tag from first entry in %a" Text.Pp.path changelog);
-            Pkg.extract_version pkg >>= fun cl ->
-            Ok (Pkg.version_of_changelog pkg cl, Version.Changelog.to_tag vcs cl))
-        >>= fun (version, tag) ->
-        vcs_tag vcs pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete
-          ~msg ~yes
-        >>= fun () -> Ok 0)
-  |> Cli.handle_error
-
 (* Command line interface *)
 
 open Cmdliner
-
-let version =
-  let doc =
-    "The version tag to use. If absent, automatically extracted from the \
-     package's change log."
-  in
-  Cli.named
-    (fun x -> `Version x)
-    Arg.(value & pos 0 (some Cli.version) None & info [] ~doc ~docv:"VERSION")
-
-let commit =
-  let doc = "Commit-ish $(docv) to tag." in
-  Cli.named
-    (fun x -> `Commit_ish x)
-    Arg.(value & opt string "HEAD" & info [ "commit" ] ~doc ~docv:"COMMIT-ISH")
-
-let msg =
-  let doc =
-    "Commit message for the tag. If absent, the message 'Distribution \
-     $(i,VERSION)' is used."
-  in
-  Cli.named
-    (fun x -> `Msg x)
-    Arg.(
-      value & opt (some string) None & info [ "m"; "message" ] ~doc ~docv:"MSG")
-
-let sign =
-  let doc = "Sign the tag using the VCS's default signing key." in
-  Cli.named (fun x -> `Sign x) Arg.(value & flag & info [ "s"; "sign" ] ~doc)
-
-let force =
-  let doc = "If the tag exists, replace it rather than fail." in
-  Cli.named (fun x -> `Force x) Arg.(value & flag & info [ "f"; "force" ] ~doc)
-
-let delete =
-  let doc = "Delete the specified tag rather than create it." in
-  Cli.named
-    (fun x -> `Delete x)
-    Arg.(value & flag & info [ "d"; "delete" ] ~doc)
 
 let doc = "Tag the package's source repository with a version"
 let sdocs = Manpage.s_common_options
@@ -151,8 +91,60 @@ let man =
 
 let term =
   Term.(
-    const tag $ Cli.setup $ Cli.dry_run $ Cli.change_log $ Cli.keep_v $ version
-    $ commit $ force $ sign $ delete $ msg $ Cli.yes)
+    let open Syntax in
+    let+ () = Cli.setup
+    and+ dry_run = Cli.dry_run
+    and+ change_log = Cli.change_log
+    and+ keep_v = Cli.keep_v
+    and+ version =
+      let doc =
+        "The version tag to use. If absent, automatically extracted from the \
+         package's change log."
+      in
+      Arg.(value & pos 0 (some Cli.version) None & info [] ~doc ~docv:"VERSION")
+    and+ commit_ish =
+      let doc = "Commit-ish $(docv) to tag." in
+      Arg.(
+        value & opt string "HEAD" & info [ "commit" ] ~doc ~docv:"COMMIT-ISH")
+    and+ force =
+      let doc = "If the tag exists, replace it rather than fail." in
+      Arg.(value & flag & info [ "f"; "force" ] ~doc)
+    and+ sign =
+      let doc = "Sign the tag using the VCS's default signing key." in
+      Arg.(value & flag & info [ "s"; "sign" ] ~doc)
+    and+ delete =
+      let doc = "Delete the specified tag rather than create it." in
+      Arg.(value & flag & info [ "d"; "delete" ] ~doc)
+    and+ msg =
+      let doc =
+        "Commit message for the tag. If absent, the message 'Distribution \
+         $(i,VERSION)' is used."
+      in
+      Arg.(
+        value
+        & opt (some string) None
+        & info [ "m"; "message" ] ~doc ~docv:"MSG")
+    and+ yes = Cli.yes in
+    Config.keep_v ~keep_v
+    >>= (fun keep_v ->
+          let pkg = Pkg.v ~dry_run ~keep_v ?change_log () in
+          Vcs.get () >>= fun vcs ->
+          (match version with
+          | Some v -> Ok (v, Version.to_tag vcs v)
+          | None ->
+              Pkg.change_log pkg >>= fun changelog ->
+              App_log.status (fun l ->
+                  l "Extracting tag from first entry in %a" Text.Pp.path
+                    changelog);
+              Pkg.extract_version pkg >>= fun cl ->
+              Ok
+                ( Pkg.version_of_changelog pkg cl,
+                  Version.Changelog.to_tag vcs cl ))
+          >>= fun (version, tag) ->
+          vcs_tag vcs pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete
+            ~msg ~yes
+          >>= fun () -> Ok 0)
+    |> Cli.handle_error)
 
 let info = Cmd.info "tag" ~doc ~sdocs ~exits ~man ~man_xrefs
 let cmd = Cmd.v info term

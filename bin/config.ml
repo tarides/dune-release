@@ -111,18 +111,6 @@ let invalid_usage () =
     "Invalid dune-release config invocation. Usage:\n%s\n%s\n%s"
     (default_usage ~raw:() ()) (show_usage ~raw:() ()) (set_usage ~raw:() ())
 
-let run action key_opt value_opt =
-  let open Rresult in
-  (let res =
-     match (action, key_opt, value_opt) with
-     | "show", key, None -> show key
-     | "set", Some key, Some value -> set key value
-     | "create", None, None -> create ()
-     | _ -> invalid_usage ()
-   in
-   res >>= fun () -> Ok 0)
-  |> Cli.handle_error
-
 let man =
   let open Cmdliner in
   [
@@ -153,28 +141,38 @@ let man =
        newly created opam-repository PR or not.";
   ]
 
-let action =
-  let docv = "ACTION" in
-  let doc =
-    "The action to perform, either $(b,show) the config or $(b,set) a config \
-     field"
-  in
-  Cmdliner.Arg.(value & pos 0 string "show" & info ~doc ~docv [])
-
-let key =
-  let docv = "KEY" in
-  let doc =
-    "The configuration field to set or print. For $(b,show), if no key is \
-     provided, the entire config will be printed."
-  in
-  Cmdliner.Arg.(value & pos 1 (some string) None & info ~doc ~docv [])
-
-let value =
-  let docv = "VALUE" in
-  let doc = "The new field value" in
-  Cmdliner.Arg.(value & pos 2 (some string) None & info ~doc ~docv [])
-
-let term = Cmdliner.Term.(const run $ action $ key $ value)
+let term =
+  Cmdliner.Term.(
+    let open Syntax in
+    let+ action =
+      let docv = "ACTION" in
+      let doc =
+        "The action to perform, either $(b,show) the config or $(b,set) a \
+         config field"
+      in
+      Cmdliner.Arg.(value & pos 0 string "show" & info ~doc ~docv [])
+    and+ key_opt =
+      let docv = "KEY" in
+      let doc =
+        "The configuration field to set or print. For $(b,show), if no key is \
+         provided, the entire config will be printed."
+      in
+      Cmdliner.Arg.(value & pos 1 (some string) None & info ~doc ~docv [])
+    and+ value_opt =
+      let docv = "VALUE" in
+      let doc = "The new field value" in
+      Cmdliner.Arg.(value & pos 2 (some string) None & info ~doc ~docv [])
+    in
+    let open Rresult in
+    (let res =
+       match (action, key_opt, value_opt) with
+       | "show", key, None -> show key
+       | "set", Some key, Some value -> set key value
+       | "create", None, None -> create ()
+       | _ -> invalid_usage ()
+     in
+     res >>= fun () -> Ok 0)
+    |> Cli.handle_error)
 
 let info =
   let doc = "Displays or update dune-release global configuration" in
