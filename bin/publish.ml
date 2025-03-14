@@ -39,7 +39,7 @@ let publish_cli () (`Build_dir build_dir) (`Package_version version)
 
 open Cmdliner
 
-let doc = "Publish package distribution archives and/or documentation."
+let doc = "Publish package distribution archives."
 let sdocs = Manpage.s_common_options
 let exits = Cli.exits
 let man_xrefs = [ `Main; `Cmd "distrib" ]
