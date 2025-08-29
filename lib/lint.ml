@@ -46,32 +46,6 @@ let lint_std_files ~dry_run pkg =
   in
   List.fold_left go 0 std_files
 
-let lint_file_with_cmd ~dry_run ~file_kind ~cmd ~handle_exit file errs =
-  let run_linter cmd file ~exists =
-    if not (exists || dry_run) then
-      Ok (`Fail (strf "%a: No such file" Fpath.pp file))
-    else
-      Sos.run_out ~dry_run ~err:OS.Cmd.err_run_out
-        Cmd.(cmd % p file)
-        ~default:(Sos.out "") OS.Cmd.out_string
-      >>| fun (out, status) -> handle_exit (snd status) out
-  in
-  Logs.on_error_msg
-    ~use:(fun () -> errs + 1)
-    ( OS.File.exists file >>= fun exists ->
-      run_linter cmd file ~exists >>| function
-      | `Ok ->
-          Logs.app (fun m ->
-              m "%a @[lint@ %s %a.@]" Text.Pp.status `Ok file_kind Text.Pp.path
-                file);
-          errs
-      | `Fail msgs ->
-          Logs.app (fun m ->
-              m "%a @[<v>@[lint@ %s %a:@]@,@[%a messages:@]@,%a@]"
-                Text.Pp.status `Fail file_kind Text.Pp.path file Cmd.pp cmd
-                Fmt.lines msgs);
-          errs + 1 )
-
 let lint_res ~msgf = function
   | Ok _ ->
       App_log.report_status `Ok msgf;
@@ -91,32 +65,6 @@ let lint_opam_home_and_dev pkg =
 
 let lint_opam_github_fields pkg = lint_opam_home_and_dev pkg
 
-let opam_lint_cmd ~opam_file_version =
-  let lint_older_format =
-    match opam_file_version with
-    | Some "1.2" ->
-        let _ = Deprecate.Opam_1_x.remove_me in
-        true
-    | _ -> false
-  in
-  Cmd.(Opam.cmd % "lint" %% on lint_older_format (v "--warn=-21-32-48"))
-
-(* We first run opam lint with -s and if there's something beyond 5
-   we rerun it without it for the error messages. It's ugly since 5
-   will still but opam lint's cli is broken. *)
-let handle_opam_lint_exit ~dry_run ~verbose_lint_cmd ~opam_file status output =
-  match (status, output) with
-  | `Exited 0, ("" | "5") -> `Ok
-  | _ -> (
-      let default = Sos.out "" in
-      let err = OS.Cmd.err_run_out in
-      let cmd = Cmd.(verbose_lint_cmd % p opam_file) in
-      let verbose_lint_output =
-        Sos.run_out ~dry_run ~err ~default cmd OS.Cmd.out_string
-      in
-      match verbose_lint_output with
-      | Ok (out, _) | Error (`Msg out) -> `Fail out)
-
 let check_has_synopsis ~opam_file pkg =
   Pkg.opam_field_hd pkg "synopsis" >>= function
   | None ->
@@ -128,13 +76,32 @@ let lint_descr ~opam_file pkg =
     ~msgf:(fun l -> l "opam field %a is present" pp_field "synopsis")
     (check_has_synopsis ~opam_file pkg)
 
-let opam_lint ~dry_run ~opam_file_version opam_file =
-  let base_lint_cmd = opam_lint_cmd ~opam_file_version in
-  let short_lint_cmd = Cmd.(base_lint_cmd % "-s") in
-  let verbose_lint_cmd = base_lint_cmd in
-  lint_file_with_cmd ~dry_run ~file_kind:"opam file" ~cmd:short_lint_cmd
-    ~handle_exit:(handle_opam_lint_exit ~dry_run ~verbose_lint_cmd ~opam_file)
-    opam_file 0
+let opam_lint ~dry_run opam_file_name =
+  let file_kind = "opam file" in
+  match dry_run with
+  | true -> 0
+  | false -> (
+      let opam_file =
+        opam_file_name |> Fpath.to_string |> OpamFilename.of_string
+        |> OpamFile.make |> OpamFile.OPAM.read
+      in
+      match OpamFileTools.lint opam_file with
+      | [] ->
+          Logs.app (fun m ->
+              m "%a @[lint@ %s %a.@]" Text.Pp.status `Ok file_kind Text.Pp.path
+                opam_file_name);
+          0
+      | failures ->
+          let msg =
+            failures
+            |> List.map (fun (_err_code, _severity, msg) -> msg)
+            |> String.concat ~sep:"\n"
+          in
+          Logs.app (fun m ->
+              m "%a @[<v>@[lint@ %s %a:@]@,@[%s messages:@]@,%a@]"
+                Text.Pp.status `Fail file_kind Text.Pp.path opam_file_name
+                "lint" Fmt.lines msg);
+          1)
 
 let extra_opam_lint ~opam_file_version ~opam_file pkg =
   let is_2_0_format =
@@ -160,7 +127,7 @@ let lint_opam ~dry_run pkg =
       App_log.unhappy (fun l -> l "%s" Deprecate.Opam_1_x.file_format_warning)
   | _ -> ());
   Pkg.opam pkg >>= fun opam_file ->
-  let opam_lint_errors = opam_lint ~dry_run ~opam_file_version opam_file in
+  let opam_lint_errors = opam_lint ~dry_run opam_file in
   let extra_errors = extra_opam_lint ~opam_file_version ~opam_file pkg in
   Ok (opam_lint_errors + extra_errors)
 
