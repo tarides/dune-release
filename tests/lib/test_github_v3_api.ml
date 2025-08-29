@@ -33,14 +33,14 @@ let test_create_release =
                Dump_header `Ignore;
                Data
                  (`Data
-                   (Yojson.Basic.to_string
-                      (`Assoc
-                        [
-                          ("tag_name", `String tag);
-                          ("name", `String version);
-                          ("body", `String msg);
-                          ("draft", `Bool draft);
-                        ])));
+                    (Yojson.Basic.to_string
+                       (`Assoc
+                          [
+                            ("tag_name", `String tag);
+                            ("name", `String version);
+                            ("body", `String msg);
+                            ("draft", `Bool draft);
+                          ])));
              ];
          });
   ]
@@ -108,17 +108,17 @@ let test_open_pr =
                Dump_header `Ignore;
                Data
                  (`Data
-                   (Yojson.Basic.to_string
-                      (`Assoc
-                        [
-                          ("title", `String title);
-                          ("base", `String "master");
-                          ("body", `String body);
-                          ( "head",
-                            `String (Bos_setup.strf "%s:%s" fork_owner branch)
-                          );
-                          ("draft", `Bool draft);
-                        ])));
+                    (Yojson.Basic.to_string
+                       (`Assoc
+                          [
+                            ("title", `String title);
+                            ("base", `String "master");
+                            ("body", `String body);
+                            ( "head",
+                              `String (Bos_setup.strf "%s:%s" fork_owner branch)
+                            );
+                            ("draft", `Bool draft);
+                          ])));
              ];
          });
   ]
@@ -175,7 +175,7 @@ let test_undraft_release =
               Dump_header `Ignore;
               Data
                 (`Data
-                  (Yojson.Basic.to_string (`Assoc [ ("draft", `Bool false) ])));
+                   (Yojson.Basic.to_string (`Assoc [ ("draft", `Bool false) ])));
             ];
         };
   ]

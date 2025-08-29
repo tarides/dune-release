@@ -52,7 +52,8 @@ val change_log_last_entry :
 val change_log_file_last_entry :
   Fpath.t -> (Version.Changelog.t * (string * string), R.msg) result
 (** [change_log_file_last_entry file] tries to parse the last change log entry
-    of the file [file] using {!flavour_of_fpath} and {!change_log_last_entry}. *)
+    of the file [file] using {!flavour_of_fpath} and {!change_log_last_entry}.
+*)
 
 val rewrite_github_refs : user:string -> repo:string -> string -> string
 (** [rewrite_github_refs ~user ~repo s] replaces references like [#yyy] with

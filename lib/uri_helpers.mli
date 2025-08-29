@@ -13,7 +13,8 @@ val equal_uri : uri -> uri -> bool
 val parse : string -> uri option
 (** Parses an URI as a string. Returns [None] if the URI can't be properly
     parsed. The domain and path are determined based on the first ['/'] or [':']
-    separator to support either regular URIs or ["github.com:owner/..."] URIs. *)
+    separator to support either regular URIs or ["github.com:owner/..."] URIs.
+*)
 
 val get_sld : string -> string option
 (** Get the URI's second level domain, if it has one. *)

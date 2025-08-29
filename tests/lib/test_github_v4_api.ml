@@ -49,7 +49,7 @@ let test_pr_request_node_id =
             [
               Data
                 (`Data
-                  {|{ "query": "query { repository(owner:\"you\", name:\"some-repo\") { pullRequest(number:4) { id } } }" }|});
+                   {|{ "query": "query { repository(owner:\"you\", name:\"some-repo\") { pullRequest(number:4) { id } } }" }|});
             ];
         };
   ]
@@ -73,7 +73,7 @@ let test_pr_ready_for_review =
             [
               Data
                 (`Data
-                  {|{ "query": "mutation { markPullRequestReadyForReview (input : {clientMutationId:\"dune-release\",pullRequestId:\"node_id\"}) { pullRequest { url } } }" }|});
+                   {|{ "query": "mutation { markPullRequestReadyForReview (input : {clientMutationId:\"dune-release\",pullRequestId:\"node_id\"}) { pullRequest { url } } }" }|});
             ];
         };
   ]

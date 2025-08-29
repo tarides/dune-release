@@ -69,12 +69,12 @@ module Release = struct
       let json =
         Yojson.Basic.to_string
           (`Assoc
-            [
-              ("tag_name", `String (Vcs.Tag.to_string tag));
-              ("name", `String (Version.to_string version));
-              ("body", `String msg);
-              ("draft", `Bool draft);
-            ])
+             [
+               ("tag_name", `String (Vcs.Tag.to_string tag));
+               ("name", `String (Version.to_string version));
+               ("body", `String msg);
+               ("draft", `Bool draft);
+             ])
       in
       let url = strf "https://api.github.com/repos/%s/%s/releases" user repo in
       let args =
@@ -187,13 +187,13 @@ module Pull_request = struct
       let json =
         Yojson.Basic.to_string
           (`Assoc
-            [
-              ("title", `String title);
-              ("base", `String "master");
-              ("body", `String body);
-              ("head", `String (strf "%s:%s" fork_owner branch));
-              ("draft", `Bool draft);
-            ])
+             [
+               ("title", `String title);
+               ("base", `String "master");
+               ("body", `String body);
+               ("head", `String (strf "%s:%s" fork_owner branch));
+               ("draft", `Bool draft);
+             ])
       in
       let args =
         let open Curl_option in

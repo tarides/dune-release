@@ -7,7 +7,8 @@ module Sbytes : sig
 
   val make : int -> char -> (t, [> R.msg ]) result
   (** [make n c] returns a new byte sequence of length [n], filled with the byte
-      [c]. Returns an error message if [n < 0] or [n > Sys.max_string_length]. *)
+      [c]. Returns an error message if [n < 0] or [n > Sys.max_string_length].
+  *)
 
   val blit_string :
     string -> int -> t -> int -> int -> (unit, [> R.msg ]) result

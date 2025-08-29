@@ -22,7 +22,7 @@ val get_pkgs :
   unit ->
   (Dune_release.Pkg.t list, Bos_setup.R.msg) result
 (** [get_pkgs ~build_dir ~opam ~distrib_uri ~distrib_file ~readme ~change_log
-    ~publish_msg ~pkg_descr ~dry_run ~keep_v ~tag ~name ~pkg_names ~version ()]
+     ~publish_msg ~pkg_descr ~dry_run ~keep_v ~tag ~name ~pkg_names ~version ()]
     returns the list of packages built from the [distrib_file] or the associated
     error messages. *)
 
@@ -55,9 +55,9 @@ val submit :
   unit ->
   (int, Bos_setup.R.msg) result
 (** [submit ?distrib_uri ?local_repo ?remote_repo ?opam_repo ?user ~dry_run
-    ~pkgs ~pkg_names ~no_auto_open ~yes ~draft ()]
-    opens a pull request on the opam repository for the packages [pkgs]. Returns
-    the exit code (0 for success, 1 for failure) or error messages. *)
+     ~pkgs ~pkg_names ~no_auto_open ~yes ~draft ()] opens a pull request on the
+    opam repository for the packages [pkgs]. Returns the exit code (0 for
+    success, 1 for failure) or error messages. *)
 
 val field :
   pkgs:Dune_release.Pkg.t list ->

@@ -13,11 +13,13 @@ let cmd_error () =
   check ~name:"cmd exited" ~cmd ~err_msg:None ~status:(`Exited 2)
     ~expected:
       "The following command exited with code 2:\n\
-      \  git --git-dir .git --work-tree . diff-index --quiet HEAD" ();
+      \  git --git-dir .git --work-tree . diff-index --quiet HEAD"
+    ();
   check ~name:"cmd signaled" ~cmd ~err_msg:None ~status:(`Signaled 3)
     ~expected:
       "The following command exited with signal 3:\n\
-      \  git --git-dir .git --work-tree . diff-index --quiet HEAD" ();
+      \  git --git-dir .git --work-tree . diff-index --quiet HEAD"
+    ();
   check ~name:"cmd exited verbose" ~cmd
     ~err_msg:(Some "fatal: This is all made up\n") ~status:(`Exited 2)
     ~expected:
