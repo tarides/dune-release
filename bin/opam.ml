@@ -320,13 +320,13 @@ let opam_cli () (`Dry_run dry_run) (`Build_dir build_dir)
   get_pkgs ?build_dir ?opam ?distrib_file ?pkg_descr ?readme ?change_log
     ?publish_msg ~dry_run ~keep_v ~tag ~pkg_names ~version ()
   >>= (fun pkgs ->
-        match action with
-        | `Descr -> descr ~pkgs
-        | `Pkg -> pkg ~dry_run ?distrib_uri ~pkgs ()
-        | `Submit ->
-            submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run
-              ~pkgs ~pkg_names ~no_auto_open ~yes ~draft ()
-        | `Field -> field ~pkgs ~field_name)
+  match action with
+  | `Descr -> descr ~pkgs
+  | `Pkg -> pkg ~dry_run ?distrib_uri ~pkgs ()
+  | `Submit ->
+      submit ?local_repo ?remote_repo ?opam_repo ?user ?token ~dry_run ~pkgs
+        ~pkg_names ~no_auto_open ~yes ~draft ()
+  | `Field -> field ~pkgs ~field_name)
   |> Cli.handle_error
 
 (* Command line interface *)

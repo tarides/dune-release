@@ -76,20 +76,20 @@ let tag () (`Dry_run dry_run) (`Change_log change_log) (`Keep_v keep_v)
     (`Delete delete) (`Msg msg) (`Yes yes) =
   Config.keep_v ~keep_v
   >>= (fun keep_v ->
-        let pkg = Pkg.v ~dry_run ~keep_v ?change_log () in
-        Vcs.get () >>= fun vcs ->
-        (match version with
-        | Some v -> Ok (v, Version.to_tag vcs v)
-        | None ->
-            Pkg.change_log pkg >>= fun changelog ->
-            App_log.status (fun l ->
-                l "Extracting tag from first entry in %a" Text.Pp.path changelog);
-            Pkg.extract_version pkg >>= fun cl ->
-            Ok (Pkg.version_of_changelog pkg cl, Version.Changelog.to_tag vcs cl))
-        >>= fun (version, tag) ->
-        vcs_tag vcs pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete
-          ~msg ~yes
-        >>= fun () -> Ok 0)
+  let pkg = Pkg.v ~dry_run ~keep_v ?change_log () in
+  Vcs.get () >>= fun vcs ->
+  (match version with
+  | Some v -> Ok (v, Version.to_tag vcs v)
+  | None ->
+      Pkg.change_log pkg >>= fun changelog ->
+      App_log.status (fun l ->
+          l "Extracting tag from first entry in %a" Text.Pp.path changelog);
+      Pkg.extract_version pkg >>= fun cl ->
+      Ok (Pkg.version_of_changelog pkg cl, Version.Changelog.to_tag vcs cl))
+  >>= fun (version, tag) ->
+  vcs_tag vcs pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete ~msg
+    ~yes
+  >>= fun () -> Ok 0)
   |> Cli.handle_error
 
 (* Command line interface *)

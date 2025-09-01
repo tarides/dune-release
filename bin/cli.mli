@@ -33,7 +33,8 @@ val pkg_version : [ `Package_version of Dune_release.Version.t option ] Term.t
 (** A [--pkg-version] option to specify the packages version. *)
 
 val keep_v : [ `Keep_v of bool Dune_release.Config.Cli.t ] Term.t
-(** A [--keep-v] option to not drop the 'v' at the beginning of version strings. *)
+(** A [--keep-v] option to not drop the 'v' at the beginning of version strings.
+*)
 
 val dist_tag : [ `Dist_tag of Dune_release.Vcs.Tag.t option ] Term.t
 (** A [--tag] option to define the tag from which the distribution is or will be
@@ -76,7 +77,8 @@ val yes : [ `Yes of bool ] Term.t
 (** A [--yes] option to skip confirmation prompts. *)
 
 val include_submodules : [ `Include_submodules of bool ] Term.t
-(** A [--include-submodules] flag to include submodules in the distrib tarball *)
+(** A [--include-submodules] flag to include submodules in the distrib tarball
+*)
 
 val user : [ `User of string option ] Term.t
 (** A [--user] option to define the name of the GitHub account where to push new

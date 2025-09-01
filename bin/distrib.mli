@@ -21,10 +21,10 @@ val distrib :
   unit ->
   (int, Bos_setup.R.msg) result
 (** [distrib ~build_dir ~dry_run ~name ~pkg_names ~version ~tag ~keep_v
-    ~keep_dir ~skip_lint ~skip_build ~skip_tests ()]
-    creates a distribution archive for the package built with [name], [version]
-    and [tag], in [build_dir]. Returns the exit code (0 for success, 1 for
-    failure) or error messages.
+     ~keep_dir ~skip_lint ~skip_build ~skip_tests ()] creates a distribution
+    archive for the package built with [name], [version] and [tag], in
+    [build_dir]. Returns the exit code (0 for success, 1 for failure) or error
+    messages.
 
     - [keep_v] indicates whether the version is prefixed by 'v'
     - If [keep_dir] is [true] the repository checkout used to create the

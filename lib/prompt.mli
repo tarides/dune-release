@@ -8,7 +8,7 @@ val confirm :
     [true] for yes. Defaults to [default_answer] if the user just presses enter.
     If [yes], then it just skips the prompt and returns [true]. E.g.
     [confirm ~question:(fun l -> l "Do you want some %a?" Fmt.(styled `Bold
-    string) "coffee")] *)
+     string) "coffee")] *)
 
 val confirm_or_abort :
   question:('a, unit) Logs.msgf ->

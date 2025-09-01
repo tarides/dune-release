@@ -207,7 +207,7 @@ let git_submodule_update ~dry_run r =
   run_git_quiet ~dry_run r Cmd.(v "submodule" % "update" % "--init")
 
 (* See the reference here: https://git-scm.com/docs/git-check-ref-format
-   * Similar escape as DEP-14: https://dep-team.pages.debian.net/deps/dep14/ *)
+ * Similar escape as DEP-14: https://dep-team.pages.debian.net/deps/dep14/ *)
 let git_escape_tag t = String.map (function '~' -> '_' | c -> c) t
 let git_unescape_tag t = String.map (function '_' -> '~' | c -> c) t
 
@@ -267,9 +267,9 @@ let hg_describe ~dirty r ~rev =
       Cmd.(v "parent" % "--rev" % rev % "--template" % t)
       OS.Cmd.out_string
   in
-  (parent "{latesttagdistance}" >>= get_distance >>= function
-   | 1L -> parent "{latesttag}"
-   | _ -> parent "{latesttag}-{latesttagdistance}-{node|short}")
+  ( parent "{latesttagdistance}" >>= get_distance >>= function
+    | 1L -> parent "{latesttag}"
+    | _ -> parent "{latesttag}-{latesttagdistance}-{node|short}" )
   >>= fun descr ->
   match dirty with
   | false -> Ok descr
