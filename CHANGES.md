@@ -1,3 +1,9 @@
+## Unreleased
+
+### Breaking
+
+- Update to use cmdliner 2.0.0. Shortened arguments will not work anymore. (#512, @psafont)
+
 ## 2.1.0
 
 ### Added

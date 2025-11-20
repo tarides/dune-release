@@ -249,14 +249,14 @@ let help man_format topic commands =
   | Some topic -> (
       let topics = ("topics" :: commands) @ List.map fst pages in
       let topics = List.sort compare topics in
-      let conv, _ = Cmdliner.Arg.enum (List.rev_map (fun s -> (s, s)) topics) in
-      match conv topic with
-      | `Error e -> `Error (false, e)
-      | `Ok t when List.mem t commands -> `Help (man_format, Some t)
-      | `Ok t when t = "topics" ->
+      let conv = Cmdliner.Arg.enum (List.rev_map (fun s -> (s, s)) topics) in
+      match Arg.conv_parser conv topic with
+      | Error (`Msg e) -> `Error (false, e)
+      | Ok t when List.mem t commands -> `Help (man_format, Some t)
+      | Ok t when t = "topics" ->
           Fmt.pr "@[<v>%a@]@." Fmt.(list string) topics;
           `Ok 0
-      | `Ok t ->
+      | Ok t ->
           let man = try List.assoc t pages with Not_found -> assert false in
           Fmt.pr "%a" (Cmdliner.Manpage.print man_format) man;
           `Ok 0)
