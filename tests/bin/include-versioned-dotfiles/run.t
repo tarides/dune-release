@@ -35,7 +35,7 @@ We need to set up a git project for dune-release to work properly
 
 The generated tarball should contain the dotfile
 
-  $ dune-release distrib --skip-lint --skip-build --skip-test > /dev/null
+  $ dune-release distrib --skip-lint --skip-build --skip-tests > /dev/null
   $ tar -xjf _build/whatever-0.1.0.tbz
   $ cat whatever-0.1.0/.somedotfile
   hello

@@ -153,7 +153,7 @@ In the same way in which the user can skip the lint check when releasing the tar
 
 Same for skipping the tests
 
-  $ dune-release check --working-tree --skip-lint --skip-test | make_dune_release_deterministic
+  $ dune-release check --working-tree --skip-lint --skip-tests | make_dune_release_deterministic
   [-] Checking dune-release compatibility.
   [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
   [ OK ] The dune project contains a name stanza.

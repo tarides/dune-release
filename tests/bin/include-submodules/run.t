@@ -31,5 +31,5 @@ We need to set up a git project for dune-release to work properly
 Generating the tarball with `--include-submodules` should call `git submodule
 update --init` from within the tarball build dir:
 
-  $ dune-release distrib --skip-lint --skip-build --skip-test --include-submodule --dry-run | grep -- "--init"
+  $ dune-release distrib --skip-lint --skip-build --skip-tests --include-submodules --dry-run | grep -- "--init"
   -: exec: git --git-dir .git submodule update --init
