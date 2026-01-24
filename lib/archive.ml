@@ -117,8 +117,15 @@ module Tar = struct
     String.concat (List.rev (end_of_file :: t))
 end
 
-let path_set_of_dir dir ~exclude_paths =
-  let not_excluded p = Ok (not (Fpath.Set.mem (Fpath.base p) exclude_paths)) in
+let path_set_of_dir dir ~exclude_paths ~export_ignore =
+  let not_excluded p =
+    if Fpath.Set.mem (Fpath.base p) exclude_paths then Ok false
+    else
+      match Fpath.rem_prefix dir p with
+      | None -> Ok true
+      | Some rel_path ->
+          Ok (not (List.exists (Gitattributes.matches rel_path) export_ignore))
+  in
   let traverse = `Sat not_excluded in
   let elements = `Sat not_excluded in
   let err _ e = e in
@@ -126,24 +133,29 @@ let path_set_of_dir dir ~exclude_paths =
   >>= OS.Path.fold ~dotfiles:true ~err ~elements ~traverse Fpath.Set.add
         Fpath.Set.empty
 
-let tar dir ~exclude_paths ~root ~mtime =
+let tar dir ~exclude_paths ~export_ignore ~root ~mtime =
   let tar_add file tar =
     let fname =
       match Fpath.rem_prefix dir file with
       | None -> assert false
       | Some file -> Fpath.(root // file)
     in
-    Logs.info (fun m -> m "Archiving %a" Fpath.pp fname);
     tar >>= fun tar ->
     OS.Dir.exists file >>= function
-    | true -> Tar.add tar fname ~mode:0o775 ~mtime `Dir
+    | true ->
+        (* Skip directories - they will be created implicitly when their
+           contents are added. This ensures that directories whose contents
+           are excluded via export-ignore patterns don't appear as empty
+           directories in the archive. *)
+        Ok tar
     | false ->
+        Logs.info (fun m -> m "Archiving %a" Fpath.pp fname);
         OS.Path.Mode.get file >>= fun mode ->
         OS.File.read file >>= fun contents ->
         let mode = if 0o100 land mode > 0 then 0o775 else 0o664 in
         Tar.add tar fname ~mode ~mtime (`File contents)
   in
-  path_set_of_dir dir ~exclude_paths >>= fun fset ->
+  path_set_of_dir dir ~exclude_paths ~export_ignore >>= fun fset ->
   Fpath.Set.fold tar_add fset (Ok Tar.empty) >>| fun tar -> Tar.to_string tar
 
 (* Bzip2 compression and unarchiving *)

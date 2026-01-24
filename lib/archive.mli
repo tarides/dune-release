@@ -13,16 +13,19 @@ open Bos_setup
 val tar :
   Fpath.t ->
   exclude_paths:Fpath.set ->
+  export_ignore:Gitattributes.pattern list ->
   root:Fpath.t ->
   mtime:int64 ->
   (string, R.msg) result
-(** [tar dir ~exclude_paths ~root ~mtime] is a (us)tar archive that contains the
-    file hierarchy [dir] except the relative hierarchies present in
-    [exclude_paths]. In the archive, members of [dir] are rerooted at [root] and
-    sorted according to {!Fpath.compare}. They have their modification time set
-    to [mtime] and their file permissions are [0o775] for directories and files
-    executable by the user and [0o664] for other files. No other file metadata
-    is preserved.
+(** [tar dir ~exclude_paths ~export_ignore ~root ~mtime] is a (us)tar archive
+    that contains the file hierarchy [dir] except:
+    - relative hierarchies present in [exclude_paths] (basename matching)
+    - files matching patterns in [export_ignore] (from [.gitattributes])
+
+    In the archive, members of [dir] are rerooted at [root] and sorted according
+    to {!Fpath.compare}. They have their modification time set to [mtime] and
+    their file permissions are [0o775] for directories and files executable by
+    the user and [0o664] for other files. No other file metadata is preserved.
 
     {b Note.} This is a pure OCaml implementation, no [tar] tool is needed. *)
 
