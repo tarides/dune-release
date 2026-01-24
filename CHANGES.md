@@ -2,6 +2,8 @@
 
 ### Added
 
+- Support `.gitattributes` `export-ignore` attribute to exclude files from
+  distribution archives (#<PR_NUMBER>, @jberdine)
 - Add `dune-release delegate-info version` to show the current version as infered
   by the tool (#495, @samoht)
 - Add `--dev-repo` to `dune-release` and `dune-release publish` to overwrite
