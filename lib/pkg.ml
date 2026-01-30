@@ -465,7 +465,9 @@ let distrib_archive ~dry_run ~keep_dir ~include_submodules p =
   >>= fun () ->
   distrib_prepare ~dry_run ~dist_build_dir ~version >>= fun () ->
   let exclude_paths = Fpath.Set.of_list Distrib.exclude_paths in
-  Archive.tar dist_build_dir ~exclude_paths ~root ~mtime >>= fun tar ->
+  Gitattributes.read_export_ignore dist_build_dir >>= fun export_ignore ->
+  Archive.tar dist_build_dir ~exclude_paths ~export_ignore ~root ~mtime
+  >>= fun tar ->
   distrib_archive_path p >>= fun archive ->
   Archive.bzip2 ~dry_run ~force:true ~dst:archive tar >>= fun () ->
   (if keep_dir then Ok () else Sos.delete_dir ~dry_run dist_build_dir)
