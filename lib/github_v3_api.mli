@@ -13,6 +13,7 @@ module Release : sig
       user:string ->
       repo:string ->
       draft:bool ->
+      prerelease:bool ->
       Curl.t
 
     val undraft : owner:string -> repo:string -> release_id:int -> Curl.t

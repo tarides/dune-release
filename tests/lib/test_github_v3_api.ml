@@ -1,25 +1,29 @@
 open Dune_release.Github_v3_api
 
 let test_create_release =
-  let make_test ~test_name ~version ~tag ~msg ~user ~repo ~draft ~expected =
+  let make_test ~test_name ~version ~tag ~msg ~user ~repo ~draft ~expected
+      ~prerelease =
     let version = Dune_release.Version.of_string version in
     let tag = Dune_release.Vcs.Tag.of_string tag in
     let test_fun () =
       let actual =
-        Release.Request.create ~version ~tag ~msg ~user ~repo ~draft
+        Release.Request.create ~version ~tag ~msg ~user ~repo ~draft ~prerelease
       in
       Alcotest.check Alcotest_ext.curl test_name expected actual
     in
     (test_name, `Quick, test_fun)
   in
+  let version = "1.1.0"
+  and tag = "1.1.0"
+  and msg = "this is a message"
+  and user = "you"
+  and repo = "some-repo"
+  and draft = false in
+
   [
-    (let version = "1.1.0"
-     and tag = "1.1.0"
-     and msg = "this is a message"
-     and user = "you"
-     and repo = "some-repo"
-     and draft = false in
-     make_test ~test_name:"simple" ~version ~tag ~msg ~user ~repo ~draft
+    (let prerelease = false in
+     make_test ~test_name:"simple-release" ~version ~tag ~msg ~user ~repo ~draft
+       ~prerelease
        ~expected:
          {
            url = "https://api.github.com/repos/you/some-repo/releases";
@@ -40,6 +44,34 @@ let test_create_release =
                             ("name", `String version);
                             ("body", `String msg);
                             ("draft", `Bool draft);
+                            ("prerelease", `Bool prerelease);
+                          ])));
+             ];
+         });
+    (let prerelease = true in
+     make_test ~test_name:"simple-prerelease" ~version ~tag ~msg ~user ~repo
+       ~draft ~prerelease
+       ~expected:
+         {
+           url = "https://api.github.com/repos/you/some-repo/releases";
+           meth = `POST;
+           args =
+             [
+               Location;
+               Silent;
+               Show_error;
+               Config `Stdin;
+               Dump_header `Ignore;
+               Data
+                 (`Data
+                    (Yojson.Basic.to_string
+                       (`Assoc
+                          [
+                            ("tag_name", `String tag);
+                            ("name", `String version);
+                            ("body", `String msg);
+                            ("draft", `Bool draft);
+                            ("prerelease", `Bool prerelease);
                           ])));
              ];
          });

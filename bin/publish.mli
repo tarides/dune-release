@@ -20,6 +20,7 @@ val publish :
   dry_run:bool ->
   yes:bool ->
   draft:bool ->
+  prerelease:bool ->
   unit ->
   (int, Bos_setup.R.msg) result
 (** [publish ~build_dir ~opam ~change_log ~distrib_uri ~distrib_file

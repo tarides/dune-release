@@ -36,18 +36,14 @@ We need to set up a git project for dune-release to work properly
   $ git commit -m "Initial commit" > /dev/null
   $ dune-release tag -y > /dev/null
 
-We do the whole `dune-release` process but create a draft release on GitHub.
+We create a prerelease through the `dune-release` process.
 
 (1) `distrib` as normal
 
   $ dune-release distrib --dry-run > /dev/null
 
-(2) `publish` when asking for the release to be created as a draft should
-create a draft release and submit it as such to GitHub. It should also write a
-`draft_release` file for `undraft`.
+(2) `publish` when asking for the prerelease to be created should mark it as a
+prerelease and submit it as such to GitHub.
 
-  $ dune-release publish --dry-run --yes --draft | grep draft
-  [-] Creating draft release 0.1.0 on https://github.com/foo/whatever.git via github's API
-       {"tag_name":"0.1.0","name":"0.1.0","body":"CHANGES:\n\n- Some other feature\n","draft":true,"prerelease":false}
-  [+] Successfully created draft release with id 1
-  -: write _build/whatever-0.1.0.draft_release
+  $ dune-release publish --dry-run --yes --prerelease | grep prerelease
+       {"tag_name":"0.1.0","name":"0.1.0","body":"CHANGES:\n\n- Some other feature\n","draft":false,"prerelease":true}

@@ -185,6 +185,10 @@ let draft =
   in
   named (fun x -> `Draft x) Arg.(value & flag & info [ "draft" ] ~doc)
 
+let prerelease =
+  let doc = "Produce a release that is marked as prerelease." in
+  named (fun x -> `Prerelease x) Arg.(value & flag & info [ "prerelease" ] ~doc)
+
 let yes =
   let doc = "Do not prompt for confirmation and keep going instead" in
   named (fun x -> `Yes x) Arg.(value & flag & info [ "y"; "yes" ] ~doc)

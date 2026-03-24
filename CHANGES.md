@@ -1,3 +1,10 @@
+## Unreleased
+
+### Added
+
+- Add support for marking a release as a prerelease. Closes  (#PR_NUMBER,
+  @Sudha247, closes #516)
+
 ## 2.2.0
 
 ### Breaking
