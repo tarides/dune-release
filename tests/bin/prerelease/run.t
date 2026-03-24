@@ -3,10 +3,6 @@ We need a basic opam project skeleton
   $ cat > CHANGES.md << EOF
   > ## 0.1.0
   > 
-  > - Some other feature
-  > 
-  > ## 0.0.0
-  > 
   > - Some feature
   > EOF
   $ cat > whatever.opam << EOF
@@ -46,4 +42,4 @@ We create a prerelease through the `dune-release` process.
 prerelease and submit it as such to GitHub.
 
   $ dune-release publish --dry-run --yes --prerelease | grep prerelease
-       {"tag_name":"0.1.0","name":"0.1.0","body":"CHANGES:\n\n- Some other feature\n","draft":false,"prerelease":true}
+       {"tag_name":"0.1.0","name":"0.1.0","body":"CHANGES:\n\n- Some feature\n","draft":false,"prerelease":true}
