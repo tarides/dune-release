@@ -73,6 +73,9 @@ val dry_run : [ `Dry_run of bool ] Term.t
 val draft : [ `Draft of bool ] Term.t
 (** A [--draft] option to produce a draft release. *)
 
+val prerelease : [ `Prerelease of bool ] Term.t
+(** A [--prerelease] option to mark a release as [prerelease]. *)
+
 val yes : [ `Yes of bool ] Term.t
 (** A [--yes] option to skip confirmation prompts. *)
 

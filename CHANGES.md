@@ -1,3 +1,9 @@
+## Unreleased
+
+### Added
+
+- Add support for marking a release as a prerelease. (#517, @Sudha247)
+
 ## 2.2.0
 
 ### Breaking

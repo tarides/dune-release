@@ -65,7 +65,7 @@ module Release = struct
       in
       Curl.{ url; meth = `GET; args }
 
-    let create ~version ~tag ~msg ~user ~repo ~draft =
+    let create ~version ~tag ~msg ~user ~repo ~draft ~prerelease =
       let json =
         Yojson.Basic.to_string
           (`Assoc
@@ -74,6 +74,7 @@ module Release = struct
                ("name", `String (Version.to_string version));
                ("body", `String msg);
                ("draft", `Bool draft);
+               ("prerelease", `Bool prerelease);
              ])
       in
       let url = strf "https://api.github.com/repos/%s/%s/releases" user repo in

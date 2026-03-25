@@ -23,6 +23,7 @@ val publish_distrib :
   archive:Fpath.t ->
   yes:bool ->
   draft:bool ->
+  prerelease:bool ->
   Pkg.t ->
   (string, R.msg) Result.result
 (** Push the tag, create a Github release, upload the distribution archive and

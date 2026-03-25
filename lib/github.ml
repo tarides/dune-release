@@ -56,9 +56,11 @@ let run_with_auth ?(default_body = `Null) ~dry_run Curl.{ url; args; meth } =
         Json.from_string resp.body
     | Error e -> R.error_msgf "curl execution failed: %a" Curly.Error.pp e
 
-let curl_create_release ~token ~dry_run ~version ~tag ~draft msg user repo =
+let curl_create_release ~token ~dry_run ~version ~tag ~draft ~prerelease msg
+    user repo =
   let curl_t =
     Github_v3_api.Release.Request.create ~version ~tag ~msg ~user ~repo ~draft
+      ~prerelease
   in
   let curl_t = Github_v3_api.with_auth ~token curl_t in
   let default_body = `Assoc [ ("id", `Int D.release_id) ] in
@@ -286,7 +288,7 @@ let curl_get_release ~dry_run ~token ~tag ~user ~repo =
   run_with_auth ~dry_run curl_t >>= Github_v3_api.Release.Response.release_id
 
 let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
-    ~draft =
+    ~draft ~prerelease =
   match curl_get_release ~dry_run ~token ~tag ~user ~repo with
   | Error _ ->
       Prompt.(
@@ -300,6 +302,7 @@ let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
           l "Creating %a %a on %a via github's API" Text.Pp.maybe_draft
             (draft, "release") Text.Pp.version version Text.Pp.url dev_repo);
       curl_create_release ~token ~dry_run ~version ~tag msg user repo ~draft
+        ~prerelease
       >>= fun id ->
       App_log.success (fun l ->
           l "Successfully created %a with id %d" Text.Pp.maybe_draft
@@ -309,7 +312,8 @@ let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
       App_log.status (fun l -> l "Release with id %d already exists" id);
       Ok id
 
-let publish_distrib ~token ?dev_repo ~dry_run ~msg ~archive ~yes ~draft p =
+let publish_distrib ~token ?dev_repo ~dry_run ~msg ~archive ~yes ~draft
+    ~prerelease p =
   Pkg.infer_github_repo p >>= fun { owner; repo } ->
   Pkg.tag p >>= fun tag ->
   assert_tag_exists ~dry_run tag >>= fun () ->
@@ -324,7 +328,7 @@ let publish_distrib ~token ?dev_repo ~dry_run ~msg ~archive ~yes ~draft p =
   Pkg.version p >>= fun version ->
   push_tag ~dry_run ~yes ~dev_repo vcs tag >>= fun () ->
   create_release ~dry_run ~yes ~dev_repo ~token ~version ~msg ~tag ~user:owner
-    ~repo ~draft
+    ~repo ~draft ~prerelease
   >>= fun id ->
   (if draft then
      Config.Draft_release.set ~dry_run ~build_dir ~name ~version

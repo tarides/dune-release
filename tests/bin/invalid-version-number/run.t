@@ -73,7 +73,7 @@ We do the whole dune-release process
   [-] Pushing tag 3.3.4_4.10preview1 to git@github.com:user/repo.git
        git --git-dir .git push --force git@github.com:user/repo.git   3.3.4_4.10preview1
   [-] Creating release 3.3.4~4.10preview1 on https://github.com/user/repo.git via github's API
-       {"tag_name":"3.3.4_4.10preview1","name":"3.3.4~4.10preview1","body":"CHANGES:\n\n- Some other feature\n","draft":false}
+       {"tag_name":"3.3.4_4.10preview1","name":"3.3.4~4.10preview1","body":"CHANGES:\n\n- Some other feature\n","draft":false,"prerelease":false}
   [-] Uploading _build/whatever-3.3.4~4.10preview1.tbz as a release asset for 3.3.4~4.10preview1 via github's API
        @_build/whatever-3.3.4~4.10preview1.tbz
   -: write _build/asset-3.3.4~4.10preview1.url

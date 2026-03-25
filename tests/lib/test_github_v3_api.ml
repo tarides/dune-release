@@ -1,48 +1,52 @@
 open Dune_release.Github_v3_api
 
 let test_create_release =
-  let make_test ~test_name ~version ~tag ~msg ~user ~repo ~draft ~expected =
-    let version = Dune_release.Version.of_string version in
-    let tag = Dune_release.Vcs.Tag.of_string tag in
+  let version = "1.1.0"
+  and tag = "1.1.0"
+  and msg = "this is a message"
+  and user = "you"
+  and repo = "some-repo"
+  and draft = false in
+  let make_test ~test_name ~prerelease =
+    let expected : Dune_release.Curl.t =
+      {
+        url = "https://api.github.com/repos/you/some-repo/releases";
+        meth = `POST;
+        args =
+          [
+            Location;
+            Silent;
+            Show_error;
+            Config `Stdin;
+            Dump_header `Ignore;
+            Data
+              (`Data
+                 (Yojson.Basic.to_string
+                    (`Assoc
+                       [
+                         ("tag_name", `String tag);
+                         ("name", `String version);
+                         ("body", `String msg);
+                         ("draft", `Bool draft);
+                         ("prerelease", `Bool prerelease);
+                       ])));
+          ];
+      }
+    in
     let test_fun () =
+      let version = Dune_release.Version.of_string version in
+      let tag = Dune_release.Vcs.Tag.of_string tag in
+
       let actual =
-        Release.Request.create ~version ~tag ~msg ~user ~repo ~draft
+        Release.Request.create ~version ~tag ~msg ~user ~repo ~draft ~prerelease
       in
       Alcotest.check Alcotest_ext.curl test_name expected actual
     in
     (test_name, `Quick, test_fun)
   in
   [
-    (let version = "1.1.0"
-     and tag = "1.1.0"
-     and msg = "this is a message"
-     and user = "you"
-     and repo = "some-repo"
-     and draft = false in
-     make_test ~test_name:"simple" ~version ~tag ~msg ~user ~repo ~draft
-       ~expected:
-         {
-           url = "https://api.github.com/repos/you/some-repo/releases";
-           meth = `POST;
-           args =
-             [
-               Location;
-               Silent;
-               Show_error;
-               Config `Stdin;
-               Dump_header `Ignore;
-               Data
-                 (`Data
-                    (Yojson.Basic.to_string
-                       (`Assoc
-                          [
-                            ("tag_name", `String tag);
-                            ("name", `String version);
-                            ("body", `String msg);
-                            ("draft", `Bool draft);
-                          ])));
-             ];
-         });
+    make_test ~test_name:"simple-release" ~prerelease:false;
+    make_test ~test_name:"simple-prerelease" ~prerelease:true;
   ]
 
 let test_upload_archive =
