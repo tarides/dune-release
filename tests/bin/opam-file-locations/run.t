@@ -100,5 +100,5 @@ And as well have a release tarball
 
 Which contains the `.opam` file in the right location:
 
-  $ tar tf _build/myproject-0.2.0.tbz | grep \\.opam
+  $ tar tjf _build/myproject-0.2.0.tbz | grep \\.opam
   myproject-0.2.0/opam/myproject.opam
