@@ -99,11 +99,13 @@ let matches path pattern =
       (* Match against full path or basename for patterns like *.log *)
       Re.execp re path_str || Re.execp re basename
 
+let utf8_bom = "\xef\xbb\xbf"
+
 let parse_export_ignore content =
   (* Strip UTF-8 BOM if present at start of file *)
   let content =
-    if String.is_prefix ~affix:"\xef\xbb\xbf" content then
-      String.Sub.to_string (String.sub ~start:3 content)
+    if String.is_prefix ~affix:utf8_bom content then
+      String.Sub.to_string (String.sub ~start:(String.length utf8_bom) content)
     else content
   in
   content |> String.cuts ~sep:"\n"
