@@ -59,30 +59,47 @@ let glob_to_re pattern =
   Buffer.add_char buf '$';
   Re.Pcre.regexp (Buffer.contents buf)
 
+(* [unsupported_syntax s] is [Some reason] when [s] uses a gitattributes
+   pattern feature we do not implement. The pattern is then skipped rather
+   than compiled into a regex that happens to match nothing. *)
+let unsupported_syntax s =
+  if String.length s > 0 && s.[0] = '!' then Some "negation (!pattern)"
+  else if String.exists (fun c -> c = '\\') s then Some "escape (\\)"
+  else if String.exists (fun c -> c = '"') s then Some "quoting (\")"
+  else if String.exists (fun c -> c = '[' || c = ']') s then
+    Some "character class ([...])"
+  else None
+
 let parse_pattern s =
   let s = String.trim s in
-  (* Remove leading slash if present - we always match relative paths *)
-  let s =
-    if String.is_prefix ~affix:"/" s then
-      String.Sub.to_string (String.sub ~start:1 s)
-    else s
-  in
-  let has_wildcard s = String.exists (fun c -> c = '*' || c = '?') s in
-  if String.is_suffix ~affix:"/**" s then
-    (* Directory pattern: match everything under the directory *)
-    let prefix =
-      String.Sub.to_string (String.sub ~stop:(String.length s - 3) s)
-    in
-    if has_wildcard prefix then
-      (* Prefix contains wildcards, treat whole pattern as glob *)
-      Glob (glob_to_re s)
-    else Prefix prefix
-  else if has_wildcard s then
-    (* Has wildcards - compile as glob *)
-    Glob (glob_to_re s)
-  else
-    (* Exact match *)
-    Exact s
+  match unsupported_syntax s with
+  | Some reason ->
+      Logs.warn (fun m ->
+          m "Skipping unsupported .gitattributes pattern %S: %s" s reason);
+      None
+  | None ->
+      (* Remove leading slash if present - we always match relative paths *)
+      let s =
+        if String.is_prefix ~affix:"/" s then
+          String.Sub.to_string (String.sub ~start:1 s)
+        else s
+      in
+      let has_wildcard s = String.exists (fun c -> c = '*' || c = '?') s in
+      if String.is_suffix ~affix:"/**" s then
+        (* Directory pattern: match everything under the directory *)
+        let prefix =
+          String.Sub.to_string (String.sub ~stop:(String.length s - 3) s)
+        in
+        if has_wildcard prefix then
+          (* Prefix contains wildcards, treat whole pattern as glob *)
+          Some (Glob (glob_to_re s))
+        else Some (Prefix prefix)
+      else if has_wildcard s then
+        (* Has wildcards - compile as glob *)
+        Some (Glob (glob_to_re s))
+      else
+        (* Exact match *)
+        Some (Exact s)
 
 let matches path pattern =
   let path = Fpath.normalize path in
@@ -124,7 +141,7 @@ let parse_export_ignore content =
            match parts with
            | pattern :: attrs
              when List.exists (String.equal "export-ignore") attrs ->
-               Some (parse_pattern pattern)
+               parse_pattern pattern
            | _ -> None)
 
 let read_export_ignore dir =

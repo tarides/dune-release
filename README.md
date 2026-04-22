@@ -127,13 +127,15 @@ dune-workspace export-ignore
 - Double star in path: `**/build`, `src/**/test.ml`
 - Path normalization: handles `./` and `../` in paths
 
-**Not supported:**
+**Unsupported pattern syntax** (such patterns are skipped with a warning):
 - Negation patterns (`!pattern`)
 - Escaped patterns (`\!` for literal `!`)
 - Quoted patterns (`"a b"` for patterns with spaces)
 - Character classes (`[abc]`)
-- Case insensitivity (`core.ignorecase`)
-- `.gitattributes` files in subdirectories
+
+**Other limitations:**
+- Only the repository-root `.gitattributes` is read; files in subdirectories are ignored.
+- Matching is always case-sensitive; `core.ignorecase` is not consulted.
 
 
 ### Publish the distribution online
