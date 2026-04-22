@@ -13,7 +13,7 @@ open Bos_setup
 val tar :
   Fpath.t ->
   exclude_paths:Fpath.set ->
-  export_ignore:Gitattributes.pattern list ->
+  export_ignore:Gitattributes.t list ->
   root:Fpath.t ->
   mtime:int64 ->
   (string, R.msg) result

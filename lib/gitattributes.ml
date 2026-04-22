@@ -1,6 +1,6 @@
 open Bos_setup
 
-type pattern =
+type t =
   | Exact of string  (** Exact match against basename or full path. *)
   | Prefix of string
       (** Pattern like [dir/**] that matches everything under a directory, but
