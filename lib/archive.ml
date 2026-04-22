@@ -118,7 +118,7 @@ module Tar = struct
 end
 
 let path_set_of_dir dir ~exclude_paths ~export_ignore =
-  let not_excluded p =
+  let included p =
     if Fpath.Set.mem (Fpath.base p) exclude_paths then Ok false
     else
       match Fpath.rem_prefix dir p with
@@ -126,8 +126,8 @@ let path_set_of_dir dir ~exclude_paths ~export_ignore =
       | Some rel_path ->
           Ok (not (List.exists (Gitattributes.matches rel_path) export_ignore))
   in
-  let traverse = `Sat not_excluded in
-  let elements = `Sat not_excluded in
+  let traverse = `Sat included in
+  let elements = `Sat included in
   let err _ e = e in
   OS.Dir.contents ~dotfiles:true dir
   >>= OS.Path.fold ~dotfiles:true ~err ~elements ~traverse Fpath.Set.add
