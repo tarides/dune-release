@@ -11,8 +11,10 @@ open Bos_setup
 type t
 (** The type for gitattributes patterns. *)
 
-val parse_pattern : string -> t
-(** [parse_pattern s] is the pattern parsed from string [s]. Supports:
+val parse_pattern : string -> t option
+(** [parse_pattern s] is the pattern parsed from string [s], or [None] if [s]
+    uses an unsupported syntactic feature (negation, escaping, quoting, or
+    character classes). In that case a warning is logged. Supports:
     - Exact matches: [filename]
     - Directory patterns: [dir/**]
     - Glob patterns: [*.ext], [prefix*] *)
