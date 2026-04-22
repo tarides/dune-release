@@ -21,7 +21,7 @@ let test_archive_export_ignore () =
     let files =
       [
         ("CHANGES.md", "changes");
-        ("foo.opam", "opam");
+        ("foo.opam", {|opam-version: "2.0"|});
         ("dune-project", "(lang dune 3.0)");
         ("dune-workspace", "(lang dune 3.0)");
         ( ".gitattributes",
