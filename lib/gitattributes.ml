@@ -11,7 +11,7 @@ type pattern =
     (any chars except /), [?] (single char except /), and [**] (any path
     segments, but only when adjacent to /). *)
 let glob_to_re pattern =
-  let buf = Buffer.create (String.length pattern * 2) in
+  let buf = Buffer.create (String.length pattern) in
   Buffer.add_char buf '^';
   let len = String.length pattern in
   let rec loop i =
