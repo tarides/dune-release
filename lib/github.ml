@@ -314,15 +314,23 @@ let create_release ~dry_run ~yes ~dev_repo ~token ~msg ~tag ~version ~user ~repo
 
 let publish_distrib ~token ?dev_repo ~dry_run ~msg ~archive ~yes ~draft
     ~prerelease p =
-  Pkg.infer_github_repo p >>= fun { owner; repo } ->
+  let repo_info =
+    match dev_repo with
+    | None ->
+        pkg_dev_repo p >>= fun dev_url ->
+        Pkg.infer_github_repo p >>| fun repo -> (dev_url, repo)
+    | Some dev_url -> (
+        match Github_repo.from_uri dev_url with
+        | None ->
+            R.error_msgf "the supplied dev-repo %s is not a valid repo URI"
+              dev_url
+        | Some repo -> Ok (dev_url, repo))
+  in
+  repo_info >>= fun (dev_repo, { owner; repo }) ->
   Pkg.tag p >>= fun tag ->
   assert_tag_exists ~dry_run tag >>= fun () ->
   Vcs.get () >>= fun vcs ->
   check_tag ~dry_run vcs tag >>= fun () ->
-  let dev_repo =
-    match dev_repo with Some d -> Ok d | None -> pkg_dev_repo p
-  in
-  dev_repo >>= fun dev_repo ->
   Pkg.build_dir p >>= fun build_dir ->
   Pkg.name p >>= fun name ->
   Pkg.version p >>= fun version ->
