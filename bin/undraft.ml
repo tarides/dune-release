@@ -19,22 +19,24 @@ let update_opam_file ~dry_run ~url pkg =
   OS.File.read opam_f >>= fun opam ->
   let opam_t = OpamFile.OPAM.read_from_string opam in
   (match OpamVersion.to_string (OpamFile.OPAM.opam_version opam_t) with
-  | "2.0" ->
-      let file x = OpamFile.make (OpamFilename.of_string (Fpath.to_string x)) in
-      let opam_t = OpamFile.OPAM.with_url url opam_t in
-      if not dry_run then
-        OpamFile.OPAM.write_with_preserved_format ~format_from:(file opam_f)
-          (file dest_opam_file) opam_t;
-      Ok ()
-  | ("1.0" | "1.1" | "1.2") as v ->
-      App_log.status (fun l ->
-          l "Upgrading opam file %a from opam format %s to 2.0" Text.Pp.path
-            opam_f v);
-      let opam =
-        OpamFile.OPAM.with_url url opam_t |> OpamFile.OPAM.write_to_string
-      in
-      Sos.write_file ~dry_run dest_opam_file opam
-  | s -> Fmt.kstr (fun x -> Error (`Msg x)) "invalid opam version: %s" s)
+    | "2.0" ->
+        let file x =
+          OpamFile.make (OpamFilename.of_string (Fpath.to_string x))
+        in
+        let opam_t = OpamFile.OPAM.with_url url opam_t in
+        if not dry_run then
+          OpamFile.OPAM.write_with_preserved_format ~format_from:(file opam_f)
+            (file dest_opam_file) opam_t;
+        Ok ()
+    | ("1.0" | "1.1" | "1.2") as v ->
+        App_log.status (fun l ->
+            l "Upgrading opam file %a from opam format %s to 2.0" Text.Pp.path
+              opam_f v);
+        let opam =
+          OpamFile.OPAM.with_url url opam_t |> OpamFile.OPAM.write_to_string
+        in
+        Sos.write_file ~dry_run dest_opam_file opam
+    | s -> Fmt.kstr (fun x -> Error (`Msg x)) "invalid opam version: %s" s)
   >>| fun () ->
   App_log.success (fun m ->
       m "Wrote opam package description %a" Text.Pp.path dest_opam_file)

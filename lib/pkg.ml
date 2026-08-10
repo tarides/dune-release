@@ -219,7 +219,7 @@ let distrib_file ~dry_run p =
       distrib_archive_path p
       >>= (fun f -> Sos.file_must_exist ~dry_run f)
       |> R.reword_error_msg (fun _ ->
-             R.msgf "Did you forget to call 'dune-release distrib' ?")
+          R.msgf "Did you forget to call 'dune-release distrib' ?")
 
 let doc_dir = Fpath.(v "_build" / "default" / "_doc" / "_html")
 

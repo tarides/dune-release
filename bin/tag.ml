@@ -12,7 +12,7 @@ let vcs_tag repo pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete ~msg
   App_log.status (fun l -> l "Using tag \"%a\"" Vcs.Tag.pp tag);
   Vcs.commit_id ~dirty:false ~commit_ish repo
   |> R.reword_error (fun (`Msg msg) ->
-         R.msgf "Due to invalid commit-ish `%s`:\n%s" commit_ish msg)
+      R.msgf "Due to invalid commit-ish `%s`:\n%s" commit_ish msg)
   >>= fun commit ->
   let tag_commit_opt = Vcs.tag_points_to repo tag in
   match (tag_commit_opt, delete) with
@@ -61,10 +61,10 @@ let vcs_tag repo pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete ~msg
           ~default_answer:Yes)
       >>= fun () ->
       (match msg with
-      | Some msg -> Ok msg
-      | None ->
-          Pkg.publish_msg pkg >>| fun msg ->
-          strf "Release %a\n\n%s" Version.pp version msg)
+        | Some msg -> Ok msg
+        | None ->
+            Pkg.publish_msg pkg >>| fun msg ->
+            strf "Release %a\n\n%s" Version.pp version msg)
       >>= fun msg ->
       Vcs.tag repo ~dry_run ~force ~sign ~msg ~commit_ish tag >>| fun () ->
       App_log.success (fun m ->
@@ -79,13 +79,13 @@ let tag () (`Dry_run dry_run) (`Change_log change_log) (`Keep_v keep_v)
   let pkg = Pkg.v ~dry_run ~keep_v ?change_log () in
   Vcs.get () >>= fun vcs ->
   (match version with
-  | Some v -> Ok (v, Version.to_tag vcs v)
-  | None ->
-      Pkg.change_log pkg >>= fun changelog ->
-      App_log.status (fun l ->
-          l "Extracting tag from first entry in %a" Text.Pp.path changelog);
-      Pkg.extract_version pkg >>= fun cl ->
-      Ok (Pkg.version_of_changelog pkg cl, Version.Changelog.to_tag vcs cl))
+    | Some v -> Ok (v, Version.to_tag vcs v)
+    | None ->
+        Pkg.change_log pkg >>= fun changelog ->
+        App_log.status (fun l ->
+            l "Extracting tag from first entry in %a" Text.Pp.path changelog);
+        Pkg.extract_version pkg >>= fun cl ->
+        Ok (Pkg.version_of_changelog pkg cl, Version.Changelog.to_tag vcs cl))
   >>= fun (version, tag) ->
   vcs_tag vcs pkg tag version ~dry_run ~commit_ish ~force ~sign ~delete ~msg
     ~yes
