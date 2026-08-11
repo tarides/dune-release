@@ -25,8 +25,8 @@ let check (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
          Vcs.get () >>= fun repo ->
          assert_tag_exists repo inferred_tag >>= fun () ->
          (match build_dir with
-         | Some dir -> Ok dir
-         | None -> Fpath.of_string "_build")
+           | Some dir -> Ok dir
+           | None -> Fpath.of_string "_build")
          >>= fun build_directory ->
          let dir = Fpath.(build_directory // v ".dune-release-check") in
          clone_and_checkout_tag repo ~dir ~tag:(Tag inferred_tag) >>| fun () ->
@@ -51,7 +51,7 @@ let check (`Package_names pkg_names) (`Package_version version) (`Dist_tag tag)
    let () = clean_up dir in
    check_result)
   |> R.reword_error_msg (fun err ->
-         R.msgf "Error while running `check`: %s" err)
+      R.msgf "Error while running `check`: %s" err)
   |> Cli.handle_error
 
 open Cmdliner

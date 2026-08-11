@@ -86,8 +86,8 @@ let pkg ~dry_run ~distrib_uri pkg =
   Pkg.opam pkg >>= fun opam_f ->
   Pkg.distrib_file ~dry_run pkg >>= fun distrib_file ->
   (match distrib_uri with
-  | Some uri -> Ok uri
-  | None -> archive_url ~dry_run ~opam_file:opam_f pkg)
+    | Some uri -> Ok uri
+    | None -> archive_url ~dry_run ~opam_file:opam_f pkg)
   >>= fun uri ->
   let uri = String.trim uri in
   Opam.Url.with_distrib_file ~dry_run ~uri distrib_file >>= fun url ->

@@ -278,7 +278,7 @@ module Descr = struct
     OS.File.read file
     >>= (fun text -> of_readme ?flavour text)
     |> R.reword_error_msg ~replace:true (fun m ->
-           R.msgf "%a: %s" Fpath.pp file m)
+        R.msgf "%a: %s" Fpath.pp file m)
 end
 
 module Url = struct

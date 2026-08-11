@@ -4,6 +4,11 @@
 
 - Add support for marking a release as a prerelease. (#517, @Sudha247)
 
+### Fixed
+
+- Bump the `ocamlformat` dev dependency to 0.28.1 so that the contributor setup
+  documented in `CONTRIBUTING.md` can be installed again. (#520, @alexleighton)
+
 ## 2.2.0
 
 ### Breaking

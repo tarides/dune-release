@@ -109,8 +109,8 @@ let open_pr ~token ~dry_run ~title ~fork_owner ~branch ~opam_repo ~draft body
 
 let undraft_release ~token ~dry_run ~owner ~repo ~release_id ~name =
   (match int_of_string_opt release_id with
-  | Some id -> Ok id
-  | None -> R.error_msgf "Invalid Github Release id: %s" release_id)
+    | Some id -> Ok id
+    | None -> R.error_msgf "Invalid Github Release id: %s" release_id)
   >>= fun release_id ->
   let curl_t = Github_v3_api.Release.Request.undraft ~owner ~repo ~release_id in
   let default_body =
@@ -122,8 +122,8 @@ let undraft_release ~token ~dry_run ~owner ~repo ~release_id ~name =
 
 let undraft_pr ~token ~dry_run ~opam_repo:(user, repo) ~pr_id =
   (match int_of_string_opt pr_id with
-  | Some id -> Ok id
-  | None -> R.error_msgf "Invalid Github PR number: %s" pr_id)
+    | Some id -> Ok id
+    | None -> R.error_msgf "Invalid Github PR number: %s" pr_id)
   >>= fun pr_id ->
   let curl_t =
     Github_v4_api.Pull_request.Request.node_id ~user ~repo ~id:pr_id
