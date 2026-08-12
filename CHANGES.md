@@ -8,6 +8,8 @@
 
 - Bump the `ocamlformat` dev dependency to 0.28.1 so that the contributor setup
   documented in `CONTRIBUTING.md` can be installed again. (#520, @alexleighton)
+- `dune-release publish` now respects the `--dev-repo` or `DUNE_RELEASE_DEV_REPO`
+  CLI inputs. (#522, @shonfeder)
 
 ## 2.2.0
 
