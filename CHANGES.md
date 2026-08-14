@@ -1,8 +1,5 @@
 ## Unreleased
 
-### Added
-
-- Add support for marking a release as a prerelease. (#517, @Sudha247)
 
 ### Fixed
 
@@ -10,6 +7,12 @@
   documented in `CONTRIBUTING.md` can be installed again. (#520, @alexleighton)
 - `dune-release publish` now respects the `--dev-repo` or `DUNE_RELEASE_DEV_REPO`
   CLI inputs. (#522, @shonfeder)
+
+## 2.2.1
+
+### Added
+
+- Add support for marking a release as a prerelease. (#517, @Sudha247)
 
 ## 2.2.0
 
