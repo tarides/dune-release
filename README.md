@@ -110,6 +110,33 @@ The full documentation of this command is available with
 dune-release help distrib
 ```
 
+#### Excluding files with .gitattributes
+
+Files marked with the `export-ignore` attribute in `.gitattributes` will be excluded from the distribution archive. This can be used to exclude development files like `dune-workspace` that should not be included in releases.
+
+Example `.gitattributes`:
+```
+dune-workspace export-ignore
+.github/** export-ignore
+```
+
+**Supported patterns:**
+- Exact filenames: `dune-workspace`
+- Directory patterns: `.github/**` (matches all files under `.github/`)
+- Glob patterns: `*.log`, `test_*`, `file?.txt`
+- Double star in path: `**/build`, `src/**/test.ml`
+- Path normalization: handles `./` and `../` in paths
+
+**Unsupported pattern syntax** (such patterns are skipped with a warning):
+- Negation patterns (`!pattern`)
+- Escaped patterns (`\!` for literal `!`)
+- Quoted patterns (`"a b"` for patterns with spaces)
+- Character classes (`[abc]`)
+
+**Other limitations:**
+- Only the repository-root `.gitattributes` is read; files in subdirectories are ignored.
+- Matching is always case-sensitive; `core.ignorecase` is not consulted.
+
 
 ### Publish the distribution online
 
