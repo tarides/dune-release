@@ -9,7 +9,7 @@
   CLI inputs. (#522, @shonfeder)
 - On a terminal, answers are typed on the line of their question, instead of
   on the next line, which left an empty line under the question once answered.
-  (#PR, @samoht)
+  (#526, @samoht)
 
 ## 2.2.1
 
