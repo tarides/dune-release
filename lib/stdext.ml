@@ -42,6 +42,8 @@ module Unix = struct
       tcsetattr stdin TCSANOW { term_io with c_echo = false };
       let input = f x in
       tcsetattr stdin TCSANOW term_io;
+      (* The newline typed was not echoed either. *)
+      print_newline ();
       input
 
   let read_line ?(echo_input = true) () =

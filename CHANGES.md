@@ -7,6 +7,9 @@
   documented in `CONTRIBUTING.md` can be installed again. (#520, @alexleighton)
 - `dune-release publish` now respects the `--dev-repo` or `DUNE_RELEASE_DEV_REPO`
   CLI inputs. (#522, @shonfeder)
+- On a terminal, answers are typed on the line of their question, instead of
+  on the next line, which left an empty line under the question once answered.
+  (#526, @samoht)
 
 ## 2.2.1
 
