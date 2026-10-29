@@ -19,7 +19,7 @@
   and errors show the executable name without its `.exe` suffix. The
   test-suite now runs there too. (#378, #529, @emillon, @samoht)
 - A yes or no question with no input left to read takes its default answer
-  instead of failing with an uncaught `End_of_file`. (#PR, @samoht)
+  instead of failing with an uncaught `End_of_file`. (#525, @samoht)
 - Build with opam-format 2.6, which removed `OpamFile.Descr.read_from_string`.
   (#524, #527, @vbgl)
 - The README no longer lists `opam` and `ocamlfind` as runtime dependencies:
