@@ -11,7 +11,8 @@ let ask_yes_no f ~default_answer =
 
 let rec loop_yes_no ~question ~default_answer =
   ask_yes_no question ~default_answer;
-  match String.lowercase_ascii (read_line ()) with
+  let answer = try read_line () with End_of_file -> "" in
+  match String.lowercase_ascii answer with
   | "" when default_answer = Yes -> true
   | "" when default_answer = No -> false
   | "y" | "yes" -> true

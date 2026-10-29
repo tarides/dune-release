@@ -7,6 +7,8 @@
   documented in `CONTRIBUTING.md` can be installed again. (#520, @alexleighton)
 - `dune-release publish` now respects the `--dev-repo` or `DUNE_RELEASE_DEV_REPO`
   CLI inputs. (#522, @shonfeder)
+- A yes or no question with no input left to read takes its default answer
+  instead of failing with an uncaught `End_of_file`. (#PR, @samoht)
 
 ## 2.2.1
 
