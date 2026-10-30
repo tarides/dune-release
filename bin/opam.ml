@@ -48,9 +48,7 @@ let write_opam_file ~dry_run ~id ~url ~opam_f pkg dest_opam_file =
           l "Upgrading opam file %a from opam format %s to 2.0" Text.Pp.path
             opam_f v);
       Pkg.opam_descr pkg >>= fun descr ->
-      let descr =
-        OpamFile.Descr.read_from_string (Opam.Descr.to_string descr)
-      in
+      let descr = OpamFile.Descr.create (Opam.Descr.to_string descr) in
       let opam =
         Opam_file.upgrade ~filename ~url ~id opam_t ~version:(`V1 descr)
         |> OpamFile.OPAM.write_to_string
