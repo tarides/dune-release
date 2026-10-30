@@ -8,7 +8,7 @@
 - `dune-release publish` now respects the `--dev-repo` or `DUNE_RELEASE_DEV_REPO`
   CLI inputs. (#522, @shonfeder)
 - Build with opam-format 2.6, which removed `OpamFile.Descr.read_from_string`.
-  (#PR, @samoht)
+  (#527, @samoht)
 
 ## 2.2.1
 
