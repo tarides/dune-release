@@ -22,7 +22,7 @@
   instead of failing with an uncaught `End_of_file`. (#525, @samoht)
 - On a terminal, answers are typed on the line of their question, instead of
   on the next line, which left an empty line under the question once answered.
-  (#526, @samoht)
+  (#526, @samoht, reported by @xvw)
 - Build with opam-format 2.6, which removed `OpamFile.Descr.read_from_string`.
   (#524, #527, @vbgl)
 - The README no longer lists `opam` and `ocamlfind` as runtime dependencies:
