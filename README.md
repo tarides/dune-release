@@ -187,10 +187,9 @@ The main differences between `dune-release` and `topkg` are:
 - `tar` can be set with the `DUNE_RELEASE_TAR` variable (deprecated), otherwise it is expected to be in `PATH`;
 - `git` can be set with the `DUNE_RELEASE_GIT` variable (deprecated), otherwise it is expected to be in `PATH`;
 - `hg` can be set with the `DUNE_RELEASE_HG` variable (deprecated), otherwise it is expected to be in `PATH`;
-- `opam` can be set with the `HOST_OS_OPAM` variable (deprecated), otherwise it is looked for in `HOST_OS_XBIN/opam` (deprecated), otherwise it is looked for in `opamHOST_OS_SUFF` (deprecated), otherwise it is expected to be in `PATH`;
-- `dune`, `curl`, `cp` and `ocamlfind` are expected to be in `PATH`.
+- `dune`, `curl` and `cp` are expected to be in `PATH`.
 
-Using these `DUNE_RELEASE_*` and `HOST_OS_*` environment variables to configure the path to these binaries is deprecated since `dune-release.1.4.0`, and will no longer be supported in `dune-release.2.0.0`, it is thus recommended to only rely on the `PATH` variable.
+Using these `DUNE_RELEASE_*` environment variables to configure the path to these binaries is deprecated since `dune-release.1.4.0`; rely on the `PATH` variable instead.
 
 ## Contributing
 
