@@ -153,7 +153,12 @@ let git_clone ~dry_run ?force ?branch ~dir:d r =
   let branch =
     match branch with None -> Cmd.empty | Some b -> Cmd.(v "-b" % b)
   in
-  let clone = Cmd.(v "clone" % "--local" %% branch % p (dir r) % p d) in
+  (* Copy the objects rather than hardlinking them: git on Windows (Cygwin)
+     rejects the links, and copies keep the temporary clone independent
+     from the object store of the repository. *)
+  let clone =
+    Cmd.(v "clone" % "--local" % "--no-hardlinks" %% branch % p (dir r) % p d)
+  in
   run_git ~dry_run ?force r clone ~default:Default.unit OS.Cmd.out_stdout
   >>= fun () -> Ok ()
 

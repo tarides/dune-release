@@ -44,7 +44,7 @@ We do the whole dune-release process
   => rmdir _build/whatever-3.3.4~4.10preview1.build
   -: exec: git --git-dir .git rev-parse --verify refs/tags/3.3.4_4.10preview1
   => exec: git --git-dir .git show -s --format=%ct 3.3.4_4.10preview1^0
-       git --git-dir .git clone --local .git   _build/whatever-3.3.4~4.10preview1.build
+       git --git-dir .git clone --local --no-hardlinks .git   _build/whatever-3.3.4~4.10preview1.build
        git --git-dir _build/whatever-3.3.4~4.10preview1.build/.git --work-tree   _build/whatever-3.3.4~4.10preview1.build/ checkout --quiet -b   dune-release-dist-3.3.4_4.10preview1 3.3.4_4.10preview1
   => chdir _build/whatever-3.3.4~4.10preview1.build
      [in _build/whatever-3.3.4~4.10preview1.build]

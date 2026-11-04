@@ -13,9 +13,10 @@
   documented in `CONTRIBUTING.md` can be installed again. (#520, @alexleighton)
 - `dune-release publish` now respects the `--dev-repo` or `DUNE_RELEASE_DEV_REPO`
   CLI inputs. (#522, @shonfeder)
-- On Windows, delete the directories that `distrib` and `check` create even
-  when they hold read-only files, such as the objects of a git clone, and show
-  the executable name without its `.exe` suffix in warnings and errors. The
+- Fix `distrib` and `check` on Windows: the temporary clone copies the git
+  objects instead of hardlinking them, which git refuses there, and its
+  deletion clears the read-only attribute git sets on them first. Warnings
+  and errors show the executable name without its `.exe` suffix. The
   test-suite now runs there too. (#378, #529, @emillon, @samoht)
 - Build with opam-format 2.6, which removed `OpamFile.Descr.read_from_string`.
   (#524, #527, @vbgl)
