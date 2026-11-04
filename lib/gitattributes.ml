@@ -127,22 +127,20 @@ let parse_export_ignore content =
   in
   content |> String.cuts ~sep:"\n"
   |> List.filter_map (fun line ->
-         let line = String.trim line in
-         (* Skip empty lines and comments *)
-         if String.length line = 0 || String.is_prefix ~affix:"#" line then None
-         else
-           (* Format: <pattern> <attr1> <attr2> ...
+      let line = String.trim line in
+      (* Skip empty lines and comments *)
+      if String.length line = 0 || String.is_prefix ~affix:"#" line then None
+      else
+        (* Format: <pattern> <attr1> <attr2> ...
               Attributes can be separated by spaces or tabs *)
-           let parts =
-             String.fields ~empty:false
-               ~is_sep:(fun c -> c = ' ' || c = '\t')
-               line
-           in
-           match parts with
-           | pattern :: attrs
-             when List.exists (String.equal "export-ignore") attrs ->
-               parse_pattern pattern
-           | _ -> None)
+        let parts =
+          String.fields ~empty:false ~is_sep:(fun c -> c = ' ' || c = '\t') line
+        in
+        match parts with
+        | pattern :: attrs when List.exists (String.equal "export-ignore") attrs
+          ->
+            parse_pattern pattern
+        | _ -> None)
 
 let read_export_ignore dir =
   let file = Fpath.(dir / ".gitattributes") in
