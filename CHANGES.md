@@ -9,6 +9,9 @@
   CLI inputs. (#522, @shonfeder)
 - Build with opam-format 2.6, which removed `OpamFile.Descr.read_from_string`.
   (#524, #527, @vbgl)
+- The README no longer lists `opam` and `ocamlfind` as runtime dependencies:
+  since 2.2.0, `dune-release lint` checks opam files with the opam libraries
+  instead of the `opam` binary (#509). (@samoht)
 
 ## 2.2.1
 
