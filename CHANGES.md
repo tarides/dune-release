@@ -20,7 +20,7 @@
   instead of the `opam` binary (#509). (#528, @samoht)
 - The pull request to opam-repository no longer links to the `doc` field of
   the opam file: `dune-release` stopped publishing the documentation in
-  2.1.0, so the link was often broken (#511). (@samoht)
+  2.1.0, so the link was often broken (#511). (#534, @samoht)
 
 ## 2.2.1
 
