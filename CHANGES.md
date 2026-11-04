@@ -33,6 +33,9 @@
 - The pull request to opam-repository no longer links to the `doc` field of
   the opam file: `dune-release` stopped publishing the documentation in
   2.1.0, so the link was often broken (#511). (#534, @samoht)
+- `dune-release opam submit` prints the URL of the pull request it opened
+  before trying to show it in a browser, and no longer lets `xdg-open`
+  clutter the output when there is none (#306). (@samoht)
 
 ## 2.2.1
 

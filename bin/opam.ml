@@ -142,21 +142,18 @@ let open_pr ~dry_run ~changes ~remote_repo ~fork_owner ~branch ~token ~title
             Fmt.(styled `Bold string)
             (fork_owner ^ ":" ^ branch));
       Ok 0
-  | `Url url -> (
-      let msg () =
-        App_log.success (fun m ->
-            m "A new %a has been created at %s\n" Text.Pp.maybe_draft
-              (draft, "pull-request") url);
-        Ok 0
-      in
-      if not auto_open then msg ()
-      else
-        let auto_open =
-          if OpamStd.Sys.(os () = Darwin) then "open" else "xdg-open"
-        in
-        match Sos.run ~dry_run Cmd.(v auto_open % url) with
-        | Ok () -> Ok 0
-        | Error _ -> msg ())
+  | `Url url ->
+      App_log.success (fun m ->
+          m "A new %a has been created at %s\n" Text.Pp.maybe_draft
+            (draft, "pull-request") url);
+      (* The browser is a convenience: without one, the URL above is the
+         answer, and the opener's own complaints are not shown. *)
+      (if auto_open then
+         let opener =
+           if OpamStd.Sys.(os () = Darwin) then "open" else "xdg-open"
+         in
+         ignore (Sos.run_quiet ~dry_run Cmd.(v opener % url)));
+      Ok 0
 
 (** Get the value from the [user] config, if it is unset try to parse it from
     the [remote_repo]. *)
