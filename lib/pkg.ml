@@ -32,7 +32,6 @@ let opam_field_hd p f =
   opam_field p f >>| function None | Some [] -> None | Some (v :: _) -> Some v
 
 let opam_homepage p = opam_field_hd p "homepage"
-let opam_doc p = opam_field_hd p "doc"
 
 let opam_homepage_sld p =
   opam_homepage p >>| Stdext.Option.bind ~f:Uri_helpers.get_sld

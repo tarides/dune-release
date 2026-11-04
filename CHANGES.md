@@ -18,6 +18,9 @@
 - The README no longer lists `opam` and `ocamlfind` as runtime dependencies:
   since 2.2.0, `dune-release lint` checks opam files with the opam libraries
   instead of the `opam` binary (#509). (#528, @samoht)
+- The pull request to opam-repository no longer links to the `doc` field of
+  the opam file: `dune-release` stopped publishing the documentation in
+  2.1.0, so the link was often broken (#511). (@samoht)
 
 ## 2.2.1
 
