@@ -131,10 +131,13 @@ let make_writable p =
 let make_contents_writable p =
   if not Sys.win32 then Ok ()
   else
-    OS.Path.fold ~dotfiles:true ~elements:`Files
-      (fun p acc -> acc >>= fun () -> make_writable p)
-      (Ok ()) [ p ]
-    >>= fun r -> r
+    OS.Path.exists p >>= function
+    | false -> Ok ()
+    | true ->
+        OS.Path.fold ~dotfiles:true ~elements:`Files
+          (fun p acc -> acc >>= fun () -> make_writable p)
+          (Ok ()) [ p ]
+        >>= fun r -> r
 
 let rm_rf dir =
   make_contents_writable dir >>= fun () -> OS.Dir.delete ~recurse:true dir
