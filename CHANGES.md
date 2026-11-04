@@ -13,6 +13,10 @@
   documented in `CONTRIBUTING.md` can be installed again. (#520, @alexleighton)
 - `dune-release publish` now respects the `--dev-repo` or `DUNE_RELEASE_DEV_REPO`
   CLI inputs. (#522, @shonfeder)
+- On Windows, delete the directories that `distrib` and `check` create even
+  when they hold read-only files, such as the objects of a git clone, and show
+  the executable name without its `.exe` suffix in warnings and errors. The
+  test-suite now runs there too. (#378, @emillon, @samoht)
 - Build with opam-format 2.6, which removed `OpamFile.Descr.read_from_string`.
   (#524, #527, @vbgl)
 - The README no longer lists `opam` and `ocamlfind` as runtime dependencies:

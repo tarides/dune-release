@@ -49,7 +49,7 @@ We make a dry-run release and check that the opam file is correct:
 (3) Creating an opam package with a pre-set URL (since we did not upload to GitHub)
 
   $ echo "https://foo.fr/archive/foo/foo.tbz" > _build/asset-0.1.0.url
-  $ dune-release opam pkg
+  $ dune-release opam pkg | make_dune_release_deterministic
   [-] Creating opam package description for whatever
   [+] Wrote opam package description _build/whatever.0.1.0/opam
 
