@@ -1,5 +1,14 @@
 (library
  (name dune_release)
  (public_name dune-release)
- (libraries fmt fpath bos curly opam-state rresult bos.setup yojson
-   opam-file-format re))
+ (libraries
+  fmt
+  fpath
+  bos
+  curly
+  opam-state
+  rresult
+  bos.setup
+  yojson
+  opam-file-format
+  re))

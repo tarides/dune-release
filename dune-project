@@ -1,4 +1,4 @@
-(lang dune 2.7)
+(lang dune 3.14)
 (name dune-release)
 
 (cram enable)
@@ -25,11 +25,6 @@ with [Dune](https://github.com/ocaml/dune) and hosted on
 [GitHub](https://github.com).")
  (depends
   (ocaml (>= 4.08.0))
-  ;; two dependencies on dune to work around
-  ;; https://github.com/ocaml/dune/issues/3431
-  dune
-  ;; the tests require dune 3.14
-  (dune (and (>= 3.14) :with-test))
   (curly (>= 0.3.0))
   (fmt (>= 0.8.7))
   (fpath (>= 0.7.3))
