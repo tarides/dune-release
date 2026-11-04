@@ -36,7 +36,7 @@ depends: [
   "odoc"
   "alcotest" {with-test}
   "yojson" {>= "1.6"}
-  "ocamlformat" {= "0.28.1" & with-dev-setup}
+  "ocamlformat" {= "0.29.0" & with-dev-setup}
 ]
 conflicts: [
   "result" {< "1.5"}
