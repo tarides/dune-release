@@ -287,10 +287,39 @@ let keep_build_dir =
 
 (* Terms *)
 
+(* The header of [Logs_fmt.reporter], with the [.exe] suffix Windows gives
+   the executable name removed. *)
+let pp_exec_header =
+  let exec =
+    let name =
+      match Array.length Sys.argv with
+      | 0 -> Filename.basename Sys.executable_name
+      | _ -> Filename.basename Sys.argv.(0)
+    in
+    match Filename.chop_suffix_opt ~suffix:".exe" name with
+    | Some name -> name
+    | None -> name
+  in
+  let pp_h ppf style h =
+    Fmt.pf ppf "%s: [%a] " exec Fmt.(styled style string) h
+  in
+  fun ppf (level, h) ->
+    match level with
+    | Logs.App -> Logs_fmt.pp_header ppf (level, h)
+    | Logs.Error ->
+        pp_h ppf Logs_fmt.err_style (Option.value h ~default:"ERROR")
+    | Logs.Warning ->
+        pp_h ppf Logs_fmt.warn_style (Option.value h ~default:"WARNING")
+    | Logs.Info -> pp_h ppf Logs_fmt.info_style (Option.value h ~default:"INFO")
+    | Logs.Debug ->
+        pp_h ppf Logs_fmt.debug_style (Option.value h ~default:"DEBUG")
+
+let reporter () = Logs_fmt.reporter ~pp_header:pp_exec_header ~app:Fmt.stdout ()
+
 let setup style_renderer log_level cwd =
   Fmt_tty.setup_std_outputs ?style_renderer ();
   Logs.set_level log_level;
-  Logs.set_reporter (Logs_fmt.reporter ~app:Fmt.stdout ());
+  Logs.set_reporter (reporter ());
   Logs.info (fun m -> m "dune-release %%VERSION%% running");
   match cwd with
   | None -> `Ok ()

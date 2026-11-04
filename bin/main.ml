@@ -50,7 +50,10 @@ let main =
     (Cmd.info "dune-release" ~version:"%%VERSION%%" ~doc ~sdocs ~exits ~man)
     cmds
 
-let main () = Stdlib.exit @@ Cmd.eval' main
+let main () =
+  Logs.set_reporter (Cli.reporter ());
+  Stdlib.exit @@ Cmd.eval' main
+
 let () = main ()
 
 (*---------------------------------------------------------------------------
