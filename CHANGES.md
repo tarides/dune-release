@@ -1,5 +1,10 @@
 ## Unreleased
 
+### Changed
+
+- Require dune 3.14 to build, as the test-suite already did. The `dune`
+  dependency is now generated once from `(lang dune 3.14)`, which silences
+  the duplicate-dependency warning of dune 3.24. (@samoht)
 
 ### Fixed
 
