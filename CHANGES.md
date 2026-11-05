@@ -7,48 +7,45 @@
 
 ### Changed
 
-- Require dune 3.14 to build, as the test-suite already did. The `dune`
-  dependency is now generated once from `(lang dune 3.14)`, which silences
-  the duplicate-dependency warning of dune 3.24. (#532, @samoht)
-- Bump the `ocamlformat` dev dependency to 0.29.0. (#531, @samoht)
-- Declare the maintenance intent of the opam package, `(latest)`, so that
-  opam-repository can archive its older releases (#507). (#533, @samoht)
+- Require dune 3.14 to build. (#532, @samoht)
+- Declare the maintenance intent of the opam package, so that opam-repository
+  can archive its older releases. (#507, #533, @samoht, reported by @hannesm)
+- The pull request to opam-repository no longer links to the `doc` field of
+  the opam file: `dune-release` stopped publishing the documentation in
+  2.1.0, so the link was often broken. (#511, #534, @samoht, reported by
+  @talex5)
 
 ### Fixed
 
-- Bump the `ocamlformat` dev dependency to 0.28.1 so that the contributor setup
-  documented in `CONTRIBUTING.md` can be installed again. (#520, @alexleighton)
-- `dune-release publish` now respects the `--dev-repo` or `DUNE_RELEASE_DEV_REPO`
-  CLI inputs. (#522, @shonfeder)
+- `dune-release publish` now respects the `--dev-repo` or
+  `DUNE_RELEASE_DEV_REPO` CLI inputs. (#521, #522, @shonfeder, reviewed by
+  @Leonidas-from-XIV)
 - Fix `distrib` and `check` on Windows: the temporary clone copies the git
-  objects instead of hardlinking them, which git refuses there, and its
-  deletion clears the read-only attribute git sets on them first. Warnings
-  and errors show the executable name without its `.exe` suffix. The
-  test-suite now runs there too. (#378, #529, @emillon, @samoht)
+  objects instead of hardlinking them, which git refuses there, and their
+  read-only attribute is cleared before the clone is deleted. Warnings and
+  errors show the executable name without its `.exe` suffix.
+  (#378, #529, @emillon, @samoht)
 - A yes or no question with no input left to read takes its default answer
   instead of failing with an uncaught `End_of_file`. (#525, @samoht)
 - On a terminal, answers are typed on the line of their question, instead of
-  on the next line, which left an empty line under the question once answered.
-  (#526, @samoht, reported by @xvw)
-- Build with opam-format 2.6, which removed `OpamFile.Descr.read_from_string`.
-  (#524, #527, @vbgl)
-- The README no longer lists `opam` and `ocamlfind` as runtime dependencies:
-  since 2.2.0, `dune-release lint` checks opam files with the opam libraries
-  instead of the `opam` binary (#509). (#528, @samoht)
-- The pull request to opam-repository no longer links to the `doc` field of
-  the opam file: `dune-release` stopped publishing the documentation in
-  2.1.0, so the link was often broken (#511). (#534, @samoht)
-- `dune-release opam submit` prints the URL of the pull request it opened
-  before trying to show it in a browser, and no longer lets `xdg-open`
-  clutter the output when there is none (#306). (#535, @samoht)
+  on the next line. (#526, @samoht, reported and reviewed by @xvw)
+- `dune-release opam submit` always prints the URL of the pull request it
+  opened, and no longer shows the errors of `xdg-open` when there is no
+  browser to open it with. (#306, #535, @samoht, reported by @mato)
+- Build with the opam 2.6 libraries. (#524, #527, @vbgl, @samoht)
+- The README no longer lists `opam` and `ocamlfind` as runtime dependencies,
+  which `dune-release lint` stopped calling in 2.2.0. (#430, #509, #528,
+  @samoht, reviewed by @Leonidas-from-XIV)
+- The README explains how to publish through an ssh alias. (#440, @pbaudin)
 - When the change log cannot be parsed, `dune-release` says what it expects
-  of its first heading, and no longer prints a raw debug line (#207).
-  (#537, @samoht)
+  of its first heading, and no longer prints a raw debug line. (#207, #537,
+  @samoht, reported by @Drup)
 - `dune-release distrib` skips `dune subst` when `dune-project` disables it
-  with `(subst disabled)`, instead of failing (#496). (#538, @samoht)
+  with `(subst disabled)`, instead of failing. (#496, #538, @samoht, reported
+  by @talex5)
 - `dune-release publish` no longer aborts when the release asset was already
   uploaded, or when its upload is declined: the asset on the release is used
-  instead (#513). (#539, @samoht)
+  instead. (#513, #539, @samoht, reported by @davesnx)
 
 ## 2.2.1
 
