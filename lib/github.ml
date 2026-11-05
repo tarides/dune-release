@@ -67,7 +67,22 @@ let curl_create_release ~token ~dry_run ~version ~tag ~draft ~prerelease msg
   run_with_auth ~dry_run ~default_body curl_t
   >>= Github_v3_api.Release.Response.release_id
 
-let curl_upload_archive ~token ~dry_run ~yes archive user repo release_id =
+(* The URL of an asset that is already on the release. *)
+let curl_existing_asset ~token ~dry_run ~tag ~name user repo =
+  let curl_t = Github_v3_api.Release.Request.get ~tag ~user ~repo in
+  let curl_t = Github_v3_api.with_auth ~token curl_t in
+  let asset =
+    `Assoc
+      [
+        ("name", `String name); ("browser_download_url", `String D.download_url);
+      ]
+  in
+  let default_body = `Assoc [ ("assets", `List [ asset ]) ] in
+  run_with_auth ~dry_run ~default_body curl_t
+  >>= Github_v3_api.Release.Response.browser_download_url ~name
+  >>| fun url -> (url, name)
+
+let curl_upload_archive ~token ~dry_run ~yes ~tag archive user repo release_id =
   let curl_t =
     Github_v3_api.Archive.Request.upload ~archive ~user ~repo ~release_id
   in
@@ -84,9 +99,15 @@ let curl_upload_archive ~token ~dry_run ~yes archive user repo release_id =
       l "Uploading %a as release asset failed. Try again?" Text.Pp.path archive)
     (fun () ->
       run_with_auth ~dry_run ~default_body curl_t >>= fun response ->
-      Github_v3_api.Archive.Response.browser_download_url response
-      >>= fun url ->
-      Github_v3_api.Archive.Response.name response >>= fun name -> Ok (url, name))
+      Github_v3_api.Archive.Response.browser_download_url response >>= function
+      | `Url url ->
+          Github_v3_api.Archive.Response.name response >>= fun name ->
+          Ok (url, name)
+      | `Already_exists ->
+          let name = Fpath.filename archive in
+          App_log.status (fun l ->
+              l "Release asset %s already exists, using it" name);
+          curl_existing_asset ~token ~dry_run ~tag ~name user repo)
 
 let open_pr ~token ~dry_run ~title ~fork_owner ~branch ~opam_repo ~draft body
     pkg =
@@ -343,15 +364,22 @@ let publish_distrib ~token ?dev_repo ~dry_run ~msg ~archive ~yes ~draft
        (string_of_int id)
    else Config.Draft_release.unset ~dry_run ~build_dir ~name ~version)
   >>= fun () ->
-  Prompt.(
-    confirm_or_abort ~yes
-      ~question:(fun l -> l "Upload %a as release asset?" Text.Pp.path archive)
-      ~default_answer:Yes)
-  >>= fun () ->
-  App_log.status (fun l ->
-      l "Uploading %a as a release asset for %a via github's API" Text.Pp.path
-        archive Text.Pp.version version);
-  curl_upload_archive ~token ~dry_run ~yes archive owner repo id
+  (if
+     Prompt.(
+       confirm ~yes
+         ~question:(fun l ->
+           l "Upload %a as release asset?" Text.Pp.path archive)
+         ~default_answer:Yes)
+   then (
+     App_log.status (fun l ->
+         l "Uploading %a as a release asset for %a via github's API"
+           Text.Pp.path archive Text.Pp.version version);
+     curl_upload_archive ~token ~dry_run ~yes ~tag archive owner repo id)
+   else
+     (* Declined: the asset is expected to be on the release already. *)
+     let name = Fpath.filename archive in
+     App_log.status (fun l -> l "Using the release asset %s already there" name);
+     curl_existing_asset ~token ~dry_run ~tag ~name owner repo)
   >>= fun (url, asset_name) ->
   (if draft then
      Config.Release_asset_name.set ~dry_run ~build_dir ~name ~version asset_name

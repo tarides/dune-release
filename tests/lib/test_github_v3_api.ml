@@ -185,22 +185,27 @@ let test_undraft_release =
   ]
 
 let test_archive_upload_url =
-  let make_test json expected =
-    let test_name = "archive_upload_url" in
+  let make_test name json expected =
+    let test_name = "archive_upload_url: " ^ name in
     let test_fun () =
       let json = Yojson.Basic.from_string json in
-      let actual = Archive.Response.browser_download_url json in
-      Alcotest.(check (Alcotest_ext.result_msg string)) __LOC__ expected actual
+      let actual =
+        match Archive.Response.browser_download_url json with
+        | Ok (`Url url) -> url
+        | Ok `Already_exists -> "ALREADY_EXISTS"
+        | Error (`Msg msg) -> msg
+      in
+      Alcotest.(check string) __LOC__ expected actual
     in
     (test_name, `Quick, test_fun)
   in
   [
-    make_test Upload_response.gh_v3_api_DR_example
-      (Ok
-         "https://github.com/NathanReb/dune-release-testing/releases/download/v0.0.0/dummy-v0.0.0.tbz");
-    make_test Upload_response.gh_v3_api_example
-      (Ok
-         "https://github.com/octocat/Hello-World/releases/download/v1.0.0/example.zip");
+    make_test "dry run" Upload_response.gh_v3_api_DR_example
+      "https://github.com/NathanReb/dune-release-testing/releases/download/v0.0.0/dummy-v0.0.0.tbz";
+    make_test "example" Upload_response.gh_v3_api_example
+      "https://github.com/octocat/Hello-World/releases/download/v1.0.0/example.zip";
+    make_test "already exists" Upload_response.gh_v3_api_already_exists
+      "ALREADY_EXISTS";
   ]
 
 let test_release_id =
