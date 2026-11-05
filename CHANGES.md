@@ -6,6 +6,8 @@
   dependency is now generated once from `(lang dune 3.14)`, which silences
   the duplicate-dependency warning of dune 3.24. (#532, @samoht)
 - Bump the `ocamlformat` dev dependency to 0.29.0. (#531, @samoht)
+- Declare the maintenance intent of the opam package, `(latest)`, so that
+  opam-repository can archive its older releases (#507). (#533, @samoht)
 
 ### Fixed
 
