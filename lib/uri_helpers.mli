@@ -16,9 +16,6 @@ val parse : string -> uri option
     separator to support either regular URIs or ["github.com:owner/..."] URIs.
 *)
 
-val get_sld : string -> string option
-(** Get the URI's second level domain, if it has one. *)
-
 val append_to_base : rel_path:string -> string -> string
 (** Append a relative path to a base URI. *)
 

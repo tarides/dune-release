@@ -49,6 +49,8 @@
 - `dune-release publish` accepts a `dev-repo` that names a branch with
   `#branch`: the fragment is dropped from the URL used to push the tag and to
   find the GitHub repository. (#203, #540, @samoht, reported by @hannesm)
+- `dune-release opam pkg` run without `publish` now infers the right archive
+  URL for an https GitHub `dev-repo`. (#541, @samoht)
 
 ## 2.2.1
 

@@ -32,10 +32,6 @@ let opam_field_hd p f =
   opam_field p f >>| function None | Some [] -> None | Some (v :: _) -> Some v
 
 let opam_homepage p = opam_field_hd p "homepage"
-
-let opam_homepage_sld p =
-  opam_homepage p >>| Stdext.Option.bind ~f:Uri_helpers.get_sld
-
 let name p = Ok p.name
 let with_name p name = { p with name }
 let project_name p = p.project_name
@@ -140,36 +136,16 @@ let dev_repo p =
   | None -> Ok None
   | Some r -> Ok (Some Uri_helpers.(chop_fragment (chop_git_prefix r)))
 
-let dev_repo_is_on_github p =
-  opam_field_hd p "dev-repo" >>| function
-  | None -> false
-  | Some r -> (
-      match String.cut ~sep:"git@github.com:" r with
-      | Some ("", _) -> true
-      | _ -> (
-          match String.cut ~sep:"git+ssh://git@github.com/" r with
-          | Some ("", _) -> true
-          | _ -> false))
-
-let homepage_is_on_github p =
-  opam_homepage_sld p >>| function None -> false | Some sld -> sld = "github"
-
+(* The distribution is a GitHub release asset. *)
 let path_of_distrib p =
-  dev_repo_is_on_github p >>= fun repo_on_gh ->
-  homepage_is_on_github p >>= fun hp_on_gh ->
   name p >>= fun name ->
-  release_identifier p >>= fun identifier ->
+  release_identifier p >>| fun identifier ->
   let basename =
     match p.distrib_file with
     | Some f -> Fpath.basename f
     | None -> strf "%s-%s.tbz" name identifier
   in
-  let filename =
-    if repo_on_gh || hp_on_gh then
-      strf "releases/download/%s/%s" identifier basename
-    else "releases/" ^ basename
-  in
-  Ok filename
+  strf "releases/download/%s/%s" identifier basename
 
 let infer_github_repo pkg =
   opam_homepage pkg >>= fun homepage ->

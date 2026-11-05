@@ -87,6 +87,7 @@ let distrib_uri =
         Pkg.infer_github_distrib_uri x >>| Fpath.v)
   in
   let dev_repo = [ ("dev-repo", "git@github.com:foo/bar.git") ] in
+  let dev_repo_https = [ ("dev-repo", "git+https://github.com/foo/bar.git") ] in
   let dev_repo_branch =
     [ ("dev-repo", "git+ssh://git@github.com/foo/bar.git#main") ]
   in
@@ -102,6 +103,7 @@ let distrib_uri =
     make_test ~test_name:"7" ~opam:dev_repo ~tag:"v0" ~version:"x" url;
     make_test ~test_name:"8" ~opam:homepage ~tag:"v0" ~version:"x" url;
     make_test ~test_name:"9" ~opam:dev_repo_branch ~tag:"v0" url;
+    make_test ~test_name:"10" ~opam:dev_repo_https ~tag:"v0" url;
     make_test ~test_name:"9"
       ~opam:[ ("homepage", "https://foo.github.io/bar") ]
       ~tag:"v0" url;

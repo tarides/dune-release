@@ -56,11 +56,6 @@ let parse uri =
           path = String.cuts ~sep:"/" raw_path;
         }
 
-let get_sld uri =
-  match parse uri with
-  | Some { domain = _ :: sld :: _; _ } -> Some sld
-  | _ -> None
-
 let append_to_base ~rel_path base =
   match String.head ~rev:true base with
   | None -> rel_path
