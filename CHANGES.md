@@ -1,5 +1,10 @@
 ## Unreleased
 
+### Added
+
+- Support `.gitattributes` `export-ignore` attribute to exclude files from
+  distribution archives. (#515, @jberdine, reviewed by @Leonidas-from-XIV)
+
 ### Changed
 
 - Require dune 3.14 to build, as the test-suite already did. The `dune`
