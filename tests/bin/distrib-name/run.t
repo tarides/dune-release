@@ -53,7 +53,9 @@ this name must be one the .opam file names.)
 Run dune-release distrib with the uncommitted name in dune-project.
 
   $ dune-release tag -y > /dev/null
-  $ dune-release distrib --skip-lint > /dev/null
+  $ dune-release distrib --skip-lint > /dev/null 2> stderr.log
+  [3]
+  $ make_dune_release_deterministic < stderr.log; rm stderr.log
   dune-release: [WARNING] The repo is dirty. Uncommitted changes to files
                           (including dune-project) will not be included in the
                           distribution archive.
@@ -61,7 +63,6 @@ Run dune-release distrib with the uncommitted name in dune-project.
   Error: The project name is not defined, please add a (name <name>) field to
   your dune-project file.
   dune-release: [ERROR] run ['dune' 'subst']: exited with 1
-  [3]
 
 Commit the change in dune-project and run distrib.
 

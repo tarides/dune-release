@@ -1,2 +1,2 @@
 (cram
- (deps %{bin:dune-release}))
+ (deps %{bin:dune-release} %{bin:make_dune_release_deterministic}))

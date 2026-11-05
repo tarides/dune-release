@@ -122,8 +122,28 @@ let run_status ~dry_run ?(force = false) ?sandbox v =
     let _ = show ?sandbox ~action:`Done "exec:@[@ %a@]" pp_cmd v in
     OS.Cmd.run_status v
 
+(* Git marks its object files read-only, which on Windows makes their
+   deletion fail. Clear the attribute under [p] before deleting it. *)
+let make_writable p =
+  OS.Path.Mode.get p >>= fun mode ->
+  if mode land 0o200 <> 0 then Ok () else OS.Path.Mode.set p (mode lor 0o200)
+
+let make_contents_writable p =
+  if not Sys.win32 then Ok ()
+  else
+    OS.Path.exists p >>= function
+    | false -> Ok ()
+    | true ->
+        OS.Path.fold ~dotfiles:true ~elements:`Files
+          (fun p acc -> acc >>= fun () -> make_writable p)
+          (Ok ()) [ p ]
+        >>= fun r -> r
+
+let rm_rf dir =
+  make_contents_writable dir >>= fun () -> OS.Dir.delete ~recurse:true dir
+
 let delete_dir ~dry_run ?(force = false) dir =
-  if not dry_run then OS.Dir.delete ~recurse:true dir
+  if not dry_run then rm_rf dir
   else
     let dir' =
       match current_dir () with
@@ -133,10 +153,11 @@ let delete_dir ~dry_run ?(force = false) dir =
     if not force then show "rmdir %a" Fpath.pp dir'
     else
       let _ = show ~action:`Done "rmdir %a" Fpath.pp dir' in
-      OS.Dir.delete ~recurse:true dir
+      rm_rf dir
 
 let delete_path ~dry_run p =
-  if not dry_run then OS.Path.delete ~recurse:true p
+  if not dry_run then
+    make_contents_writable p >>= fun () -> OS.Path.delete ~recurse:true p
   else
     let p' =
       match current_dir () with

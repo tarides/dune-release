@@ -123,6 +123,11 @@ val keep_build_dir : [> `Keep_build_dir of bool ] Term.t
 
 (** {1 Terms} *)
 
+val reporter : unit -> Logs.reporter
+(** [reporter ()] is the {!Logs} reporter of every command: the one of
+    {!Logs_fmt}, with application messages on [stdout] and the executable name
+    shown without its Windows [.exe] suffix. *)
+
 val setup : unit Term.t
 (** [setup env] defines a basic setup common to all commands. The setup does, by
     side effect, set {!Logs} log verbosity, adjusts colored output and sets the

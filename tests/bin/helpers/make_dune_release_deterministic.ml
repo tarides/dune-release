@@ -58,20 +58,40 @@ let make_lint_directory_deterministic line =
   let re = compile @@ seq [ str "lint of "; rep any; str " and" ] in
   replace_string re ~by:"lint of <project_dir> and" line
 
+let forward_slashes s = String.map (function '\\' -> '/' | c -> c) s
+
+(* dune-release prints the test directory as [Sys.getcwd] returns it, which
+   is also what this helper sees. On Windows, [use_forward_slashes] has
+   already rewritten it with forward slashes. *)
 let make_test_directory_deterministic line =
-  (* OCaml implementation of bash's
-     sed 's/\/.*\/tests\/bin\/check/<test_directory>/' *)
-  let re = compile @@ seq [ str "/"; rep any; str "/tests/bin/check" ] in
+  let re = compile @@ str (forward_slashes (Sys.getcwd ())) in
   replace_string re ~by:"<test_directory>" line
 
+(* On Windows, Fpath joins with a backslash. A path in the output starts at
+   [_build], [.\] or the test directory and runs to the end of the line. *)
+let use_forward_slashes line =
+  let start = alt [ str "_build"; str ".\\"; str (Sys.getcwd ()) ] in
+  let re = compile @@ seq [ start; rep any; eol ] in
+  replace re line ~f:(fun g -> forward_slashes (Group.get g 0))
+
+(* On Windows, [Filename.quote] uses double quotes, so a failed command is
+   reported as [run ["dune" "subst"]]. *)
+let use_single_quotes line =
+  let re = compile @@ seq [ str "run ["; rep any; str "]" ] in
+  replace re line ~f:(fun g ->
+      String.map (function '"' -> '\'' | c -> c) (Group.get g 0))
+
+(* The Windows output is brought to its Unix form first, so that the
+   determinising transforms see the same paths on every platform. *)
 let transforms =
-  [
-    make_build_deterministic;
-    make_commit_deterministic;
-    make_distribution_deterministic;
-    make_lint_directory_deterministic;
-    make_test_directory_deterministic;
-  ]
+  (if Sys.win32 then [ use_forward_slashes; use_single_quotes ] else [])
+  @ [
+      make_build_deterministic;
+      make_commit_deterministic;
+      make_distribution_deterministic;
+      make_lint_directory_deterministic;
+      make_test_directory_deterministic;
+    ]
 
 let () =
   try

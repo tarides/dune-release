@@ -36,7 +36,7 @@ Running the following should not fail if the dune-release generated tarball
   $ dune-release opam pkg \
   > --dist-file ./our-custom-distrib.tbz \
   > --dist-uri "https://my.custom.url/mytarball.tbz" \
-  > --pkg-version 0.1.0
+  > --pkg-version 0.1.0 2>&1 | make_dune_release_deterministic
   [-] Creating opam package description for whatever
   [+] Wrote opam package description _build/whatever.0.1.0/opam
   dune-release: [WARNING] The repo is dirty. The opam package may be

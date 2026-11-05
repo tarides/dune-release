@@ -36,21 +36,21 @@ We need to set up a git project with two commits to test trying to tag different
 Creating a `git tag` manually since the project might be using this workflow
 
   $ git tag -a 23.0 -m "Release 23.0"
-  $ dune-release distrib --dry-run | grep "Archive _build/"
+  $ dune-release distrib --dry-run | make_dune_release_deterministic | grep "Archive _build/"
   [+] Archive _build/whatever-23.0.tbz
 
 Also, while not the preferred way, unannotated tags should be possible as well
 
   $ git commit --allow-empty -m "Testing" --quiet
   $ git tag 42.0
-  $ dune-release distrib --dry-run | grep "Archive _build/"
+  $ dune-release distrib --dry-run | make_dune_release_deterministic | grep "Archive _build/"
   [+] Archive _build/whatever-42.0.tbz
 
 It should also properly map back tags to releases
 
   $ git commit --allow-empty -m "Testing" --quiet
   $ git tag -a 1337.0_beta1 -m 'Release 1337~beta1'
-  $ dune-release distrib --dry-run | grep "Archive _build/"
+  $ dune-release distrib --dry-run | make_dune_release_deterministic | grep "Archive _build/"
   [+] Archive _build/whatever-1337.0~beta1.tbz
 
 Also, specifying the tag manually should work
@@ -59,5 +59,5 @@ Also, specifying the tag manually should work
   $ dune-release tag -y 9000_alpha3
   [-] Using tag "9000_alpha3"
   [+] Tagged HEAD with version 9000_alpha3
-  $ dune-release distrib --dry-run | grep "Archive _build/"
+  $ dune-release distrib --dry-run | make_dune_release_deterministic | grep "Archive _build/"
   [+] Archive _build/whatever-9000~alpha3.tbz

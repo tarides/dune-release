@@ -46,7 +46,7 @@ We do the whole `dune-release` process but create a draft release on GitHub.
 create a draft release and submit it as such to GitHub. It should also write a
 `draft_release` file for `undraft`.
 
-  $ dune-release publish --dry-run --yes --draft | grep draft
+  $ dune-release publish --dry-run --yes --draft | grep draft | make_dune_release_deterministic
   [-] Creating draft release 0.1.0 on https://github.com/foo/whatever.git via github's API
        {"tag_name":"0.1.0","name":"0.1.0","body":"CHANGES:\n\n- Some other feature\n","draft":true,"prerelease":false}
   [+] Successfully created draft release with id 1

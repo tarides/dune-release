@@ -176,15 +176,15 @@ Same for skipping the build (which implies skipping the tests)
 
 Same for skipping the change log validation
 
-  $ dune-release check --working-tree --skip-lint --skip-change-log
+  $ dune-release check --working-tree --skip-lint --skip-change-log | make_dune_release_deterministic
   [-] Checking dune-release compatibility.
   [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
   [ OK ] The dune project contains a name stanza.
   
-  [-] Building package in $TESTCASE_ROOT
+  [-] Building package in <test_directory>
   [ OK ] package(s) build
   
-  [-] Running package tests in $TESTCASE_ROOT
+  [-] Running package tests in <test_directory>
   [ OK ] package(s) pass the tests
 
 Create a project with an opam file without dev-repo field
@@ -314,16 +314,17 @@ Create an invalid change log file (the title is at the same H level to the rest 
   > - another feature
   > EOF
 
-  $ dune-release check --skip-lint --skip-build --skip-tests --working-tree
+  $ dune-release check --skip-lint --skip-build --skip-tests --working-tree 2> stderr.log
   [-] Checking dune-release compatibility.
   [ OK ] The dev-repo field of my_pkg.opam contains a github uri.
   [ OK ] The dune project contains a name stanza.
   
   [-] Validating change log.
   [FAIL] Change log is not valid.
+  [3]
+  $ make_dune_release_deterministic < stderr.log; rm stderr.log
   dune-release: [ERROR] ./ChangeLog: Could not parse change log.
     Error while running `check`: ./ChangeLog: Could not parse change log.
-  [3]
 
 Skip the change log check while the change log file is invalid.
 
