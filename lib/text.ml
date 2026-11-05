@@ -109,9 +109,7 @@ let rec change_log_last_entry ?flavour text =
         change_log_last_entry ?flavour changes
       else
         match String.take ~sat:Char.Ascii.is_graphic title with
-        | "" ->
-            Logs.app (fun m -> m "%S %S" h changes);
-            None
+        | "" -> None
         | version ->
             let changes =
               match
@@ -134,7 +132,11 @@ let change_log_file_last_entry file =
   let flavour = flavour_of_fpath file in
   OS.File.read file >>= fun text ->
   match change_log_last_entry ?flavour text with
-  | None -> R.error_msgf "%a: Could not parse change log." Fpath.pp file
+  | None ->
+      R.error_msgf
+        "%a: Could not parse change log: its first heading must start with the \
+         version, as in `## 1.2.3`."
+        Fpath.pp file
   | Some (version, (header, changes)) -> Ok (version, (header, changes))
 
 let github_issue =

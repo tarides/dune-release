@@ -323,8 +323,8 @@ Create an invalid change log file (the title is at the same H level to the rest 
   [FAIL] Change log is not valid.
   [3]
   $ make_dune_release_deterministic < stderr.log; rm stderr.log
-  dune-release: [ERROR] ./ChangeLog: Could not parse change log.
-    Error while running `check`: ./ChangeLog: Could not parse change log.
+  dune-release: [ERROR] ./ChangeLog: Could not parse change log: its first heading must start with the version, as in `## 1.2.3`.
+    Error while running `check`: ./ChangeLog: Could not parse change log: its first heading must start with the version, as in `## 1.2.3`.
 
 Skip the change log check while the change log file is invalid.
 
