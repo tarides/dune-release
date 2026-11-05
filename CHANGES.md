@@ -41,6 +41,9 @@
 - `dune-release opam submit` prints the URL of the pull request it opened
   before trying to show it in a browser, and no longer lets `xdg-open`
   clutter the output when there is none (#306). (#535, @samoht)
+- When the change log cannot be parsed, `dune-release` says what it expects
+  of its first heading, and no longer prints a raw debug line (#207).
+  (#537, @samoht)
 
 ## 2.2.1
 
