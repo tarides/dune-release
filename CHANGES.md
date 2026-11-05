@@ -1,5 +1,10 @@
 ## Unreleased
 
+### Added
+
+- Support `.gitattributes` `export-ignore` attribute to exclude files from
+  distribution archives. (#515, @jberdine, reviewed by @Leonidas-from-XIV)
+
 ### Changed
 
 - Require dune 3.14 to build, as the test-suite already did. The `dune`
@@ -53,8 +58,6 @@
 
 ### Added
 
-- Support `.gitattributes` `export-ignore` attribute to exclude files from
-  distribution archives (#515, @jberdine)
 - Add `dune-release delegate-info version` to show the current version as infered
   by the tool (#495, @samoht)
 - Add `--dev-repo` to `dune-release` and `dune-release publish` to overwrite
