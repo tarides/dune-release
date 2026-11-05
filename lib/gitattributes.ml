@@ -101,9 +101,12 @@ let parse_pattern s =
         (* Exact match *)
         Some (Exact s)
 
+(* Patterns use [/] as a separator, whatever the platform's one is. *)
+let to_pattern_path p = String.concat ~sep:"/" (Fpath.segs p)
+
 let matches path pattern =
   let path = Fpath.normalize path in
-  let path_str = Fpath.to_string path in
+  let path_str = to_pattern_path path in
   let basename = Fpath.basename path in
   match pattern with
   | Exact s ->
