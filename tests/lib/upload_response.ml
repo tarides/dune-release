@@ -72,3 +72,18 @@ let gh_v3_api_example =
   }
 }
 |}
+
+let gh_v3_api_already_exists =
+  {|
+{
+  "message": "Validation Failed",
+  "errors": [
+    {
+      "resource": "ReleaseAsset",
+      "code": "already_exists",
+      "field": "name"
+    }
+  ],
+  "documentation_url": "https://docs.github.com/rest/releases/assets#upload-a-release-asset"
+}
+|}

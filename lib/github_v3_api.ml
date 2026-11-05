@@ -1,11 +1,13 @@
 open Bos_setup
 
+(* GitHub words a duplicate pull request in the error message, and flags a
+   duplicate release asset with an error code. *)
 let is_handled errors (affix, _) =
   List.exists
     (fun error ->
       match Json.string_field ~field:"message" error with
-      | Ok x -> String.is_prefix ~affix x
-      | Error _ -> false)
+      | Ok message -> String.is_prefix ~affix message
+      | Error _ -> Json.string_field ~field:"code" error = Ok affix)
     errors
 
 let pp_break_then_string ?(pre = "") ?(post = "") fs = function
@@ -123,7 +125,7 @@ module Release = struct
           Json.list_field ~field:"assets" json >>= fun assets ->
           match List.find_opt (same_name name) assets with
           | Some json -> Json.string_field ~field:"browser_download_url" json
-          | None -> R.error_msg "No asset matches the release")
+          | None -> R.error_msgf "No asset named %s on the release" name)
         ~on_ok:(fun x -> x)
         ~default_msg:
           (Format.sprintf
@@ -167,9 +169,9 @@ module Archive = struct
     let browser_download_url json =
       handle_errors json
         ~try_:(Json.string_field ~field:"browser_download_url")
-        ~on_ok:(fun x -> x)
+        ~on_ok:(fun x -> `Url x)
         ~default_msg:"Could not retrieve archive download URL from response"
-        ~handled_errors:[]
+        ~handled_errors:[ ("already_exists", `Already_exists) ]
 
     let name json =
       handle_errors json

@@ -39,9 +39,11 @@ module Archive : sig
   end
 
   module Response : sig
-    val browser_download_url : Yojson.Basic.t -> (string, R.msg) result
-    (** [browser_download_url response] extracts the browser_download_url field
-        from a github release asset upload response, or error messages. *)
+    val browser_download_url :
+      Yojson.Basic.t -> ([ `Url of string | `Already_exists ], R.msg) result
+    (** [browser_download_url response] is the browser_download_url field of a
+        github release asset upload response, [`Already_exists] when the release
+        has an asset of that name already, or error messages. *)
 
     val name : Yojson.Basic.t -> (string, R.msg) result
     (** [name response] extracts the github name for the asset, which might

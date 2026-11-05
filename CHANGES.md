@@ -46,6 +46,9 @@
   (#537, @samoht)
 - `dune-release distrib` skips `dune subst` when `dune-project` disables it
   with `(subst disabled)`, instead of failing (#496). (#538, @samoht)
+- `dune-release publish` no longer aborts when the release asset was already
+  uploaded, or when its upload is declined: the asset on the release is used
+  instead (#513). (#539, @samoht)
 
 ## 2.2.1
 
