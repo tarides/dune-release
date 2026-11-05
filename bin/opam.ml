@@ -114,17 +114,12 @@ let open_pr ~dry_run ~changes ~remote_repo ~fork_owner ~branch ~token ~title
     ~opam_repo ~auto_open ~yes ~draft pkg =
   Pkg.opam_descr pkg >>= fun (syn, _) ->
   Pkg.opam_homepage pkg >>= fun homepage ->
-  Pkg.opam_doc pkg >>= fun doc ->
   let pp_link name ppf = function
     | None -> ()
-    | Some h -> Fmt.pf ppf "- %s: <a href=%S>%s</a>\n" name h h
-  in
-  let pp_space ppf () =
-    if homepage <> None || doc <> None then Fmt.string ppf "\n"
+    | Some h -> Fmt.pf ppf "- %s: <a href=%S>%s</a>\n\n" name h h
   in
   let msg =
-    strf "%s\n\n%a%a%a##### %s" syn (pp_link "Project page") homepage
-      (pp_link "Documentation") doc pp_space () changes
+    strf "%s\n\n%a##### %s" syn (pp_link "Project page") homepage changes
   in
   Prompt.(
     confirm_or_abort ~yes
