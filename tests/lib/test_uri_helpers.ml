@@ -20,6 +20,14 @@ let test_parse =
              domain = [ "com"; "domain" ];
              path = [ "some"; "path" ];
            });
+    make_test ~input:"scheme://domain.com/some/path#fragment"
+      ~expected:
+        (Some
+           {
+             scheme = Some "scheme";
+             domain = [ "com"; "domain" ];
+             path = [ "some"; "path" ];
+           });
     make_test ~input:"noscheme.com/some/path"
       ~expected:
         (Some
