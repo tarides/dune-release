@@ -44,6 +44,8 @@
 - When the change log cannot be parsed, `dune-release` says what it expects
   of its first heading, and no longer prints a raw debug line (#207).
   (#537, @samoht)
+- `dune-release distrib` skips `dune subst` when `dune-project` disables it
+  with `(subst disabled)`, instead of failing (#496). (#538, @samoht)
 
 ## 2.2.1
 

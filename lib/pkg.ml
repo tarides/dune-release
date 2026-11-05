@@ -253,6 +253,18 @@ let dune_project_name dir =
   | false -> Ok None
   | true -> Bos.OS.File.read file >>| dune_project_name_string
 
+(* [(subst disabled)] in dune-project makes `dune subst` fail. *)
+let dune_project_subst_disabled dir =
+  let file = Fpath.(dir / "dune-project") in
+  let re =
+    Re.(
+      compile
+        (seq [ str "(subst"; rep1 space; str "disabled"; rep space; char ')' ]))
+  in
+  Bos.OS.File.exists file >>= function
+  | false -> Ok false
+  | true -> Bos.OS.File.read file >>| Re.execp re
+
 let infer_pkg_names dir = function
   | [] ->
       let remove_extension =
@@ -429,8 +441,13 @@ let distrib_version_opam_files ~dry_run ~version =
 let distrib_prepare ~dry_run ~dist_build_dir ~version =
   Sos.with_dir ~dry_run dist_build_dir
     (fun () ->
-      Sos.run ~dry_run Cmd.(v "dune" % "subst") >>= fun () ->
-      distrib_version_opam_files ~dry_run ~version)
+      dune_project_subst_disabled (Fpath.v ".") >>= fun disabled ->
+      (if disabled then (
+         App_log.status (fun l ->
+             l "Skipping dune subst, disabled in dune-project");
+         Ok ())
+       else Sos.run ~dry_run Cmd.(v "dune" % "subst"))
+      >>= fun () -> distrib_version_opam_files ~dry_run ~version)
     ()
   |> R.join
 
