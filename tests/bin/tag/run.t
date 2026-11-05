@@ -83,3 +83,18 @@ Trying to delete a commit that doesn't exist should inform the user that there's
   [-] Extracting tag from first entry in CHANGES.md
   [-] Using tag "0.1.0"
   [-] Nothing to be deleted: there is no tag 0.1.0.
+
+With no input left to read, the questions take their default answer, as an empty answer does.
+
+  $ dune-release tag -y > /dev/null
+  $ dune-release tag -d --commit=HEAD^ < /dev/null
+  [-] Extracting tag from first entry in CHANGES.md
+  [-] Using tag "0.1.0"
+  [?] Warning: Tag 0.1.0 does not point to the commit you've provided (default: HEAD). Do you want to delete it anyways? [y/N]
+  dune-release: [ERROR] Aborting on user demand
+  [3]
+  $ dune-release tag -d < /dev/null
+  [-] Extracting tag from first entry in CHANGES.md
+  [-] Using tag "0.1.0"
+  [?] Delete tag 0.1.0? [Y/n]
+  [+] Deleted tag 0.1.0
