@@ -20,7 +20,12 @@ let equal_uri uri uri' =
 
 let parse_domain domain = List.rev (String.cuts ~sep:"." domain)
 
+(* A dev-repo may end with [#branch], which git does not take on a URI. *)
+let chop_fragment uri =
+  match String.cut ~sep:"#" uri with Some (uri, _) -> uri | None -> uri
+
 let parse uri =
+  let uri = chop_fragment uri in
   let scheme, remainder =
     match String.cut ~sep:"://" uri with
     | None -> (None, uri)

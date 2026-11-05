@@ -138,7 +138,7 @@ let licenses p =
 let dev_repo p =
   opam_field_hd p "dev-repo" >>= function
   | None -> Ok None
-  | Some r -> Ok (Some (Uri_helpers.chop_git_prefix r))
+  | Some r -> Ok (Some Uri_helpers.(chop_fragment (chop_git_prefix r)))
 
 let dev_repo_is_on_github p =
   opam_field_hd p "dev-repo" >>| function

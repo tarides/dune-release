@@ -46,6 +46,9 @@
 - `dune-release publish` no longer aborts when the release asset was already
   uploaded, or when its upload is declined: the asset on the release is used
   instead. (#513, #539, @samoht, reported by @davesnx)
+- `dune-release publish` accepts a `dev-repo` that names a branch with
+  `#branch`: the fragment is dropped from the URL used to push the tag and to
+  find the GitHub repository. (#203, #540, @samoht, reported by @hannesm)
 
 ## 2.2.1
 

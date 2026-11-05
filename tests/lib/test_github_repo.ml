@@ -18,6 +18,8 @@ let test_from_uri =
       ~expected:(Some { owner = "owner"; repo = "repo" });
     make_test ~input:"git+https://github.com/owner/repo.git"
       ~expected:(Some { owner = "owner"; repo = "repo" });
+    make_test ~input:"git+https://github.com/owner/repo.git#branch"
+      ~expected:(Some { owner = "owner"; repo = "repo" });
     make_test ~input:"git@github.com:owner/repo.git"
       ~expected:(Some { owner = "owner"; repo = "repo" });
     make_test ~input:"ssh://git@github.com:owner/repo.git"
