@@ -51,6 +51,8 @@
   find the GitHub repository. (#203, #540, @samoht, reported by @hannesm)
 - `dune-release opam pkg` run without `publish` now infers the right archive
   URL for an https GitHub `dev-repo`. (#541, @samoht)
+- The `lint` man page describes the checks `lint` performs today. (#542,
+  @samoht)
 
 ## 2.2.1
 
