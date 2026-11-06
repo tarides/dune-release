@@ -43,10 +43,9 @@ let man =
     `S Manpage.s_description;
     `P
       "The $(tname) command makes tests on a package distribution or source \
-       repository. It checks that standard files exist, that ocamlfind META \
-       files pass the ocamlfind lint test, that opam package files pass the \
-       opam lint test and that the opam dependencies are consistent with those \
-       of the build system.";
+       repository. It checks that standard files exist, that opam package \
+       files pass the opam lint test and have a synopsis, and that their \
+       homepage and dev-repo fields can be parsed.";
     `P
       "Linting is automatically performed on distribution generation, see \
        dune-release-distrib(1) for more details.";
