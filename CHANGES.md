@@ -1,3 +1,10 @@
+## Unreleased
+
+### Fixed
+
+- Use the correct location of the opam-repository worktree. (#533, @bobot,
+  closes #439)
+
 ## 2.3.0 (6/11/2026)
 
 ### Added

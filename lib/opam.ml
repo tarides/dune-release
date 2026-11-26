@@ -95,7 +95,7 @@ let prepare ~dry_run ?msg ~local_repo ~remote_repo ~opam_repo ~version ~tag
    else R.error_msgf "%a is not a valid Git repository." Fpath.pp local_repo)
   >>= fun () ->
   let git_for_repo r = Cmd.of_list (Cmd.to_list @@ Vcs.cmd r) in
-  Vcs.get () >>= fun repo ->
+  Sos.with_dir ~dry_run local_repo Vcs.get () |> R.join >>= fun repo ->
   let git = git_for_repo repo in
   let upstream =
     let user, repo = opam_repo in
